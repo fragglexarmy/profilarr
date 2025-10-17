@@ -4,6 +4,7 @@
 	"version": "2.0.0",
 	"type": "module",
 	"dependencies": {
+		"lucide-svelte": "^0.546.0",
 		"sveltekit-adapter-deno": "^0.16.1"
 	},
 	"devDependencies": {

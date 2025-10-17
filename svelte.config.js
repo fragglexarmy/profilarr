@@ -10,7 +10,10 @@ const config = {
 			usage: 'deno-compile'
 		}),
 		alias: {
-			$config: './src/utils/config/config.ts'
+			$config: './src/utils/config/config.ts',
+			$stores: './src/stores',
+			$components: './src/components',
+			$static: './src/static'
 		}
 	}
 };

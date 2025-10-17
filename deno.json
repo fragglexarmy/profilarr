@@ -1,6 +1,9 @@
 {
 	"imports": {
-		"$config": "./src/utils/config/config.ts"
+		"$config": "./src/utils/config/config.ts",
+		"$stores": "./src/stores",
+		"$components": "./src/components",
+		"$static": "./src/static"
 	},
 	"tasks": {
 		"dev": "APP_BASE_PATH=./temp vite dev",

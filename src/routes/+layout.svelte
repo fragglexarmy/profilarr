@@ -1,8 +1,7 @@
 <script lang="ts">
 	import '../app.css';
-	import logo from '../static/logo.svg';
-
-	let { children } = $props();
+	import logo from '$static/logo.svg';
+	import Navbar from '$components/navigation/navbar/navbar.svelte';
 </script>
 
 <svelte:head>
@@ -10,4 +9,6 @@
 	<title>Profilarr</title>
 </svelte:head>
 
-{@render children?.()}
+<Navbar />
+
+<slot />
