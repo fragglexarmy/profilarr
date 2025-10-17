@@ -3,11 +3,12 @@
 	"private": true,
 	"version": "2.0.0",
 	"type": "module",
+	"dependencies": {
+		"sveltekit-adapter-deno": "^0.16.1"
+	},
 	"devDependencies": {
-		"@deno/svelte-adapter": "^0.1.0",
 		"@eslint/compat": "^1.4.0",
 		"@eslint/js": "^9.36.0",
-		"@sveltejs/adapter-auto": "^6.1.0",
 		"@sveltejs/kit": "^2.43.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.0",
 		"@tailwindcss/forms": "^0.5.10",
