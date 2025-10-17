@@ -13,7 +13,8 @@ const config = {
 			$config: './src/utils/config/config.ts',
 			$stores: './src/stores',
 			$components: './src/components',
-			$static: './src/static'
+			$static: './src/static',
+			$server: './src/server'
 		}
 	}
 };
