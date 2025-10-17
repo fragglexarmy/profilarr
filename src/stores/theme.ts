@@ -21,7 +21,7 @@ function createThemeStore() {
 		}
 	}
 
-	const { subscribe, set, update } = writable<Theme>(initialTheme);
+	const { subscribe, update } = writable<Theme>(initialTheme);
 
 	// Apply theme on initialization
 	if (browser) {
@@ -30,8 +30,17 @@ function createThemeStore() {
 
 	function applyTheme(newTheme: Theme) {
 		if (browser) {
-			document.documentElement.classList.remove('light', 'dark');
-			document.documentElement.classList.add(newTheme);
+			// Use View Transitions API if available for smooth theme changes
+			if (document.startViewTransition) {
+				document.startViewTransition(() => {
+					document.documentElement.classList.remove('light', 'dark');
+					document.documentElement.classList.add(newTheme);
+				});
+			} else {
+				// Fallback for browsers without View Transitions API
+				document.documentElement.classList.remove('light', 'dark');
+				document.documentElement.classList.add(newTheme);
+			}
 		}
 	}
 
