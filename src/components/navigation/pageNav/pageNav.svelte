@@ -5,7 +5,7 @@
 </script>
 
 <nav
-	class="fixed left-0 top-16 flex h-[calc(100vh-4rem)] w-72 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+	class="fixed top-16 left-0 flex h-[calc(100vh-4rem)] w-72 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
 >
 	<div class="flex-1 overflow-y-auto p-4">
 		<Group label="🏠 Home" href="/" hasItems={true}>

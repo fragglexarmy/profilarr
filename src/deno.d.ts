@@ -7,10 +7,7 @@ declare namespace Deno {
 		get(key: string): string | undefined;
 	};
 
-	export function mkdir(
-		path: string,
-		options?: { recursive?: boolean }
-	): Promise<void>;
+	export function mkdir(path: string, options?: { recursive?: boolean }): Promise<void>;
 
 	export function writeTextFile(
 		path: string,

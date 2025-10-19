@@ -18,7 +18,11 @@
 	<!-- Main navigation button (left side) - rounded left, square right (or fully rounded if no items) -->
 	<a
 		{href}
-		class="flex flex-1 items-center gap-2 py-1.5 pl-3 pr-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-200 group-hover/header:bg-neutral-200 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:group-hover/header:bg-neutral-800 {hasItems ? 'rounded-l-lg' : 'rounded-lg'} {isActive ? 'bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700' : ''}"
+		class="flex flex-1 items-center gap-2 py-1.5 pr-2 pl-3 text-sm font-semibold text-neutral-700 transition-colors group-hover/header:bg-neutral-200 hover:bg-neutral-200 dark:text-neutral-300 dark:group-hover/header:bg-neutral-800 dark:hover:bg-neutral-800 {hasItems
+			? 'rounded-l-lg'
+			: 'rounded-lg'} {isActive
+			? 'bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700'
+			: ''}"
 	>
 		{label}
 	</a>
@@ -27,7 +31,9 @@
 	{#if hasItems}
 		<button
 			onclick={onToggle}
-			class="flex items-center self-stretch rounded-r-lg pl-1.5 pr-1.5 transition-colors group-hover/header:bg-neutral-200 hover:!bg-neutral-300 dark:group-hover/header:bg-neutral-800 dark:hover:!bg-neutral-700 {isActive ? 'bg-neutral-200 hover:!bg-neutral-300 dark:bg-neutral-800 dark:hover:!bg-neutral-700' : ''}"
+			class="flex items-center self-stretch rounded-r-lg pr-1.5 pl-1.5 transition-colors group-hover/header:bg-neutral-200 hover:!bg-neutral-300 dark:group-hover/header:bg-neutral-800 dark:hover:!bg-neutral-700 {isActive
+				? 'bg-neutral-200 hover:!bg-neutral-300 dark:bg-neutral-800 dark:hover:!bg-neutral-700'
+				: ''}"
 			aria-label={isOpen ? 'Collapse group' : 'Expand group'}
 		>
 			<svg

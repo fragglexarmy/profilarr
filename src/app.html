@@ -5,9 +5,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<!-- Prevent theme flash by setting theme immediately -->
 		<script>
-			(function() {
+			(function () {
 				const stored = localStorage.getItem('theme');
-				const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+				const theme =
+					stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 				document.documentElement.classList.add(theme);
 			})();
 		</script>

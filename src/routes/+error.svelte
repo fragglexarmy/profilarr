@@ -6,7 +6,9 @@
 	$: errorMessage = $page.error?.message || 'An unexpected error occurred';
 </script>
 
-<div class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-neutral-50 px-4 dark:bg-neutral-900">
+<div
+	class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-neutral-50 px-4 dark:bg-neutral-900"
+>
 	<div class="flex max-w-6xl items-center gap-12">
 		<!-- Left column: Error info and button -->
 		<div class="flex-1">
@@ -29,11 +31,7 @@
 		<!-- Right column: 404 gif -->
 		{#if statusCode === 404}
 			<div class="flex-1">
-				<img
-					src={gif404}
-					alt="404 Not Found"
-					class="h-auto w-full rounded-lg"
-				/>
+				<img src={gif404} alt="404 Not Found" class="h-auto w-full rounded-lg" />
 			</div>
 		{/if}
 	</div>

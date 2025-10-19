@@ -3,7 +3,9 @@
 	import logo from '$static/logo.svg';
 </script>
 
-<nav class="fixed left-0 right-0 top-0 z-50 border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+<nav
+	class="fixed top-0 right-0 left-0 z-50 border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+>
 	<div class="flex items-center justify-between px-4 py-4">
 		<!-- Left: Brand name with logo -->
 		<div class="flex items-center gap-2">

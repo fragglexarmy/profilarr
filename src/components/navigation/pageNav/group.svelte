@@ -30,7 +30,7 @@
 			</div>
 
 			<!-- Column 2: Items -->
-			<div class="flex flex-col gap-1 -ml-3">
+			<div class="-ml-3 flex flex-col gap-1">
 				{@render children()}
 			</div>
 		</div>

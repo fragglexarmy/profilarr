@@ -13,6 +13,6 @@
 <Navbar />
 <PageNav />
 
-<main class="pl-72 pt-16">
+<main class="pt-16 pl-72">
 	<slot />
 </main>
