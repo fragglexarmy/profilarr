@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	import {
 		Info,
@@ -7,13 +8,21 @@
 		HelpCircle,
 		Heart,
 		ListChecks,
-		Package
+		Package,
+		Loader2,
+		Users
 	} from 'lucide-svelte';
 	import InfoTable from './components/InfoTable.svelte';
 	import InfoRow from './components/InfoRow.svelte';
 	import VersionBadge from './components/VersionBadge.svelte';
 
 	export let data: PageData;
+
+	let loading = true;
+
+	onMount(() => {
+		loading = false;
+	});
 
 	type InfoRowData = {
 		label: string;
@@ -83,12 +92,35 @@
 			]
 		}
 	];
+
+	type DevTeamMember = {
+		name: string;
+		remark?: string;
+		tags: string[];
+	};
+
+	const devTeam: DevTeamMember[] = [
+		{
+			name: 'santiagosayshey',
+			remark: 'No Gatekeeping Allowed',
+			tags: ['Lead Profilarr Developer', 'Database Hater']
+		},
+		{
+			name: 'Seraphys',
+			tags: ['Dictionarry Database Lead', 'Sexy God']
+		}
+	];
 </script>
 
 <div class="p-8">
 	<h1 class="mb-6 text-3xl font-bold text-neutral-900 dark:text-neutral-50">About Profilarr</h1>
 
-	<div class="space-y-6">
+	{#if loading}
+		<div class="flex min-h-[400px] items-center justify-center">
+			<Loader2 class="h-8 w-8 animate-spin text-neutral-500" />
+		</div>
+	{:else}
+		<div class="space-y-6">
 		<!-- Application (special case with version badge) -->
 		<InfoTable title="Application" icon={Info}>
 			<tr class="bg-white dark:bg-neutral-900">
@@ -130,15 +162,22 @@
 						<div class="space-y-2">
 							{#each data.migration.applied as migration (migration.version)}
 								<div class="flex items-center justify-between">
-									<div class="text-sm">
+									<div class="flex items-center gap-2 text-sm">
 										<code
 											class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 										>
 											v{migration.version}
 										</code>
-										<span class="ml-2 text-neutral-600 dark:text-neutral-400">
+										<span class="text-neutral-600 dark:text-neutral-400">
 											{migration.name}
 										</span>
+										{#if migration.latest}
+											<span
+												class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+											>
+												Latest
+											</span>
+										{/if}
 									</div>
 									<span class="text-xs text-neutral-500">
 										{new Date(migration.applied_at).toLocaleDateString()}
@@ -196,5 +235,70 @@
 				</tr>
 			</InfoTable>
 		{/if}
-	</div>
+
+		<!-- Dev Team Section -->
+		<div class="space-y-3">
+			<!-- Section Title -->
+			<div class="flex items-center gap-2">
+				<Users class="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Dev Team</h2>
+			</div>
+
+			<!-- Table -->
+			<div class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+				<div class="overflow-x-auto">
+					<table class="w-full">
+					<thead class="bg-neutral-50 dark:bg-neutral-800/50">
+						<tr>
+							<th class="px-6 py-3 text-left text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+								Name
+							</th>
+							<th class="px-6 py-3 text-left text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+								Remark
+							</th>
+							<th class="px-6 py-3 text-left text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+								Tags
+							</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+						{#each devTeam as member (member.name)}
+							<tr class="bg-white dark:bg-neutral-900">
+								<td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-neutral-50">
+									{member.name}
+								</td>
+								<td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">
+									{#if member.remark}
+										{member.remark}
+									{:else}
+										<span class="italic text-neutral-400 dark:text-neutral-500">Remark pending - someone should probably ask them</span>
+									{/if}
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex flex-wrap gap-2">
+										{#each member.tags as tag}
+											<span
+												class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+											>
+												{tag}
+											</span>
+										{/each}
+									</div>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Dedication -->
+		<div class="mt-8 text-center">
+			<p class="text-sm italic text-neutral-500 dark:text-neutral-400">
+				This project is dedicated to Faiza, for helping me find my heart.
+			</p>
+		</div>
+		</div>
+	{/if}
 </div>

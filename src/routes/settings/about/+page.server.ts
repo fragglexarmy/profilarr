@@ -85,6 +85,12 @@ export const load = async () => {
 	const currentMigrationVersion = migrationRunner.getCurrentVersion();
 	const appliedMigrations = migrationRunner.getAppliedMigrations();
 
+	// Mark the latest migration (highest version)
+	const migrationsWithLatest = appliedMigrations.map((migration) => ({
+		...migration,
+		latest: migration.version === currentMigrationVersion
+	}));
+
 	// Fetch GitHub releases
 	const releases = await fetchGitHubReleases();
 	const latestRelease = releases.find((r) => !r.prerelease);
@@ -104,7 +110,7 @@ export const load = async () => {
 		},
 		migration: {
 			current: currentMigrationVersion,
-			applied: appliedMigrations
+			applied: migrationsWithLatest
 		},
 		releases: releases.slice(0, 10) // Return latest 10 releases
 	};
