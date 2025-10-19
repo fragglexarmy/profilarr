@@ -8,6 +8,7 @@ import { logger } from '$logger';
  */
 export class BaseArrClient extends BaseHttpClient {
 	private apiKey: string;
+	protected apiVersion: string = 'v3'; // Default to v3, can be overridden by subclasses
 
 	constructor(url: string, apiKey: string) {
 		super(url, {
@@ -20,12 +21,13 @@ export class BaseArrClient extends BaseHttpClient {
 
 	/**
 	 * Test connection to the arr instance
-	 * Calls /api/v3/system/status endpoint
+	 * Calls /api/{version}/system/status endpoint
+	 * Note: This method has built-in retry logic (3 attempts by default)
 	 * @returns true if connection successful, false otherwise
 	 */
 	async testConnection(): Promise<boolean> {
 		try {
-			const status = await this.get<ArrSystemStatus>('/api/v3/system/status');
+			const status = await this.get<ArrSystemStatus>(`/api/${this.apiVersion}/system/status`);
 
 			await logger.info(`Connection successful to ${this.baseUrl}`, {
 				source: 'BaseArrClient',
@@ -38,7 +40,8 @@ export class BaseArrClient extends BaseHttpClient {
 
 			return true;
 		} catch (error) {
-			await logger.error(`Connection failed to ${this.baseUrl}`, {
+			// Only log after all retries are exhausted
+			await logger.error(`Connection failed to ${this.baseUrl} after retries`, {
 				source: 'BaseArrClient',
 				meta: error
 			});

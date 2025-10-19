@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		if (isConnected) {
 			return json({ success: true });
 		} else {
-			return json({ success: false, error: 'Connection test failed' });
+			return json({ success: false, error: 'Connection test failed' }, { status: 400 });
 		}
 	} catch (error) {
 		return json(
