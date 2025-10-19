@@ -11,10 +11,15 @@ const config = {
 		}),
 		alias: {
 			$config: './src/utils/config/config.ts',
+			$logger: './src/utils/logger/logger.ts',
 			$stores: './src/stores',
 			$components: './src/components',
 			$static: './src/static',
-			$server: './src/server'
+			$server: './src/server',
+			$db: './src/db',
+			$arr: './src/utils/arr',
+			$http: './src/utils/http',
+			$api: './src/utils/api/request.ts'
 		}
 	}
 };

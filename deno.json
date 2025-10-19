@@ -3,7 +3,12 @@
 		"$config": "./src/utils/config/config.ts",
 		"$stores": "./src/stores",
 		"$components": "./src/components",
-		"$static": "./src/static"
+		"$static": "./src/static",
+		"$db/": "./src/db/",
+		"$logger": "./src/utils/logger/logger.ts",
+		"$arr/": "./src/utils/arr/",
+		"$http/": "./src/utils/http/",
+		"$api": "./src/utils/api/request.ts"
 	},
 	"tasks": {
 		"dev": "APP_BASE_PATH=./temp vite dev",

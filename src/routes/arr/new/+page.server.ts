@@ -1,0 +1,102 @@
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions } from '@sveltejs/kit';
+import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { logger } from '$logger';
+
+const VALID_TYPES = ['radarr', 'sonarr', 'lidarr', 'chaptarr'];
+
+export const actions = {
+	default: async ({ request }) => {
+		const formData = await request.formData();
+
+		const name = formData.get('name')?.toString().trim();
+		const type = formData.get('type')?.toString().trim();
+		const url = formData.get('url')?.toString().trim();
+		const apiKey = formData.get('api_key')?.toString().trim();
+		const tagsJson = formData.get('tags')?.toString().trim();
+
+		// Validation
+		if (!name || !type || !url || !apiKey) {
+			await logger.warn('Attempted to create instance with missing required fields', {
+				source: 'arr/new',
+				meta: { name, type, url, hasApiKey: !!apiKey }
+			});
+
+			return fail(400, {
+				error: 'Name, type, URL, and API key are required',
+				values: { name, type, url }
+			});
+		}
+
+		if (!VALID_TYPES.includes(type)) {
+			await logger.warn('Attempted to create instance with invalid type', {
+				source: 'arr/new',
+				meta: { name, type, url }
+			});
+
+			return fail(400, {
+				error: 'Invalid arr type',
+				values: { name, type, url }
+			});
+		}
+
+		// Check if name already exists
+		if (arrInstancesQueries.nameExists(name)) {
+			await logger.warn('Attempted to create instance with duplicate name', {
+				source: 'arr/new',
+				meta: { name, type }
+			});
+
+			return fail(400, {
+				error: 'An instance with this name already exists',
+				values: { name, type, url }
+			});
+		}
+
+		// Parse tags
+		let tags: string[] = [];
+		if (tagsJson) {
+			try {
+				const parsed = JSON.parse(tagsJson);
+				if (Array.isArray(parsed)) {
+					tags = parsed;
+				}
+			} catch (error) {
+				await logger.warn('Failed to parse tags JSON', {
+					source: 'arr/new',
+					meta: { tagsJson, error }
+				});
+			}
+		}
+
+		try {
+			// Create the instance
+			const id = arrInstancesQueries.create({
+				name,
+				type,
+				url,
+				apiKey,
+				tags
+			});
+
+			await logger.info(`Created new ${type} instance: ${name}`, {
+				source: 'arr/new',
+				meta: { id, name, type, url }
+			});
+
+		} catch (error) {
+			await logger.error('Failed to create arr instance', {
+				source: 'arr/new',
+				meta: error
+			});
+
+			return fail(500, {
+				error: 'Failed to create instance',
+				values: { name, type, url }
+			});
+		}
+
+		// Redirect to the type page (outside try-catch since redirect throws)
+		redirect(303, `/arr/${type}`);
+	}
+} satisfies Actions;

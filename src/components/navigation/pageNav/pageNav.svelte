@@ -10,9 +10,9 @@
 	<div class="flex-1 overflow-y-auto p-4">
 		<Group label="🏠 Home" href="/" hasItems={true}>
 			<GroupItem label="Databases" href="/databases" />
-			<GroupItem label="Radarr" href="/radarr" />
-			<GroupItem label="Sonarr" href="/sonarr" />
-			<GroupItem label="Lidarr" href="/lidarr" />
+			<GroupItem label="Radarr" href="/arr/radarr" />
+			<GroupItem label="Sonarr" href="/arr/sonarr" />
+			<GroupItem label="Lidarr" href="/arr/lidarr" />
 		</Group>
 
 		<Group label="⚡ Quality Profiles" href="/quality-profiles" initialOpen={false} />

@@ -3,6 +3,7 @@
   "specifiers": {
     "npm:@eslint/compat@^1.4.0": "1.4.0_eslint@9.37.0",
     "npm:@eslint/js@^9.36.0": "9.37.0",
+    "npm:@jsr/db__sqlite@0.12": "0.12.0",
     "npm:@sveltejs/kit@^2.43.2": "2.47.1_@sveltejs+vite-plugin-svelte@6.2.1__svelte@5.40.2___acorn@8.15.0__vite@7.1.10___@types+node@22.18.11___picomatch@4.0.3__@types+node@22.18.11_svelte@5.40.2__acorn@8.15.0_vite@7.1.10__@types+node@22.18.11__picomatch@4.0.3_acorn@8.15.0_@types+node@22.18.11",
     "npm:@sveltejs/vite-plugin-svelte@^6.2.0": "6.2.1_svelte@5.40.2__acorn@8.15.0_vite@7.1.10__@types+node@22.18.11__picomatch@4.0.3_@types+node@22.18.11",
     "npm:@tailwindcss/forms@~0.5.10": "0.5.10_tailwindcss@4.1.14",
@@ -395,6 +396,69 @@
         "@jridgewell/resolve-uri",
         "@jridgewell/sourcemap-codec"
       ]
+    },
+    "@jsr/db__sqlite@0.12.0": {
+      "integrity": "sha512-nTMYOzEl8oFhtPS90tAdMbpYTec7/brHtlVLt8afAsNLX+z1FkEIWljxqJS8UDzN23wCTsNXL96NArqBaJRy9A==",
+      "dependencies": [
+        "@jsr/denosaurs__plug",
+        "@jsr/std__path@0.217.0"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/db__sqlite/0.12.0.tgz"
+    },
+    "@jsr/denosaurs__plug@1.1.0": {
+      "integrity": "sha512-GNRMr8XcYWbv8C1B5OjDa5u8q3p2lz7YVWQLhH5HAy0pkpb0+Y3npSxzjM49v5ajTFIzUCwIKv1gQukPm9q7qw==",
+      "dependencies": [
+        "@jsr/std__encoding",
+        "@jsr/std__fmt@1.0.8",
+        "@jsr/std__fs",
+        "@jsr/std__path@1.1.2"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/denosaurs__plug/1.1.0.tgz"
+    },
+    "@jsr/std__assert@0.217.0": {
+      "integrity": "sha512-kCGfcXX8lMcZHWrCgFhbdpNloB50MkLwHdRZvZKjZK424F9g+M742jkTDLMOJmwkDoEqFKyNVrGhPtspS4+NvQ==",
+      "dependencies": [
+        "@jsr/std__fmt@0.217.0"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__assert/0.217.0.tgz"
+    },
+    "@jsr/std__encoding@1.0.10": {
+      "integrity": "sha512-WK2njnDTyKefroRNk2Ooq7GStp6Y0ccAvr4To+Z/zecRAGe7+OSvH9DbiaHpAKwEi2KQbmpWMOYsdNt+TsdmSw==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__encoding/1.0.10.tgz"
+    },
+    "@jsr/std__fmt@0.217.0": {
+      "integrity": "sha512-AM33Cr/V3St3Cj5O4QQe4aMKGyzL9eYz+mOC58BmqxgeZwFbvSC06DzM2DS3ixcsAnwH2kYMXHpCBax0sT9q8Q==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__fmt/0.217.0.tgz"
+    },
+    "@jsr/std__fmt@1.0.8": {
+      "integrity": "sha512-miZHzj9OgjuajrcMKzpqNVwFb9O71UHZzV/FHVq0E0Uwmv/1JqXgmXAoBNPrn+MP0fHT3mMgaZ6XvQO7dam67Q==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__fmt/1.0.8.tgz"
+    },
+    "@jsr/std__fs@1.0.19": {
+      "integrity": "sha512-TEjyE8g+46jPlu7dJHLrwc8NMGl8zfG+JjWxyNQyDbxP0RtqZ4JmYZfR9vy4RWYWJQbLpw6Kbt2n+K/2zAO/JA==",
+      "dependencies": [
+        "@jsr/std__internal",
+        "@jsr/std__path@1.1.2"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__fs/1.0.19.tgz"
+    },
+    "@jsr/std__internal@1.0.12": {
+      "integrity": "sha512-6xReMW9p+paJgqoFRpOE2nogJFvzPfaLHLIlyADYjKMUcwDyjKZxryIbgcU+gxiTygn8yCjld1HoI0ET4/iZeA==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__internal/1.0.12.tgz"
+    },
+    "@jsr/std__path@0.217.0": {
+      "integrity": "sha512-KoqEpZX9CE8zyyr4+X6AROOGYv95AysnJni2E5g9pqG+IGUUuNjOC3yRTvHnsB5tJ6uQs6DwET5chIdUPcylIQ==",
+      "dependencies": [
+        "@jsr/std__assert"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__path/0.217.0.tgz"
+    },
+    "@jsr/std__path@1.1.2": {
+      "integrity": "sha512-5hkOR1s5M7am02Bn9KS+SNMNwUSivz7t7/w2HBhFIfO7Eh8+mWilaZ+1tdanV9aaSHr4c99Zo4Da+cCSuzUOdA==",
+      "dependencies": [
+        "@jsr/std__internal"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__path/1.1.2.tgz"
     },
     "@nodelib/fs.scandir@2.1.5": {
       "integrity": "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==",
@@ -1815,6 +1879,7 @@
       "dependencies": [
         "npm:@eslint/compat@^1.4.0",
         "npm:@eslint/js@^9.36.0",
+        "npm:@jsr/db__sqlite@0.12",
         "npm:@sveltejs/kit@^2.43.2",
         "npm:@sveltejs/vite-plugin-svelte@^6.2.0",
         "npm:@tailwindcss/forms@~0.5.10",

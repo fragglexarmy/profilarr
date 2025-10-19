@@ -3,6 +3,7 @@
 	import logo from '$static/logo.svg';
 	import Navbar from '$components/navigation/navbar/navbar.svelte';
 	import PageNav from '$components/navigation/pageNav/pageNav.svelte';
+	import ToastContainer from '$components/toast/ToastContainer.svelte';
 </script>
 
 <svelte:head>
@@ -12,6 +13,7 @@
 
 <Navbar />
 <PageNav />
+<ToastContainer />
 
 <main class="pt-16 pl-72">
 	<slot />

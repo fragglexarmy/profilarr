@@ -1,0 +1,111 @@
+import { migrationRunner } from '$db/migrations.ts';
+import { config } from '$config';
+import packageJson from '../../../../package.json' with { type: 'json' };
+
+type GitHubRelease = {
+	tag_name: string;
+	name: string;
+	published_at: string;
+	html_url: string;
+	prerelease: boolean;
+};
+
+type VersionStatus = 'up-to-date' | 'out-of-date' | 'dev-build';
+
+async function fetchGitHubReleases(): Promise<GitHubRelease[]> {
+	try {
+		const response = await fetch(
+			'https://api.github.com/repos/Dictionarry-Hub/profilarr/releases',
+			{
+				headers: {
+					Accept: 'application/vnd.github+json',
+					'User-Agent': 'Profilarr'
+				}
+			}
+		);
+
+		if (!response.ok) {
+			return [];
+		}
+
+		return await response.json();
+	} catch {
+		return [];
+	}
+}
+
+function compareVersions(v1: string, v2: string): number {
+	const parts1 = v1.split('.').map(Number);
+	const parts2 = v2.split('.').map(Number);
+
+	for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+		const num1 = parts1[i] || 0;
+		const num2 = parts2[i] || 0;
+
+		if (num1 > num2) return 1;
+		if (num1 < num2) return -1;
+	}
+
+	return 0;
+}
+
+function getVersionStatus(
+	currentVersion: string,
+	latestVersion: string | undefined
+): VersionStatus {
+	if (!latestVersion) {
+		return 'dev-build';
+	}
+
+	// Remove 'v' prefix if present
+	const current = currentVersion.replace(/^v/, '');
+	const latest = latestVersion.replace(/^v/, '');
+
+	// Check if it's a dev build (e.g., has -dev, -alpha, -beta suffix)
+	if (current.includes('-') || current.includes('dev')) {
+		return 'dev-build';
+	}
+
+	// Compare versions semantically
+	const comparison = compareVersions(current, latest);
+
+	if (comparison > 0) {
+		// Current version is greater than latest release - must be a dev build
+		return 'dev-build';
+	} else if (comparison === 0) {
+		// Versions are equal
+		return 'up-to-date';
+	} else {
+		// Current version is less than latest release
+		return 'out-of-date';
+	}
+}
+
+export const load = async () => {
+	const currentMigrationVersion = migrationRunner.getCurrentVersion();
+	const appliedMigrations = migrationRunner.getAppliedMigrations();
+
+	// Fetch GitHub releases
+	const releases = await fetchGitHubReleases();
+	const latestRelease = releases.find((r) => !r.prerelease);
+
+	// Determine version status
+	const versionStatus = getVersionStatus(packageJson.version, latestRelease?.tag_name);
+
+	return {
+		version: packageJson.version,
+		versionStatus,
+		timezone: config.timezone,
+		paths: {
+			base: config.paths.base,
+			data: config.paths.data,
+			logs: config.paths.logs,
+			database: config.paths.database
+		},
+		migration: {
+			current: currentMigrationVersion,
+			applied: appliedMigrations
+		},
+		releases: releases.slice(0, 10) // Return latest 10 releases
+	};
+};

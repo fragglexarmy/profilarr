@@ -4,12 +4,18 @@
 
 class Config {
 	private basePath: string;
+	public readonly timezone: string;
 
 	constructor() {
 		// Default base path logic:
 		// 1. Check environment variable
 		// 2. Fall back to /app (Docker default)
 		this.basePath = Deno.env.get('APP_BASE_PATH') || '/app';
+
+		// Timezone configuration:
+		// 1. Check TZ environment variable
+		// 2. Fall back to system timezone
+		this.timezone = Deno.env.get('TZ') || Intl.DateTimeFormat().resolvedOptions().timeZone;
 	}
 
 	/**
@@ -18,6 +24,7 @@ class Config {
 	 */
 	async init(): Promise<void> {
 		await Deno.mkdir(this.paths.logs, { recursive: true });
+		await Deno.mkdir(this.paths.data, { recursive: true });
 	}
 
 	/**
@@ -39,7 +46,13 @@ class Config {
 		},
 		get logFile(): string {
 			return `${config.basePath}/logs/app.log`;
-		}
+		},
+		get data(): string {
+			return `${config.basePath}/data`;
+		},
+		get database(): string {
+			return `${config.basePath}/data/profilarr.db`;
+		},
 	};
 }
 
