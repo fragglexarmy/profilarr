@@ -12,11 +12,7 @@ import { ChaptarrClient } from './clients/chaptarr.ts';
  * @param apiKey - API key for authentication
  * @returns Arr client instance
  */
-export function createArrClient(
-	type: ArrType,
-	url: string,
-	apiKey: string
-): BaseArrClient {
+export function createArrClient(type: ArrType, url: string, apiKey: string): BaseArrClient {
 	switch (type) {
 		case 'radarr':
 			return new RadarrClient(url, apiKey);

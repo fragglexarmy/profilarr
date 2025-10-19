@@ -52,7 +52,7 @@ class Config {
 		},
 		get database(): string {
 			return `${config.basePath}/data/profilarr.db`;
-		},
+		}
 	};
 }
 

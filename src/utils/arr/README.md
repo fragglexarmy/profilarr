@@ -1,6 +1,6 @@
 # Arr HTTP Client Utilities
 
-Object-oriented HTTP client architecture for communicating with *arr
+Object-oriented HTTP client architecture for communicating with \*arr
 applications (Radarr, Sonarr, Lidarr, Chaptarr).
 
 ## Architecture
@@ -64,7 +64,7 @@ new BaseHttpClient(baseUrl: string, options?: HttpClientOptions)
 
 ### BaseArrClient (`src/utils/arr/base.ts`)
 
-Base client for all *arr applications. Extends `BaseHttpClient`.
+Base client for all \*arr applications. Extends `BaseHttpClient`.
 
 **Features:**
 
@@ -86,9 +86,9 @@ new BaseArrClient(url: string, apiKey: string)
 ### Future Usage (when specific methods are implemented)
 
 ```typescript
-import { createArrClient } from "$utils/arr/factory.ts";
+import { createArrClient } from '$utils/arr/factory.ts';
 
-const radarr = createArrClient("radarr", "http://localhost:7878", "api-key");
+const radarr = createArrClient('radarr', 'http://localhost:7878', 'api-key');
 
 // Get movies
 const movies = await radarr.getMovies();
@@ -98,8 +98,8 @@ const profiles = await radarr.getQualityProfiles();
 
 // Add movie
 await radarr.addMovie({
-  title: "Inception",
-  tmdbId: 27205,
-  qualityProfileId: 1,
+	title: 'Inception',
+	tmdbId: 27205,
+	qualityProfileId: 1
 });
 ```

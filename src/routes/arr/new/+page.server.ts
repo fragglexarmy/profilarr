@@ -83,7 +83,6 @@ export const actions = {
 				source: 'arr/new',
 				meta: { id, name, type, url }
 			});
-
 		} catch (error) {
 			await logger.error('Failed to create arr instance', {
 				source: 'arr/new',

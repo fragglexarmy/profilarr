@@ -113,10 +113,7 @@ export class BaseHttpClient {
 					}
 
 					// Wrap other errors
-					throw new HttpError(
-						error instanceof Error ? error.message : 'Unknown error',
-						0
-					);
+					throw new HttpError(error instanceof Error ? error.message : 'Unknown error', 0);
 				}
 			} catch (error) {
 				// If it's not an HttpError or not retryable, throw immediately

@@ -78,10 +78,7 @@ export const arrInstancesQueries = {
 	 * Get arr instances by type
 	 */
 	getByType(type: string): ArrInstance[] {
-		return db.query<ArrInstance>(
-			'SELECT * FROM arr_instances WHERE type = ? ORDER BY name',
-			type
-		);
+		return db.query<ArrInstance>('SELECT * FROM arr_instances WHERE type = ? ORDER BY name', type);
 	},
 
 	/**
