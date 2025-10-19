@@ -1,5 +1,9 @@
 node_modules
 
+# Claude context
+CLAUDE.md
+.claudeignore
+
 # Output
 .output
 .vercel
@@ -7,6 +11,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/static
 
 # Application
 /temp
