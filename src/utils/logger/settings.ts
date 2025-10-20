@@ -41,9 +41,7 @@ class LogSettingsManager {
 			// Return defaults if not initialized
 			return {
 				id: 1,
-				rotation_strategy: 'daily',
 				retention_days: 30,
-				max_file_size: 100,
 				min_level: 'INFO',
 				enabled: 1,
 				file_logging: 1,

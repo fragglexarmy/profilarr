@@ -40,11 +40,9 @@
 		<div class="space-y-6">
 			<!-- Enable Backups -->
 			<div class="space-y-3">
-				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-					Enable Features
-				</h3>
+				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Enable Features</h3>
 				<div class="space-y-2">
-					<label class="flex items-center gap-3 cursor-pointer">
+					<label class="flex cursor-pointer items-center gap-3">
 						<input
 							type="checkbox"
 							name="enabled"
@@ -61,7 +59,7 @@
 						</div>
 					</label>
 
-					<label class="flex items-center gap-3 cursor-pointer">
+					<label class="flex cursor-pointer items-center gap-3">
 						<input
 							type="checkbox"
 							name="compression_enabled"
@@ -82,9 +80,7 @@
 
 			<!-- Schedule Configuration -->
 			<div class="space-y-3">
-				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-					Backup Schedule
-				</h3>
+				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Backup Schedule</h3>
 				<div class="space-y-2">
 					<label class="block">
 						<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
@@ -93,7 +89,7 @@
 						<select
 							name="schedule"
 							bind:value={settings.schedule}
-							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
+							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
 						>
 							<option value="daily">Daily</option>
 							<option value="weekly">Weekly</option>

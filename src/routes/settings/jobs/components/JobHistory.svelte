@@ -43,7 +43,9 @@
 	}
 </script>
 
-<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+<div
+	class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+>
 	<!-- Header -->
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
 		<div class="flex items-center gap-2">
@@ -98,14 +100,14 @@
 						<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
 							{#if run.status === 'success'}
 								<span
-									class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-100"
+									class="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-100"
 								>
 									<CheckCircle size={10} />
 									Success
 								</span>
 							{:else}
 								<span
-									class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100"
+									class="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-100"
 								>
 									<XCircle size={10} />
 									Failed
@@ -157,10 +159,7 @@
 					</tr>
 				{:else}
 					<tr>
-						<td
-							colspan="5"
-							class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400"
-						>
+						<td colspan="5" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
 							No job runs yet
 						</td>
 					</tr>

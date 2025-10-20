@@ -9,9 +9,7 @@
 
 	// Default values
 	const DEFAULTS = {
-		rotation_strategy: 'daily',
 		retention_days: 30,
-		max_file_size: 100,
 		min_level: 'INFO',
 		enabled: true,
 		file_logging: true,
@@ -20,9 +18,7 @@
 
 	// Reset to defaults (client-side only)
 	function resetToDefaults() {
-		settings.rotation_strategy = DEFAULTS.rotation_strategy as 'daily' | 'size' | 'both';
 		settings.retention_days = DEFAULTS.retention_days;
-		settings.max_file_size = DEFAULTS.max_file_size;
 		settings.min_level = DEFAULTS.min_level as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 		settings.enabled = DEFAULTS.enabled;
 		settings.file_logging = DEFAULTS.file_logging;
@@ -65,7 +61,7 @@
 				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Enable Features</h3>
 				<div class="space-y-2">
 					<!-- Enable Logging -->
-					<label class="flex items-center gap-3 cursor-pointer">
+					<label class="flex cursor-pointer items-center gap-3">
 						<input
 							type="checkbox"
 							name="enabled"
@@ -83,7 +79,7 @@
 					</label>
 
 					<!-- File Logging -->
-					<label class="flex items-center gap-3 cursor-pointer">
+					<label class="flex cursor-pointer items-center gap-3">
 						<input
 							type="checkbox"
 							name="file_logging"
@@ -99,7 +95,7 @@
 					</label>
 
 					<!-- Console Logging -->
-					<label class="flex items-center gap-3 cursor-pointer">
+					<label class="flex cursor-pointer items-center gap-3">
 						<input
 							type="checkbox"
 							name="console_logging"
@@ -110,9 +106,7 @@
 							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
 								Console Logging
 							</span>
-							<p class="text-xs text-neutral-500 dark:text-neutral-400">
-								Output logs to terminal
-							</p>
+							<p class="text-xs text-neutral-500 dark:text-neutral-400">Output logs to terminal</p>
 						</div>
 					</label>
 				</div>
@@ -125,7 +119,7 @@
 			<div>
 				<label
 					for="min_level"
-					class="block text-sm font-semibold text-neutral-900 dark:text-neutral-50 mb-2"
+					class="mb-2 block text-sm font-semibold text-neutral-900 dark:text-neutral-50"
 				>
 					Minimum Log Level
 				</label>
@@ -149,77 +143,30 @@
 			<!-- Divider -->
 			<div class="border-t border-neutral-200 dark:border-neutral-800"></div>
 
-			<!-- Rotation & Retention -->
+			<!-- Retention -->
 			<div>
-				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50 mb-3">
-					Rotation & Retention
+				<h3 class="mb-3 text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+					Retention Policy
 				</h3>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<!-- Rotation Strategy -->
-					<div>
-						<label
-							for="rotation_strategy"
-							class="block text-sm font-medium text-neutral-900 dark:text-neutral-50 mb-1"
-						>
-							Rotation Strategy
-						</label>
-						<select
-							id="rotation_strategy"
-							name="rotation_strategy"
-							bind:value={settings.rotation_strategy}
-							required
-							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
-						>
-							<option value="daily">Daily</option>
-							<option value="size">Size</option>
-							<option value="both">Both</option>
-						</select>
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							How to rotate log files
-						</p>
-					</div>
-
-					<!-- Retention Days -->
-					<div>
-						<label
-							for="retention_days"
-							class="block text-sm font-medium text-neutral-900 dark:text-neutral-50 mb-1"
-						>
-							Retention (days)
-						</label>
-						<NumberInput
-							name="retention_days"
-							id="retention_days"
-							bind:value={settings.retention_days}
-							min={1}
-							max={365}
-							required
-						/>
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Keep logs for 1-365 days
-						</p>
-					</div>
-
-					<!-- Max File Size -->
-					<div class="md:col-span-2">
-						<label
-							for="max_file_size"
-							class="block text-sm font-medium text-neutral-900 dark:text-neutral-50 mb-1"
-						>
-							Max File Size (MB)
-						</label>
-						<NumberInput
-							name="max_file_size"
-							id="max_file_size"
-							bind:value={settings.max_file_size}
-							min={1}
-							max={1000}
-							required
-						/>
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Maximum size before rotation (1-1000 MB)
-						</p>
-					</div>
+				<div>
+					<label
+						for="retention_days"
+						class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+					>
+						Retention (days)
+					</label>
+					<NumberInput
+						name="retention_days"
+						id="retention_days"
+						bind:value={settings.retention_days}
+						min={1}
+						max={365}
+						required
+					/>
+					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+						Keep daily log files for 1-365 days. Logs are automatically rotated daily
+						(YYYY-MM-DD.log format).
+					</p>
 				</div>
 			</div>
 		</div>
@@ -231,7 +178,7 @@
 			<button
 				type="button"
 				on:click={resetToDefaults}
-				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
 				<RotateCcw size={16} />
 				Reset to Defaults
@@ -239,7 +186,7 @@
 
 			<button
 				type="submit"
-				class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+				class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-blue-500 dark:hover:bg-blue-600"
 			>
 				<Save size={16} />
 				Save Settings

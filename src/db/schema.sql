@@ -50,10 +50,8 @@ CREATE TABLE arr_instances (
 CREATE TABLE log_settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
 
-    -- Rotation & Retention
-    rotation_strategy TEXT NOT NULL DEFAULT 'daily' CHECK (rotation_strategy IN ('daily', 'size', 'both')),
+    -- Retention
     retention_days INTEGER NOT NULL DEFAULT 30,
-    max_file_size INTEGER NOT NULL DEFAULT 100,
 
     -- Log Level
     min_level TEXT NOT NULL DEFAULT 'INFO' CHECK (min_level IN ('DEBUG', 'INFO', 'WARN', 'ERROR')),

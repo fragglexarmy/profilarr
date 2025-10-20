@@ -77,7 +77,10 @@
 
 			<!-- Schedule -->
 			<div>
-				<label for="schedule" class="block text-sm font-medium text-neutral-900 dark:text-neutral-50">
+				<label
+					for="schedule"
+					class="block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+				>
 					Schedule <span class="text-red-500">*</span>
 				</label>
 				<input
@@ -91,11 +94,25 @@
 				/>
 				<div class="mt-2 space-y-1">
 					<p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Examples:</p>
-					<ul class="list-inside list-disc space-y-1 text-sm text-neutral-600 dark:text-neutral-400">
-						<li><code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">daily</code> - Runs once per day</li>
-						<li><code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">hourly</code> - Runs every hour</li>
-						<li><code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">*/5 minutes</code> - Runs every 5 minutes</li>
-						<li><code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">weekly</code> - Runs once per week</li>
+					<ul
+						class="list-inside list-disc space-y-1 text-sm text-neutral-600 dark:text-neutral-400"
+					>
+						<li>
+							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">daily</code> - Runs
+							once per day
+						</li>
+						<li>
+							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">hourly</code> - Runs
+							every hour
+						</li>
+						<li>
+							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">*/5 minutes</code
+							> - Runs every 5 minutes
+						</li>
+						<li>
+							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">weekly</code> - Runs
+							once per week
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -104,14 +121,14 @@
 			<div class="flex gap-3 border-t border-neutral-200 pt-6 dark:border-neutral-800">
 				<button
 					type="submit"
-					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-blue-500 dark:hover:bg-blue-600"
 				>
 					<Save size={16} />
 					Save Changes
 				</button>
 				<a
 					href="/settings/jobs"
-					class="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+					class="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
 					Cancel
 				</a>

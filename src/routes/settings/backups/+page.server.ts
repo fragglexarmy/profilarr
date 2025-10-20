@@ -99,7 +99,9 @@ export const actions: Actions = {
 
 		try {
 			const backupsDir = config.paths.backups;
-			const filename = file.name.startsWith('backup-') ? file.name : `backup-uploaded-${Date.now()}.tar.gz`;
+			const filename = file.name.startsWith('backup-')
+				? file.name
+				: `backup-uploaded-${Date.now()}.tar.gz`;
 			const backupPath = `${backupsDir}/${filename}`;
 
 			// Check if file already exists
@@ -179,12 +181,7 @@ export const actions: Actions = {
 
 			// Extract backup to base directory (will overwrite data directory)
 			const command = new Deno.Command('tar', {
-				args: [
-					'-xzf',
-					backupPath,
-					'-C',
-					config.paths.base
-				],
+				args: ['-xzf', backupPath, '-C', config.paths.base],
 				stdout: 'piped',
 				stderr: 'piped'
 			});
@@ -205,7 +202,10 @@ export const actions: Actions = {
 				meta: { filename }
 			});
 
-			return { success: true, message: 'Backup restored successfully. Please restart the application.' };
+			return {
+				success: true,
+				message: 'Backup restored successfully. Please restart the application.'
+			};
 		} catch (err) {
 			await logger.error(`Failed to restore backup: ${filename}`, {
 				source: 'settings/backups',

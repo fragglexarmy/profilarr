@@ -39,13 +39,7 @@ export const createBackupJob: JobDefinition = {
 
 			// Create tar.gz archive of data directory
 			const command = new Deno.Command('tar', {
-				args: [
-					'-czf',
-					backupPath,
-					'-C',
-					config.paths.base,
-					'data'
-				],
+				args: ['-czf', backupPath, '-C', config.paths.base, 'data'],
 				stdout: 'piped',
 				stderr: 'piped'
 			});

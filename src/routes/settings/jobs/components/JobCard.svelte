@@ -201,14 +201,14 @@
 								</code>
 								{#if job.last_run_status === 'success'}
 									<span
-										class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-100"
+										class="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-100"
 									>
 										<CheckCircle size={10} />
 										Success
 									</span>
 								{:else if job.last_run_status === 'failure'}
 									<span
-										class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100"
+										class="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-100"
 									>
 										<XCircle size={10} />
 										Failed

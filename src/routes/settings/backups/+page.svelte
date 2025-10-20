@@ -311,10 +311,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td
-								colspan="4"
-								class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400"
-							>
+							<td colspan="4" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
 								No backups found. Create your first backup to get started.
 							</td>
 						</tr>

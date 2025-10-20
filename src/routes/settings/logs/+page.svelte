@@ -118,14 +118,17 @@
 	<div class="mb-6 flex flex-wrap items-center gap-4">
 		<!-- Log File Selector -->
 		<div class="flex items-center gap-2">
-			<label for="log-file-select" class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+			<label
+				for="log-file-select"
+				class="text-sm font-medium text-neutral-700 dark:text-neutral-300"
+			>
 				Log File:
 			</label>
 			<select
 				id="log-file-select"
 				value={data.selectedFile}
 				on:change={(e) => changeLogFile(e.currentTarget.value)}
-				class="min-w-64 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
+				class="min-w-64 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
 			>
 				{#each data.logFiles as file (file.filename)}
 					<option value={file.filename}>
@@ -153,16 +156,13 @@
 
 		<!-- Search Input -->
 		<div class="flex flex-1 items-center gap-2">
-			<div class="relative flex-1 max-w-md">
-				<Search
-					size={18}
-					class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-				/>
+			<div class="relative max-w-md flex-1">
+				<Search size={18} class="absolute top-1/2 left-3 -translate-y-1/2 text-neutral-400" />
 				<input
 					type="text"
 					bind:value={searchQuery}
 					placeholder="Search logs..."
-					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pl-10 pr-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pr-3 pl-10 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
 				/>
 			</div>
 		</div>
@@ -256,9 +256,7 @@
 						>
 							{log.message}
 						</td>
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-center dark:border-neutral-800"
-						>
+						<td class="border-b border-neutral-200 px-4 py-2 text-center dark:border-neutral-800">
 							<div class="flex items-center justify-center gap-1">
 								<button
 									type="button"
@@ -305,5 +303,9 @@
 >
 	<pre
 		slot="body"
-		class="max-h-[400px] overflow-auto whitespace-pre-wrap rounded-lg bg-neutral-50 p-4 font-mono text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">{JSON.stringify(selectedMeta, null, 2)}</pre>
+		class="max-h-[400px] overflow-auto rounded-lg bg-neutral-50 p-4 font-mono text-xs whitespace-pre-wrap text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">{JSON.stringify(
+			selectedMeta,
+			null,
+			2
+		)}</pre>
 </Modal>

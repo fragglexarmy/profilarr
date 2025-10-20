@@ -1,12 +1,12 @@
 /**
  * Logger singleton with console and file output
- * Supports configurable settings, daily rotation, and size-based rotation
+ * Supports configurable settings and daily rotation
  */
 
 import { config } from '$config';
 import { colors } from './colors.ts';
 import { logSettings } from './settings.ts';
-import type { LogOptions, LogEntry } from './types.ts';
+import type { LogEntry, LogOptions } from './types.ts';
 
 class Logger {
 	private formatTimestamp(): string {
@@ -29,49 +29,11 @@ class Logger {
 	}
 
 	/**
-	 * Get log file path based on rotation strategy
+	 * Get log file path with daily rotation (YYYY-MM-DD.log)
 	 */
 	private getLogFilePath(): string {
-		const settings = logSettings.get();
-		const strategy = settings.rotation_strategy;
-
-		if (strategy === 'daily' || strategy === 'both') {
-			// Use date-based filename: app-2025-01-20.log
-			const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-			return `${config.paths.logs}/app-${date}.log`;
-		}
-
-		// Default: use app.log
-		return config.paths.logFile;
-	}
-
-	/**
-	 * Check if log file needs rotation due to size
-	 */
-	private async checkSizeRotation(filePath: string): Promise<void> {
-		const settings = logSettings.get();
-		const strategy = settings.rotation_strategy;
-
-		if (strategy !== 'size' && strategy !== 'both') {
-			return;
-		}
-
-		try {
-			const stat = await Deno.stat(filePath);
-			const maxSizeBytes = settings.max_file_size * 1024 * 1024; // Convert MB to bytes
-
-			if (stat.size >= maxSizeBytes) {
-				// Rotate: rename current file with timestamp
-				const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-				const rotatedPath = filePath.replace('.log', `-${timestamp}.log`);
-				await Deno.rename(filePath, rotatedPath);
-			}
-		} catch (error) {
-			// File might not exist yet, that's okay
-			if (!(error instanceof Deno.errors.NotFound)) {
-				console.error('Error checking file size for rotation:', error);
-			}
-		}
+		const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+		return `${config.paths.logs}/${date}.log`;
 	}
 
 	private async log(
@@ -112,9 +74,6 @@ class Logger {
 
 			try {
 				const filePath = this.getLogFilePath();
-
-				// Check if file needs rotation due to size
-				await this.checkSizeRotation(filePath);
 
 				// Write to log file
 				await Deno.writeTextFile(filePath, JSON.stringify(logEntry) + '\n', {

@@ -5,7 +5,7 @@ import type { JobDefinition, JobResult } from '../types.ts';
 
 /**
  * Cleanup old log files job
- * Deletes log files older than the configured retention period
+ * Deletes daily log files (YYYY-MM-DD.log) older than the configured retention period
  */
 export const cleanupLogsJob: JobDefinition = {
 	name: 'cleanup_logs',
@@ -26,40 +26,43 @@ export const cleanupLogsJob: JobDefinition = {
 			const retentionDays = settings.retention_days;
 			const logsDir = config.paths.logs;
 
-			// Calculate cutoff date
+			// Calculate cutoff date (YYYY-MM-DD format)
 			const cutoffDate = new Date();
 			cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+			const cutoffDateStr = cutoffDate.toISOString().split('T')[0]; // YYYY-MM-DD
 
 			await logger.info(`Cleaning up logs older than ${retentionDays} days`, {
 				source: 'CleanupLogsJob',
-				meta: { cutoffDate: cutoffDate.toISOString() }
+				meta: { cutoffDate: cutoffDateStr }
 			});
 
 			// Read all files in logs directory
 			let deletedCount = 0;
 			let errorCount = 0;
 
+			// Regex to match daily log files: YYYY-MM-DD.log
+			const dateLogPattern = /^(\d{4}-\d{2}-\d{2})\.log$/;
+
 			try {
 				for await (const entry of Deno.readDir(logsDir)) {
 					if (!entry.isFile) continue;
 
-					// Only process log files (*.log, app-*.log, etc.)
-					if (!entry.name.endsWith('.log')) continue;
+					// Only process log files matching YYYY-MM-DD.log pattern
+					const match = entry.name.match(dateLogPattern);
+					if (!match) continue;
 
+					const logDate = match[1]; // Extract YYYY-MM-DD from filename
 					const filePath = `${logsDir}/${entry.name}`;
 
 					try {
-						// Get file stats
-						const stat = await Deno.stat(filePath);
-
-						// Check if file is older than cutoff
-						if (stat.mtime && stat.mtime < cutoffDate) {
+						// Compare date strings directly (YYYY-MM-DD format sorts correctly)
+						if (logDate < cutoffDateStr) {
 							await Deno.remove(filePath);
 							deletedCount++;
 
 							await logger.info(`Deleted old log file: ${entry.name}`, {
 								source: 'CleanupLogsJob',
-								meta: { file: entry.name, modifiedAt: stat.mtime.toISOString() }
+								meta: { file: entry.name, logDate }
 							});
 						}
 					} catch (error) {
@@ -73,7 +76,9 @@ export const cleanupLogsJob: JobDefinition = {
 			} catch (error) {
 				return {
 					success: false,
-					error: `Failed to read logs directory: ${error instanceof Error ? error.message : String(error)}`
+					error: `Failed to read logs directory: ${
+						error instanceof Error ? error.message : String(error)
+					}`
 				};
 			}
 

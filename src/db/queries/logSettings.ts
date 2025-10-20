@@ -5,9 +5,7 @@ import { db } from '../db.ts';
  */
 export interface LogSettings {
 	id: number;
-	rotation_strategy: 'daily' | 'size' | 'both';
 	retention_days: number;
-	max_file_size: number;
 	min_level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 	enabled: number;
 	file_logging: number;
@@ -17,9 +15,7 @@ export interface LogSettings {
 }
 
 export interface UpdateLogSettingsInput {
-	rotationStrategy?: 'daily' | 'size' | 'both';
 	retentionDays?: number;
-	maxFileSize?: number;
 	minLevel?: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 	enabled?: boolean;
 	fileLogging?: boolean;
@@ -45,17 +41,9 @@ export const logSettingsQueries = {
 		const updates: string[] = [];
 		const params: (string | number)[] = [];
 
-		if (input.rotationStrategy !== undefined) {
-			updates.push('rotation_strategy = ?');
-			params.push(input.rotationStrategy);
-		}
 		if (input.retentionDays !== undefined) {
 			updates.push('retention_days = ?');
 			params.push(input.retentionDays);
-		}
-		if (input.maxFileSize !== undefined) {
-			updates.push('max_file_size = ?');
-			params.push(input.maxFileSize);
 		}
 		if (input.minLevel !== undefined) {
 			updates.push('min_level = ?');
@@ -96,9 +84,7 @@ export const logSettingsQueries = {
 	reset(): boolean {
 		const affected = db.execute(`
 			UPDATE log_settings SET
-				rotation_strategy = 'daily',
 				retention_days = 30,
-				max_file_size = 100,
 				min_level = 'INFO',
 				enabled = 1,
 				file_logging = 1,

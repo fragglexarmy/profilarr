@@ -7,6 +7,7 @@ import { migration as migration002 } from './migrations/002_remove_sync_profile.
 import { migration as migration003 } from './migrations/003_create_log_settings.ts';
 import { migration as migration004 } from './migrations/004_create_jobs_tables.ts';
 import { migration as migration005 } from './migrations/005_create_backup_settings.ts';
+import { migration as migration006 } from './migrations/006_simplify_log_settings.ts';
 
 export interface Migration {
 	version: number;
@@ -223,13 +224,14 @@ export const migrationRunner = new MigrationRunner();
  * Helper function to load migrations
  * Returns all statically imported migrations
  */
-export async function loadMigrations(): Promise<Migration[]> {
+export function loadMigrations(): Migration[] {
 	const migrations: Migration[] = [
 		migration001,
 		migration002,
 		migration003,
 		migration004,
 		migration005,
+		migration006
 	];
 
 	// Sort by version number
@@ -240,6 +242,6 @@ export async function loadMigrations(): Promise<Migration[]> {
  * Run migrations
  */
 export async function runMigrations(migrations?: Migration[]): Promise<void> {
-	const migrationsToRun = migrations ?? (await loadMigrations());
+	const migrationsToRun = migrations ?? loadMigrations();
 	await migrationRunner.up(migrationsToRun);
 }

@@ -19,9 +19,7 @@ export const load = () => {
 
 	return {
 		logSettings: {
-			rotation_strategy: logSetting.rotation_strategy,
 			retention_days: logSetting.retention_days,
-			max_file_size: logSetting.max_file_size,
 			min_level: logSetting.min_level,
 			enabled: logSetting.enabled === 1,
 			file_logging: logSetting.file_logging === 1,
@@ -42,25 +40,15 @@ export const actions: Actions = {
 		const formData = await request.formData();
 
 		// Parse form data
-		const rotationStrategy = formData.get('rotation_strategy') as 'daily' | 'size' | 'both';
 		const retentionDays = parseInt(formData.get('retention_days') as string);
-		const maxFileSize = parseInt(formData.get('max_file_size') as string);
 		const minLevel = formData.get('min_level') as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 		const enabled = formData.get('enabled') === 'on';
 		const fileLogging = formData.get('file_logging') === 'on';
 		const consoleLogging = formData.get('console_logging') === 'on';
 
 		// Validate
-		if (!rotationStrategy || !['daily', 'size', 'both'].includes(rotationStrategy)) {
-			return fail(400, { error: 'Invalid rotation strategy' });
-		}
-
 		if (isNaN(retentionDays) || retentionDays < 1 || retentionDays > 365) {
 			return fail(400, { error: 'Retention days must be between 1 and 365' });
-		}
-
-		if (isNaN(maxFileSize) || maxFileSize < 1 || maxFileSize > 1000) {
-			return fail(400, { error: 'Max file size must be between 1 and 1000 MB' });
 		}
 
 		if (!minLevel || !['DEBUG', 'INFO', 'WARN', 'ERROR'].includes(minLevel)) {
@@ -69,9 +57,7 @@ export const actions: Actions = {
 
 		// Update settings
 		const updated = logSettingsQueries.update({
-			rotationStrategy,
 			retentionDays,
-			maxFileSize,
 			minLevel,
 			enabled,
 			fileLogging,
@@ -91,9 +77,7 @@ export const actions: Actions = {
 		await logger.info('Log settings updated', {
 			source: 'settings/general',
 			meta: {
-				rotationStrategy,
 				retentionDays,
-				maxFileSize,
 				minLevel,
 				enabled,
 				fileLogging,

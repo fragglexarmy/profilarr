@@ -7,10 +7,10 @@ import { logger } from '$logger';
 // Helper to format schedule for display
 function formatSchedule(schedule: string): string {
 	const scheduleMap: Record<string, string> = {
-		'daily': 'Daily',
-		'hourly': 'Hourly',
-		'weekly': 'Weekly',
-		'monthly': 'Monthly'
+		daily: 'Daily',
+		hourly: 'Hourly',
+		weekly: 'Weekly',
+		monthly: 'Monthly'
 	};
 
 	// Check for cron-like patterns

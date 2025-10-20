@@ -51,7 +51,9 @@ class DatabaseManager {
 			await Deno.mkdir(config.paths.data, { recursive: true });
 
 			// Check if database exists before opening
-			const dbExists = await Deno.stat(config.paths.database).then(() => true).catch(() => false);
+			const dbExists = await Deno.stat(config.paths.database)
+				.then(() => true)
+				.catch(() => false);
 
 			if (!dbExists) {
 				await logger.warn('Database file does not exist, creating new database', {
