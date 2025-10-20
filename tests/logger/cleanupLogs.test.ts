@@ -4,7 +4,7 @@
  */
 
 import { BaseTest } from "../base/BaseTest.ts";
-import { cleanupLogs } from "../../src/utils/jobs/lib/cleanupLogs.ts";
+import { cleanupLogs } from "../../src/jobs/logic/cleanupLogs.ts";
 import { assertEquals } from "@std/assert";
 
 class CleanupLogsTest extends BaseTest {

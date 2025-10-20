@@ -1,5 +1,5 @@
 import { db } from '../db.ts';
-import type { Job, CreateJobInput, UpdateJobInput, JobRun } from '$utils/jobs/types.ts';
+import type { Job, CreateJobInput, UpdateJobInput, JobRun } from '../../jobs/types.ts';
 
 /**
  * All queries for jobs table

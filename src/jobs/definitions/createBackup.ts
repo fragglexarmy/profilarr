@@ -1,6 +1,7 @@
 import { config } from '$config';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { logger } from '$logger';
+import { createBackup } from '../logic/createBackup.ts';
 import type { JobDefinition, JobResult } from '../types.ts';
 
 /**
@@ -23,53 +24,39 @@ export const createBackupJob: JobDefinition = {
 				};
 			}
 
+			const sourceDir = config.paths.data;
 			const backupsDir = config.paths.backups;
 
-			// Generate backup filename with timestamp
-			const now = new Date();
-			const datePart = now.toISOString().split('T')[0]; // YYYY-MM-DD
-			const timePart = now.toISOString().split('T')[1].split('.')[0].replace(/:/g, ''); // HHMMSS
-			const backupFilename = `backup-${datePart}-${timePart}.tar.gz`;
-			const backupPath = `${backupsDir}/${backupFilename}`;
-
-			await logger.info(`Creating backup: ${backupFilename}`, {
+			await logger.info('Creating backup', {
 				source: 'CreateBackupJob',
-				meta: { backupPath }
+				meta: { sourceDir, backupsDir }
 			});
 
-			// Create tar.gz archive of data directory
-			const command = new Deno.Command('tar', {
-				args: ['-czf', backupPath, '-C', config.paths.base, 'data'],
-				stdout: 'piped',
-				stderr: 'piped'
-			});
+			// Run backup creation
+			const result = await createBackup(sourceDir, backupsDir);
 
-			const { code, stderr } = await command.output();
-
-			if (code !== 0) {
-				const errorMessage = new TextDecoder().decode(stderr);
+			if (!result.success) {
 				await logger.error('Backup creation failed', {
 					source: 'CreateBackupJob',
-					meta: { error: errorMessage, exitCode: code }
+					meta: { error: result.error }
 				});
 				return {
 					success: false,
-					error: `tar command failed with code ${code}: ${errorMessage}`
+					error: result.error ?? 'Unknown error'
 				};
 			}
 
-			// Get backup file size
-			const stat = await Deno.stat(backupPath);
-			const sizeInMB = (stat.size / (1024 * 1024)).toFixed(2);
+			// Calculate size in MB for display
+			const sizeInMB = ((result.sizeBytes ?? 0) / (1024 * 1024)).toFixed(2);
 
-			await logger.info(`Backup created successfully: ${backupFilename} (${sizeInMB} MB)`, {
+			await logger.info(`Backup created successfully: ${result.filename} (${sizeInMB} MB)`, {
 				source: 'CreateBackupJob',
-				meta: { filename: backupFilename, sizeBytes: stat.size }
+				meta: { filename: result.filename, sizeBytes: result.sizeBytes }
 			});
 
 			return {
 				success: true,
-				output: `Backup created: ${backupFilename} (${sizeInMB} MB)`
+				output: `Backup created: ${result.filename} (${sizeInMB} MB)`
 			};
 		} catch (error) {
 			await logger.error('Backup creation failed', {

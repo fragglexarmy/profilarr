@@ -3,8 +3,8 @@ import { logStartup } from './utils/logger/startup.ts';
 import { logSettings } from './utils/logger/settings.ts';
 import { db } from '$db/db.ts';
 import { runMigrations } from '$db/migrations.ts';
-import { initializeJobs } from './utils/jobs/init.ts';
-import { jobScheduler } from './utils/jobs/scheduler.ts';
+import { initializeJobs } from './jobs/init.ts';
+import { jobScheduler } from './jobs/scheduler.ts';
 
 // Initialize configuration on server startup
 await config.init();
