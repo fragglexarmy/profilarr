@@ -1,134 +1,215 @@
 /**
- * Logger singleton with console and file output
+ * Logger with console and file output
  * Supports configurable settings and daily rotation
+ * Can run independently with provided config or use system defaults
  */
 
-import { config } from '$config';
-import { colors } from './colors.ts';
-import { logSettings } from './settings.ts';
-import type { LogEntry, LogOptions } from './types.ts';
+import { config } from "$config";
+import { colors } from "./colors.ts";
+import { logSettings } from "./settings.ts";
+import type { LogEntry, LoggerConfig, LogLevel, LogOptions } from "./types.ts";
 
 class Logger {
-	private formatTimestamp(): string {
-		const timestamp = new Date().toISOString();
-		return `${colors.grey}${timestamp}${colors.reset}`;
-	}
+  private config: Required<LoggerConfig>;
 
-	private formatLevel(level: string, color: string): string {
-		return `${color}${level.padEnd(5)}${colors.reset}`;
-	}
+  constructor(config?: LoggerConfig) {
+    // Use provided config or sensible defaults
+    this.config = {
+      logsDir: config?.logsDir ?? "/tmp/logs",
+      enabled: config?.enabled ?? true,
+      fileLogging: config?.fileLogging ?? true,
+      consoleLogging: config?.consoleLogging ?? true,
+      minLevel: config?.minLevel ?? "INFO",
+    };
+  }
 
-	private formatSource(source?: string): string {
-		if (!source) return '';
-		return `${colors.grey}[${source}]${colors.reset}`;
-	}
+  private formatTimestamp(): string {
+    const timestamp = new Date().toISOString();
+    return `${colors.grey}${timestamp}${colors.reset}`;
+  }
 
-	private formatMeta(meta?: unknown): string {
-		if (!meta) return '';
-		return `${colors.grey}${JSON.stringify(meta)}${colors.reset}`;
-	}
+  private formatLevel(level: string, color: string): string {
+    return `${color}${level.padEnd(5)}${colors.reset}`;
+  }
 
-	/**
-	 * Get log file path with daily rotation (YYYY-MM-DD.log)
-	 */
-	private getLogFilePath(): string {
-		const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-		return `${config.paths.logs}/${date}.log`;
-	}
+  private formatSource(source?: string): string {
+    if (!source) return "";
+    return `${colors.grey}[${source}]${colors.reset}`;
+  }
 
-	private async log(
-		level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR',
-		color: string,
-		message: string,
-		options?: LogOptions
-	): Promise<void> {
-		// Check if this log level should be logged
-		if (!logSettings.shouldLog(level)) {
-			return;
-		}
+  private formatMeta(meta?: unknown): string {
+    if (!meta) return "";
+    return `${colors.grey}${JSON.stringify(meta)}${colors.reset}`;
+  }
 
-		const timestamp = new Date().toISOString();
+  /**
+   * Get log file path with daily rotation (YYYY-MM-DD.log)
+   */
+  private getLogFilePath(): string {
+    const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    return `${this.config.logsDir}/${date}.log`;
+  }
 
-		// Console output (colored)
-		if (logSettings.isConsoleLoggingEnabled()) {
-			const consoleParts = [
-				this.formatTimestamp(),
-				this.formatLevel(level, color),
-				message,
-				options?.source ? this.formatSource(options.source) : '',
-				options?.meta ? this.formatMeta(options.meta) : ''
-			].filter(Boolean);
+  /**
+   * Check if logging is enabled
+   */
+  private isEnabled(): boolean {
+    return this.config.enabled;
+  }
 
-			console.log(consoleParts.join(' | '));
-		}
+  /**
+   * Check if file logging is enabled
+   */
+  private isFileLoggingEnabled(): boolean {
+    return this.config.fileLogging;
+  }
 
-		// File output (JSON)
-		if (logSettings.isFileLoggingEnabled()) {
-			const logEntry: LogEntry = {
-				timestamp,
-				level,
-				message,
-				...(options?.source ? { source: options.source } : {}),
-				...(options?.meta ? { meta: options.meta } : {})
-			};
+  /**
+   * Check if console logging is enabled
+   */
+  private isConsoleLoggingEnabled(): boolean {
+    return this.config.consoleLogging;
+  }
 
-			try {
-				const filePath = this.getLogFilePath();
+  /**
+   * Check if a log level should be logged based on minimum level
+   */
+  private shouldLog(level: LogLevel): boolean {
+    if (!this.isEnabled()) {
+      return false;
+    }
 
-				// Write to log file
-				await Deno.writeTextFile(filePath, JSON.stringify(logEntry) + '\n', {
-					append: true
-				});
-			} catch (error) {
-				// If file write fails, at least we have console output
-				console.error('Failed to write to log file:', error);
-			}
-		}
-	}
+    const levels: LogLevel[] = ["DEBUG", "INFO", "WARN", "ERROR"];
+    const minIndex = levels.indexOf(this.config.minLevel);
+    const levelIndex = levels.indexOf(level);
 
-	async debug(message: string, options?: LogOptions): Promise<void> {
-		await this.log('DEBUG', colors.cyan, message, options);
-	}
+    return levelIndex >= minIndex;
+  }
 
-	async info(message: string, options?: LogOptions): Promise<void> {
-		await this.log('INFO', colors.green, message, options);
-	}
+  private async log(
+    level: LogLevel,
+    color: string,
+    message: string,
+    options?: LogOptions,
+  ): Promise<void> {
+    // Check if this log level should be logged
+    if (!this.shouldLog(level)) {
+      return;
+    }
 
-	async warn(message: string, options?: LogOptions): Promise<void> {
-		await this.log('WARN', colors.yellow, message, options);
-	}
+    const timestamp = new Date().toISOString();
 
-	async error(message: string, options?: LogOptions): Promise<void> {
-		await this.log('ERROR', colors.red, message, options);
-	}
+    // Console output (colored)
+    if (this.isConsoleLoggingEnabled()) {
+      const consoleParts = [
+        this.formatTimestamp(),
+        this.formatLevel(level, color),
+        message,
+        options?.source ? this.formatSource(options.source) : "",
+        options?.meta ? this.formatMeta(options.meta) : "",
+      ].filter(Boolean);
 
-	async errorWithTrace(message: string, error?: Error, options?: LogOptions): Promise<void> {
-		await this.log('ERROR', colors.red, message, options);
+      console.log(consoleParts.join(" | "));
+    }
 
-		// Print stack trace to console
-		if (error?.stack && logSettings.isConsoleLoggingEnabled()) {
-			console.log(`${colors.grey}${error.stack}${colors.reset}`);
-		}
+    // File output (JSON)
+    if (this.isFileLoggingEnabled()) {
+      const logEntry: LogEntry = {
+        timestamp,
+        level,
+        message,
+        ...(options?.source ? { source: options.source } : {}),
+        ...(options?.meta ? { meta: options.meta } : {}),
+      };
 
-		// Write stack trace to file
-		if (error?.stack && logSettings.isFileLoggingEnabled()) {
-			const traceEntry: LogEntry = {
-				timestamp: new Date().toISOString(),
-				level: 'ERROR',
-				message: 'Stack trace',
-				meta: { stack: error.stack }
-			};
+      try {
+        const filePath = this.getLogFilePath();
 
-			try {
-				const filePath = this.getLogFilePath();
-				await Deno.writeTextFile(filePath, JSON.stringify(traceEntry) + '\n', {
-					append: true
-				});
-			} catch (writeError) {
-				console.error('Failed to write stack trace to log file:', writeError);
-			}
-		}
-	}
+        // Ensure logs directory exists
+        try {
+          await Deno.mkdir(this.config.logsDir, { recursive: true });
+        } catch {
+          // Directory might already exist
+        }
+
+        // Write to log file
+        await Deno.writeTextFile(filePath, JSON.stringify(logEntry) + "\n", {
+          append: true,
+        });
+      } catch (error) {
+        // If file write fails, at least we have console output
+        console.error("Failed to write to log file:", error);
+      }
+    }
+  }
+
+  async debug(message: string, options?: LogOptions): Promise<void> {
+    await this.log("DEBUG", colors.cyan, message, options);
+  }
+
+  async info(message: string, options?: LogOptions): Promise<void> {
+    await this.log("INFO", colors.green, message, options);
+  }
+
+  async warn(message: string, options?: LogOptions): Promise<void> {
+    await this.log("WARN", colors.yellow, message, options);
+  }
+
+  async error(message: string, options?: LogOptions): Promise<void> {
+    await this.log("ERROR", colors.red, message, options);
+  }
+
+  async errorWithTrace(
+    message: string,
+    error?: Error,
+    options?: LogOptions,
+  ): Promise<void> {
+    await this.log("ERROR", colors.red, message, options);
+
+    // Print stack trace to console
+    if (error?.stack && this.isConsoleLoggingEnabled()) {
+      console.log(`${colors.grey}${error.stack}${colors.reset}`);
+    }
+
+    // Write stack trace to file
+    if (error?.stack && this.isFileLoggingEnabled()) {
+      const traceEntry: LogEntry = {
+        timestamp: new Date().toISOString(),
+        level: "ERROR",
+        message: "Stack trace",
+        meta: { stack: error.stack },
+      };
+
+      try {
+        const filePath = this.getLogFilePath();
+        await Deno.writeTextFile(filePath, JSON.stringify(traceEntry) + "\n", {
+          append: true,
+        });
+      } catch (writeError) {
+        console.error("Failed to write stack trace to log file:", writeError);
+      }
+    }
+  }
 }
 
-export const logger = new Logger();
+// Export Logger class for creating custom instances (for testing)
+export { Logger };
+
+/**
+ * Default logger singleton for production use
+ * Uses system config and database settings
+ *
+ * For testing, create a standalone Logger instance:
+ * @example
+ * import { Logger } from './logger.ts';
+ * const testLogger = new Logger({ logsDir: '/tmp/test-logs', minLevel: 'DEBUG' });
+ * await testLogger.info('test message');
+ */
+const settings = logSettings.get();
+export const logger = new Logger({
+  logsDir: config.paths.logs,
+  enabled: settings.enabled === 1,
+  fileLogging: settings.file_logging === 1,
+  consoleLogging: settings.console_logging === 1,
+  minLevel: settings.min_level,
+});
