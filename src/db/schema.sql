@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2025-10-20
+-- Last updated: 2025-10-21
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -40,3 +40,117 @@ CREATE TABLE arr_instances (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ==============================================================================
+-- TABLE: log_settings
+-- Purpose: Store configurable logging settings (singleton pattern with id=1)
+-- Migration: 003_create_log_settings.ts
+-- ==============================================================================
+
+CREATE TABLE log_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+
+    -- Rotation & Retention
+    rotation_strategy TEXT NOT NULL DEFAULT 'daily' CHECK (rotation_strategy IN ('daily', 'size', 'both')),
+    retention_days INTEGER NOT NULL DEFAULT 30,
+    max_file_size INTEGER NOT NULL DEFAULT 100,
+
+    -- Log Level
+    min_level TEXT NOT NULL DEFAULT 'INFO' CHECK (min_level IN ('DEBUG', 'INFO', 'WARN', 'ERROR')),
+
+    -- Enable/Disable
+    enabled INTEGER NOT NULL DEFAULT 1,
+    file_logging INTEGER NOT NULL DEFAULT 1,
+    console_logging INTEGER NOT NULL DEFAULT 1,
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: jobs
+-- Purpose: Store job definitions and schedules
+-- Migration: 004_create_jobs_tables.ts
+-- ==============================================================================
+
+CREATE TABLE jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Job identification
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+
+    -- Scheduling
+    schedule TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+
+    -- Execution tracking
+    last_run_at DATETIME,
+    next_run_at DATETIME,
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: job_runs
+-- Purpose: Store execution history for each job
+-- Migration: 004_create_jobs_tables.ts
+-- ==============================================================================
+
+CREATE TABLE job_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Foreign key to jobs
+    job_id INTEGER NOT NULL,
+
+    -- Execution status
+    status TEXT NOT NULL CHECK (status IN ('success', 'failure')),
+
+    -- Timing
+    started_at DATETIME NOT NULL,
+    finished_at DATETIME NOT NULL,
+    duration_ms INTEGER NOT NULL,
+
+    -- Output
+    error TEXT,
+    output TEXT,
+
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
+-- TABLE: backup_settings
+-- Purpose: Store configurable backup settings (singleton pattern with id=1)
+-- Migration: 005_create_backup_settings.ts
+-- ==============================================================================
+
+CREATE TABLE backup_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+
+    -- Backup Configuration
+    schedule TEXT NOT NULL DEFAULT 'daily',
+    retention_days INTEGER NOT NULL DEFAULT 30,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    include_database INTEGER NOT NULL DEFAULT 1,
+    compression_enabled INTEGER NOT NULL DEFAULT 1,
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- INDEXES
+-- Purpose: Improve query performance
+-- ==============================================================================
+
+-- Jobs indexes (Migration: 004_create_jobs_tables.ts)
+CREATE INDEX idx_jobs_enabled ON jobs(enabled);
+CREATE INDEX idx_jobs_next_run ON jobs(next_run_at);
+
+-- Job runs indexes (Migration: 004_create_jobs_tables.ts)
+CREATE INDEX idx_job_runs_job_id ON job_runs(job_id);
+CREATE INDEX idx_job_runs_started_at ON job_runs(started_at);

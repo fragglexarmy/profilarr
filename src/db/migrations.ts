@@ -1,6 +1,13 @@
 import { db } from './db.ts';
 import { logger } from '$logger';
 
+// Static imports for all migrations
+import { migration as migration001 } from './migrations/001_create_arr_instances.ts';
+import { migration as migration002 } from './migrations/002_remove_sync_profile.ts';
+import { migration as migration003 } from './migrations/003_create_log_settings.ts';
+import { migration as migration004 } from './migrations/004_create_jobs_tables.ts';
+import { migration as migration005 } from './migrations/005_create_backup_settings.ts';
+
 export interface Migration {
 	version: number;
 	name: string;
@@ -213,52 +220,17 @@ class MigrationRunner {
 export const migrationRunner = new MigrationRunner();
 
 /**
- * Helper function to load migrations from files
- * Loads all migration files from src/db/migrations/ directory
+ * Helper function to load migrations
+ * Returns all statically imported migrations
  */
 export async function loadMigrations(): Promise<Migration[]> {
-	const migrations: Migration[] = [];
-	const migrationsDir = new URL('./migrations/', import.meta.url).pathname;
-
-	try {
-		// Read all files in migrations directory
-		for await (const entry of Deno.readDir(migrationsDir)) {
-			// Skip template files (starting with _)
-			if (entry.name.startsWith('_')) {
-				continue;
-			}
-
-			// Only process TypeScript/JavaScript files
-			if (entry.isFile && (entry.name.endsWith('.ts') || entry.name.endsWith('.js'))) {
-				try {
-					// Dynamically import the migration file
-					const migrationModule = await import(/* @vite-ignore */ `./migrations/${entry.name}`);
-
-					// Get the migration object (could be default export or named export)
-					const migration = migrationModule.default || migrationModule.migration;
-
-					if (migration && typeof migration.version === 'number') {
-						migrations.push(migration);
-					} else {
-						await logger.warn(`Migration file ${entry.name} does not export a valid migration`, {
-							source: 'MigrationRunner'
-						});
-					}
-				} catch (error) {
-					await logger.error(`Failed to load migration file ${entry.name}`, {
-						source: 'MigrationRunner',
-						meta: error
-					});
-				}
-			}
-		}
-	} catch (_error) {
-		// If directory doesn't exist or can't be read, return empty array
-		await logger.info('No migrations directory found or empty', {
-			source: 'MigrationRunner'
-		});
-		return [];
-	}
+	const migrations: Migration[] = [
+		migration001,
+		migration002,
+		migration003,
+		migration004,
+		migration005,
+	];
 
 	// Sort by version number
 	return migrations.sort((a, b) => a.version - b.version);

@@ -11,16 +11,54 @@ class DatabaseManager {
 	private initialized = false;
 
 	/**
+	 * Check if the database connection is healthy
+	 */
+	private isHealthy(): boolean {
+		if (!this.db || !this.initialized) {
+			return false;
+		}
+
+		try {
+			// Try a simple query to verify connection is alive
+			this.db.prepare('SELECT 1').get();
+			return true;
+		} catch {
+			// Connection is broken
+			return false;
+		}
+	}
+
+	/**
 	 * Initialize the database connection
 	 */
 	async initialize(): Promise<void> {
-		if (this.initialized) {
+		// Check if already initialized and healthy
+		if (this.initialized && this.isHealthy()) {
 			return;
+		}
+
+		// If initialized but unhealthy, close and reinitialize (HMR recovery)
+		if (this.initialized && !this.isHealthy()) {
+			await logger.warn('Database connection unhealthy, reinitializing', {
+				source: 'DatabaseManager',
+				meta: { path: config.paths.database }
+			});
+			this.close();
 		}
 
 		try {
 			// Ensure data directory exists
 			await Deno.mkdir(config.paths.data, { recursive: true });
+
+			// Check if database exists before opening
+			const dbExists = await Deno.stat(config.paths.database).then(() => true).catch(() => false);
+
+			if (!dbExists) {
+				await logger.warn('Database file does not exist, creating new database', {
+					source: 'DatabaseManager',
+					meta: { path: config.paths.database }
+				});
+			}
 
 			// Open database connection
 			this.db = new Database(config.paths.database);
@@ -35,6 +73,11 @@ class DatabaseManager {
 			this.db.exec('PRAGMA synchronous = NORMAL');
 
 			this.initialized = true;
+
+			await logger.info('Database initialized successfully', {
+				source: 'DatabaseManager',
+				meta: { path: config.paths.database, dbExists }
+			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			await logger.error(`Failed to initialize database: ${message}`, {
@@ -151,6 +194,14 @@ class DatabaseManager {
 	 */
 	close(): void {
 		if (this.db) {
+			// Log with stack trace to see what's calling close()
+			logger.info('Closing database connection', {
+				source: 'DatabaseManager',
+				meta: {
+					path: config.paths.database,
+					stack: new Error().stack
+				}
+			});
 			this.db.close();
 			this.db = null;
 			this.initialized = false;

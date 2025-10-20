@@ -62,7 +62,9 @@
 
 			<!-- Body -->
 			<div class="px-6 py-4">
-				<p class="text-sm text-neutral-600 dark:text-neutral-400">{bodyMessage}</p>
+				<slot name="body">
+					<p class="text-sm text-neutral-600 dark:text-neutral-400">{bodyMessage}</p>
+				</slot>
 			</div>
 
 			<!-- Footer -->

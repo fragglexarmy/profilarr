@@ -25,6 +25,7 @@ class Config {
 	async init(): Promise<void> {
 		await Deno.mkdir(this.paths.logs, { recursive: true });
 		await Deno.mkdir(this.paths.data, { recursive: true });
+		await Deno.mkdir(this.paths.backups, { recursive: true });
 	}
 
 	/**
@@ -52,6 +53,9 @@ class Config {
 		},
 		get database(): string {
 			return `${config.basePath}/data/profilarr.db`;
+		},
+		get backups(): string {
+			return `${config.basePath}/backups`;
 		}
 	};
 }

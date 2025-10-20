@@ -18,9 +18,9 @@ export async function logStartup(): Promise<void> {
 	console.log(BANNER);
 
 	// Log startup info
-	await logger.info('Server started');
+	await logger.info('Server started', { source: 'Startup' });
 
 	// Log environment
 	const env = Deno.env.get('NODE_ENV') || Deno.env.get('DENO_ENV') || 'development';
-	await logger.info(`Environment: ${env}`);
+	await logger.info(`Environment: ${env}`, { source: 'Startup' });
 }

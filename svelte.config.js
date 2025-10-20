@@ -12,6 +12,7 @@ const config = {
 		alias: {
 			$config: './src/utils/config/config.ts',
 			$logger: './src/utils/logger/logger.ts',
+			'$logger/*': './src/utils/logger/*',
 			$stores: './src/stores',
 			$components: './src/components',
 			$static: './src/static',
@@ -19,7 +20,8 @@ const config = {
 			$db: './src/db',
 			$arr: './src/utils/arr',
 			$http: './src/utils/http',
-			$api: './src/utils/api/request.ts'
+			$api: './src/utils/api/request.ts',
+			$utils: './src/utils'
 		}
 	}
 };

@@ -6,9 +6,11 @@
 		"$static": "./src/static",
 		"$db/": "./src/db/",
 		"$logger": "./src/utils/logger/logger.ts",
+		"$logger/": "./src/utils/logger/",
 		"$arr/": "./src/utils/arr/",
 		"$http/": "./src/utils/http/",
-		"$api": "./src/utils/api/request.ts"
+		"$api": "./src/utils/api/request.ts",
+		"$utils/": "./src/utils/"
 	},
 	"tasks": {
 		"dev": "APP_BASE_PATH=./temp vite dev",
@@ -20,7 +22,9 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"test": "APP_BASE_PATH=./temp deno test --allow-read --allow-write --allow-env",
+		"test:watch": "APP_BASE_PATH=./temp deno test --allow-read --allow-write --allow-env --watch"
 	},
 	"compilerOptions": {
 		"lib": ["deno.window", "dom"],
