@@ -1,6 +1,7 @@
 import { jobRegistry } from './registry.ts';
 import { jobsQueries, jobRunsQueries } from '$db/queries/jobs.ts';
 import { logger } from '$logger';
+import { notificationManager } from '../notifications/NotificationManager.ts';
 import type { Job, JobResult } from './types.ts';
 
 /**
@@ -91,6 +92,27 @@ export async function runJob(job: Job): Promise<boolean> {
 			meta: { jobId: job.id, durationMs, error: result.error }
 		});
 	}
+
+	// Send notifications
+	const notificationType = result.success ? `job.${job.name}.success` : `job.${job.name}.failed`;
+	const notificationTitle = result.success
+		? `${definition.description} - Success`
+		: `${definition.description} - Failed`;
+	const notificationMessage = result.success
+		? result.output ?? 'Job completed successfully'
+		: result.error ?? 'Unknown error';
+
+	await notificationManager.notify({
+		type: notificationType,
+		title: notificationTitle,
+		message: notificationMessage,
+		metadata: {
+			jobId: job.id,
+			jobName: job.name,
+			durationMs,
+			timestamp: finishedAt
+		}
+	});
 
 	// Save job run to database
 	jobRunsQueries.create(

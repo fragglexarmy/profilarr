@@ -8,6 +8,7 @@ import { migration as migration003 } from './migrations/003_create_log_settings.
 import { migration as migration004 } from './migrations/004_create_jobs_tables.ts';
 import { migration as migration005 } from './migrations/005_create_backup_settings.ts';
 import { migration as migration006 } from './migrations/006_simplify_log_settings.ts';
+import { migration as migration007 } from './migrations/007_create_notification_tables.ts';
 
 export interface Migration {
 	version: number;
@@ -231,7 +232,8 @@ export function loadMigrations(): Migration[] {
 		migration003,
 		migration004,
 		migration005,
-		migration006
+		migration006,
+		migration007
 	];
 
 	// Sort by version number

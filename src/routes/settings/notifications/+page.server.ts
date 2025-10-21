@@ -1,0 +1,145 @@
+import type { Actions, RequestEvent } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { logger } from '$logger';
+import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
+import { notificationHistoryQueries } from '$db/queries/notificationHistory.ts';
+import type { NotificationService } from '$db/queries/notificationServices.ts';
+
+interface NotificationServiceWithStats extends NotificationService {
+	successCount: number;
+	failedCount: number;
+	successRate: number;
+}
+
+export const load = () => {
+	const services = notificationServicesQueries.getAll();
+
+	// Get stats for each service
+	const servicesWithStats: NotificationServiceWithStats[] = services.map((service) => {
+		const stats = notificationHistoryQueries.getStats(service.id);
+		return {
+			...service,
+			successCount: stats.success,
+			failedCount: stats.failed,
+			successRate: stats.successRate
+		};
+	});
+
+	// Get recent notification history (last 50)
+	const history = notificationHistoryQueries.getRecent(50);
+
+	return {
+		services: servicesWithStats,
+		history
+	};
+};
+
+export const actions: Actions = {
+	toggleEnabled: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+		const id = formData.get('id') as string;
+		const enabled = formData.get('enabled') === 'true';
+
+		if (!id) {
+			return fail(400, { error: 'Service ID is required' });
+		}
+
+		try {
+			const success = notificationServicesQueries.update(id, { enabled });
+
+			if (!success) {
+				return fail(400, { error: 'Failed to update service' });
+			}
+
+			await logger.info(`Notification service ${enabled ? 'enabled' : 'disabled'}`, {
+				source: 'settings/notifications',
+				meta: { serviceId: id, enabled }
+			});
+
+			return { success: true };
+		} catch (err) {
+			await logger.error('Failed to toggle notification service', {
+				source: 'settings/notifications',
+				meta: { serviceId: id, error: err }
+			});
+			return fail(500, { error: 'Failed to update service' });
+		}
+	},
+
+	delete: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+		const id = formData.get('id') as string;
+
+		if (!id) {
+			return fail(400, { error: 'Service ID is required' });
+		}
+
+		try {
+			const success = notificationServicesQueries.delete(id);
+
+			if (!success) {
+				return fail(400, { error: 'Failed to delete service' });
+			}
+
+			await logger.info('Notification service deleted', {
+				source: 'settings/notifications',
+				meta: { serviceId: id }
+			});
+
+			return { success: true };
+		} catch (err) {
+			await logger.error('Failed to delete notification service', {
+				source: 'settings/notifications',
+				meta: { serviceId: id, error: err }
+			});
+			return fail(500, { error: 'Failed to delete service' });
+		}
+	},
+
+	testNotification: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+		const id = formData.get('id') as string;
+
+		if (!id) {
+			return fail(400, { error: 'Service ID is required' });
+		}
+
+		try {
+			const service = notificationServicesQueries.getById(id);
+
+			if (!service) {
+				return fail(404, { error: 'Service not found' });
+			}
+
+			// Send test notification directly (bypass enabled_types filter)
+			const { DiscordNotifier } = await import('$notifications/notifiers/DiscordNotifier.ts');
+			const config = JSON.parse(service.config);
+
+			let notifier;
+			if (service.service_type === 'discord') {
+				notifier = new DiscordNotifier(config);
+			} else {
+				return fail(400, { error: 'Unknown service type' });
+			}
+
+			await notifier.notify({
+				type: 'test',
+				title: 'Test Notification',
+				message: 'This is a test notification from Profilarr. If you received this, your notification service is working correctly!',
+				metadata: {
+					serviceId: id,
+					serviceName: service.name,
+					timestamp: new Date().toISOString()
+				}
+			});
+
+			return { success: true };
+		} catch (err) {
+			await logger.error('Failed to send test notification', {
+				source: 'settings/notifications',
+				meta: { serviceId: id, error: err }
+			});
+			return fail(500, { error: 'Failed to send test notification' });
+		}
+	}
+};

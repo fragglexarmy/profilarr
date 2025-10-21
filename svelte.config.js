@@ -21,7 +21,8 @@ const config = {
 			$arr: './src/utils/arr',
 			$http: './src/utils/http',
 			$api: './src/utils/api/request.ts',
-			$utils: './src/utils'
+			$utils: './src/utils',
+			$notifications: './src/notifications',
 		}
 	}
 };

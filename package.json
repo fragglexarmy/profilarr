@@ -6,6 +6,7 @@
 	"dependencies": {
 		"@jsr/db__sqlite": "^0.12.0",
 		"lucide-svelte": "^0.546.0",
+		"simple-icons": "^15.17.0",
 		"sveltekit-adapter-deno": "^0.16.1"
 	},
 	"devDependencies": {

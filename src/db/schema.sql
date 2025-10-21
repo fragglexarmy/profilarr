@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2025-10-21
+-- Last updated: 2025-10-22
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -44,7 +44,7 @@ CREATE TABLE arr_instances (
 -- ==============================================================================
 -- TABLE: log_settings
 -- Purpose: Store configurable logging settings (singleton pattern with id=1)
--- Migration: 003_create_log_settings.ts
+-- Migration: 003_create_log_settings.ts, 006_simplify_log_settings.ts
 -- ==============================================================================
 
 CREATE TABLE log_settings (
@@ -141,6 +141,57 @@ CREATE TABLE backup_settings (
 );
 
 -- ==============================================================================
+-- TABLE: notification_services
+-- Purpose: Store notification service configurations (Discord, Slack, Email, etc.)
+-- Migration: 007_create_notification_tables.ts
+-- ==============================================================================
+
+CREATE TABLE notification_services (
+    id TEXT PRIMARY KEY,                        -- UUID
+
+    -- Service identification
+    name TEXT NOT NULL,                         -- User-defined: "Main Discord", "Error Alerts"
+    service_type TEXT NOT NULL,                 -- 'discord', 'slack', 'email', etc.
+
+    -- Configuration
+    enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch
+    config TEXT NOT NULL,                       -- JSON blob: { webhook_url: "...", username: "...", ... }
+    enabled_types TEXT NOT NULL,                -- JSON array: ["job.backup.success", "job.backup.failed"]
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: notification_history
+-- Purpose: Track notification delivery history for auditing and debugging
+-- Migration: 007_create_notification_tables.ts
+-- ==============================================================================
+
+CREATE TABLE notification_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Foreign key to notification service
+    service_id TEXT NOT NULL,
+
+    -- Notification details
+    notification_type TEXT NOT NULL,            -- e.g., 'job.backup.success'
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    metadata TEXT,                              -- JSON blob for additional context
+
+    -- Delivery status
+    status TEXT NOT NULL CHECK (status IN ('success', 'failed')),
+    error TEXT,                                 -- Error message if status = 'failed'
+
+    -- Timing
+    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (service_id) REFERENCES notification_services(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
 -- INDEXES
 -- Purpose: Improve query performance
 -- ==============================================================================
@@ -152,3 +203,12 @@ CREATE INDEX idx_jobs_next_run ON jobs(next_run_at);
 -- Job runs indexes (Migration: 004_create_jobs_tables.ts)
 CREATE INDEX idx_job_runs_job_id ON job_runs(job_id);
 CREATE INDEX idx_job_runs_started_at ON job_runs(started_at);
+
+-- Notification services indexes (Migration: 007_create_notification_tables.ts)
+CREATE INDEX idx_notification_services_enabled ON notification_services(enabled);
+CREATE INDEX idx_notification_services_type ON notification_services(service_type);
+
+-- Notification history indexes (Migration: 007_create_notification_tables.ts)
+CREATE INDEX idx_notification_history_service_id ON notification_history(service_id);
+CREATE INDEX idx_notification_history_sent_at ON notification_history(sent_at);
+CREATE INDEX idx_notification_history_status ON notification_history(status);
