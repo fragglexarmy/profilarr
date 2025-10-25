@@ -39,4 +39,22 @@
 				color 0.3s ease-in-out;
 		}
 	}
+
+	/* Custom scrollbar for Chromium and Safari */
+	::-webkit-scrollbar {
+		width: 12px;
+		height: 12px;
+	}
+
+	::-webkit-scrollbar-track {
+		@apply bg-neutral-100 dark:bg-neutral-900;
+	}
+
+	::-webkit-scrollbar-thumb {
+		@apply bg-neutral-300 dark:bg-neutral-700 rounded;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		@apply bg-neutral-400 dark:bg-neutral-600;
+	}
 }
