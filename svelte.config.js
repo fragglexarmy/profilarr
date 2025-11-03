@@ -13,7 +13,7 @@ const config = {
 			$config: './src/utils/config/config.ts',
 			$logger: './src/utils/logger/logger.ts',
 			'$logger/*': './src/utils/logger/*',
-			$stores: './src/stores',
+			$stores: './src/lib/client/stores',
 			$components: './src/components',
 			$assets: './src/lib/client/assets',
 			$server: './src/server',
