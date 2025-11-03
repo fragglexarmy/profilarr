@@ -1890,7 +1890,8 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/assert@1"
+      "jsr:@std/assert@1",
+      "npm:simple-icons@^15.17.0"
     ],
     "packageJson": {
       "dependencies": [
@@ -1910,6 +1911,7 @@
         "npm:prettier-plugin-svelte@^3.4.0",
         "npm:prettier-plugin-tailwindcss@~0.6.14",
         "npm:prettier@^3.6.2",
+        "npm:simple-icons@^15.17.0",
         "npm:svelte-check@^4.3.2",
         "npm:svelte@^5.39.5",
         "npm:sveltekit-adapter-deno@~0.16.1",

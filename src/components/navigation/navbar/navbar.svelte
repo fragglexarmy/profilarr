@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ThemeToggle from './themeToggle.svelte';
-	import logo from '$static/logo.svg';
+	import logo from '$assets/logo.svg';
 </script>
 
 <nav

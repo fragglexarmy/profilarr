@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import logo from '$static/logo.svg';
+	import logo from '$assets/logo.svg';
 	import Navbar from '$components/navigation/navbar/navbar.svelte';
 	import PageNav from '$components/navigation/pageNav/pageNav.svelte';
 	import ToastContainer from '$components/toast/ToastContainer.svelte';

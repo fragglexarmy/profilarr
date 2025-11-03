@@ -15,7 +15,7 @@ const config = {
 			'$logger/*': './src/utils/logger/*',
 			$stores: './src/stores',
 			$components: './src/components',
-			$static: './src/static',
+			$assets: './src/lib/client/assets',
 			$server: './src/server',
 			$db: './src/db',
 			$arr: './src/utils/arr',
