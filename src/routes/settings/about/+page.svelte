@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	import {
 		Info,
@@ -7,9 +6,7 @@
 		Database,
 		HelpCircle,
 		Heart,
-		ListChecks,
 		Package,
-		Loader2,
 		Users
 	} from 'lucide-svelte';
 	import InfoTable from './components/InfoTable.svelte';
@@ -17,12 +14,6 @@
 	import VersionBadge from './components/VersionBadge.svelte';
 
 	export let data: PageData;
-
-	let loading = true;
-
-	onMount(() => {
-		loading = false;
-	});
 
 	type InfoRowData = {
 		label: string;
@@ -115,31 +106,34 @@
 <div class="p-8">
 	<h1 class="mb-6 text-3xl font-bold text-neutral-900 dark:text-neutral-50">About Profilarr</h1>
 
-	{#if loading}
-		<div class="flex min-h-[400px] items-center justify-center">
-			<Loader2 class="h-8 w-8 animate-spin text-neutral-500" />
-		</div>
-	{:else}
-		<div class="space-y-6">
-			<!-- Application (special case with version badge) -->
-			<InfoTable title="Application" icon={Info}>
-				<tr class="bg-white dark:bg-neutral-900">
-					<td class="w-1/3 px-6 py-4 text-sm font-medium text-neutral-900 dark:text-neutral-50">
-						Version
-					</td>
-					<td class="px-6 py-4 text-sm">
-						<div class="flex items-center gap-2">
-							<code
-								class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-							>
-								v{data.version}
-							</code>
+	<div class="space-y-6">
+		<!-- Application (special case with version badge) -->
+		<InfoTable title="Application" icon={Info}>
+			<tr class="bg-white dark:bg-neutral-900">
+				<td class="w-1/3 px-6 py-4 text-sm font-medium text-neutral-900 dark:text-neutral-50">
+					Version
+				</td>
+				<td class="px-6 py-4 text-sm">
+					<div class="flex items-center gap-2">
+						<code
+							class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+						>
+							v{data.version}
+						</code>
+						{#await data.streamed.releasesData}
+							<div class="animate-pulse">
+								<div class="h-6 w-20 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
+							</div>
+						{:then releasesData}
+							<VersionBadge status={releasesData.versionStatus} />
+						{:catch}
 							<VersionBadge status={data.versionStatus} />
-						</div>
-					</td>
-				</tr>
-				<InfoRow label="Timezone" value={data.timezone} type="code" />
-			</InfoTable>
+						{/await}
+					</div>
+				</td>
+			</tr>
+			<InfoRow label="Timezone" value={data.timezone} type="code" />
+		</InfoTable>
 
 			{#each sections as section (section.title)}
 				<InfoTable title={section.title} icon={section.icon}>
@@ -191,50 +185,68 @@
 			{/if}
 
 			<!-- Releases Section -->
-			{#if data.releases.length > 0}
+			{#await data.streamed.releasesData}
 				<InfoTable title="Releases" icon={Package}>
 					<tr class="bg-white dark:bg-neutral-900">
 						<td colspan="2" class="px-6 py-4">
 							<div class="space-y-3">
-								{#each data.releases as release, index (release.tag_name)}
-									<div
-										class="flex items-center justify-between border-b border-neutral-200 pb-3 last:border-0 last:pb-0 dark:border-neutral-800"
-									>
-										<div class="flex items-center gap-3">
-											<a
-												href={release.html_url}
-												target="_blank"
-												rel="noopener noreferrer"
-												data-sveltekit-reload
-												class="font-mono text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-											>
-												{release.tag_name}
-											</a>
-											{#if index === 0}
-												<span
-													class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-												>
-													Latest
-												</span>
-											{/if}
-											{#if release.prerelease}
-												<span
-													class="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
-												>
-													Pre-release
-												</span>
-											{/if}
-										</div>
-										<span class="text-xs text-neutral-500 dark:text-neutral-500">
-											{new Date(release.published_at).toLocaleDateString()}
-										</span>
-									</div>
-								{/each}
+								<div class="animate-pulse space-y-3">
+									<div class="h-8 rounded bg-neutral-200 dark:bg-neutral-800"></div>
+									<div class="h-8 rounded bg-neutral-200 dark:bg-neutral-800"></div>
+									<div class="h-8 rounded bg-neutral-200 dark:bg-neutral-800"></div>
+								</div>
 							</div>
 						</td>
 					</tr>
 				</InfoTable>
-			{/if}
+			{:then releasesData}
+				{#if releasesData.releases.length > 0}
+					<InfoTable title="Releases" icon={Package}>
+						<tr class="bg-white dark:bg-neutral-900">
+							<td colspan="2" class="px-6 py-4">
+								<div class="space-y-3">
+									{#each releasesData.releases as release, index (release.tag_name)}
+										<div
+											class="flex items-center justify-between border-b border-neutral-200 pb-3 last:border-0 last:pb-0 dark:border-neutral-800"
+										>
+											<div class="flex items-center gap-3">
+												<a
+													href={release.html_url}
+													target="_blank"
+													rel="noopener noreferrer"
+													data-sveltekit-reload
+													class="font-mono text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+												>
+													{release.tag_name}
+												</a>
+												{#if index === 0}
+													<span
+														class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+													>
+														Latest
+													</span>
+												{/if}
+												{#if release.prerelease}
+													<span
+														class="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+													>
+														Pre-release
+													</span>
+												{/if}
+											</div>
+											<span class="text-xs text-neutral-500 dark:text-neutral-500">
+												{new Date(release.published_at).toLocaleDateString()}
+											</span>
+										</div>
+									{/each}
+								</div>
+							</td>
+						</tr>
+					</InfoTable>
+				{/if}
+			{:catch}
+				<!-- Silently handle errors - don't show releases section if fetch fails -->
+			{/await}
 
 			<!-- Dev Team Section -->
 			<div class="space-y-3">
@@ -310,5 +322,4 @@
 				</p>
 			</div>
 		</div>
-	{/if}
 </div>

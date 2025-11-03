@@ -81,7 +81,7 @@ function getVersionStatus(
 	}
 }
 
-export const load = async () => {
+export const load = () => {
 	const currentMigrationVersion = migrationRunner.getCurrentVersion();
 	const appliedMigrations = migrationRunner.getAppliedMigrations();
 
@@ -91,16 +91,20 @@ export const load = async () => {
 		latest: migration.version === currentMigrationVersion
 	}));
 
-	// Fetch GitHub releases
-	const releases = await fetchGitHubReleases();
-	const latestRelease = releases.find((r) => !r.prerelease);
+	// Return synchronous data immediately, defer releases fetch
+	const releasesPromise = fetchGitHubReleases().then((releases) => {
+		const latestRelease = releases.find((r) => !r.prerelease);
+		const versionStatus = getVersionStatus(packageJson.version, latestRelease?.tag_name);
 
-	// Determine version status
-	const versionStatus = getVersionStatus(packageJson.version, latestRelease?.tag_name);
+		return {
+			releases: releases.slice(0, 10),
+			versionStatus
+		};
+	});
 
 	return {
 		version: packageJson.version,
-		versionStatus,
+		versionStatus: 'dev-build' as VersionStatus, // Default until releases load
 		timezone: config.timezone,
 		paths: {
 			base: config.paths.base,
@@ -112,6 +116,9 @@ export const load = async () => {
 			current: currentMigrationVersion,
 			applied: migrationsWithLatest
 		},
-		releases: releases.slice(0, 10) // Return latest 10 releases
+		// Stream the releases data
+		streamed: {
+			releasesData: releasesPromise
+		}
 	};
 };
