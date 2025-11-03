@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ArrowLeft } from 'lucide-svelte';
-	import NotificationServiceForm from '$components/notifications/NotificationServiceForm.svelte';
+	import NotificationServiceForm from '../../components/NotificationServiceForm.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;

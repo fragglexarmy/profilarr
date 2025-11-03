@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import ArrInstanceForm from '$components/arr/ArrInstanceForm.svelte';
+	import InstanceForm from './components/InstanceForm.svelte';
 	import type { ActionData } from './$types';
 
 	export let form: ActionData;
@@ -9,4 +9,4 @@
 	const typeFromUrl = $page.url.searchParams.get('type') || '';
 </script>
 
-<ArrInstanceForm mode="create" {form} initialType={typeFromUrl} />
+<InstanceForm mode="create" {form} initialType={typeFromUrl} />

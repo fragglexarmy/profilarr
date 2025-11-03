@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
 	import { Download, Plus, Trash2, RotateCcw, Database, Upload } from 'lucide-svelte';
-	import Modal from '$components/modal/Modal.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;

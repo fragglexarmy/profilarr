@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
 	import { Save } from 'lucide-svelte';
-	import NumberInput from '$components/form/NumberInput.svelte';
+	import NumberInput from '$ui/form/NumberInput.svelte';
 	import type { BackupSettings } from './types';
 
 	export let settings: BackupSettings;

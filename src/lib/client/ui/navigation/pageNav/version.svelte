@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getBuildLabel, VERSION } from '$logger/version.ts';
+	import { getBuildLabel, VERSION } from '$shared/version.ts';
 	import { Package } from 'lucide-svelte';
 
 	const buildLabel = getBuildLabel();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Check, X, Loader2, Save, Wifi, Trash2 } from 'lucide-svelte';
-	import TagInput from '$components/form/TagInput.svelte';
-	import Modal from '$components/modal/Modal.svelte';
+	import TagInput from '$ui/form/TagInput.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';

@@ -2,7 +2,7 @@ import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
 import { config } from '$config';
 import { logger } from '$logger';
-import { jobScheduler } from '../../../jobs/scheduler.ts';
+import { jobScheduler } from '$jobs/scheduler.ts';
 
 interface BackupFile {
 	filename: string;

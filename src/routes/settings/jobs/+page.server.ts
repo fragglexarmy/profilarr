@@ -1,7 +1,7 @@
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
 import { jobsQueries, jobRunsQueries } from '$db/queries/jobs.ts';
-import { jobScheduler } from '../../../jobs/scheduler.ts';
+import { jobScheduler } from '$jobs/scheduler.ts';
 import { logger } from '$logger';
 
 // Helper to format schedule for display

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ArrowLeft } from 'lucide-svelte';
-	import NotificationServiceForm from '$components/notifications/NotificationServiceForm.svelte';
+	import NotificationServiceForm from '../components/NotificationServiceForm.svelte';
 </script>
 
 <div class="p-8">

@@ -4,8 +4,8 @@
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
 	import { Plus, Trash2, Bell, BellOff, MessageSquare, Send, Loader2, Pencil } from 'lucide-svelte';
-	import Modal from '$components/modal/Modal.svelte';
-	import NotificationHistory from '$components/notifications/NotificationHistory.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
+	import NotificationHistory from './components/NotificationHistory.svelte';
 	import { siDiscord } from 'simple-icons';
 	import type { PageData } from './$types';
 

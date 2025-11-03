@@ -1,9 +1,9 @@
 <script lang="ts">
-	import ArrInstanceForm from '$components/arr/ArrInstanceForm.svelte';
+	import InstanceForm from '../../../components/InstanceForm.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	export let form: ActionData;
 	export let data: PageData;
 </script>
 
-<ArrInstanceForm mode="edit" {form} instance={data.instance} />
+<InstanceForm mode="edit" {form} instance={data.instance} />

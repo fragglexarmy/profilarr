@@ -10,19 +10,21 @@ const config = {
 			usage: 'deno-compile'
 		}),
 		alias: {
-			$config: './src/utils/config/config.ts',
-			$logger: './src/utils/logger/logger.ts',
-			'$logger/*': './src/utils/logger/*',
+			$config: './src/lib/server/utils/config/config.ts',
+			$logger: './src/lib/server/utils/logger/logger.ts',
+			'$logger/*': './src/lib/server/utils/logger/*',
+			$shared: './src/lib/shared',
 			$stores: './src/lib/client/stores',
-			$components: './src/components',
+			$ui: './src/lib/client/ui',
 			$assets: './src/lib/client/assets',
 			$alerts: './src/lib/client/alerts',
 			$server: './src/server',
-			$db: './src/db',
-			$arr: './src/utils/arr',
-			$http: './src/utils/http',
-			$utils: './src/utils',
-			$notifications: './src/notifications',
+			$db: './src/lib/server/db',
+			$jobs: './src/lib/server/jobs',
+			$arr: './src/lib/server/utils/arr',
+			$http: './src/lib/server/utils/http',
+			$utils: './src/lib/server/utils',
+			$notifications: './src/lib/server/notifications',
 		}
 	}
 };

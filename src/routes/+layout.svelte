@@ -1,8 +1,8 @@
 <script lang="ts">
 	import '../app.css';
 	import logo from '$assets/logo.svg';
-	import Navbar from '$components/navigation/navbar/navbar.svelte';
-	import PageNav from '$components/navigation/pageNav/pageNav.svelte';
+	import Navbar from '$ui/navigation/navbar/navbar.svelte';
+	import PageNav from '$ui/navigation/pageNav/pageNav.svelte';
 	import AlertContainer from '$alerts/AlertContainer.svelte';
 </script>
 

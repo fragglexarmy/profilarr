@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Search, Download, RefreshCw, Eye, Copy } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
-	import Modal from '$components/modal/Modal.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
