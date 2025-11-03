@@ -38,6 +38,16 @@ async function cloneDependency(
 
 	// Checkout the specific version tag
 	await git.checkout(depPath, version);
+
+	// Clean up dependency - keep only ops folder and pcd.json
+	const keepItems = new Set(['ops', 'pcd.json']);
+
+	for await (const entry of Deno.readDir(depPath)) {
+		if (!keepItems.has(entry.name)) {
+			const itemPath = `${depPath}/${entry.name}`;
+			await Deno.remove(itemPath, { recursive: true });
+		}
+	}
 }
 
 /**
