@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import InstanceForm from './components/InstanceForm.svelte';
+	import InstanceForm from '../components/InstanceForm.svelte';
 	import type { ActionData } from './$types';
 
 	export let form: ActionData;
