@@ -7,8 +7,10 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			usage: 'deno-compile'
+			usage: 'deno-compile',
+			out: 'dist/build'
 		}),
+		outDir: 'dist/.svelte-kit',
 		alias: {
 			$config: './src/lib/server/utils/config/config.ts',
 			$logger: './src/lib/server/utils/logger',

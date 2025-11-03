@@ -1,45 +1,40 @@
 {
   "imports": {
-    "$config": "./src/utils/config/config.ts",
-    "$stores": "./src/stores",
-    "$components": "./src/components",
-    "$static": "./src/static",
-    "$db/": "./src/db/",
-    "$logger": "./src/utils/logger/logger.ts",
-    "$logger/": "./src/utils/logger/",
-    "$arr/": "./src/utils/arr/",
-    "$http/": "./src/utils/http/",
-    "$api": "./src/utils/api/request.ts",
-    "$utils/": "./src/utils/",
-    "$notifications/": "./src/notifications/",
+    "$config": "./src/lib/server/utils/config/config.ts",
+    "$logger/": "./src/lib/server/utils/logger/",
+    "$shared/": "./src/lib/shared/",
+    "$stores/": "./src/lib/client/stores/",
+    "$ui/": "./src/lib/client/ui/",
+    "$assets/": "./src/lib/client/assets/",
+    "$alerts/": "./src/lib/client/alerts/",
+    "$server/": "./src/server/",
+    "$db/": "./src/lib/server/db/",
+    "$jobs/": "./src/lib/server/jobs/",
+    "$arr/": "./src/lib/server/utils/arr/",
+    "$http/": "./src/lib/server/utils/http/",
+    "$utils/": "./src/lib/server/utils/",
+    "$notifications/": "./src/lib/server/notifications/",
     "@std/assert": "jsr:@std/assert@^1.0.0",
     "simple-icons": "npm:simple-icons@^15.17.0"
   },
   "tasks": {
-    "dev": "APP_BASE_PATH=./temp vite dev",
-    "build": "vite build && cp -r build/static .",
-    "compile": "deno task build && deno compile --no-check --allow-all --output profilarr build/mod.ts",
-    "start": "APP_BASE_PATH=temp PORT=6975 ./profilarr",
-    "preview": "vite preview",
-    "prepare": "svelte-kit sync || echo ''",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "dev": "APP_BASE_PATH=./dist/dev vite dev",
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint .",
-    "test": "APP_BASE_PATH=./temp deno test --allow-read --allow-write --allow-env",
-    "test:watch": "APP_BASE_PATH=./temp deno test --allow-read --allow-write --allow-env --watch"
+    "test": "APP_BASE_PATH=./dist/test deno test src/tests --allow-read --allow-write --allow-env",
+    "test:watch": "APP_BASE_PATH=./dist/test deno test src/tests --allow-read --allow-write --allow-env --watch"
   },
   "compilerOptions": {
     "lib": ["deno.window", "dom"],
     "strict": true
   },
-  "exclude": ["build/", ".svelte-kit/", "node_modules/"],
+  "exclude": ["dist/", "node_modules/"],
   "fmt": {
-    "exclude": ["build/", ".svelte-kit/", "node_modules/"],
+    "exclude": ["dist/", "node_modules/"],
     "indentWidth": 2,
     "useTabs": false
   },
   "lint": {
-    "exclude": ["build/", ".svelte-kit/", "node_modules/"]
+    "exclude": ["dist/", "node_modules/"]
   }
 }

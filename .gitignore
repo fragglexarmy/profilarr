@@ -9,8 +9,7 @@ CLAUDE.md
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
+/dist
 /static
 
 # Application
