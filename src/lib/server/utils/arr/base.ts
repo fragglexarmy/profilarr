@@ -1,6 +1,6 @@
 import { BaseHttpClient } from '../http/client.ts';
 import type { ArrSystemStatus } from './types.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 
 /**
  * Base client for all *arr applications

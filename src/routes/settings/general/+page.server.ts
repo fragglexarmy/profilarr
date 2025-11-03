@@ -3,7 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { logSettingsQueries } from '$db/queries/logSettings.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { logSettings } from '$logger/settings.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 
 export const load = () => {
 	const logSetting = logSettingsQueries.get();

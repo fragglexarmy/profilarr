@@ -1,4 +1,4 @@
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
 import { notificationHistoryQueries } from '$db/queries/notificationHistory.ts';
 import type { Notifier } from './base/Notifier.ts';

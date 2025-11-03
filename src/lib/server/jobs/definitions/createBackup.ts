@@ -1,6 +1,6 @@
 import { config } from '$config';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import { createBackup } from '../logic/createBackup.ts';
 import type { JobDefinition, JobResult } from '../types.ts';
 

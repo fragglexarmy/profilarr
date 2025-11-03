@@ -1,6 +1,6 @@
 import { config } from '$config';
 import { logSettingsQueries } from '$db/queries/logSettings.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import { cleanupLogs } from '../logic/cleanupLogs.ts';
 import type { JobDefinition, JobResult } from '../types.ts';
 

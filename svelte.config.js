@@ -11,8 +11,7 @@ const config = {
 		}),
 		alias: {
 			$config: './src/lib/server/utils/config/config.ts',
-			$logger: './src/lib/server/utils/logger/logger.ts',
-			'$logger/*': './src/lib/server/utils/logger/*',
+			$logger: './src/lib/server/utils/logger',
 			$shared: './src/lib/shared',
 			$stores: './src/lib/client/stores',
 			$ui: './src/lib/client/ui',

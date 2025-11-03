@@ -1,6 +1,6 @@
 import { jobRegistry } from './registry.ts';
 import { jobsQueries } from '$db/queries/jobs.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 
 // Import all job definitions
 import { cleanupLogsJob } from './definitions/cleanupLogs.ts';

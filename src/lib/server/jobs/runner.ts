@@ -1,6 +1,6 @@
 import { jobRegistry } from './registry.ts';
 import { jobsQueries, jobRunsQueries } from '$db/queries/jobs.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import { notificationManager } from '../notifications/NotificationManager.ts';
 import type { Job, JobResult } from './types.ts';
 

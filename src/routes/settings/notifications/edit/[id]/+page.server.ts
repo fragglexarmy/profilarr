@@ -1,6 +1,6 @@
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
 
 export const load = ({ params }: { params: { id: string } }) => {

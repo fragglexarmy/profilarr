@@ -1,7 +1,7 @@
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail, redirect } from '@sveltejs/kit';
 import { jobsQueries } from '$db/queries/jobs.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 
 export const load = ({ params }: { params: Record<string, string | undefined> }) => {
 	const jobId = parseInt(params.id || '');

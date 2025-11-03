@@ -1,4 +1,4 @@
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import type { Notification } from '../types.ts';
 import type { Notifier } from './Notifier.ts';
 

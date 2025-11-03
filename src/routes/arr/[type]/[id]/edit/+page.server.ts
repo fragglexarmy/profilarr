@@ -1,7 +1,7 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 
 // Valid arr types
 const VALID_TYPES = ['radarr', 'sonarr', 'lidarr', 'chaptarr'];

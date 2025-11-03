@@ -1,6 +1,6 @@
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
 import { notificationHistoryQueries } from '$db/queries/notificationHistory.ts';
 import type { NotificationService } from '$db/queries/notificationServices.ts';

@@ -1,6 +1,6 @@
 import { jobsQueries } from '$db/queries/jobs.ts';
 import { runJob } from './runner.ts';
-import { logger } from '$logger';
+import { logger } from '$logger/logger.ts';
 
 /**
  * Job scheduler - checks for due jobs and executes them
