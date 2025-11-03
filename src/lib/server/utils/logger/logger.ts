@@ -54,21 +54,24 @@ class Logger {
    * Check if logging is enabled
    */
   private isEnabled(): boolean {
-    return this.config.enabled;
+    const currentSettings = logSettings.get();
+    return currentSettings.enabled === 1;
   }
 
   /**
    * Check if file logging is enabled
    */
   private isFileLoggingEnabled(): boolean {
-    return this.config.fileLogging;
+    const currentSettings = logSettings.get();
+    return currentSettings.file_logging === 1;
   }
 
   /**
    * Check if console logging is enabled
    */
   private isConsoleLoggingEnabled(): boolean {
-    return this.config.consoleLogging;
+    const currentSettings = logSettings.get();
+    return currentSettings.console_logging === 1;
   }
 
   /**
@@ -79,8 +82,12 @@ class Logger {
       return false;
     }
 
+    // Get fresh settings from database instead of using cached config
+    const currentSettings = logSettings.get();
+    const currentMinLevel = currentSettings.min_level;
+
     const levels: LogLevel[] = ["DEBUG", "INFO", "WARN", "ERROR"];
-    const minIndex = levels.indexOf(this.config.minLevel);
+    const minIndex = levels.indexOf(currentMinLevel);
     const levelIndex = levels.indexOf(level);
 
     return levelIndex >= minIndex;

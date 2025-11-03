@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2025-10-22
+-- Last updated: 2025-11-04
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -192,6 +192,40 @@ CREATE TABLE notification_history (
 );
 
 -- ==============================================================================
+-- TABLE: database_instances
+-- Purpose: Store linked Profilarr Compliant Database (PCD) repositories
+-- Migration: 008_create_database_instances.ts, 009_add_personal_access_token.ts, 010_add_is_private.ts
+-- ==============================================================================
+
+CREATE TABLE database_instances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Instance identification
+    uuid TEXT NOT NULL UNIQUE,                  -- UUID for filesystem storage path
+    name TEXT NOT NULL UNIQUE,                  -- User-friendly name (e.g., "Dictionarry DB")
+
+    -- Repository connection
+    repository_url TEXT NOT NULL,               -- Git repository URL
+    personal_access_token TEXT,                 -- PAT for private repos and push access (Migration 009)
+    is_private INTEGER NOT NULL DEFAULT 0,      -- 1=private repo, 0=public (auto-detected, Migration 010)
+
+    -- Local storage
+    local_path TEXT NOT NULL,                   -- Path where repo is cloned (data/databases/{uuid})
+
+    -- Sync settings
+    sync_strategy INTEGER NOT NULL DEFAULT 0,   -- 0=manual check, >0=auto-check every X minutes
+    auto_pull INTEGER NOT NULL DEFAULT 0,       -- 0=notify only, 1=auto-pull updates
+
+    -- Status
+    enabled INTEGER NOT NULL DEFAULT 1,         -- 1=enabled, 0=disabled
+    last_synced_at DATETIME,                    -- Timestamp of last successful sync
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
 -- INDEXES
 -- Purpose: Improve query performance
 -- ==============================================================================
@@ -212,3 +246,6 @@ CREATE INDEX idx_notification_services_type ON notification_services(service_typ
 CREATE INDEX idx_notification_history_service_id ON notification_history(service_id);
 CREATE INDEX idx_notification_history_sent_at ON notification_history(sent_at);
 CREATE INDEX idx_notification_history_status ON notification_history(status);
+
+-- Database instances indexes (Migration: 008_create_database_instances.ts)
+CREATE INDEX idx_database_instances_uuid ON database_instances(uuid);

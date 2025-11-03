@@ -54,7 +54,7 @@ export async function createBackup(
           error: `Source path is not a directory: ${sourceDir}`,
         };
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: `Source directory does not exist: ${sourceDir}`,

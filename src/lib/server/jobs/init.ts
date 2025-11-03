@@ -6,6 +6,7 @@ import { logger } from '$logger/logger.ts';
 import { cleanupLogsJob } from './definitions/cleanupLogs.ts';
 import { createBackupJob } from './definitions/createBackup.ts';
 import { cleanupBackupsJob } from './definitions/cleanupBackups.ts';
+import { syncDatabasesJob } from './definitions/syncDatabases.ts';
 
 /**
  * Register all job definitions
@@ -15,6 +16,7 @@ function registerAllJobs(): void {
 	jobRegistry.register(cleanupLogsJob);
 	jobRegistry.register(createBackupJob);
 	jobRegistry.register(cleanupBackupsJob);
+	jobRegistry.register(syncDatabasesJob);
 }
 
 /**

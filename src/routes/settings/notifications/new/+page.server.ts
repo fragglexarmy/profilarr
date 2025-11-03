@@ -2,6 +2,7 @@ import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail, redirect } from '@sveltejs/kit';
 import { logger } from '$logger/logger.ts';
 import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
+import { getAllNotificationTypeIds } from '$shared/notificationTypes.ts';
 
 export const actions: Actions = {
 	create: async ({ request }: RequestEvent) => {
@@ -39,22 +40,9 @@ export const actions: Actions = {
 				enable_mentions: enableMentions
 			};
 
-			// Get enabled notification types
-			const jobBackupSuccess = formData.get('job.create_backup.success') === 'on';
-			const jobBackupFailed = formData.get('job.create_backup.failed') === 'on';
-			const jobCleanupBackupsSuccess = formData.get('job.cleanup_backups.success') === 'on';
-			const jobCleanupBackupsFailed = formData.get('job.cleanup_backups.failed') === 'on';
-			const jobCleanupLogsSuccess = formData.get('job.cleanup_logs.success') === 'on';
-			const jobCleanupLogsFailed = formData.get('job.cleanup_logs.failed') === 'on';
-
-			enabledTypes = [
-				...(jobBackupSuccess ? ['job.create_backup.success'] : []),
-				...(jobBackupFailed ? ['job.create_backup.failed'] : []),
-				...(jobCleanupBackupsSuccess ? ['job.cleanup_backups.success'] : []),
-				...(jobCleanupBackupsFailed ? ['job.cleanup_backups.failed'] : []),
-				...(jobCleanupLogsSuccess ? ['job.cleanup_logs.success'] : []),
-				...(jobCleanupLogsFailed ? ['job.cleanup_logs.failed'] : [])
-			];
+			// Get enabled notification types dynamically from all available types
+			const allTypeIds = getAllNotificationTypeIds();
+			enabledTypes = allTypeIds.filter((typeId) => formData.get(typeId) === 'on');
 		}
 
 		// Generate UUID for the service

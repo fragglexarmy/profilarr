@@ -9,6 +9,9 @@ import { migration as migration004 } from './migrations/004_create_jobs_tables.t
 import { migration as migration005 } from './migrations/005_create_backup_settings.ts';
 import { migration as migration006 } from './migrations/006_simplify_log_settings.ts';
 import { migration as migration007 } from './migrations/007_create_notification_tables.ts';
+import { migration as migration008 } from './migrations/008_create_database_instances.ts';
+import { migration as migration009 } from './migrations/009_add_personal_access_token.ts';
+import { migration as migration010 } from './migrations/010_add_is_private.ts';
 
 export interface Migration {
 	version: number;
@@ -233,7 +236,10 @@ export function loadMigrations(): Migration[] {
 		migration004,
 		migration005,
 		migration006,
-		migration007
+		migration007,
+		migration008,
+		migration009,
+		migration010
 	];
 
 	// Sort by version number

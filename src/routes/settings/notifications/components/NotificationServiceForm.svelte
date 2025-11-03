@@ -3,6 +3,7 @@
 	import { alertStore } from '$alerts/store';
 	import DiscordConfiguration from './DiscordConfiguration.svelte';
 	import { siDiscord } from 'simple-icons';
+	import { groupNotificationTypesByCategory } from '$shared/notificationTypes';
 
 	export let mode: 'create' | 'edit' = 'create';
 	export let initialData: {
@@ -15,31 +16,8 @@
 	let selectedType: 'discord' | 'slack' | 'email' = (initialData.serviceType as 'discord') || 'discord';
 	let serviceName = initialData.name || '';
 
-	// Available notification types
-	const notificationTypes = [
-		{ id: 'job.create_backup.success', label: 'Backup Created (Success)', category: 'Backups' },
-		{ id: 'job.create_backup.failed', label: 'Backup Created (Failed)', category: 'Backups' },
-		{
-			id: 'job.cleanup_backups.success',
-			label: 'Backup Cleanup (Success)',
-			category: 'Backups'
-		},
-		{ id: 'job.cleanup_backups.failed', label: 'Backup Cleanup (Failed)', category: 'Backups' },
-		{ id: 'job.cleanup_logs.success', label: 'Log Cleanup (Success)', category: 'Logs' },
-		{ id: 'job.cleanup_logs.failed', label: 'Log Cleanup (Failed)', category: 'Logs' }
-	];
-
 	// Group notification types by category
-	const groupedTypes = notificationTypes.reduce(
-		(acc, type) => {
-			if (!acc[type.category]) {
-				acc[type.category] = [];
-			}
-			acc[type.category].push(type);
-			return acc;
-		},
-		{} as Record<string, typeof notificationTypes>
-	);
+	const groupedTypes = groupNotificationTypesByCategory();
 
 	// Check if a notification type should be checked by default
 	function isTypeEnabled(typeId: string): boolean {

@@ -10,6 +10,7 @@
     "$server/": "./src/server/",
     "$db/": "./src/lib/server/db/",
     "$jobs/": "./src/lib/server/jobs/",
+    "$pcd/": "./src/lib/server/pcd/",
     "$arr/": "./src/lib/server/utils/arr/",
     "$http/": "./src/lib/server/utils/http/",
     "$utils/": "./src/lib/server/utils/",

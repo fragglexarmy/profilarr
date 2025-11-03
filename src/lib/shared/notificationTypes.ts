@@ -1,0 +1,118 @@
+/**
+ * Shared notification types for both backend and frontend
+ * Defines all available notification types and their metadata
+ */
+
+export interface NotificationType {
+	id: string;
+	label: string;
+	category: string;
+	description?: string;
+}
+
+/**
+ * All available notification types
+ */
+export const notificationTypes: NotificationType[] = [
+	// Backups
+	{
+		id: 'job.create_backup.success',
+		label: 'Backup Created (Success)',
+		category: 'Backups',
+		description: 'Notification when a backup is created successfully'
+	},
+	{
+		id: 'job.create_backup.failed',
+		label: 'Backup Created (Failed)',
+		category: 'Backups',
+		description: 'Notification when backup creation fails'
+	},
+	{
+		id: 'job.cleanup_backups.success',
+		label: 'Backup Cleanup (Success)',
+		category: 'Backups',
+		description: 'Notification when old backups are cleaned up successfully'
+	},
+	{
+		id: 'job.cleanup_backups.failed',
+		label: 'Backup Cleanup (Failed)',
+		category: 'Backups',
+		description: 'Notification when backup cleanup fails'
+	},
+
+	// Logs
+	{
+		id: 'job.cleanup_logs.success',
+		label: 'Log Cleanup (Success)',
+		category: 'Logs',
+		description: 'Notification when old logs are cleaned up successfully'
+	},
+	{
+		id: 'job.cleanup_logs.failed',
+		label: 'Log Cleanup (Failed)',
+		category: 'Logs',
+		description: 'Notification when log cleanup fails'
+	},
+
+	// Database Sync
+	{
+		id: 'pcd.linked',
+		label: 'Database Linked',
+		category: 'Databases',
+		description: 'Notification when a new database is linked'
+	},
+	{
+		id: 'pcd.unlinked',
+		label: 'Database Unlinked',
+		category: 'Databases',
+		description: 'Notification when a database is removed'
+	},
+	{
+		id: 'pcd.updates_available',
+		label: 'Database Updates Available',
+		category: 'Databases',
+		description: 'Notification when database updates are available but auto-pull is disabled'
+	},
+	{
+		id: 'pcd.sync_success',
+		label: 'Database Synced (Success)',
+		category: 'Databases',
+		description: 'Notification when a database is synced successfully'
+	},
+	{
+		id: 'pcd.sync_failed',
+		label: 'Database Sync (Failed)',
+		category: 'Databases',
+		description: 'Notification when database sync fails'
+	}
+];
+
+/**
+ * Group notification types by category
+ */
+export function groupNotificationTypesByCategory(): Record<string, NotificationType[]> {
+	return notificationTypes.reduce(
+		(acc, type) => {
+			if (!acc[type.category]) {
+				acc[type.category] = [];
+			}
+			acc[type.category].push(type);
+			return acc;
+		},
+		{} as Record<string, NotificationType[]>
+	);
+}
+
+/**
+ * Get all notification type IDs
+ */
+export function getAllNotificationTypeIds(): string[] {
+	return notificationTypes.map((type) => type.id);
+}
+
+/**
+ * Validate if a notification type ID exists
+ */
+export function isValidNotificationType(typeId: string): boolean {
+	return notificationTypes.some((type) => type.id === typeId);
+}
