@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import { Download, Plus, Trash2, RotateCcw, Database, Upload } from 'lucide-svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import type { PageData } from './$types';
@@ -93,12 +93,12 @@
 					use:enhance={() => {
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data) {
-								toastStore.add(
+								alertStore.add(
 									'error',
 									(result.data as { error?: string }).error || 'Failed to upload backup'
 								);
 							} else if (result.type === 'success') {
-								toastStore.add('success', 'Backup uploaded successfully');
+								alertStore.add('success', 'Backup uploaded successfully');
 								fileInput.value = ''; // Reset file input
 							}
 							await update();
@@ -135,12 +135,12 @@
 					use:enhance={() => {
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data) {
-								toastStore.add(
+								alertStore.add(
 									'error',
 									(result.data as { error?: string }).error || 'Failed to create backup'
 								);
 							} else if (result.type === 'success') {
-								toastStore.add('success', 'Backup created successfully');
+								alertStore.add('success', 'Backup created successfully');
 							}
 							await update();
 						};
@@ -247,12 +247,12 @@
 										use:enhance={() => {
 											return async ({ result, update }) => {
 												if (result.type === 'failure' && result.data) {
-													toastStore.add(
+													alertStore.add(
 														'error',
 														(result.data as { error?: string }).error || 'Failed to restore backup'
 													);
 												} else if (result.type === 'success') {
-													toastStore.add(
+													alertStore.add(
 														'success',
 														'Backup restored successfully. Please restart the application.'
 													);
@@ -282,12 +282,12 @@
 										use:enhance={() => {
 											return async ({ result, update }) => {
 												if (result.type === 'failure' && result.data) {
-													toastStore.add(
+													alertStore.add(
 														'error',
 														(result.data as { error?: string }).error || 'Failed to delete backup'
 													);
 												} else if (result.type === 'success') {
-													toastStore.add('success', 'Backup deleted successfully');
+													alertStore.add('success', 'Backup deleted successfully');
 												}
 												await update();
 											};

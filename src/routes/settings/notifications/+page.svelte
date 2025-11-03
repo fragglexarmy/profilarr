@@ -2,7 +2,7 @@
 
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import { Plus, Trash2, Bell, BellOff, MessageSquare, Send, Loader2, Pencil } from 'lucide-svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import NotificationHistory from '$components/notifications/NotificationHistory.svelte';
@@ -206,12 +206,12 @@
 									use:enhance={() => {
 										return async ({ result, update }) => {
 											if (result.type === 'failure' && result.data) {
-												toastStore.add(
+												alertStore.add(
 													'error',
 													(result.data as { error?: string }).error || 'Failed to update service'
 												);
 											} else if (result.type === 'success') {
-												toastStore.add('success', 'Service updated successfully');
+												alertStore.add('success', 'Service updated successfully');
 											}
 											await update();
 										};
@@ -277,12 +277,12 @@
 											testingServiceId = service.id;
 											return async ({ result, update }) => {
 												if (result.type === 'failure' && result.data) {
-													toastStore.add(
+													alertStore.add(
 														'error',
 														(result.data as { error?: string }).error || 'Failed to send test notification'
 													);
 												} else if (result.type === 'success') {
-													toastStore.add('success', 'Test notification sent successfully');
+													alertStore.add('success', 'Test notification sent successfully');
 												}
 												testingServiceId = null;
 												await update();
@@ -320,12 +320,12 @@
 										use:enhance={() => {
 											return async ({ result, update }) => {
 												if (result.type === 'failure' && result.data) {
-													toastStore.add(
+													alertStore.add(
 														'error',
 														(result.data as { error?: string }).error || 'Failed to delete service'
 													);
 												} else if (result.type === 'success') {
-													toastStore.add('success', 'Service deleted successfully');
+													alertStore.add('success', 'Service deleted successfully');
 												}
 												await update();
 											};

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import { Play, CheckCircle, XCircle, AlertCircle, Edit2, Power } from 'lucide-svelte';
 
 	export let job: {
@@ -107,12 +107,12 @@
 					use:enhance={() => {
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data) {
-								toastStore.add(
+								alertStore.add(
 									'error',
 									(result.data as { error?: string }).error || 'Failed to trigger job'
 								);
 							} else if (result.type === 'success') {
-								toastStore.add('success', `Job "${job.name}" triggered successfully`);
+								alertStore.add('success', `Job "${job.name}" triggered successfully`);
 							}
 							await update();
 						};
@@ -136,12 +136,12 @@
 					use:enhance={() => {
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data) {
-								toastStore.add(
+								alertStore.add(
 									'error',
 									(result.data as { error?: string }).error || 'Failed to update job'
 								);
 							} else if (result.type === 'success') {
-								toastStore.add('success', `Job ${job.enabled ? 'disabled' : 'enabled'}`);
+								alertStore.add('success', `Job ${job.enabled ? 'disabled' : 'enabled'}`);
 							}
 							await update();
 						};

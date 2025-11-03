@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import DiscordConfiguration from './DiscordConfiguration.svelte';
 	import { siDiscord } from 'simple-icons';
 
@@ -53,12 +53,12 @@
 	use:enhance={() => {
 		return async ({ result, update }) => {
 			if (result.type === 'failure' && result.data) {
-				toastStore.add(
+				alertStore.add(
 					'error',
 					(result.data as { error?: string }).error || `Failed to ${mode} service`
 				);
 			} else if (result.type === 'redirect') {
-				toastStore.add('success', `Notification service ${mode === 'create' ? 'created' : 'updated'} successfully`);
+				alertStore.add('success', `Notification service ${mode === 'create' ? 'created' : 'updated'} successfully`);
 			}
 			await update();
 		};

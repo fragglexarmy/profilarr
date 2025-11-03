@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Search, Download, RefreshCw, Eye, Copy } from 'lucide-svelte';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import Modal from '$components/modal/Modal.svelte';
 	import type { PageData } from './$types';
 
@@ -80,9 +80,9 @@
 
 		try {
 			await navigator.clipboard.writeText(logText);
-			toastStore.add('success', 'Log entry copied to clipboard');
+			alertStore.add('success', 'Log entry copied to clipboard');
 		} catch (err) {
-			toastStore.add('error', 'Failed to copy to clipboard');
+			alertStore.add('error', 'Failed to copy to clipboard');
 		}
 	}
 

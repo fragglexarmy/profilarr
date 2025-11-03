@@ -3,7 +3,7 @@
 	import logo from '$assets/logo.svg';
 	import Navbar from '$components/navigation/navbar/navbar.svelte';
 	import PageNav from '$components/navigation/pageNav/pageNav.svelte';
-	import ToastContainer from '$components/toast/ToastContainer.svelte';
+	import AlertContainer from '$alerts/AlertContainer.svelte';
 </script>
 
 <svelte:head>
@@ -13,7 +13,7 @@
 
 <Navbar />
 <PageNav />
-<ToastContainer />
+<AlertContainer />
 
 <main class="pt-16 pl-72">
 	<slot />

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import { Save } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
@@ -29,12 +29,12 @@
 			use:enhance={() => {
 				return async ({ result, update }) => {
 					if (result.type === 'failure' && result.data) {
-						toastStore.add(
+						alertStore.add(
 							'error',
 							(result.data as { error?: string }).error || 'Failed to update job'
 						);
 					} else if (result.type === 'redirect') {
-						toastStore.add('success', 'Job updated successfully!');
+						alertStore.add('success', 'Job updated successfully!');
 					}
 					await update();
 				};

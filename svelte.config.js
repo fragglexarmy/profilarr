@@ -16,11 +16,11 @@ const config = {
 			$stores: './src/lib/client/stores',
 			$components: './src/components',
 			$assets: './src/lib/client/assets',
+			$alerts: './src/lib/client/alerts',
 			$server: './src/server',
 			$db: './src/db',
 			$arr: './src/utils/arr',
 			$http: './src/utils/http',
-			$api: './src/utils/api/request.ts',
 			$utils: './src/utils',
 			$notifications: './src/notifications',
 		}

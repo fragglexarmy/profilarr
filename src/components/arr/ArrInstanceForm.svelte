@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { Check, X, Loader2, Save, Wifi, Trash2 } from 'lucide-svelte';
-	import { apiRequest } from '$api';
 	import TagInput from '$components/form/TagInput.svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';
 
 	// Props
@@ -56,14 +55,20 @@
 		connectionError = '';
 
 		try {
-			await apiRequest<{ success: boolean; error?: string }>('/arr/test', {
+			const response = await fetch('/arr/test', {
 				method: 'POST',
-				body: JSON.stringify({ type, url, apiKey }),
-				showSuccessToast: true,
-				successMessage: 'Connection successful!'
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ type, url, apiKey })
 			});
 
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || data.message || 'Connection test failed');
+			}
+
 			connectionStatus = 'success';
+			alertStore.add('success', 'Connection successful!');
 		} catch (error) {
 			connectionStatus = 'error';
 			connectionError = error instanceof Error ? error.message : 'Connection test failed';
@@ -106,9 +111,9 @@
 		use:enhance={() => {
 			return async ({ result, update }) => {
 				if (result.type === 'failure' && result.data) {
-					toastStore.add('error', (result.data as { error?: string }).error || errorMessage);
+					alertStore.add('error', (result.data as { error?: string }).error || errorMessage);
 				} else if (result.type === 'redirect') {
-					toastStore.add('success', successMessage);
+					alertStore.add('success', successMessage);
 				}
 				await update();
 			};
@@ -351,12 +356,12 @@
 				use:enhance={() => {
 					return async ({ result, update }) => {
 						if (result.type === 'failure' && result.data) {
-							toastStore.add(
+							alertStore.add(
 								'error',
 								(result.data as { error?: string }).error || 'Failed to delete instance'
 							);
 						} else if (result.type === 'redirect') {
-							toastStore.add('success', 'Instance deleted successfully');
+							alertStore.add('success', 'Instance deleted successfully');
 						}
 						await update();
 					};

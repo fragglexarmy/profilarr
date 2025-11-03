@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-svelte';
-	import type { ToastType } from '$stores/toast';
-	import { toastStore } from '$stores/toast';
+	import type { AlertType } from './store';
+	import { alertStore } from './store';
 	import { fade, fly } from 'svelte/transition';
 
 	export let id: string;
-	export let type: ToastType;
+	export let type: AlertType;
 	export let message: string;
 
 	// Icon mapping
@@ -38,7 +38,7 @@
 	const Icon = icons[type];
 
 	function dismiss() {
-		toastStore.remove(id);
+		alertStore.remove(id);
 	}
 </script>
 

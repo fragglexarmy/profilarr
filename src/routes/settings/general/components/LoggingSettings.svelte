@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { toastStore } from '$stores/toast';
+	import { alertStore } from '$alerts/store';
 	import { Save, RotateCcw } from 'lucide-svelte';
 	import NumberInput from '$components/form/NumberInput.svelte';
 	import type { LogSettings } from './types';
@@ -47,9 +47,9 @@
 		use:enhance={() => {
 			return async ({ result, update }) => {
 				if (result.type === 'failure' && result.data) {
-					toastStore.add('error', (result.data as { error?: string }).error || 'Failed to save');
+					alertStore.add('error', (result.data as { error?: string }).error || 'Failed to save');
 				} else if (result.type === 'success') {
-					toastStore.add('success', 'Log settings saved successfully!');
+					alertStore.add('success', 'Log settings saved successfully!');
 				}
 				await update();
 			};
