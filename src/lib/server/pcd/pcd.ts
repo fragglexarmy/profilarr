@@ -9,6 +9,8 @@ import { loadManifest, type Manifest } from './manifest.ts';
 import { getPCDPath } from './paths.ts';
 import { processDependencies } from './deps.ts';
 import { notificationManager } from '$notifications/NotificationManager.ts';
+import { compile, invalidate, startWatch, getCache } from './cache.ts';
+import { logger } from '$logger/logger.ts';
 
 export interface LinkOptions {
 	repositoryUrl: string;
@@ -65,6 +67,20 @@ class PCDManager {
 				throw new Error('Failed to retrieve created database instance');
 			}
 
+			// Compile cache and start watching (only if enabled)
+			if (instance.enabled) {
+				try {
+					await compile(localPath, id);
+					await startWatch(localPath, id);
+				} catch (error) {
+					// Log error but don't fail the link operation
+					await logger.error('Failed to compile PCD cache after linking', {
+						source: 'PCDManager',
+						meta: { error: String(error), databaseId: id }
+					});
+				}
+			}
+
 			// Send notification
 			await notificationManager.notify({
 				type: 'pcd.linked',
@@ -101,7 +117,10 @@ class PCDManager {
 		// Store name and URL for notification
 		const { name, repository_url } = instance;
 
-		// Delete from database first
+		// Invalidate cache first
+		await invalidate(id);
+
+		// Delete from database
 		databaseInstancesQueries.delete(id);
 
 		// Then cleanup filesystem
@@ -152,6 +171,19 @@ class PCDManager {
 
 			// Update last_synced_at
 			databaseInstancesQueries.updateSyncedAt(id);
+
+			// Recompile cache and restart watching (only if enabled)
+			if (instance.enabled) {
+				try {
+					await compile(instance.local_path, id);
+					await startWatch(instance.local_path, id);
+				} catch (error) {
+					await logger.error('Failed to recompile PCD cache after sync', {
+						source: 'PCDManager',
+						meta: { error: String(error), databaseId: id }
+					});
+				}
+			}
 
 			return {
 				success: true,
@@ -235,6 +267,57 @@ class PCDManager {
 	 */
 	getDueForSync(): DatabaseInstance[] {
 		return databaseInstancesQueries.getDueForSync();
+	}
+
+	/**
+	 * Initialize PCD caches for all enabled databases
+	 * Should be called on application startup
+	 */
+	async initialize(): Promise<void> {
+		await logger.info('Initializing PCD caches', { source: 'PCDManager' });
+
+		const instances = databaseInstancesQueries.getAll();
+		const enabledInstances = instances.filter((instance) => instance.enabled);
+
+		await logger.info(`Found ${enabledInstances.length} enabled databases to compile`, {
+			source: 'PCDManager',
+			meta: {
+				total: instances.length,
+				enabled: enabledInstances.length
+			}
+		});
+
+		// Compile and watch all enabled instances
+		for (const instance of enabledInstances) {
+			try {
+				await logger.info(`Compiling cache for database: ${instance.name}`, {
+					source: 'PCDManager',
+					meta: { databaseId: instance.id }
+				});
+
+				await compile(instance.local_path, instance.id);
+				await startWatch(instance.local_path, instance.id);
+
+				await logger.info(`Successfully compiled cache for: ${instance.name}`, {
+					source: 'PCDManager',
+					meta: { databaseId: instance.id }
+				});
+			} catch (error) {
+				await logger.error(`Failed to compile cache for: ${instance.name}`, {
+					source: 'PCDManager',
+					meta: { error: String(error), databaseId: instance.id }
+				});
+			}
+		}
+
+		await logger.info('PCD cache initialization complete', { source: 'PCDManager' });
+	}
+
+	/**
+	 * Get the cache for a database instance
+	 */
+	getCache(id: number) {
+		return getCache(id);
 	}
 }
 

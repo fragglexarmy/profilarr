@@ -207,5 +207,23 @@ export const databaseInstancesQueries = {
 			name
 		);
 		return (result?.count ?? 0) > 0;
+	},
+
+	/**
+	 * Disable a database instance (set enabled = 0)
+	 */
+	disable(id: number): boolean {
+		const affected = db.execute(
+			'UPDATE database_instances SET enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+			id
+		);
+		return affected > 0;
 	}
 };
+
+/**
+ * Helper function to disable a database instance
+ */
+export function disableDatabaseInstance(id: number): boolean {
+	return databaseInstancesQueries.disable(id);
+}
