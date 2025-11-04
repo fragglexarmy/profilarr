@@ -1,29 +1,23 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { Plus, Pencil } from 'lucide-svelte';
+	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 
 	export let data: PageData;
+
+	// Build tabs from instances
+	const tabs = data.allInstances.map((instance) => ({
+		label: instance.name,
+		href: `/arr/${data.type}/${instance.id}`,
+		active: instance.id === data.instance.id
+	}));
 </script>
 
 <div class="p-8">
 	<!-- Tabs Section -->
 	<div class="mb-8">
-		<div class="border-b border-neutral-200 dark:border-neutral-800">
-			<nav class="-mb-px flex gap-2" aria-label="Tabs">
-				<!-- Instance Tabs -->
-				{#each data.allInstances as instance (instance.id)}
-					<a
-						href="/arr/{data.type}/{instance.id}"
-						class="border-b-2 px-4 py-3 text-sm font-medium transition-colors {data.instance.id ===
-						instance.id
-							? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
-							: 'border-transparent text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:text-neutral-50'}"
-					>
-						{instance.name}
-					</a>
-				{/each}
-
-				<!-- Add Instance Tab (always visible) -->
+		<Tabs {tabs}>
+			<svelte:fragment slot="actions">
 				<a
 					href="/arr/new?type={data.type}"
 					class="flex items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-300 hover:text-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:text-neutral-50"
@@ -31,8 +25,8 @@
 					<Plus size={16} />
 					Add Instance
 				</a>
-			</nav>
-		</div>
+			</svelte:fragment>
+		</Tabs>
 	</div>
 
 	<!-- Content Area -->
