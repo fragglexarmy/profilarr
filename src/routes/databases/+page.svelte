@@ -7,7 +7,7 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
-	import type { Column } from '$ui/table/Table.svelte';
+	import type { Column } from '$ui/table/types';
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 
 	export let data: PageData;

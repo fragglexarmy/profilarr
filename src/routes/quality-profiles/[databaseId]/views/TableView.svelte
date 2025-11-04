@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Table, { type Column } from '$ui/table/Table.svelte';
+	import Table from '$ui/table/Table.svelte';
+	import type { Column } from '$ui/table/types';
 	import type { QualityProfileTableRow } from '$lib/server/pcd/queries/qualityProfiles';
 	import { Tag, FileText, Layers, BookOpenText, Gauge, Earth } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
