@@ -45,7 +45,7 @@
 	</button>
 
 	{#if hasDropdown && isHovered}
-		<div transition:fly={{ y: -8, duration: 150 }}>
+		<div class="z-50" transition:fly={{ y: -8, duration: 150 }}>
 			<slot name="dropdown" {dropdownPosition} open={isHovered} />
 		</div>
 	{/if}
