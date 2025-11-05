@@ -2,17 +2,15 @@ import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles.ts';
+import * as languageQueries from '$pcd/queries/languages.ts';
 
 export const load: ServerLoad = ({ params }) => {
-	const { databaseId } = params;
+	const { databaseId, id } = params;
 
 	// Validate params exist
-	if (!databaseId) {
-		throw error(400, 'Missing database ID');
+	if (!databaseId || !id) {
+		throw error(400, 'Missing required parameters');
 	}
-
-	// Get all databases for tabs
-	const databases = pcdManager.getAll();
 
 	// Parse and validate the database ID
 	const currentDatabaseId = parseInt(databaseId, 10);
@@ -20,11 +18,10 @@ export const load: ServerLoad = ({ params }) => {
 		throw error(400, 'Invalid database ID');
 	}
 
-	// Get the current database instance
-	const currentDatabase = databases.find((db) => db.id === currentDatabaseId);
-
-	if (!currentDatabase) {
-		throw error(404, 'Database not found');
+	// Parse and validate the profile ID
+	const profileId = parseInt(id, 10);
+	if (isNaN(profileId)) {
+		throw error(400, 'Invalid profile ID');
 	}
 
 	// Get the cache for the database
@@ -33,12 +30,14 @@ export const load: ServerLoad = ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	// Load quality profiles for the current database
-	const qualityProfiles = qualityProfileQueries.list(cache);
+	// Load languages for the quality profile
+	const languagesData = qualityProfileQueries.languages(cache, profileId);
+
+	// Load all available languages
+	const availableLanguages = languageQueries.list(cache);
 
 	return {
-		databases,
-		currentDatabase,
-		qualityProfiles
+		languages: languagesData.languages,
+		availableLanguages
 	};
 };

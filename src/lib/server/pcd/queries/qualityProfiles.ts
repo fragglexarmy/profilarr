@@ -31,6 +31,66 @@ interface CustomFormatCounts {
 }
 
 /**
+ * Quality profile general information
+ */
+export interface QualityProfileGeneral {
+  id: number;
+  name: string;
+  description: string; // Raw markdown
+  tags: Tag[];
+}
+
+/**
+ * Language configuration for a quality profile
+ */
+export interface QualityProfileLanguage {
+  id: number;
+  name: string;
+  type: 'must' | 'only' | 'not' | 'simple';
+}
+
+/**
+ * Quality profile languages information
+ */
+export interface QualityProfileLanguages {
+  languages: QualityProfileLanguage[];
+}
+
+/**
+ * Single quality item
+ */
+export interface QualitySingle {
+  id: number;
+  name: string;
+  position: number;
+  enabled: boolean;
+  isUpgradeUntil: boolean;
+}
+
+/**
+ * Quality group with members
+ */
+export interface QualityGroup {
+  id: number;
+  name: string;
+  position: number;
+  enabled: boolean;
+  isUpgradeUntil: boolean;
+  members: {
+    id: number;
+    name: string;
+  }[];
+}
+
+/**
+ * Quality profile qualities information
+ */
+export interface QualityProfileQualities {
+  singles: QualitySingle[];
+  groups: QualityGroup[];
+}
+
+/**
  * Quality profile data for table view with all relationships
  */
 export interface QualityProfileTableRow {
@@ -242,4 +302,171 @@ export function list(cache: PCDCache): QualityProfileTableRow[] {
 
     return result;
   });
+}
+
+/**
+ * Get general information for a single quality profile
+ */
+export function general(cache: PCDCache, profileId: number): QualityProfileGeneral | null {
+  // Get the quality profile
+  const profiles = cache.query<{
+    id: number;
+    name: string;
+    description: string | null;
+  }>(`
+    SELECT
+      id,
+      name,
+      description
+    FROM quality_profiles
+    WHERE id = ?
+  `, profileId);
+
+  if (profiles.length === 0) return null;
+
+  const profile = profiles[0];
+
+  // Get tags for this profile
+  const tags = cache.query<{
+    tag_id: number;
+    tag_name: string;
+    tag_created_at: string;
+  }>(`
+    SELECT
+      t.id as tag_id,
+      t.name as tag_name,
+      t.created_at as tag_created_at
+    FROM quality_profile_tags qpt
+    JOIN tags t ON qpt.tag_id = t.id
+    WHERE qpt.quality_profile_id = ?
+    ORDER BY t.name
+  `, profileId);
+
+  return {
+    id: profile.id,
+    name: profile.name,
+    description: profile.description || '',
+    tags: tags.map(tag => ({
+      id: tag.tag_id,
+      name: tag.tag_name,
+      created_at: tag.tag_created_at
+    }))
+  };
+}
+
+/**
+ * Get languages for a quality profile
+ */
+export function languages(cache: PCDCache, profileId: number): QualityProfileLanguages {
+  const profileLanguages = cache.query<{
+    language_id: number;
+    language_name: string;
+    type: string;
+  }>(`
+    SELECT
+      l.id as language_id,
+      l.name as language_name,
+      qpl.type
+    FROM quality_profile_languages qpl
+    JOIN languages l ON qpl.language_id = l.id
+    WHERE qpl.quality_profile_id = ?
+    ORDER BY l.name
+  `, profileId);
+
+  return {
+    languages: profileLanguages.map(lang => ({
+      id: lang.language_id,
+      name: lang.language_name,
+      type: lang.type as 'must' | 'only' | 'not' | 'simple'
+    }))
+  };
+}
+
+/**
+ * Get qualities for a quality profile (singles, groups, and available)
+ */
+export function qualities(cache: PCDCache, profileId: number): QualityProfileQualities {
+  // 1. Get single qualities
+  const singles = cache.query<{
+    quality_id: number;
+    quality_name: string;
+    position: number;
+    enabled: number;
+    upgrade_until: number;
+  }>(`
+    SELECT
+      qpq.quality_id,
+      q.name as quality_name,
+      qpq.position,
+      qpq.enabled,
+      qpq.upgrade_until
+    FROM quality_profile_qualities qpq
+    JOIN qualities q ON qpq.quality_id = q.id
+    WHERE qpq.quality_profile_id = ? AND qpq.quality_id IS NOT NULL
+    ORDER BY qpq.position
+  `, profileId);
+
+  // 2. Get groups with their IDs
+  const groups = cache.query<{
+    group_id: number;
+    group_name: string;
+    position: number;
+    enabled: number;
+    upgrade_until: number;
+  }>(`
+    SELECT
+      qpq.quality_group_id as group_id,
+      qg.name as group_name,
+      qpq.position,
+      qpq.enabled,
+      qpq.upgrade_until
+    FROM quality_profile_qualities qpq
+    JOIN quality_groups qg ON qpq.quality_group_id = qg.id
+    WHERE qpq.quality_profile_id = ? AND qpq.quality_group_id IS NOT NULL
+    ORDER BY qpq.position
+  `, profileId);
+
+  // 3. Get all group members for all groups in this profile
+  const groupIds = groups.map(g => g.group_id);
+  const groupMembers = groupIds.length > 0 ? cache.query<{
+    group_id: number;
+    quality_id: number;
+    quality_name: string;
+  }>(`
+    SELECT
+      qgm.quality_group_id as group_id,
+      qgm.quality_id,
+      q.name as quality_name
+    FROM quality_group_members qgm
+    JOIN qualities q ON qgm.quality_id = q.id
+    WHERE qgm.quality_group_id IN (${groupIds.map(() => '?').join(',')})
+    ORDER BY q.name
+  `, ...groupIds) : [];
+
+  // Build groups with members
+  const groupsWithMembers: QualityGroup[] = groups.map(g => {
+    const members = groupMembers
+      .filter(gm => gm.group_id === g.group_id)
+      .map(gm => ({ id: gm.quality_id, name: gm.quality_name }));
+
+    return {
+      id: g.group_id,
+      name: g.group_name,
+      position: g.position,
+      enabled: g.enabled === 1,
+      isUpgradeUntil: g.upgrade_until === 1,
+      members
+    };
+  });
+
+  return {
+    singles: singles.map(s => ({
+      id: s.quality_id,
+      name: s.quality_name,
+      position: s.position,
+      enabled: s.enabled === 1,
+      isUpgradeUntil: s.upgrade_until === 1
+    })),
+    groups: groupsWithMembers
+  };
 }

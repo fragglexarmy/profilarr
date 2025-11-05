@@ -8,7 +8,7 @@
 
 	function handleCardClick(profile: QualityProfileTableRow) {
 		const databaseId = $page.params.databaseId;
-		goto(`/quality-profiles/${databaseId}/${profile.id}`);
+		goto(`/quality-profiles/${databaseId}/${profile.id}/general`);
 	}
 </script>
 

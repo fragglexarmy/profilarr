@@ -11,7 +11,7 @@
 	function handleRowClick(row: QualityProfileTableRow) {
 		// Get the current database ID from the URL
 		const databaseId = $page.params.databaseId;
-		goto(`/quality-profiles/${databaseId}/${row.id}`);
+		goto(`/quality-profiles/${databaseId}/${row.id}/general`);
 	}
 
 	// Define table columns for quality profiles
