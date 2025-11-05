@@ -7,7 +7,7 @@
 
 	let showInfoModal = false;
 
-	const typeOptions = [
+	const typeOptions: Array<{ value: 'simple' | 'must' | 'only' | 'not'; label: string }> = [
 		{ value: 'simple', label: 'Preferred' },
 		{ value: 'must', label: 'Must Include' },
 		{ value: 'only', label: 'Must Only Be' },
