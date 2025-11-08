@@ -17,12 +17,10 @@
     "npm:eslint@^9.36.0": "9.39.1",
     "npm:globals@^16.4.0": "16.5.0",
     "npm:lucide-svelte@0.546": "0.546.0_svelte@5.43.3__acorn@8.15.0",
-    "npm:marked@^12.0.2": "12.0.2",
     "npm:marked@^15.0.6": "15.0.12",
     "npm:prettier-plugin-svelte@^3.4.0": "3.4.0_prettier@3.6.2_svelte@5.43.3__acorn@8.15.0",
     "npm:prettier-plugin-tailwindcss@~0.6.14": "0.6.14_prettier@3.6.2_prettier-plugin-svelte@3.4.0__prettier@3.6.2__svelte@5.43.3___acorn@8.15.0_svelte@5.43.3__acorn@8.15.0",
     "npm:prettier@^3.6.2": "3.6.2",
-    "npm:sanitize-html@^2.17.0": "2.17.0",
     "npm:simple-icons@^15.17.0": "15.17.0",
     "npm:svelte-check@^4.3.2": "4.3.3_svelte@5.43.3__acorn@8.15.0_typescript@5.9.3",
     "npm:svelte@^5.39.5": "5.43.3_acorn@8.15.0",
@@ -1929,8 +1927,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
-      "npm:marked@^12.0.2",
-      "npm:sanitize-html@^2.17.0",
+      "npm:marked@^15.0.6",
       "npm:simple-icons@^15.17.0"
     ],
     "packageJson": {
