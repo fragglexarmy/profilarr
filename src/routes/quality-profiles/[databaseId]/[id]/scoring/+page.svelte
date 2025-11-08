@@ -13,6 +13,7 @@
 	import ScoringTable from './components/ScoringTable.svelte';
 	import { createSearchStore } from '$lib/client/stores/search';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -477,7 +478,7 @@
 	})()}
 	{@const sortedCustomFormats = sortFormats(filteredCustomFormats, state, sortState)}
 	{@const groupedFormats = groupFormats(sortedCustomFormats, selectedGroups)}
-	<div class="mt-6 space-y-6">
+	<div class="mt-6 space-y-6" on:change={() => unsavedChanges.markDirty()}>
 	<!-- Profile-level Score Settings -->
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 		<div class="space-y-2">
