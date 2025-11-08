@@ -45,7 +45,8 @@ export async function list(cache: PCDCache): Promise<QualityProfileTableRow[]> {
       't.created_at as tag_created_at'
     ])
     .where('qpt.quality_profile_id', 'in', profileIds)
-    .orderBy(['qpt.quality_profile_id', 't.name'])
+    .orderBy('qpt.quality_profile_id')
+    .orderBy('t.name')
     .execute();
 
   // 3. Get custom format counts grouped by arr_type
@@ -72,7 +73,8 @@ export async function list(cache: PCDCache): Promise<QualityProfileTableRow[]> {
       'qg.name as group_name'
     ])
     .where('qpq.quality_profile_id', 'in', profileIds)
-    .orderBy(['qpq.quality_profile_id', 'qpq.position'])
+    .orderBy('qpq.quality_profile_id')
+    .orderBy('qpq.position')
     .execute();
 
   // 5. Get languages for all profiles

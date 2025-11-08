@@ -3,7 +3,7 @@ import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 
-export const load: ServerLoad = async ({ params, isDataRequest }) => {
+export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
 
 	// Validate params exist
@@ -29,23 +29,9 @@ export const load: ServerLoad = async ({ params, isDataRequest }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	// Always return synchronous data at top level, stream the heavy data
-	if (isDataRequest) {
-		// Client-side navigation - stream the data
-		return {
-			loaded: true, // Synchronous data to enable instant navigation
-			streamed: {
-				scoring: qualityProfileQueries.scoring(cache, currentDatabaseId, profileId)
-			}
-		};
-	} else {
-		// Initial page load - await the data for SEO
-		const scoringData = await qualityProfileQueries.scoring(cache, currentDatabaseId, profileId);
-		return {
-			loaded: true,
-			streamed: {
-				scoring: Promise.resolve(scoringData)
-			}
-		};
-	}
+	const scoringData = await qualityProfileQueries.scoring(cache, currentDatabaseId, profileId);
+
+	return {
+		scoring: scoringData
+	};
 };

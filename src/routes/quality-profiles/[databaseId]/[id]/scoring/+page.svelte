@@ -30,7 +30,6 @@
 	let upgradeScoreIncrement = 0;
 	let customFormatScores: Record<number, Record<string, number | null>> = {};
 	let customFormatEnabled: Record<number, Record<string, boolean>> = {};
-	let scoringData: any = null;
 
 	// Track initial values
 	let initialMinimumScore = 0;
@@ -306,25 +305,51 @@
 		return arrTypeColors[arrType] || '#3b82f6'; // default to blue
 	}
 
+	$: scoring = data.scoring;
+
+	// Compute filtered and sorted formats
+	$: searchQuery = ($searchStore.query ?? '').trim().toLowerCase();
+	$: filteredCustomFormats = scoring?.customFormats.filter((format) => {
+		if (searchQuery && !format.name?.toLowerCase().includes(searchQuery)) {
+			return false;
+		}
+		if (hideUnscoredFormats) {
+			const hasAnyScore = scoring.arrTypes.some((arrType) => format.scores[arrType] !== null);
+			if (!hasAnyScore) return false;
+		}
+		return true;
+	}) || [];
+
+	$: sortedCustomFormats = sortFormats(filteredCustomFormats, state, sortState);
+	$: groupedFormats = groupFormats(sortedCustomFormats, selectedGroups);
+
+	// Apply default sort
+	$: if (scoring && !sortState) {
+		const defaultSortKey = (scoring.arrTypes.includes('radarr') ? 'radarr' : scoring.arrTypes[0]) as SortKey;
+		if (defaultSortKey) {
+			sortState = { key: defaultSortKey, direction: 'desc' };
+		}
+	}
+
 	// Reactive state - initialize from data
-	$: if (scoringData) {
-		minimumScore = scoringData.minimum_custom_format_score;
-		upgradeUntilScore = scoringData.upgrade_until_score;
-		upgradeScoreIncrement = scoringData.upgrade_score_increment;
+	$: if (scoring) {
+		minimumScore = scoring.minimum_custom_format_score;
+		upgradeUntilScore = scoring.upgrade_until_score;
+		upgradeScoreIncrement = scoring.upgrade_score_increment;
 
 		// Save initial values
-		initialMinimumScore = scoringData.minimum_custom_format_score;
-		initialUpgradeUntilScore = scoringData.upgrade_until_score;
-		initialUpgradeScoreIncrement = scoringData.upgrade_score_increment;
+		initialMinimumScore = scoring.minimum_custom_format_score;
+		initialUpgradeUntilScore = scoring.upgrade_until_score;
+		initialUpgradeScoreIncrement = scoring.upgrade_score_increment;
 
 		// Initialize scores and enabled state from data
 		const newScores: Record<number, Record<string, number | null>> = {};
 		const newEnabled: Record<number, Record<string, boolean>> = {};
 
-		scoringData.customFormats.forEach((cf: any) => {
+		scoring.customFormats.forEach((cf: any) => {
 			newScores[cf.id] = { ...cf.scores };
 			newEnabled[cf.id] = {};
-			scoringData.arrTypes.forEach((arrType: string) => {
+			scoring.arrTypes.forEach((arrType: string) => {
 				newEnabled[cf.id][arrType] = cf.scores[arrType] !== null;
 			});
 		});
@@ -437,78 +462,8 @@
 
 <UnsavedChangesModal />
 
-{#await data.streamed.scoring}
-	<!-- Loading skeleton -->
-	<div class="mt-6 space-y-6 animate-pulse">
-		<!-- Profile-level Score Settings Skeleton -->
-		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-			{#each [1, 2, 3] as _}
-				<div class="space-y-2">
-					<div class="h-5 w-32 rounded bg-neutral-200 dark:bg-neutral-700"></div>
-					<div class="h-4 w-48 rounded bg-neutral-100 dark:bg-neutral-800"></div>
-					<div class="h-10 w-full rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
-				</div>
-			{/each}
-		</div>
-
-		<!-- Section Header Skeleton -->
-		<div class="flex items-start justify-between">
-			<div class="space-y-2">
-				<div class="h-5 w-48 rounded bg-neutral-200 dark:bg-neutral-700"></div>
-				<div class="h-4 w-64 rounded bg-neutral-100 dark:bg-neutral-800"></div>
-			</div>
-			<div class="h-8 w-16 rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
-		</div>
-
-		<!-- Table Skeleton -->
-		<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
-			<div class="w-full">
-				<div class="border-b border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-800 dark:bg-neutral-800">
-					<div class="flex gap-4">
-						<div class="h-4 w-48 rounded bg-neutral-300 dark:bg-neutral-600"></div>
-						<div class="h-4 w-24 rounded bg-neutral-300 dark:bg-neutral-600"></div>
-						<div class="h-4 w-24 rounded bg-neutral-300 dark:bg-neutral-600"></div>
-					</div>
-				</div>
-				<div class="space-y-2 p-6">
-					{#each [1, 2, 3, 4, 5] as _}
-						<div class="flex gap-4">
-							<div class="h-10 w-48 rounded bg-neutral-200 dark:bg-neutral-700"></div>
-							<div class="h-10 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
-							<div class="h-10 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</div>
-	</div>
-{:then scoring}
-	{@const _ = (scoringData = scoring, null)}
-	{@const searchQuery = ($searchStore.query ?? '').trim().toLowerCase()}
-	{@const filteredCustomFormats = scoring.customFormats.filter((format) => {
-		// Filter by search
-		if (searchQuery && !format.name?.toLowerCase().includes(searchQuery)) {
-			return false;
-		}
-
-		// Filter unscored formats if option is enabled
-		if (hideUnscoredFormats) {
-			const hasAnyScore = scoring.arrTypes.some((arrType) => format.scores[arrType] !== null);
-			if (!hasAnyScore) return false;
-		}
-
-		return true;
-	})}
-	{@const defaultSortKey = (scoring.arrTypes.includes('radarr') ? 'radarr' : scoring.arrTypes[0]) as SortKey}
-	{@const _applyDefaultSort = (() => {
-		if (!sortState && defaultSortKey) {
-			sortState = { key: defaultSortKey, direction: 'desc' };
-		}
-		return null;
-	})()}
-	{@const sortedCustomFormats = sortFormats(filteredCustomFormats, state, sortState)}
-	{@const groupedFormats = groupFormats(sortedCustomFormats, selectedGroups)}
-	<div class="mt-6 space-y-6" on:change={() => unsavedChanges.markDirty()}>
+{#if scoring}
+<div class="mt-6 space-y-6" on:change={() => unsavedChanges.markDirty()}>
 	<!-- Profile-level Score Settings -->
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 		<div class="space-y-2">
@@ -855,7 +810,7 @@
 		</div>
 	{/if}
 </div>
-{/await}
+{/if}
 
 <InfoModal bind:open={showInfoModal} header="Custom Format Scoring">
 	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
