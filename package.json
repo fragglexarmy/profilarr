@@ -4,7 +4,9 @@
 	"version": "2.0.0",
 	"type": "module",
 	"dependencies": {
+		"@deno/vite-plugin": "^1.0.5",
 		"@jsr/db__sqlite": "^0.12.0",
+		"kysely": "^0.28.8",
 		"lucide-svelte": "^0.546.0",
 		"marked": "^15.0.6",
 		"simple-icons": "^15.17.0",

@@ -3,15 +3,19 @@
  */
 
 import { Database } from '@jsr/db__sqlite';
+import { Kysely } from 'kysely';
+import { DenoSqlite3Dialect } from 'jsr:@soapbox/kysely-deno-sqlite';
 import { logger } from '$logger/logger.ts';
 import { loadAllOperations, validateOperations } from './ops.ts';
 import { disableDatabaseInstance } from '$db/queries/databaseInstances.ts';
+import type { PCDDatabase } from './schema.ts';
 
 /**
  * PCDCache - Manages an in-memory compiled database for a single PCD
  */
 export class PCDCache {
 	private db: Database | null = null;
+	private kysely: Kysely<PCDDatabase> | null = null;
 	private pcdPath: string;
 	private databaseInstanceId: number;
 	private built = false;
@@ -36,6 +40,13 @@ export class PCDCache {
 
 			// Enable foreign keys
 			this.db.exec('PRAGMA foreign_keys = ON');
+
+			// Initialize Kysely query builder
+			this.kysely = new Kysely<PCDDatabase>({
+				dialect: new DenoSqlite3Dialect({
+					database: this.db
+				})
+			});
 
 			// 2. Register helper functions
 			this.registerHelperFunctions();
@@ -125,11 +136,26 @@ export class PCDCache {
 	 * Close the database connection
 	 */
 	close(): void {
+		if (this.kysely) {
+			this.kysely.destroy();
+			this.kysely = null;
+		}
 		if (this.db) {
 			this.db.close();
 			this.db = null;
 		}
 		this.built = false;
+	}
+
+	/**
+	 * Get the Kysely query builder
+	 * Use this for type-safe queries
+	 */
+	get kb(): Kysely<PCDDatabase> {
+		if (!this.kysely) {
+			throw new Error('Cache not built');
+		}
+		return this.kysely;
 	}
 
 	// ============================================================================

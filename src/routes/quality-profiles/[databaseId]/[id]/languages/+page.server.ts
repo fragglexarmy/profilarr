@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
-import * as qualityProfileQueries from '$pcd/queries/qualityProfiles.ts';
+import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 import * as languageQueries from '$pcd/queries/languages.ts';
 
-export const load: ServerLoad = ({ params }) => {
+export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
 
 	// Validate params exist
@@ -31,7 +31,7 @@ export const load: ServerLoad = ({ params }) => {
 	}
 
 	// Load languages for the quality profile
-	const languagesData = qualityProfileQueries.languages(cache, profileId);
+	const languagesData = await qualityProfileQueries.languages(cache, profileId);
 
 	// Load all available languages
 	const availableLanguages = languageQueries.list(cache);

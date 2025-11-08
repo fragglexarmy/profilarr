@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
-import * as qualityProfileQueries from '$pcd/queries/qualityProfiles.ts';
+import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 
-export const load: ServerLoad = ({ params }) => {
+export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
 
 	// Validate params exist
@@ -30,7 +30,7 @@ export const load: ServerLoad = ({ params }) => {
 	}
 
 	// Load general information for the quality profile
-	const profile = qualityProfileQueries.general(cache, profileId);
+	const profile = await qualityProfileQueries.general(cache, profileId);
 
 	if (!profile) {
 		throw error(404, 'Quality profile not found');

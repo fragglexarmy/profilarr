@@ -3,6 +3,13 @@ import type { ComponentType } from 'svelte';
 /**
  * Column definition for table
  */
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortState {
+	key: string;
+	direction: SortDirection;
+}
+
 export interface Column<T> {
 	/** Unique key for the column */
 	key: string;
@@ -16,6 +23,12 @@ export interface Column<T> {
 	align?: 'left' | 'center' | 'right';
 	/** Whether column is sortable */
 	sortable?: boolean;
+	/** Optional accessor used for sorting (defaults to column key lookup) */
+	sortAccessor?: (row: T) => string | number | boolean | Date | null | undefined;
+	/** Optional comparator when sorter needs full row context */
+	sortComparator?: (a: T, b: T) => number;
+	/** Default sort direction when column is first sorted */
+	defaultSortDirection?: SortDirection;
 	/** Custom cell renderer - receives the full row object */
 	cell?: (row: T) => string | ComponentType | { html: string };
 }

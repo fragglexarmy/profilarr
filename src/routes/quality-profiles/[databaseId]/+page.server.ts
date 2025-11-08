@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
-import * as qualityProfileQueries from '$pcd/queries/qualityProfiles.ts';
+import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 
-export const load: ServerLoad = ({ params }) => {
+export const load: ServerLoad = async ({ params }) => {
 	const { databaseId } = params;
 
 	// Validate params exist
@@ -34,7 +34,7 @@ export const load: ServerLoad = ({ params }) => {
 	}
 
 	// Load quality profiles for the current database
-	const qualityProfiles = qualityProfileQueries.list(cache);
+	const qualityProfiles = await qualityProfileQueries.list(cache);
 
 	return {
 		databases,

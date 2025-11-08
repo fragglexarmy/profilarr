@@ -254,3 +254,22 @@ export interface QualityGroupMemberRow {
 	quality_group_id: number;
 	quality_id: number;
 }
+
+// ============================================================================
+// QUALITY PROFILE SCORING TYPES
+// ============================================================================
+
+export interface CustomFormatScoring {
+	id: number; // custom format ID
+	name: string; // custom format name
+	scores: Record<string, number | null>; // arr_type -> score mapping
+}
+
+export interface QualityProfileScoring {
+	databaseId: number; // PCD database ID (for linking)
+	arrTypes: string[]; // Display arr types: ['radarr', 'sonarr']. Note: 'all' scores are applied to each type
+	customFormats: CustomFormatScoring[]; // All custom formats with their scores
+	minimum_custom_format_score: number; // Minimum score to accept
+	upgrade_until_score: number; // Stop upgrading when reached
+	upgrade_score_increment: number; // Minimum score improvement needed
+}

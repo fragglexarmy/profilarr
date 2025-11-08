@@ -2,13 +2,18 @@ import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { readFileSync } from 'node:fs';
+import deno from '@deno/vite-plugin';
 
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
+	plugins: [deno(), tailwindcss(), sveltekit()],
 	server: {
-		port: 6969
+		port: 6969,
+		watch: {
+			// Ignore temporary files created by editors
+			ignored: ['**/*.tmp.*', '**/*~', '**/.#*']
+		}
 	},
 	define: {
 		__APP_VERSION__: JSON.stringify(packageJson.version)

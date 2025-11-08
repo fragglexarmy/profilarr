@@ -35,6 +35,15 @@ class PCDManager {
 	 * Link a new PCD repository
 	 */
 	async link(options: LinkOptions): Promise<DatabaseInstance> {
+		await logger.debug('Starting database link operation', {
+			source: 'PCDManager',
+			meta: {
+				name: options.name,
+				repositoryUrl: options.repositoryUrl,
+				branch: options.branch
+			}
+		});
+
 		// Generate UUID for storage
 		const uuid = crypto.randomUUID();
 		const localPath = getPCDPath(uuid);
