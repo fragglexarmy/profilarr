@@ -10,6 +10,9 @@
 	export let step: number = 1;
 	export let required: boolean = false;
 	export let disabled: boolean = false;
+	export let font: 'mono' | 'sans' | undefined = undefined;
+
+	$: fontClass = font === 'mono' ? 'font-mono' : font === 'sans' ? 'font-sans' : '';
 
 	// Increment/decrement handlers
 	function increment() {
@@ -55,7 +58,7 @@
 		{step}
 		{required}
 		{disabled}
-		class="block w-full [appearance:textfield] rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+		class="block w-full [appearance:textfield] rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {fontClass}"
 	/>
 
 	<!-- Custom increment/decrement buttons -->

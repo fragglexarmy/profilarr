@@ -20,10 +20,12 @@
 		}
 	}
 
-	$: if (open) {
-		window.addEventListener('keydown', handleKeydown);
-	} else {
-		window.removeEventListener('keydown', handleKeydown);
+	$: if (typeof window !== 'undefined') {
+		if (open) {
+			window.addEventListener('keydown', handleKeydown);
+		} else {
+			window.removeEventListener('keydown', handleKeydown);
+		}
 	}
 </script>
 

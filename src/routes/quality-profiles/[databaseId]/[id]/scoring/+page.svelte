@@ -1,0 +1,927 @@
+<script lang="ts">
+	import NumberInput from '$ui/form/NumberInput.svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import { Info, ArrowUpDown, ArrowUp, ArrowDown, Layers, Check, LayoutGrid, Settings, User, X } from 'lucide-svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import UnsavedChangesModal from '$ui/modal/UnsavedChangesModal.svelte';
+	import { useUnsavedChanges } from '$lib/client/utils/unsavedChanges.svelte';
+	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import Dropdown from '$ui/dropdown/Dropdown.svelte';
+	import CustomGroupManager from '$ui/dropdown/CustomGroupManager.svelte';
+	import ScoringTable from './components/ScoringTable.svelte';
+	import { createSearchStore } from '$lib/client/stores/search';
+	import { onMount } from 'svelte';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
+
+	const unsavedChanges = useUnsavedChanges();
+	const searchStore = createSearchStore({ debounceMs: 200 });
+
+	let showInfoModal = false;
+	let showOptionsInfoModal = false;
+
+	type SortKey = 'name' | 'radarr' | 'sonarr';
+	type SortDirection = 'asc' | 'desc';
+
+	let sortState: { key: SortKey; direction: SortDirection } | null = null;
+
+	// Tiling
+	let tileColumns: number = 1;
+	const TILING_STORAGE_KEY = 'scoring-tile-columns';
+
+	// General options
+	let hideUnscoredFormats: boolean = false;
+	const HIDE_UNSCORED_STORAGE_KEY = 'scoring-hide-unscored';
+
+	// Grouping
+	type GroupKey = string;
+	let selectedGroups = new Set<GroupKey>();
+
+	const GROUPING_STORAGE_KEY = 'scoring-selected-groups';
+	const CUSTOM_GROUPS_STORAGE_KEY = 'scoring-custom-groups';
+
+	// Define built-in groups with their tags (order matters - first match wins)
+	const builtInGroups = [
+		{ name: 'Audio', key: 'audio' as const, tags: ['audio'], custom: false },
+		{ name: 'HDR/Colour', key: 'hdr' as const, tags: ['hdr', 'colour grade'], custom: false },
+		{ name: 'Release Group', key: 'release-group' as const, tags: ['release group', 'release groups'], custom: false },
+		{ name: 'Release Group Tier', key: 'release-group-tier' as const, tags: ['release group tier', 'release group tiers'], custom: false },
+		{ name: 'Streaming Service', key: 'streaming-service' as const, tags: ['streaming service'], custom: false },
+		{ name: 'Codec', key: 'codec' as const, tags: ['codec'], custom: false },
+		{ name: 'Storage', key: 'storage' as const, tags: ['storage'], custom: false },
+		{ name: 'Source', key: 'source' as const, tags: ['source'], custom: false },
+		{ name: 'Resolution', key: 'resolution' as const, tags: ['sd', '480p', '576p', '720p', '1080p', '2160p', '4k', '8k', 'resolution'], custom: false },
+		{ name: 'Indexer Flag', key: 'indexer-flag' as const, tags: ['flag'], custom: false },
+		{ name: 'Edition', key: 'edition' as const, tags: ['edition'], custom: false },
+		{ name: 'Enhancement', key: 'enhancement' as const, tags: ['enhancement', 'enhancements'], custom: false },
+		{ name: 'Languages', key: 'languages' as const, tags: ['languages'], custom: false }
+	];
+
+	// Custom groups from localStorage
+	let customGroups: Array<{ name: string; key: string; tags: string[]; custom: boolean }> = [];
+
+	// Combined groups
+	$: groups = [...builtInGroups, ...customGroups];
+
+	// Check if current config matches active profile - uncheck if different
+	$: if (currentProfileId && !isLoadingProfile) {
+		const activeProfile = profiles.find(p => p.id === currentProfileId);
+		if (activeProfile) {
+			const searchQuery = $searchStore.query ?? '';
+			const selectedGroupsArray = [...selectedGroups];
+			const customGroupsClean = customGroups.map(({ name, key, tags }) => ({ name, key, tags }));
+
+			// Compare all settings
+			const configChanged =
+				searchQuery !== activeProfile.searchQuery ||
+				JSON.stringify(sortState) !== JSON.stringify(activeProfile.sortState) ||
+				JSON.stringify(selectedGroupsArray) !== JSON.stringify(activeProfile.selectedGroups) ||
+				JSON.stringify(customGroupsClean) !== JSON.stringify(activeProfile.customGroups) ||
+				tileColumns !== activeProfile.tileColumns ||
+				hideUnscoredFormats !== activeProfile.hideUnscoredFormats;
+
+			if (configChanged) {
+				currentProfileId = null;
+			}
+		}
+	}
+
+	// Profiles
+	type Profile = {
+		id: string;
+		name: string;
+		searchQuery: string;
+		sortState: { key: SortKey; direction: SortDirection } | null;
+		selectedGroups: GroupKey[];
+		customGroups: Array<{ name: string; key: string; tags: string[] }>;
+		tileColumns: number;
+		hideUnscoredFormats: boolean;
+	};
+	let profiles: Profile[] = [];
+	let currentProfileId: string | null = null;
+	let newProfileName = '';
+	let isLoadingProfile = false;
+	const PROFILES_STORAGE_KEY = 'scoring-profiles';
+
+	onMount(() => {
+		// Load custom groups from localStorage
+		const savedCustomGroups = localStorage.getItem(CUSTOM_GROUPS_STORAGE_KEY);
+		if (savedCustomGroups) {
+			try {
+				const parsed = JSON.parse(savedCustomGroups);
+				customGroups = parsed.map((g: any) => ({ ...g, custom: true }));
+			} catch {
+				customGroups = [];
+			}
+		}
+
+		// Load grouping preference from localStorage
+		const saved = localStorage.getItem(GROUPING_STORAGE_KEY);
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved) as GroupKey[];
+				selectedGroups = new Set(parsed.filter(key => groups.some(g => g.key === key)));
+			} catch {
+				selectedGroups = new Set();
+			}
+		}
+
+		// Load tiling preference from localStorage
+		const savedTiling = localStorage.getItem(TILING_STORAGE_KEY);
+		if (savedTiling) {
+			const parsed = parseInt(savedTiling, 10);
+			if (!isNaN(parsed) && parsed >= 1 && parsed <= 3) {
+				tileColumns = parsed;
+			}
+		}
+
+		// Load hide unscored preference from localStorage
+		const savedHideUnscored = localStorage.getItem(HIDE_UNSCORED_STORAGE_KEY);
+		if (savedHideUnscored === 'true') {
+			hideUnscoredFormats = true;
+		}
+
+		// Load profiles from localStorage
+		const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
+		if (savedProfiles) {
+			try {
+				profiles = JSON.parse(savedProfiles);
+			} catch {
+				profiles = [];
+			}
+		}
+	});
+
+	function saveGroupingPreference() {
+		localStorage.setItem(GROUPING_STORAGE_KEY, JSON.stringify([...selectedGroups]));
+	}
+
+	function toggleGroup(key: GroupKey) {
+		if (selectedGroups.has(key)) {
+			selectedGroups.delete(key);
+		} else {
+			selectedGroups.add(key);
+		}
+		selectedGroups = selectedGroups; // Trigger reactivity
+		saveGroupingPreference();
+	}
+
+	function clearGrouping() {
+		selectedGroups = new Set();
+		saveGroupingPreference();
+	}
+
+	function setTileColumns(columns: number) {
+		tileColumns = columns;
+		localStorage.setItem(TILING_STORAGE_KEY, columns.toString());
+	}
+
+	function toggleHideUnscored() {
+		hideUnscoredFormats = !hideUnscoredFormats;
+		localStorage.setItem(HIDE_UNSCORED_STORAGE_KEY, hideUnscoredFormats.toString());
+	}
+
+	function saveCustomGroups() {
+		const toSave = customGroups.map(({ name, key, tags }) => ({ name, key, tags }));
+		localStorage.setItem(CUSTOM_GROUPS_STORAGE_KEY, JSON.stringify(toSave));
+	}
+
+	function addCustomGroup(name: string, tags: string[]) {
+		const key = `custom-${Date.now()}`;
+		customGroups = [...customGroups, { name, key, tags, custom: true }];
+		saveCustomGroups();
+	}
+
+	function deleteCustomGroup(key: string) {
+		customGroups = customGroups.filter((g) => g.key !== key);
+		// Remove from selected groups if it was selected
+		selectedGroups.delete(key);
+		selectedGroups = selectedGroups;
+		saveCustomGroups();
+		saveGroupingPreference();
+	}
+
+	// Profile management
+	function saveProfile(name: string) {
+		const id = `profile-${Date.now()}`;
+		const profile: Profile = {
+			id,
+			name,
+			searchQuery: $searchStore.query ?? '',
+			sortState,
+			selectedGroups: [...selectedGroups],
+			customGroups: customGroups.map(({ name, key, tags }) => ({ name, key, tags })),
+			tileColumns,
+			hideUnscoredFormats
+		};
+		profiles = [...profiles, profile];
+		localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
+		currentProfileId = id;
+	}
+
+	function loadProfile(id: string) {
+		const profile = profiles.find(p => p.id === id);
+		if (!profile) return;
+
+		isLoadingProfile = true;
+
+		// Apply profile settings
+		searchStore.setQuery(profile.searchQuery);
+		sortState = profile.sortState as { key: SortKey; direction: SortDirection } | null;
+		selectedGroups = new Set(profile.selectedGroups);
+		customGroups = profile.customGroups.map(g => ({ ...g, custom: true }));
+		tileColumns = profile.tileColumns;
+		hideUnscoredFormats = profile.hideUnscoredFormats;
+
+		// Save to individual storage keys
+		saveGroupingPreference();
+		saveCustomGroups();
+		localStorage.setItem(TILING_STORAGE_KEY, tileColumns.toString());
+		localStorage.setItem(HIDE_UNSCORED_STORAGE_KEY, hideUnscoredFormats.toString());
+
+		currentProfileId = id;
+		isLoadingProfile = false;
+	}
+
+	function deleteProfile(id: string) {
+		profiles = profiles.filter(p => p.id !== id);
+		localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
+		if (currentProfileId === id) {
+			currentProfileId = null;
+		}
+	}
+
+	function handleSaveProfile() {
+		if (newProfileName.trim()) {
+			saveProfile(newProfileName.trim());
+			newProfileName = '';
+		}
+	}
+
+	function loadDefaultProfile() {
+		isLoadingProfile = true;
+
+		// Apply default settings
+		searchStore.setQuery('');
+		sortState = { key: 'radarr', direction: 'desc' };
+		selectedGroups = new Set();
+		customGroups = [];
+		tileColumns = 1;
+		hideUnscoredFormats = false;
+
+		// Save to individual storage keys
+		saveGroupingPreference();
+		saveCustomGroups();
+		localStorage.setItem(TILING_STORAGE_KEY, tileColumns.toString());
+		localStorage.setItem(HIDE_UNSCORED_STORAGE_KEY, hideUnscoredFormats.toString());
+
+		currentProfileId = null;
+		isLoadingProfile = false;
+	}
+
+	// Arr type color mapping
+	const arrTypeColors: Record<string, string> = {
+		radarr: '#FFC230',
+		sonarr: '#00CCFF'
+	};
+
+	function getArrTypeColor(arrType: string): string {
+		return arrTypeColors[arrType] || '#3b82f6'; // default to blue
+	}
+
+	// Initialize state based on scoring data
+	function initializeState(scoring: any) {
+		const minimumScore = scoring.minimum_custom_format_score;
+		const upgradeUntilScore = scoring.upgrade_until_score;
+		const upgradeScoreIncrement = scoring.upgrade_score_increment;
+
+		// Custom format scores - create a reactive map
+		const customFormatScores: Record<number, Record<string, number | null>> = {};
+		const customFormatEnabled: Record<number, Record<string, boolean>> = {};
+
+		// Initialize scores and enabled state from data
+		scoring.customFormats.forEach((cf: any) => {
+			customFormatScores[cf.id] = { ...cf.scores };
+			customFormatEnabled[cf.id] = {};
+			scoring.arrTypes.forEach((arrType: string) => {
+				customFormatEnabled[cf.id][arrType] = cf.scores[arrType] !== null;
+			});
+		});
+
+		return {
+			minimumScore,
+			upgradeUntilScore,
+			upgradeScoreIncrement,
+			customFormatScores,
+			customFormatEnabled
+		};
+	}
+
+	function toggleSort(key: SortKey, defaultDirection: SortDirection = 'asc') {
+		if (sortState?.key === key) {
+			// Toggle direction
+			sortState = { key, direction: sortState.direction === 'asc' ? 'desc' : 'asc' };
+		} else {
+			// New sort key
+			sortState = { key, direction: defaultDirection };
+		}
+	}
+
+	function sortFormats(formats: any[], state: any, sortState: { key: SortKey; direction: SortDirection } | null) {
+		if (!sortState) return formats;
+
+		const sorted = [...formats].sort((a, b) => {
+			let aVal: any;
+			let bVal: any;
+
+			if (sortState.key === 'name') {
+				aVal = a.name?.toLowerCase() || '';
+				bVal = b.name?.toLowerCase() || '';
+				return sortState.direction === 'asc'
+					? aVal.localeCompare(bVal)
+					: bVal.localeCompare(aVal);
+			} else {
+				// Sort by score (radarr or sonarr)
+				aVal = state.customFormatScores[a.id]?.[sortState.key] ?? null;
+				bVal = state.customFormatScores[b.id]?.[sortState.key] ?? null;
+
+				// Handle nulls - always put them at the end
+				if (aVal === null && bVal === null) return 0;
+				if (aVal === null) return 1;
+				if (bVal === null) return -1;
+
+				return sortState.direction === 'desc'
+					? bVal - aVal
+					: aVal - bVal;
+			}
+		});
+
+		return sorted;
+	}
+
+	function groupFormats(formats: any[], selectedGroups: Set<GroupKey>) {
+		// If no groups selected, show all formats in one table
+		if (selectedGroups.size === 0) {
+			return [{ name: null, formats }];
+		}
+
+		const result: { name: string | null; formats: any[] }[] = [];
+		const assigned = new Set<number>();
+
+		// Process each group in order
+		for (const group of groups) {
+			if (!selectedGroups.has(group.key)) continue;
+
+			const groupFormats = formats.filter((format) => {
+				// Skip if already assigned
+				if (assigned.has(format.id)) return false;
+
+				// Check if format has any of the group's tags
+				return format.tags?.some((tag: string) => group.tags.includes(tag.toLowerCase()));
+			});
+
+			// Mark as assigned
+			groupFormats.forEach((f) => assigned.add(f.id));
+
+			result.push({ name: group.name, formats: groupFormats });
+		}
+
+		// Add remaining formats to "Other" group
+		const otherFormats = formats.filter((f) => !assigned.has(f.id));
+		if (otherFormats.length > 0) {
+			result.push({ name: 'Other', formats: otherFormats });
+		}
+
+		return result;
+	}
+
+</script>
+
+<svelte:head>
+	<title>Scoring - Profilarr</title>
+</svelte:head>
+
+<UnsavedChangesModal />
+
+{#await data.streamed.scoring}
+	<!-- Loading skeleton -->
+	<div class="mt-6 space-y-6 animate-pulse">
+		<!-- Profile-level Score Settings Skeleton -->
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+			{#each [1, 2, 3] as _}
+				<div class="space-y-2">
+					<div class="h-5 w-32 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+					<div class="h-4 w-48 rounded bg-neutral-100 dark:bg-neutral-800"></div>
+					<div class="h-10 w-full rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
+				</div>
+			{/each}
+		</div>
+
+		<!-- Section Header Skeleton -->
+		<div class="flex items-start justify-between">
+			<div class="space-y-2">
+				<div class="h-5 w-48 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+				<div class="h-4 w-64 rounded bg-neutral-100 dark:bg-neutral-800"></div>
+			</div>
+			<div class="h-8 w-16 rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
+		</div>
+
+		<!-- Table Skeleton -->
+		<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+			<div class="w-full">
+				<div class="border-b border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-800 dark:bg-neutral-800">
+					<div class="flex gap-4">
+						<div class="h-4 w-48 rounded bg-neutral-300 dark:bg-neutral-600"></div>
+						<div class="h-4 w-24 rounded bg-neutral-300 dark:bg-neutral-600"></div>
+						<div class="h-4 w-24 rounded bg-neutral-300 dark:bg-neutral-600"></div>
+					</div>
+				</div>
+				<div class="space-y-2 p-6">
+					{#each [1, 2, 3, 4, 5] as _}
+						<div class="flex gap-4">
+							<div class="h-10 w-48 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+							<div class="h-10 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+							<div class="h-10 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+						</div>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</div>
+{:then scoring}
+	{@const state = initializeState(scoring)}
+	{@const searchQuery = ($searchStore.query ?? '').trim().toLowerCase()}
+	{@const filteredCustomFormats = scoring.customFormats.filter((format) => {
+		// Filter by search
+		if (searchQuery && !format.name?.toLowerCase().includes(searchQuery)) {
+			return false;
+		}
+
+		// Filter unscored formats if option is enabled
+		if (hideUnscoredFormats) {
+			const hasAnyScore = scoring.arrTypes.some((arrType) => format.scores[arrType] !== null);
+			if (!hasAnyScore) return false;
+		}
+
+		return true;
+	})}
+	{@const defaultSortKey = (scoring.arrTypes.includes('radarr') ? 'radarr' : scoring.arrTypes[0]) as SortKey}
+	{@const _applyDefaultSort = (() => {
+		if (!sortState && defaultSortKey) {
+			sortState = { key: defaultSortKey, direction: 'desc' };
+		}
+		return null;
+	})()}
+	{@const sortedCustomFormats = sortFormats(filteredCustomFormats, state, sortState)}
+	{@const groupedFormats = groupFormats(sortedCustomFormats, selectedGroups)}
+	<div class="mt-6 space-y-6">
+	<!-- Profile-level Score Settings -->
+	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+		<div class="space-y-2">
+			<label
+				for="minimumScore"
+				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+			>
+				Minimum Score
+			</label>
+			<p class="text-xs text-neutral-600 dark:text-neutral-400">
+				Minimum custom format score required to download
+			</p>
+			<NumberInput name="minimumScore" bind:value={state.minimumScore} step={1} font="mono" />
+		</div>
+
+		<div class="space-y-2">
+			<label
+				for="upgradeUntilScore"
+				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+			>
+				Upgrade Until Score
+			</label>
+			<p class="text-xs text-neutral-600 dark:text-neutral-400">
+				Stop upgrading when this score is reached
+			</p>
+			<NumberInput
+				name="upgradeUntilScore"
+				bind:value={state.upgradeUntilScore}
+				step={1}
+				font="mono"
+			/>
+		</div>
+
+		<div class="space-y-2">
+			<label
+				for="upgradeScoreIncrement"
+				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+			>
+				Upgrade Score Increment
+			</label>
+			<p class="text-xs text-neutral-600 dark:text-neutral-400">
+				Minimum score improvement needed to upgrade
+			</p>
+			<NumberInput
+				name="upgradeScoreIncrement"
+				bind:value={state.upgradeScoreIncrement}
+				step={1}
+				font="mono"
+			/>
+		</div>
+	</div>
+
+	<!-- Section Header -->
+	<div class="flex items-start justify-between">
+		<div>
+			<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Custom Format Scoring
+			</div>
+			<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+				Configure custom format scores for each Arr type
+			</p>
+		</div>
+		<button
+			type="button"
+			on:click={() => (showInfoModal = true)}
+			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+		>
+			<Info size={14} />
+			Info
+		</button>
+	</div>
+
+	<ActionsBar className="w-full">
+		<SearchAction {searchStore} placeholder="Search custom formats..." />
+		<ActionButton icon={ArrowUpDown} hasDropdown={true} dropdownPosition="right">
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+					<div class="py-1">
+						<button
+							type="button"
+							on:click={() => toggleSort('name', 'asc')}
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key === 'name'
+								? 'bg-neutral-50 dark:bg-neutral-700'
+								: ''}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">Name</span>
+							<IconCheckbox
+								checked={sortState?.key === 'name'}
+								icon={sortState?.key === 'name' && sortState.direction === 'desc' ? ArrowDown : ArrowUp}
+								color="blue"
+								shape="circle"
+							/>
+						</button>
+						<button
+							type="button"
+							on:click={() => toggleSort('radarr', 'desc')}
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key === 'radarr'
+								? 'bg-neutral-50 dark:bg-neutral-700'
+								: ''}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">Radarr</span>
+							<IconCheckbox
+								checked={sortState?.key === 'radarr'}
+								icon={sortState?.key === 'radarr' && sortState.direction === 'asc' ? ArrowUp : ArrowDown}
+								color={getArrTypeColor('radarr')}
+								shape="circle"
+							/>
+						</button>
+						<button
+							type="button"
+							on:click={() => toggleSort('sonarr', 'desc')}
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key === 'sonarr'
+								? 'bg-neutral-50 dark:bg-neutral-700'
+								: ''}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">Sonarr</span>
+							<IconCheckbox
+								checked={sortState?.key === 'sonarr'}
+								icon={sortState?.key === 'sonarr' && sortState.direction === 'asc' ? ArrowUp : ArrowDown}
+								color={getArrTypeColor('sonarr')}
+								shape="circle"
+							/>
+						</button>
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+		<ActionButton icon={Layers} hasDropdown={true} dropdownPosition="right">
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} {open} minWidth="14rem">
+					<div class="py-1">
+						<button
+							type="button"
+							on:click={clearGrouping}
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {selectedGroups.size === 0
+								? 'bg-neutral-50 dark:bg-neutral-700'
+								: ''}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">No Grouping</span>
+							<IconCheckbox
+								checked={selectedGroups.size === 0}
+								icon={Check}
+								color="blue"
+								shape="circle"
+							/>
+						</button>
+						{#each builtInGroups as group}
+							<button
+								type="button"
+								on:click={() => toggleGroup(group.key)}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {selectedGroups.has(group.key)
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">{group.name}</span>
+								<IconCheckbox
+									checked={selectedGroups.has(group.key)}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+						{/each}
+					</div>
+					<CustomGroupManager
+						{customGroups}
+						{selectedGroups}
+						onAdd={addCustomGroup}
+						onDelete={deleteCustomGroup}
+						onToggle={toggleGroup}
+					/>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+		<ActionButton icon={LayoutGrid} hasDropdown={true} dropdownPosition="right">
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+					<div class="py-1">
+						{#each [1, 2, 3] as columns}
+							<button
+								type="button"
+								on:click={() => setTileColumns(columns)}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {tileColumns === columns
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">{columns} Column{columns > 1 ? 's' : ''}</span>
+								<IconCheckbox
+									checked={tileColumns === columns}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+						{/each}
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+		<ActionButton icon={Settings} hasDropdown={true} dropdownPosition="right">
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} {open} minWidth="14rem">
+					<div class="py-1">
+						<button
+							type="button"
+							on:click={toggleHideUnscored}
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {hideUnscoredFormats
+								? 'bg-neutral-50 dark:bg-neutral-700'
+								: ''}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">Hide Unscored Formats</span>
+							<IconCheckbox
+								checked={hideUnscoredFormats}
+								icon={Check}
+								color="blue"
+								shape="circle"
+							/>
+						</button>
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+		<ActionButton icon={User} hasDropdown={true} dropdownPosition="right">
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} {open} minWidth="16rem">
+					<!-- Save current config form -->
+					<div class="border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
+						<div class="mb-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
+							Save Current Settings
+						</div>
+						<form on:submit|preventDefault={handleSaveProfile} class="space-y-2">
+							<input
+								type="text"
+								bind:value={newProfileName}
+								placeholder="Profile name"
+								class="block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+							/>
+							<button
+								type="submit"
+								class="w-full rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+								disabled={!newProfileName.trim()}
+							>
+								Save Profile
+							</button>
+						</form>
+					</div>
+
+					<!-- Saved profiles list -->
+					<div class="py-1">
+						<!-- Default profile option -->
+						<div class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700">
+							<button
+								type="button"
+								on:click={loadDefaultProfile}
+								class="flex flex-1 items-center justify-between gap-3"
+							>
+								<div class="flex-1 text-left">
+									<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">Default</div>
+								</div>
+								<IconCheckbox
+									checked={currentProfileId === null}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+						</div>
+
+						{#if profiles.length > 0}
+							<div class="border-t border-neutral-200 dark:border-neutral-700"></div>
+							{#each profiles as profile}
+								<div class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700">
+									<button
+										type="button"
+										on:click={() => loadProfile(profile.id)}
+										class="flex flex-1 items-center justify-between gap-3"
+									>
+										<div class="flex-1 text-left">
+											<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">{profile.name}</div>
+										</div>
+										<IconCheckbox
+											checked={currentProfileId === profile.id}
+											icon={Check}
+											color="blue"
+											shape="circle"
+										/>
+									</button>
+									<button
+										type="button"
+										on:click|stopPropagation={() => deleteProfile(profile.id)}
+										class="flex h-5 w-5 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+									>
+										<X size={12} />
+									</button>
+								</div>
+							{/each}
+						{/if}
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+		<ActionButton icon={Info} on:click={() => (showOptionsInfoModal = true)} />
+	</ActionsBar>
+
+	<!-- Custom Format Scores Tables -->
+	{#if searchQuery === 'santiagoisthebest'}
+		<div class="flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900">
+			<img src="/src/lib/client/assets/thanks.gif" alt="Thanks!" class="max-w-full" />
+		</div>
+	{:else if searchQuery === 'rickroll' || searchQuery === 'nevergonnagiveyouup'}
+		<div class="flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900">
+			<img src="/src/lib/client/assets/nggyu.gif" alt="Never gonna give you up" class="max-w-full" />
+		</div>
+	{:else if sortedCustomFormats.length === 0}
+		<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+			<div class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+				{#if scoring.customFormats.length === 0}
+					No custom formats found
+				{:else}
+					No custom formats match your search
+				{/if}
+			</div>
+		</div>
+	{:else}
+		<div
+			class="grid gap-6"
+			class:grid-cols-1={tileColumns === 1}
+			class:grid-cols-2={tileColumns === 2}
+			class:grid-cols-3={tileColumns === 3}
+		>
+			{#each groupedFormats as group}
+				{#if group.formats.length > 0}
+					<div class="min-w-0">
+						<ScoringTable
+							formats={group.formats}
+							arrTypes={scoring.arrTypes}
+							{state}
+							{getArrTypeColor}
+							title={group.name}
+						/>
+					</div>
+				{/if}
+			{/each}
+		</div>
+	{/if}
+</div>
+{/await}
+
+<InfoModal bind:open={showInfoModal} header="Custom Format Scoring">
+	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Custom Format Scores</div>
+			<div class="mt-1">
+				Each custom format can have different scores for different Arr types (Radarr, Sonarr). The
+				score determines how much a release is preferred when it matches the custom format.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Minimum Score</div>
+			<div class="mt-1">
+				The minimum total custom format score required for a release to be downloaded. Releases
+				with scores below this threshold will be rejected.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Upgrade Until Score</div>
+			<div class="mt-1">
+				Once a release reaches this score, the system will stop looking for upgrades. This prevents
+				unnecessary upgrades when you've already got a good quality release.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">
+				Upgrade Score Increment
+			</div>
+			<div class="mt-1">
+				The minimum score improvement required to trigger an upgrade. This prevents minor upgrades
+				that don't significantly improve quality.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Positive vs Negative Scores</div>
+			<div class="mt-1">
+				Positive scores increase preference for releases matching the custom format. Negative
+				scores decrease preference or can block releases entirely when combined with the minimum
+				score setting.
+			</div>
+		</div>
+	</div>
+</InfoModal>
+
+<InfoModal bind:open={showOptionsInfoModal} header="Display Options">
+	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Search</div>
+			<div class="mt-1">
+				Filter custom formats by name. The search is case-insensitive and matches any part of the format name.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Sort</div>
+			<div class="mt-1">
+				Sort custom formats by Name (A-Z), Radarr score, or Sonarr score. Click the same option again to reverse the sort direction (ascending ↑ or descending ↓). Formats with no score are always shown at the end.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Grouping</div>
+			<div class="mt-1">
+				Organize custom formats into separate tables based on their tags. You can select multiple groups at once. Available groups include Audio, HDR/Colour, Release Group, Codec, Resolution, and more. Formats that don't match any selected group appear in the "Other" table. If a format matches multiple groups, it appears in the first matching group only.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Custom Groups</div>
+			<div class="mt-1">
+				Create your own custom groups by entering a name and comma-separated tags at the bottom of the Grouping dropdown. Your custom groups are saved to your browser and can be deleted at any time. Custom groups work the same as built-in groups - formats are assigned to the first matching group based on their tags.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Tiling</div>
+			<div class="mt-1">
+				Display tables in 1, 2, or 3 columns. This is especially useful when using grouping to view multiple format categories side-by-side.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Hide Unscored Formats</div>
+			<div class="mt-1">
+				Hide custom formats that have no score assigned for any Arr type. This helps focus on formats that are currently being used in your quality profile.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Profiles</div>
+			<div class="mt-1">
+				Save your current display configuration (search, sort, grouping, custom groups, tiling, and options) as a named profile. Load saved profiles to quickly switch between different views. The "Default" profile resets everything to the baseline configuration. Profiles are stored in your browser and automatically uncheck when you modify any settings.
+			</div>
+		</div>
+	</div>
+</InfoModal>

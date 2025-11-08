@@ -16,7 +16,7 @@
 <div class="absolute top-full z-40 h-3 w-full"></div>
 
 <div
-	class="absolute top-full z-50 mt-3 rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 {positionClass}"
+	class="absolute top-full z-50 mt-3 rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800 {positionClass}"
 	style="min-width: {minWidth}"
 >
 	<slot />
