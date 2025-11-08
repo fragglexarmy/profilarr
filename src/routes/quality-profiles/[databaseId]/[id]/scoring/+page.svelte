@@ -24,6 +24,19 @@
 	let showInfoModal = false;
 	let showOptionsInfoModal = false;
 
+	// State variables
+	let minimumScore = 0;
+	let upgradeUntilScore = 0;
+	let upgradeScoreIncrement = 0;
+	let customFormatScores: Record<number, Record<string, number | null>> = {};
+	let customFormatEnabled: Record<number, Record<string, boolean>> = {};
+	let scoringData: any = null;
+
+	// Track initial values
+	let initialMinimumScore = 0;
+	let initialUpgradeUntilScore = 0;
+	let initialUpgradeScoreIncrement = 0;
+
 	type SortKey = 'name' | 'radarr' | 'sonarr';
 	type SortDirection = 'asc' | 'desc';
 
@@ -293,33 +306,50 @@
 		return arrTypeColors[arrType] || '#3b82f6'; // default to blue
 	}
 
-	// Initialize state based on scoring data
-	function initializeState(scoring: any) {
-		const minimumScore = scoring.minimum_custom_format_score;
-		const upgradeUntilScore = scoring.upgrade_until_score;
-		const upgradeScoreIncrement = scoring.upgrade_score_increment;
+	// Reactive state - initialize from data
+	$: if (scoringData) {
+		minimumScore = scoringData.minimum_custom_format_score;
+		upgradeUntilScore = scoringData.upgrade_until_score;
+		upgradeScoreIncrement = scoringData.upgrade_score_increment;
 
-		// Custom format scores - create a reactive map
-		const customFormatScores: Record<number, Record<string, number | null>> = {};
-		const customFormatEnabled: Record<number, Record<string, boolean>> = {};
+		// Save initial values
+		initialMinimumScore = scoringData.minimum_custom_format_score;
+		initialUpgradeUntilScore = scoringData.upgrade_until_score;
+		initialUpgradeScoreIncrement = scoringData.upgrade_score_increment;
 
 		// Initialize scores and enabled state from data
-		scoring.customFormats.forEach((cf: any) => {
-			customFormatScores[cf.id] = { ...cf.scores };
-			customFormatEnabled[cf.id] = {};
-			scoring.arrTypes.forEach((arrType: string) => {
-				customFormatEnabled[cf.id][arrType] = cf.scores[arrType] !== null;
+		const newScores: Record<number, Record<string, number | null>> = {};
+		const newEnabled: Record<number, Record<string, boolean>> = {};
+
+		scoringData.customFormats.forEach((cf: any) => {
+			newScores[cf.id] = { ...cf.scores };
+			newEnabled[cf.id] = {};
+			scoringData.arrTypes.forEach((arrType: string) => {
+				newEnabled[cf.id][arrType] = cf.scores[arrType] !== null;
 			});
 		});
 
-		return {
-			minimumScore,
-			upgradeUntilScore,
-			upgradeScoreIncrement,
-			customFormatScores,
-			customFormatEnabled
-		};
+		customFormatScores = newScores;
+		customFormatEnabled = newEnabled;
 	}
+
+	// Mark as dirty when values change
+	$: if (
+		minimumScore !== initialMinimumScore ||
+		upgradeUntilScore !== initialUpgradeUntilScore ||
+		upgradeScoreIncrement !== initialUpgradeScoreIncrement
+	) {
+		unsavedChanges.markDirty();
+	}
+
+	// Create state object for convenience
+	$: state = {
+		minimumScore,
+		upgradeUntilScore,
+		upgradeScoreIncrement,
+		customFormatScores,
+		customFormatEnabled
+	};
 
 	function toggleSort(key: SortKey, defaultDirection: SortDirection = 'asc') {
 		if (sortState?.key === key) {
@@ -453,7 +483,7 @@
 		</div>
 	</div>
 {:then scoring}
-	{@const state = initializeState(scoring)}
+	{@const _ = (scoringData = scoring, null)}
 	{@const searchQuery = ($searchStore.query ?? '').trim().toLowerCase()}
 	{@const filteredCustomFormats = scoring.customFormats.filter((format) => {
 		// Filter by search
@@ -491,7 +521,7 @@
 			<p class="text-xs text-neutral-600 dark:text-neutral-400">
 				Minimum custom format score required to download
 			</p>
-			<NumberInput name="minimumScore" bind:value={state.minimumScore} step={1} font="mono" />
+			<NumberInput name="minimumScore" bind:value={minimumScore} step={1} font="mono" />
 		</div>
 
 		<div class="space-y-2">
@@ -506,7 +536,7 @@
 			</p>
 			<NumberInput
 				name="upgradeUntilScore"
-				bind:value={state.upgradeUntilScore}
+				bind:value={upgradeUntilScore}
 				step={1}
 				font="mono"
 			/>
@@ -524,7 +554,7 @@
 			</p>
 			<NumberInput
 				name="upgradeScoreIncrement"
-				bind:value={state.upgradeScoreIncrement}
+				bind:value={upgradeScoreIncrement}
 				step={1}
 				font="mono"
 			/>

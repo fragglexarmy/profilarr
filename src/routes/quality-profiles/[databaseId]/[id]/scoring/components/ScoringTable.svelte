@@ -72,31 +72,33 @@
 							<td class="px-6 py-4">
 								<div class="flex items-center justify-center gap-2">
 									<IconCheckbox
-										checked={state.customFormatEnabled[format.id][arrType]}
+										checked={state.customFormatEnabled[format.id]?.[arrType] ?? false}
 										icon={Check}
 										color={getArrTypeColor(arrType)}
 										shape="circle"
 										on:click={() => {
-											const isEnabled = state.customFormatEnabled[format.id][arrType];
+											const isEnabled = state.customFormatEnabled[format.id]?.[arrType] ?? false;
 											if (isEnabled) {
 												state.customFormatScores[format.id][arrType] = null;
 											} else {
-												if (state.customFormatScores[format.id][arrType] === null) {
+												if (state.customFormatScores[format.id]?.[arrType] === null) {
 													state.customFormatScores[format.id][arrType] = 0;
 												}
 											}
 											state.customFormatEnabled[format.id][arrType] = !isEnabled;
 										}}
 									/>
-									<div class="w-48">
-										<NumberInput
-											name="score-{format.id}-{arrType}"
-											bind:value={state.customFormatScores[format.id][arrType]}
-											step={1}
-											disabled={!state.customFormatEnabled[format.id][arrType]}
-											font="mono"
-										/>
-									</div>
+									{#if state.customFormatScores[format.id]}
+										<div class="w-48">
+											<NumberInput
+												name="score-{format.id}-{arrType}"
+												bind:value={state.customFormatScores[format.id][arrType]}
+												step={1}
+												disabled={!state.customFormatEnabled[format.id]?.[arrType]}
+												font="mono"
+											/>
+										</div>
+									{/if}
 								</div>
 							</td>
 						{/each}
