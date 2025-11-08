@@ -8,7 +8,7 @@
 
 	let { label, href }: Props = $props();
 
-	const isActive = $derived($page.url.pathname === href);
+	const isActive = $derived($page.url.pathname === href || $page.url.pathname.startsWith(href + '/'));
 </script>
 
 <a

@@ -11,7 +11,7 @@
 
 	let { label, href, isOpen, hasItems, onToggle }: Props = $props();
 
-	const isActive = $derived($page.url.pathname === href);
+	const isActive = $derived($page.url.pathname === href || $page.url.pathname.startsWith(href + '/'));
 </script>
 
 <div class="group/header flex items-center">
