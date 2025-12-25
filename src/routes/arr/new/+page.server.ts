@@ -14,6 +14,7 @@ export const actions = {
 		const url = formData.get('url')?.toString().trim();
 		const apiKey = formData.get('api_key')?.toString().trim();
 		const tagsJson = formData.get('tags')?.toString().trim();
+		const enabled = formData.get('enabled')?.toString() === '1';
 
 		// Validation
 		if (!name || !type || !url || !apiKey) {
@@ -69,14 +70,16 @@ export const actions = {
 			}
 		}
 
+		let id: number;
 		try {
 			// Create the instance
-			const id = arrInstancesQueries.create({
+			id = arrInstancesQueries.create({
 				name,
 				type,
 				url,
 				apiKey,
-				tags
+				tags,
+				enabled
 			});
 
 			await logger.info(`Created new ${type} instance: ${name}`, {
@@ -95,7 +98,7 @@ export const actions = {
 			});
 		}
 
-		// Redirect to the type page (outside try-catch since redirect throws)
-		redirect(303, `/arr/${type}`);
+		// Redirect to the new instance page (outside try-catch since redirect throws)
+		redirect(303, `/arr/${id}`);
 	}
 } satisfies Actions;

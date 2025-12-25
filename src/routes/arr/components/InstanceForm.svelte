@@ -32,6 +32,7 @@
 	let url = (form as any)?.values?.url ?? (mode === 'edit' ? instance?.url : '') ?? '';
 	let apiKey = ''; // Never pre-populate API key for security
 	let tags: string[] = mode === 'edit' && instance ? parseTags(instance.tags) : [];
+	let enabled: boolean = mode === 'edit' ? Boolean(instance?.enabled) : true;
 
 	// Connection test state
 	type ConnectionStatus = 'idle' | 'testing' | 'success' | 'error';
@@ -185,6 +186,38 @@
 						</select>
 					{/if}
 				</div>
+
+				<!-- Enabled Toggle -->
+				<div class="flex items-center justify-between">
+					<div>
+						<label
+							for="enabled"
+							class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
+							Enabled
+						</label>
+						<p class="text-xs text-neutral-500 dark:text-neutral-400">
+							Disable to exclude this instance from sync operations
+						</p>
+					</div>
+					<button
+						type="button"
+						role="switch"
+						aria-checked={enabled}
+						aria-label="Toggle enabled status"
+						on:click={() => (enabled = !enabled)}
+						class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {enabled
+							? 'bg-blue-600 dark:bg-blue-500'
+							: 'bg-neutral-200 dark:bg-neutral-700'}"
+					>
+						<span
+							class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {enabled
+								? 'translate-x-5'
+								: 'translate-x-0'}"
+						></span>
+					</button>
+					<input type="hidden" name="enabled" value={enabled ? '1' : '0'} />
+				</div>
 			</div>
 		</div>
 
@@ -312,8 +345,7 @@
 		<div class="flex flex-wrap items-center justify-end gap-3">
 			{#if mode === 'edit'}
 				<a
-					href="/arr/{type}/{instance?.id}"
-					data-sveltekit-reload
+					href="/arr/{instance?.id}"
 					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
 				>
 					Cancel
