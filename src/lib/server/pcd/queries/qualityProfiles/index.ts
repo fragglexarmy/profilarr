@@ -25,6 +25,7 @@ export type {
 
 // Export query functions
 export { list } from './list.ts';
+export { names } from './names.ts';
 export { general } from './general.ts';
 export { languages } from './languages.ts';
 export { qualities } from './qualities.ts';

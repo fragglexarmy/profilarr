@@ -108,7 +108,7 @@
 	$: sortedData = sortData(data);
 </script>
 
-<div class="overflow-x-auto rounded-lg border-2 border-neutral-200 dark:border-neutral-800">
+<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
 	<table class="w-full">
 		<!-- Header -->
 		<thead

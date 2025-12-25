@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import { page } from '$app/stores';
-	import { Library, ArrowUpDown, ScrollText } from 'lucide-svelte';
+	import { Library, ArrowUpCircle, ScrollText } from 'lucide-svelte';
 
 	$: instanceId = $page.params.id;
 	$: currentPath = $page.url.pathname;
@@ -14,10 +14,10 @@
 			icon: Library
 		},
 		{
-			label: 'Search Priority',
+			label: 'Upgrades',
 			href: `/arr/${instanceId}/search-priority`,
 			active: currentPath.includes('/search-priority'),
-			icon: ArrowUpDown
+			icon: ArrowUpCircle
 		},
 		{
 			label: 'Logs',
