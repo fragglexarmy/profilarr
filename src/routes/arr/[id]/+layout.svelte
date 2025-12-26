@@ -15,8 +15,8 @@
 		},
 		{
 			label: 'Upgrades',
-			href: `/arr/${instanceId}/search-priority`,
-			active: currentPath.includes('/search-priority'),
+			href: `/arr/${instanceId}/upgrades`,
+			active: currentPath.includes('/upgrades'),
 			icon: ArrowUpCircle
 		},
 		{
