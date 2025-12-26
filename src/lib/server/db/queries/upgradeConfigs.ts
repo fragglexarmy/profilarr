@@ -12,6 +12,7 @@ interface UpgradeConfigRow {
 	filter_mode: string;
 	filters: string;
 	current_filter_index: number;
+	last_run_at: string | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -39,6 +40,7 @@ function rowToConfig(row: UpgradeConfigRow): UpgradeConfig {
 		filterMode: row.filter_mode as FilterMode,
 		filters: JSON.parse(row.filters) as FilterConfig[],
 		currentFilterIndex: row.current_filter_index,
+		lastRunAt: row.last_run_at,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at
 	};
@@ -196,5 +198,31 @@ export const upgradeConfigsQueries = {
 			'UPDATE upgrade_configs SET current_filter_index = 0, updated_at = CURRENT_TIMESTAMP WHERE arr_instance_id = ?',
 			arrInstanceId
 		);
+	},
+
+	/**
+	 * Update last_run_at to current timestamp
+	 */
+	updateLastRun(arrInstanceId: number): void {
+		db.execute(
+			'UPDATE upgrade_configs SET last_run_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE arr_instance_id = ?',
+			arrInstanceId
+		);
+	},
+
+	/**
+	 * Get all enabled configs that are due to run
+	 * A config is due if: last_run_at is null OR (now - last_run_at) >= schedule minutes
+	 */
+	getDueConfigs(): UpgradeConfig[] {
+		const rows = db.query<UpgradeConfigRow>(`
+			SELECT * FROM upgrade_configs
+			WHERE enabled = 1
+			AND (
+				last_run_at IS NULL
+				OR (julianday('now') - julianday(last_run_at)) * 24 * 60 >= schedule
+			)
+		`);
+		return rows.map(rowToConfig);
 	}
 };

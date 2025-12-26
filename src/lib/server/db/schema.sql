@@ -247,6 +247,7 @@ CREATE TABLE upgrade_configs (
 
     -- State tracking
     current_filter_index INTEGER NOT NULL DEFAULT 0, -- For round-robin mode
+    last_run_at DATETIME,                            -- When upgrade job last ran (Migration 012)
 
     -- Metadata
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -55,6 +55,7 @@ export interface UpgradeConfig {
 	filterMode: FilterMode;
 	filters: FilterConfig[];
 	currentFilterIndex: number;
+	lastRunAt?: string | null;
 	createdAt?: string;
 	updatedAt?: string;
 }
