@@ -21,6 +21,8 @@
 
 		<Group label="🏷️ Media Management" href="/media-management" initialOpen={false} />
 
+		<Group label="⏱️ Delay Profiles" href="/delay-profiles" initialOpen={false} />
+
 		<Group label="⚙️ Settings" href="/settings" initialOpen={true} hasItems={true}>
 			<GroupItem label="General" href="/settings/general" />
 			<GroupItem label="Jobs" href="/settings/jobs" />
