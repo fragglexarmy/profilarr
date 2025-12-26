@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2025-11-04
+-- Last updated: 2025-12-27
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -226,6 +226,36 @@ CREATE TABLE database_instances (
 );
 
 -- ==============================================================================
+-- TABLE: upgrade_configs
+-- Purpose: Store upgrade configuration per arr instance for automated quality upgrades
+-- Migration: 011_create_upgrade_configs.ts
+-- ==============================================================================
+
+CREATE TABLE upgrade_configs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Relationship (one config per arr instance)
+    arr_instance_id INTEGER NOT NULL UNIQUE,
+
+    -- Core settings
+    enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch
+    schedule INTEGER NOT NULL DEFAULT 360,      -- Run interval in minutes (default 6 hours)
+    filter_mode TEXT NOT NULL DEFAULT 'round_robin', -- 'round_robin' or 'random'
+
+    -- Filters (stored as JSON array of FilterConfig objects)
+    filters TEXT NOT NULL DEFAULT '[]',
+
+    -- State tracking
+    current_filter_index INTEGER NOT NULL DEFAULT 0, -- For round-robin mode
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (arr_instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
 -- INDEXES
 -- Purpose: Improve query performance
 -- ==============================================================================
@@ -249,3 +279,6 @@ CREATE INDEX idx_notification_history_status ON notification_history(status);
 
 -- Database instances indexes (Migration: 008_create_database_instances.ts)
 CREATE INDEX idx_database_instances_uuid ON database_instances(uuid);
+
+-- Upgrade configs indexes (Migration: 011_create_upgrade_configs.ts)
+CREATE INDEX idx_upgrade_configs_arr_instance ON upgrade_configs(arr_instance_id);

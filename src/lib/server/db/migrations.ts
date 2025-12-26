@@ -12,6 +12,7 @@ import { migration as migration007 } from './migrations/007_create_notification_
 import { migration as migration008 } from './migrations/008_create_database_instances.ts';
 import { migration as migration009 } from './migrations/009_add_personal_access_token.ts';
 import { migration as migration010 } from './migrations/010_add_is_private.ts';
+import { migration as migration011 } from './migrations/011_create_upgrade_configs.ts';
 
 export interface Migration {
 	version: number;
@@ -239,7 +240,8 @@ export function loadMigrations(): Migration[] {
 		migration007,
 		migration008,
 		migration009,
-		migration010
+		migration010,
+		migration011
 	];
 
 	// Sort by version number

@@ -47,6 +47,18 @@ export interface FilterConfig {
 
 export type FilterMode = 'round_robin' | 'random';
 
+export interface UpgradeConfig {
+	id?: number;
+	arrInstanceId: number;
+	enabled: boolean;
+	schedule: number; // minutes
+	filterMode: FilterMode;
+	filters: FilterConfig[];
+	currentFilterIndex: number;
+	createdAt?: string;
+	updatedAt?: string;
+}
+
 export const filterModes: { id: FilterMode; label: string; description: string }[] = [
 	{
 		id: 'round_robin',
@@ -286,6 +298,20 @@ export function createEmptyFilterConfig(name: string = 'New Filter'): FilterConf
 		count: 5,
 		cutoff: 80,
 		searchCooldown: 24 // default 24 hours
+	};
+}
+
+/**
+ * Create an empty upgrade config for an arr instance
+ */
+export function createEmptyUpgradeConfig(arrInstanceId: number): UpgradeConfig {
+	return {
+		arrInstanceId,
+		enabled: false,
+		schedule: 360, // 6 hours
+		filterMode: 'round_robin',
+		filters: [],
+		currentFilterIndex: 0
 	};
 }
 
