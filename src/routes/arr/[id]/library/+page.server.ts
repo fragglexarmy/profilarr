@@ -111,14 +111,14 @@ export const load: ServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	refresh: async ({ params }) => {
+	refresh: ({ params }) => {
 		const id = parseInt(params.id || '', 10);
 		if (!isNaN(id)) {
 			cache.delete(`library:${id}`);
 		}
 		return { success: true };
 	},
-	delete: async ({ params }) => {
+	delete: ({ params }) => {
 		const id = parseInt(params.id || '', 10);
 		if (!isNaN(id)) {
 			arrInstancesQueries.delete(id);

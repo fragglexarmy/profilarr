@@ -29,6 +29,8 @@ export interface RadarrMovie {
 	ratings?: {
 		imdb?: { votes: number; value: number };
 		tmdb?: { votes: number; value: number };
+		rottenTomatoes?: { votes: number; value: number };
+		trakt?: { votes: number; value: number };
 	};
 	genres?: string[];
 	overview?: string;
@@ -38,6 +40,17 @@ export interface RadarrMovie {
 	rootFolderPath?: string;
 	sizeOnDisk?: number;
 	status?: string;
+	tags?: number[];
+	collection?: {
+		title?: string;
+		name?: string; // Deprecated, use title
+		tmdbId?: number;
+	};
+	popularity?: number;
+	originalLanguage?: {
+		id: number;
+		name: string;
+	};
 }
 
 /**
@@ -117,6 +130,32 @@ export interface RadarrQualityProfile {
 	}[];
 }
 
+/**
+ * Tag from /api/v3/tag
+ */
+export interface RadarrTag {
+	id: number;
+	label: string;
+}
+
+/**
+ * Command response from /api/v3/command
+ */
+export interface RadarrCommand {
+	id: number;
+	name: string;
+	commandName: string;
+	status: 'queued' | 'started' | 'completed' | 'failed' | string;
+	queued?: string;
+	started?: string;
+	ended?: string;
+	message?: string;
+	body?: {
+		movieIds?: number[];
+		sendUpdatesToClient?: boolean;
+	};
+}
+
 // =============================================================================
 // Library View Types (computed/joined data)
 // =============================================================================
@@ -141,6 +180,8 @@ export interface RadarrLibraryItem {
 	qualityProfileId: number;
 	qualityProfileName: string;
 	hasFile: boolean;
+	dateAdded?: string;
+	popularity?: number;
 
 	// From /moviefile (only if hasFile)
 	customFormats: CustomFormatRef[];

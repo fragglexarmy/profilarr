@@ -6,7 +6,8 @@
 import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { logger } from '$logger/logger.ts';
-import type { FilterConfig, UpgradeConfig } from '$lib/shared/filters';
+import { processUpgradeConfig } from '$lib/server/upgrades/processor.ts';
+import type { UpgradeConfig } from '$lib/shared/filters.ts';
 
 export interface UpgradeInstanceStatus {
 	instanceId: number;
@@ -26,30 +27,9 @@ export interface UpgradeManagerResult {
 }
 
 /**
- * Get the next filter to run based on the config's mode
+ * Process a single upgrade config and convert result to status
  */
-function getNextFilter(config: UpgradeConfig): FilterConfig | null {
-	const enabledFilters = config.filters.filter((f) => f.enabled);
-
-	if (enabledFilters.length === 0) {
-		return null;
-	}
-
-	if (config.filterMode === 'random') {
-		// Random: pick a random filter
-		const randomIndex = Math.floor(Math.random() * enabledFilters.length);
-		return enabledFilters[randomIndex];
-	}
-
-	// Round robin: use currentFilterIndex
-	const index = config.currentFilterIndex % enabledFilters.length;
-	return enabledFilters[index];
-}
-
-/**
- * Process a single upgrade config
- */
-async function processUpgradeConfig(config: UpgradeConfig): Promise<UpgradeInstanceStatus> {
+async function processConfig(config: UpgradeConfig): Promise<UpgradeInstanceStatus> {
 	const instance = arrInstancesQueries.getById(config.arrInstanceId);
 
 	if (!instance) {
@@ -70,68 +50,36 @@ async function processUpgradeConfig(config: UpgradeConfig): Promise<UpgradeInsta
 		};
 	}
 
-	// Get the filter to run
-	const filter = getNextFilter(config);
-
-	if (!filter) {
+	// Only process Radarr for now
+	if (instance.type !== 'radarr') {
 		return {
 			instanceId: config.arrInstanceId,
 			instanceName: instance.name,
 			success: false,
-			error: 'No enabled filters'
+			error: `Upgrade not yet supported for ${instance.type}`
 		};
 	}
 
-	await logger.info(`Processing upgrade for "${instance.name}" with filter "${filter.name}"`, {
-		source: 'UpgradeManager',
-		meta: {
-			instanceId: instance.id,
-			instanceType: instance.type,
-			filterName: filter.name,
-			selector: filter.selector,
-			count: filter.count
-		}
-	});
-
 	try {
-		// TODO: Implement actual upgrade logic:
-		// 1. Fetch library items from arr instance
-		// 2. Apply filter rules to get matching items
-		// 3. Apply selector to pick items (random, oldest, etc.)
-		// 4. Check search cooldown (via arr tags)
-		// 5. Trigger search for selected items
-		// 6. Tag items with search timestamp
+		// Process using the upgrade processor
+		const log = await processUpgradeConfig(config, instance);
 
-		await logger.debug('Upgrade config details', {
-			source: 'UpgradeManager',
-			meta: {
-				instanceId: instance.id,
-				filter: {
-					id: filter.id,
-					name: filter.name,
-					cutoff: filter.cutoff,
-					searchCooldown: filter.searchCooldown,
-					selector: filter.selector,
-					count: filter.count,
-					rulesCount: filter.group.children.length
-				}
-			}
-		});
-
-		// Update filter index for round-robin mode
-		if (config.filterMode === 'round_robin') {
+		// Update filter index for round-robin mode after successful processing
+		if (log.status !== 'failed' && config.filterMode === 'round_robin') {
 			upgradeConfigsQueries.incrementFilterIndex(config.arrInstanceId);
 		}
 
 		// Update last run timestamp
 		upgradeConfigsQueries.updateLastRun(config.arrInstanceId);
 
+		// Convert log to status
 		return {
 			instanceId: instance.id,
 			instanceName: instance.name,
-			success: true,
-			filterName: filter.name,
-			itemsSearched: 0 // TODO: Return actual count when implemented
+			success: log.status === 'success' || log.status === 'partial',
+			filterName: log.config.selectedFilter,
+			itemsSearched: log.selection.actualCount,
+			error: log.status === 'failed' ? log.results.errors.join('; ') : undefined
 		};
 	} catch (error) {
 		await logger.error(`Failed to process upgrade for "${instance.name}"`, {
@@ -146,7 +94,6 @@ async function processUpgradeConfig(config: UpgradeConfig): Promise<UpgradeInsta
 			instanceId: instance.id,
 			instanceName: instance.name,
 			success: false,
-			filterName: filter.name,
 			error: error instanceof Error ? error.message : 'Unknown error'
 		};
 	}
@@ -187,12 +134,12 @@ export async function runUpgradeManager(): Promise<UpgradeManagerResult> {
 	});
 
 	for (const config of dueConfigs) {
-		const status = await processUpgradeConfig(config);
+		const status = await processConfig(config);
 		statuses.push(status);
 
 		if (status.success) {
 			successCount++;
-		} else if (status.error?.includes('disabled') || status.error?.includes('No enabled')) {
+		} else if (status.error?.includes('disabled') || status.error?.includes('not yet supported') || status.error?.includes('No enabled')) {
 			skippedCount++;
 		} else {
 			failureCount++;

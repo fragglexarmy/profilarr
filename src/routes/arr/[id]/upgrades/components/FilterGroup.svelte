@@ -138,13 +138,13 @@
 							/>
 						{:else if field?.valueType === 'number'}
 							<div class="w-32">
-								<NumberInput name="value-{childIndex}" bind:value={child.value} font="mono" />
+								<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => child.value = e.detail} font="mono" />
 							</div>
 						{:else if field?.valueType === 'date'}
 							{#if child.operator === 'in_last' || child.operator === 'not_in_last'}
 								<div class="flex items-center gap-2">
 									<div class="w-24">
-										<NumberInput name="value-{childIndex}" bind:value={child.value} min={1} font="mono" />
+										<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => child.value = e.detail} min={1} font="mono" />
 									</div>
 									<span class="text-sm text-neutral-500 dark:text-neutral-400">days</span>
 								</div>

@@ -54,12 +54,15 @@ export const jobsQueries = {
 
 	/**
 	 * Get jobs that need to run (next_run_at <= now)
+	 * Note: next_run_at is stored as ISO string (2025-12-27T08:35:00.000Z)
+	 * datetime('now') returns space-separated format (2025-12-27 08:35:00)
+	 * We normalize by replacing T with space and comparing first 19 chars
 	 */
 	getDueJobs(): Job[] {
 		return db.query<Job>(
 			`SELECT * FROM jobs
        WHERE enabled = 1
-       AND (next_run_at IS NULL OR next_run_at <= datetime('now'))
+       AND (next_run_at IS NULL OR substr(replace(next_run_at, 'T', ' '), 1, 19) <= datetime('now'))
        ORDER BY next_run_at`
 		);
 	},

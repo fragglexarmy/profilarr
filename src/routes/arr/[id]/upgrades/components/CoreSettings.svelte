@@ -2,6 +2,7 @@
 	import { filterModes, type FilterMode } from '$lib/shared/filters';
 
 	export let enabled: boolean = true;
+	export let dryRun: boolean = false;
 	export let schedule: string = '360';
 	export let filterMode: FilterMode = 'round_robin';
 
@@ -64,35 +65,69 @@
 			</div>
 		</div>
 
-		<!-- Enabled Toggle -->
-		<div class="flex items-center justify-between">
-			<div>
-				<label
-					for="enabled"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+		<!-- Toggles Row -->
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<!-- Enabled Toggle -->
+			<div class="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+				<div>
+					<label
+						for="enabled"
+						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+					>
+						Enabled
+					</label>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
+						Run upgrade jobs on schedule
+					</p>
+				</div>
+				<button
+					type="button"
+					role="switch"
+					aria-checked={enabled}
+					aria-label="Toggle enabled status"
+					on:click={() => (enabled = !enabled)}
+					class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {enabled
+						? 'bg-blue-600 dark:bg-blue-500'
+						: 'bg-neutral-200 dark:bg-neutral-700'}"
 				>
-					Enabled
-				</label>
-				<p class="text-xs text-neutral-500 dark:text-neutral-400">
-					Enable or disable this upgrade configuration
-				</p>
+					<span
+						class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {enabled
+							? 'translate-x-5'
+							: 'translate-x-0'}"
+					></span>
+				</button>
 			</div>
-			<button
-				type="button"
-				role="switch"
-				aria-checked={enabled}
-				aria-label="Toggle enabled status"
-				on:click={() => (enabled = !enabled)}
-				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {enabled
-					? 'bg-blue-600 dark:bg-blue-500'
-					: 'bg-neutral-200 dark:bg-neutral-700'}"
-			>
-				<span
-					class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {enabled
-						? 'translate-x-5'
-						: 'translate-x-0'}"
-				></span>
-			</button>
+
+			<!-- Dry Run Toggle -->
+			<div class="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+				<div>
+					<label
+						for="dryRun"
+						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+					>
+						Dry Run
+					</label>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
+						Log actions without triggering searches
+					</p>
+				</div>
+				<button
+					type="button"
+					role="switch"
+					aria-checked={dryRun}
+					aria-label="Toggle dry run mode"
+					on:click={() => (dryRun = !dryRun)}
+					class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 {dryRun
+						? 'bg-amber-500 dark:bg-amber-500'
+						: 'bg-neutral-200 dark:bg-neutral-700'}"
+				>
+					<span
+						class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {dryRun
+							? 'translate-x-5'
+							: 'translate-x-0'}"
+					></span>
+				</button>
+			</div>
 		</div>
 	</div>
 </div>

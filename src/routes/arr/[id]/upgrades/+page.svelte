@@ -3,16 +3,18 @@
 	import type { FilterConfig, FilterMode } from '$lib/shared/filters';
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$lib/client/alerts/store';
-	import { Info, Save, Pencil } from 'lucide-svelte';
+	import { Info, Save, Pencil, Play } from 'lucide-svelte';
 	import CoreSettings from './components/CoreSettings.svelte';
 	import FilterSettings from './components/FilterSettings.svelte';
 	import UpgradesInfoModal from './components/UpgradesInfoModal.svelte';
+	import CooldownTracker from './components/CooldownTracker.svelte';
 
 	export let data: PageData;
 	export let form: ActionData;
 
 	// Initialize from existing config or defaults
 	let enabled = data.config?.enabled ?? false;
+	let dryRun = data.config?.dryRun ?? false;
 	let schedule = String(data.config?.schedule ?? 360);
 	let filterMode: FilterMode = data.config?.filterMode ?? 'round_robin';
 	let filters: FilterConfig[] = data.config?.filters ?? [];
@@ -22,10 +24,19 @@
 
 	let showInfoModal = false;
 	let saving = false;
+	let running = false;
 
 	// Handle form response
-	$: if (form?.success) {
+	$: if (form?.success && !form?.runResult) {
 		alertStore.add('success', `Configuration ${isNewConfig ? 'saved' : 'updated'} successfully`);
+	}
+	$: if (form?.success && form?.runResult) {
+		const r = form.runResult;
+		const dryLabel = r.dryRun ? '[DRY RUN] ' : '';
+		alertStore.add(
+			r.status === 'success' ? 'success' : r.status === 'partial' ? 'warning' : 'error',
+			`${dryLabel}${r.filterName}: ${r.searched}/${r.matched} items searched (${r.afterCooldown} after cooldown)`
+		);
 	}
 	$: if (form?.error) {
 		alertStore.add('error', form.error);
@@ -48,6 +59,7 @@
 	}}
 >
 	<input type="hidden" name="enabled" value={enabled} />
+	<input type="hidden" name="dryRun" value={dryRun} />
 	<input type="hidden" name="schedule" value={schedule} />
 	<input type="hidden" name="filterMode" value={filterMode} />
 	<input type="hidden" name="filters" value={JSON.stringify(filters)} />
@@ -73,14 +85,22 @@
 			</button>
 		</div>
 
-		<CoreSettings bind:enabled bind:schedule bind:filterMode />
+		{#if !isNewConfig && data.config?.lastRunAt}
+			<CooldownTracker
+				enabled={data.config.enabled}
+				schedule={data.config.schedule}
+				lastRunAt={data.config.lastRunAt}
+			/>
+		{/if}
+
+		<CoreSettings bind:enabled bind:dryRun bind:schedule bind:filterMode />
 		<FilterSettings bind:filters />
 
-		<!-- Save/Update Button -->
-		<div class="flex justify-end">
+		<!-- Action Buttons -->
+		<div class="flex justify-end gap-3">
 			<button
 				type="submit"
-				disabled={saving}
+				disabled={saving || running}
 				class="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 {isNewConfig
 					? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
 					: 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600'}"
@@ -96,5 +116,29 @@
 		</div>
 	</div>
 </form>
+
+{#if !isNewConfig && data.config?.dryRun}
+	<form
+		method="POST"
+		action="?/run"
+		class="mt-4 flex justify-end"
+		use:enhance={() => {
+			running = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				running = false;
+			};
+		}}
+	>
+		<button
+			type="submit"
+			disabled={running || saving}
+			class="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50"
+		>
+			<Play size={16} />
+			{running ? 'Running...' : 'Test Run'}
+		</button>
+	</form>
+{/if}
 
 <UpgradesInfoModal bind:open={showInfoModal} />

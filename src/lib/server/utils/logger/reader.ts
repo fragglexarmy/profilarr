@@ -183,3 +183,72 @@ export function parseLogLine(line: string): LogEntry | null {
     return null;
   }
 }
+
+/**
+ * Filter options for reading logs
+ */
+export interface LogFilterOptions {
+  source?: string;
+  instanceId?: number;
+  count?: number;
+}
+
+/**
+ * Read logs filtered by source and/or instanceId
+ * @param options Filter options
+ * @returns Array of filtered log entries (newest first)
+ */
+export async function readFilteredLogs(
+  options: LogFilterOptions = {}
+): Promise<LogEntry[]> {
+  const { source, instanceId, count = 500 } = options;
+
+  try {
+    const logFiles = await getLogFiles();
+    const logs: LogEntry[] = [];
+
+    // Read from newest files first
+    for (const filePath of logFiles) {
+      try {
+        const content = await Deno.readTextFile(filePath);
+        const lines = content.split("\n").filter((line) => line.trim());
+
+        // Parse each line as JSON
+        for (const line of lines) {
+          try {
+            const entry = JSON.parse(line) as LogEntry;
+
+            // Apply filters
+            if (source && entry.source !== source) {
+              continue;
+            }
+
+            if (instanceId !== undefined && entry.meta) {
+              const meta = entry.meta as Record<string, unknown>;
+              if (meta.instanceId !== instanceId) {
+                continue;
+              }
+            }
+
+            logs.push(entry);
+          } catch {
+            // Skip invalid JSON lines
+          }
+        }
+      } catch {
+        // Skip files we can't read
+      }
+    }
+
+    // Sort by timestamp (newest first)
+    logs.sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    // Return first N entries
+    return logs.slice(0, count);
+  } catch (_error) {
+    // If anything fails, return empty array
+    return [];
+  }
+}

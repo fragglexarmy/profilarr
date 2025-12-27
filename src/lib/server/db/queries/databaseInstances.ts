@@ -108,6 +108,7 @@ export const databaseInstancesQueries = {
 
 	/**
 	 * Get databases that need auto-sync check
+	 * Note: last_synced_at may be ISO format (with T and Z), normalize for datetime()
 	 */
 	getDueForSync(): DatabaseInstance[] {
 		return db.query<DatabaseInstance>(
@@ -116,7 +117,7 @@ export const databaseInstancesQueries = {
        AND sync_strategy > 0
        AND (
          last_synced_at IS NULL
-         OR datetime(last_synced_at, '+' || sync_strategy || ' minutes') <= datetime('now')
+         OR datetime(replace(replace(last_synced_at, 'T', ' '), 'Z', ''), '+' || sync_strategy || ' minutes') <= datetime('now')
        )
        ORDER BY last_synced_at ASC NULLS FIRST`
 		);

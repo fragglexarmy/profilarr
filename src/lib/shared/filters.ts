@@ -8,8 +8,10 @@ export interface FilterOperator {
 	label: string;
 }
 
+export type FilterValueType = string | number | boolean | null;
+
 export interface FilterValue {
-	value: any;
+	value: FilterValueType;
 	label: string;
 }
 
@@ -25,7 +27,7 @@ export interface FilterRule {
 	type: 'rule';
 	field: string;
 	operator: string;
-	value: any;
+	value: FilterValueType;
 }
 
 export interface FilterGroup {
@@ -51,6 +53,7 @@ export interface UpgradeConfig {
 	id?: number;
 	arrInstanceId: number;
 	enabled: boolean;
+	dryRun: boolean;
 	schedule: number; // minutes
 	filterMode: FilterMode;
 	filters: FilterConfig[];
@@ -309,6 +312,7 @@ export function createEmptyUpgradeConfig(arrInstanceId: number): UpgradeConfig {
 	return {
 		arrInstanceId,
 		enabled: false,
+		dryRun: false,
 		schedule: 360, // 6 hours
 		filterMode: 'round_robin',
 		filters: [],
@@ -341,4 +345,132 @@ export function isRule(child: FilterRule | FilterGroup): child is FilterRule {
  */
 export function isGroup(child: FilterRule | FilterGroup): child is FilterGroup {
 	return child.type === 'group';
+}
+
+/**
+ * Evaluate a single filter rule against an item
+ */
+export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): boolean {
+	const fieldValue = item[rule.field];
+	const ruleValue = rule.value;
+
+	// Handle null/undefined field values
+	if (fieldValue === null || fieldValue === undefined) {
+		// For 'is_not' or negation operators, null means "not equal" so return true
+		if (['is_not', 'neq', 'not_contains'].includes(rule.operator)) {
+			return true;
+		}
+		return false;
+	}
+
+	switch (rule.operator) {
+		// Boolean operators
+		case 'is':
+			return fieldValue === ruleValue;
+		case 'is_not':
+			return fieldValue !== ruleValue;
+
+		// Number operators
+		case 'eq':
+			if (typeof fieldValue === 'string' && typeof ruleValue === 'string') {
+				return fieldValue.toLowerCase() === ruleValue.toLowerCase();
+			}
+			return fieldValue === ruleValue;
+		case 'neq':
+			if (typeof fieldValue === 'string' && typeof ruleValue === 'string') {
+				return fieldValue.toLowerCase() !== ruleValue.toLowerCase();
+			}
+			return fieldValue !== ruleValue;
+		case 'gt':
+			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue > ruleValue;
+		case 'gte':
+			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue >= ruleValue;
+		case 'lt':
+			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue < ruleValue;
+		case 'lte':
+			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue <= ruleValue;
+
+		// Text operators (case-insensitive)
+		case 'contains': {
+			const strField = String(fieldValue).toLowerCase();
+			const strRule = String(ruleValue).toLowerCase();
+			return strField.includes(strRule);
+		}
+		case 'not_contains': {
+			const strField = String(fieldValue).toLowerCase();
+			const strRule = String(ruleValue).toLowerCase();
+			return !strField.includes(strRule);
+		}
+		case 'starts_with': {
+			const strField = String(fieldValue).toLowerCase();
+			const strRule = String(ruleValue).toLowerCase();
+			return strField.startsWith(strRule);
+		}
+		case 'ends_with': {
+			const strField = String(fieldValue).toLowerCase();
+			const strRule = String(ruleValue).toLowerCase();
+			return strField.endsWith(strRule);
+		}
+
+		// Date operators
+		case 'before': {
+			const fieldDate = new Date(fieldValue as string);
+			const ruleDate = new Date(ruleValue as string);
+			return fieldDate < ruleDate;
+		}
+		case 'after': {
+			const fieldDate = new Date(fieldValue as string);
+			const ruleDate = new Date(ruleValue as string);
+			return fieldDate > ruleDate;
+		}
+		case 'in_last': {
+			// ruleValue is number of days/hours depending on context
+			const fieldDate = new Date(fieldValue as string);
+			const now = new Date();
+			const diffMs = now.getTime() - fieldDate.getTime();
+			const diffDays = diffMs / (1000 * 60 * 60 * 24);
+			return diffDays <= (ruleValue as number);
+		}
+		case 'not_in_last': {
+			const fieldDate = new Date(fieldValue as string);
+			const now = new Date();
+			const diffMs = now.getTime() - fieldDate.getTime();
+			const diffDays = diffMs / (1000 * 60 * 60 * 24);
+			return diffDays > (ruleValue as number);
+		}
+
+		default:
+			return false;
+	}
+}
+
+/**
+ * Evaluate a filter group against an item
+ * Supports nested groups with AND/OR logic
+ */
+export function evaluateGroup(item: Record<string, unknown>, group: FilterGroup): boolean {
+	if (group.children.length === 0) {
+		// Empty group matches everything
+		return true;
+	}
+
+	if (group.match === 'all') {
+		// AND logic: all children must match
+		return group.children.every((child) => {
+			if (isRule(child)) {
+				return evaluateRule(item, child);
+			} else {
+				return evaluateGroup(item, child);
+			}
+		});
+	} else {
+		// OR logic: any child must match
+		return group.children.some((child) => {
+			if (isRule(child)) {
+				return evaluateRule(item, child);
+			} else {
+				return evaluateGroup(item, child);
+			}
+		});
+	}
 }

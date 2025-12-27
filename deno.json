@@ -1,5 +1,6 @@
 {
   "imports": {
+    "$lib/": "./src/lib/",
     "$config": "./src/lib/server/utils/config/config.ts",
     "$logger/": "./src/lib/server/utils/logger/",
     "$shared/": "./src/lib/shared/",
@@ -15,6 +16,7 @@
     "$http/": "./src/lib/server/utils/http/",
     "$utils/": "./src/lib/server/utils/",
     "$notifications/": "./src/lib/server/notifications/",
+    "$cache/": "./src/lib/server/utils/cache/",
     "@soapbox/kysely-deno-sqlite": "jsr:@soapbox/kysely-deno-sqlite@^2.2.0",
     "@std/assert": "jsr:@std/assert@^1.0.0",
     "marked": "npm:marked@^15.0.6",

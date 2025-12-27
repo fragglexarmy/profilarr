@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Plus, X, ChevronDown, Pencil, Check, Info, Power, Copy } from 'lucide-svelte';
+	import { Plus, X, ChevronDown, Pencil, Check, Info, Power, Copy, ClipboardCopy, ClipboardPaste } from 'lucide-svelte';
 	import { slide } from 'svelte/transition';
 	import { createEmptyFilterConfig, type FilterConfig } from '$lib/shared/filters';
 	import { selectors } from '$lib/shared/selectors';
 	import FilterGroupComponent from './FilterGroup.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import FiltersInfoModal from './FiltersInfoModal.svelte';
+	import { alertStore } from '$alerts/store';
 
 	export let filters: FilterConfig[] = [];
 
@@ -84,6 +85,57 @@
 			expandedIds = expandedIds;
 		}
 	}
+
+	async function copyFilter(id: string, event: MouseEvent) {
+		event.stopPropagation();
+		const filter = filters.find((f) => f.id === id);
+		if (!filter) return;
+
+		const exportData = {
+			...structuredClone(filter),
+			id: undefined
+		};
+
+		try {
+			await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+			alertStore.add('success', 'Filter copied to clipboard');
+		} catch {
+			alertStore.add('error', 'Failed to copy to clipboard');
+		}
+	}
+
+	async function pasteFilter(event: MouseEvent) {
+		event.stopPropagation();
+
+		try {
+			const text = await navigator.clipboard.readText();
+			const imported = JSON.parse(text);
+
+			if (!imported.name || !imported.group) {
+				alertStore.add('error', 'Invalid filter format');
+				return;
+			}
+
+			const newFilter: FilterConfig = {
+				id: crypto.randomUUID(),
+				name: imported.name,
+				enabled: imported.enabled ?? true,
+				group: imported.group,
+				selector: imported.selector ?? 'random',
+				count: imported.count ?? 5,
+				cutoff: imported.cutoff ?? 80,
+				searchCooldown: imported.searchCooldown ?? 24
+			};
+
+			filters = [...filters, newFilter];
+			expandedIds.add(newFilter.id);
+			expandedIds = expandedIds;
+
+			alertStore.add('success', `Imported "${newFilter.name}"`);
+		} catch {
+			alertStore.add('error', 'Failed to paste filter from clipboard');
+		}
+	}
 </script>
 
 <div
@@ -99,6 +151,15 @@
 			>
 				<Info size={14} />
 				Fields
+			</button>
+			<button
+				type="button"
+				on:click={pasteFilter}
+				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				title="Paste filter from clipboard"
+			>
+				<ClipboardPaste size={14} />
+				Paste
 			</button>
 			<button
 				type="button"
@@ -120,17 +181,19 @@
 			{#each filters as filter (filter.id)}
 				<div class="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
 					<!-- Accordion Header -->
-					<div class="flex cursor-pointer items-center justify-between bg-neutral-50 px-4 py-3 dark:bg-neutral-800/50">
-						<button
-							type="button"
-							on:click={() => toggleExpanded(filter.id)}
-							class="flex flex-1 cursor-pointer items-center gap-3 text-left"
-						>
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						on:click={() => toggleExpanded(filter.id)}
+						class="flex cursor-pointer items-center justify-between bg-neutral-50 px-4 py-3 dark:bg-neutral-800/50"
+					>
+						<div class="flex flex-1 items-center gap-3 text-left">
 							<ChevronDown
 								size={16}
 								class="text-neutral-400 transition-transform {expandedIds.has(filter.id) ? 'rotate-180' : ''}"
 							/>
 							{#if editingId === filter.id}
+								<!-- svelte-ignore a11y_autofocus -->
 								<input
 									type="text"
 									bind:value={editingName}
@@ -150,7 +213,7 @@
 									</span>
 								{/if}
 							{/if}
-						</button>
+						</div>
 						<div class="flex items-center gap-1">
 							{#if editingId === filter.id}
 								<button
@@ -179,6 +242,14 @@
 									title="Rename"
 								>
 									<Pencil size={14} />
+								</button>
+								<button
+									type="button"
+									on:click={(e) => copyFilter(filter.id, e)}
+									class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+									title="Copy to clipboard"
+								>
+									<ClipboardCopy size={14} />
 								</button>
 								<button
 									type="button"

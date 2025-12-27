@@ -6,7 +6,9 @@ import type {
 	RadarrLibraryItem,
 	ScoreBreakdownItem,
 	CustomFormatRef,
-	QualityProfileFormatItem
+	QualityProfileFormatItem,
+	RadarrTag,
+	RadarrCommand
 } from '../types.ts';
 
 /**
@@ -107,6 +109,8 @@ export class RadarrClient extends BaseArrClient {
 				qualityProfileId: movie.qualityProfileId,
 				qualityProfileName: profileName,
 				hasFile: movie.hasFile,
+				dateAdded: movie.added,
+				popularity: movie.popularity,
 				customFormats,
 				customFormatScore,
 				qualityName: movieFile?.quality?.quality?.name,
@@ -121,5 +125,63 @@ export class RadarrClient extends BaseArrClient {
 		});
 
 		return libraryItems;
+	}
+
+	// =========================================================================
+	// Search Methods
+	// =========================================================================
+
+	/**
+	 * Trigger a search for specific movies
+	 * Uses the MoviesSearch command endpoint
+	 */
+	searchMovies(movieIds: number[]): Promise<RadarrCommand> {
+		return this.post<RadarrCommand>(`/api/${this.apiVersion}/command`, {
+			name: 'MoviesSearch',
+			movieIds
+		});
+	}
+
+	// =========================================================================
+	// Tag Methods
+	// =========================================================================
+
+	/**
+	 * Get all tags
+	 */
+	getTags(): Promise<RadarrTag[]> {
+		return this.get<RadarrTag[]>(`/api/${this.apiVersion}/tag`);
+	}
+
+	/**
+	 * Create a new tag
+	 */
+	createTag(label: string): Promise<RadarrTag> {
+		return this.post<RadarrTag>(`/api/${this.apiVersion}/tag`, { label });
+	}
+
+	/**
+	 * Get a tag by label, or create it if it doesn't exist
+	 */
+	async getOrCreateTag(label: string): Promise<RadarrTag> {
+		const tags = await this.getTags();
+		const existing = tags.find((t) => t.label.toLowerCase() === label.toLowerCase());
+
+		if (existing) {
+			return existing;
+		}
+
+		return this.createTag(label);
+	}
+
+	// =========================================================================
+	// Movie Update Methods
+	// =========================================================================
+
+	/**
+	 * Update a movie (used for adding/removing tags)
+	 */
+	updateMovie(movie: RadarrMovie): Promise<RadarrMovie> {
+		return this.put<RadarrMovie>(`/api/${this.apiVersion}/movie/${movie.id}`, movie);
 	}
 }
