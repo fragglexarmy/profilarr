@@ -4,7 +4,7 @@
  */
 
 import { BaseTest } from '../base/BaseTest.ts';
-import { assertEquals, assertNotEquals, assert } from '@std/assert';
+import { assertEquals, assert } from '@std/assert';
 import { selectors, getSelector, isValidSelector, getAllSelectorIds } from '../../lib/shared/selectors.ts';
 
 interface MockItem {
