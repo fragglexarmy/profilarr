@@ -6,8 +6,9 @@
 	export let instance: { id: number; name: string; type: string; url: string };
 	export let library: RadarrLibraryItem[];
 	export let allMoviesWithFiles: RadarrLibraryItem[];
-
-	let refreshing = false;
+	export let refreshing = false;
+	export let loading = false;
+	export let onRefresh: () => void;
 
 	$: baseUrl = instance.url.replace(/\/$/, '');
 </script>
@@ -20,47 +21,55 @@
 				{instance.type}
 			</span>
 			<div class="hidden sm:flex items-center gap-2">
-				<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Total movies in library">
-					<Film size={12} class="text-blue-500" />
-					{library.length} Total
-				</span>
-				<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Movies with files on disk">
-					<HardDrive size={12} class="text-purple-500" />
-					{allMoviesWithFiles.length} On Disk
-				</span>
-				<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Movies that have met the quality cutoff">
-					<CheckCircle size={12} class="text-green-500" />
-					{allMoviesWithFiles.filter((m) => m.cutoffMet).length} Cutoff Met
-				</span>
-				<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Movies that can still be upgraded">
-					<ArrowUpCircle size={12} class="text-orange-500" />
-					{allMoviesWithFiles.filter((m) => !m.cutoffMet).length} Upgradeable
-				</span>
+				{#if loading}
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs dark:bg-neutral-800">
+						<Film size={12} class="text-blue-500" />
+						<span class="h-3 w-12 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse"></span>
+					</span>
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs dark:bg-neutral-800">
+						<HardDrive size={12} class="text-purple-500" />
+						<span class="h-3 w-14 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse"></span>
+					</span>
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs dark:bg-neutral-800">
+						<CheckCircle size={12} class="text-green-500" />
+						<span class="h-3 w-16 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse"></span>
+					</span>
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs dark:bg-neutral-800">
+						<ArrowUpCircle size={12} class="text-orange-500" />
+						<span class="h-3 w-16 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse"></span>
+					</span>
+				{:else}
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Total movies in library">
+						<Film size={12} class="text-blue-500" />
+						{library.length} Total
+					</span>
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Movies with files on disk">
+						<HardDrive size={12} class="text-purple-500" />
+						{allMoviesWithFiles.length} On Disk
+					</span>
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Movies that have met the quality cutoff">
+						<CheckCircle size={12} class="text-green-500" />
+						{allMoviesWithFiles.filter((m) => m.cutoffMet).length} Cutoff Met
+					</span>
+					<span class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" title="Movies that can still be upgraded">
+						<ArrowUpCircle size={12} class="text-orange-500" />
+						{allMoviesWithFiles.filter((m) => !m.cutoffMet).length} Upgradeable
+					</span>
+				{/if}
 			</div>
 		</div>
 		<code class="text-xs font-mono text-neutral-500 dark:text-neutral-400">{instance.url}</code>
 	</div>
 	<div class="flex items-center gap-2">
-		<form
-			method="POST"
-			action="?/refresh"
-			use:enhance={() => {
-				refreshing = true;
-				return async ({ update }) => {
-					await update();
-					refreshing = false;
-				};
-			}}
+		<button
+			type="button"
+			disabled={refreshing}
+			on:click={onRefresh}
+			class="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 		>
-			<button
-				type="submit"
-				disabled={refreshing}
-				class="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<RefreshCw size={14} class={refreshing ? 'animate-spin' : ''} />
-				Refresh
-			</button>
-		</form>
+			<RefreshCw size={14} class={refreshing ? 'animate-spin' : ''} />
+			Refresh
+		</button>
 		<a
 			href={baseUrl}
 			target="_blank"

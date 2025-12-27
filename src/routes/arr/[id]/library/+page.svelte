@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { AlertTriangle, Film } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
 	import { browser } from '$app/environment';
@@ -7,14 +8,88 @@
 	import type { PageData } from './$types';
 	import type { RadarrLibraryItem } from '$utils/arr/types.ts';
 	import { createSearchStore } from '$stores/search';
+	import { libraryCache } from '$stores/libraryCache';
 
 	import LibraryHeader from './components/LibraryHeader.svelte';
 	import LibraryActionBar from './components/LibraryActionBar.svelte';
 	import MovieRow from './components/MovieRow.svelte';
+	import MovieRowSkeleton from './components/MovieRowSkeleton.svelte';
 
 	export let data: PageData;
 
 	const searchStore = createSearchStore({ debounceMs: 150 });
+
+	// ==========================================================================
+	// Library Data State
+	// ==========================================================================
+
+	let library: RadarrLibraryItem[] = [];
+	let libraryError: string | null = null;
+	let profilesByDatabase: { databaseId: number; databaseName: string; profiles: string[] }[] = [];
+	let loading = true;
+	let refreshing = false;
+
+	async function fetchLibrary(force = false) {
+		const instanceId = data.instance.id;
+
+		// Check client cache first (unless forcing refresh)
+		if (!force && libraryCache.has(instanceId)) {
+			const cached = libraryCache.get(instanceId)!;
+			library = cached.data;
+			profilesByDatabase = cached.profilesByDatabase;
+			libraryError = null;
+			loading = false;
+			return;
+		}
+
+		// Fetch from API
+		try {
+			if (force) {
+				// Clear server cache first
+				await fetch(`/api/arr/${instanceId}/library`, { method: 'DELETE' });
+			}
+
+			const response = await fetch(`/api/arr/${instanceId}/library`);
+			if (!response.ok) {
+				throw new Error(`Failed to fetch library: ${response.statusText}`);
+			}
+
+			const result = await response.json();
+			library = result.library;
+			libraryError = result.libraryError;
+			profilesByDatabase = result.profilesByDatabase;
+
+			// Cache the result
+			if (!result.libraryError) {
+				libraryCache.set(instanceId, result.library, result.profilesByDatabase);
+			}
+		} catch (err) {
+			libraryError = err instanceof Error ? err.message : 'Failed to fetch library';
+		} finally {
+			loading = false;
+			refreshing = false;
+		}
+	}
+
+	async function handleRefresh() {
+		refreshing = true;
+		libraryCache.invalidate(data.instance.id);
+		await fetchLibrary(true);
+	}
+
+	let currentInstanceId: number | null = null;
+
+	onMount(() => {
+		currentInstanceId = data.instance.id;
+		fetchLibrary();
+	});
+
+	// Refetch if instance changes (navigation between instances)
+	$: if (browser && data.instance.id && data.instance.id !== currentInstanceId) {
+		currentInstanceId = data.instance.id;
+		loading = true;
+		fetchLibrary();
+	}
 
 	// ==========================================================================
 	// Column Visibility
@@ -78,8 +153,8 @@
 
 	let activeFilters: ActiveFilter[] = [];
 
-	$: uniqueQualities = [...new Set(data.library.filter(m => m.qualityName).map(m => m.qualityName!))].sort();
-	$: uniqueProfiles = [...new Set(data.library.map(m => m.qualityProfileName))].sort();
+	$: uniqueQualities = [...new Set(library.filter(m => m.qualityName).map(m => m.qualityName!))].sort();
+	$: uniqueProfiles = [...new Set(library.map(m => m.qualityProfileName))].sort();
 
 	function toggleFilter(field: FilterField, operator: FilterOperator, value: string | number | boolean, label: string) {
 		const existingIndex = activeFilters.findIndex(f => f.field === field && f.value === value);
@@ -123,7 +198,7 @@
 
 	$: baseUrl = data.instance.url.replace(/\/$/, '');
 	$: debouncedQuery = $searchStore.query;
-	$: allMoviesWithFiles = data.library.filter((m) => m.hasFile);
+	$: allMoviesWithFiles = library.filter((m) => m.hasFile);
 
 	$: moviesWithFiles = (() => {
 		const filters = activeFilters;
@@ -151,6 +226,27 @@
 	);
 
 	const defaultSort: SortState = { key: 'title', direction: 'asc' };
+
+	// Skeleton placeholder data for loading state
+	const skeletonData: RadarrLibraryItem[] = Array.from({ length: 12 }, (_, i) => ({
+		id: `skeleton-${i}`,
+		title: '',
+		year: 0,
+		tmdbId: 0,
+		hasFile: true,
+		qualityProfileId: 0,
+		qualityProfileName: '',
+		isProfilarrProfile: false,
+		qualityName: null,
+		customFormatScore: 0,
+		cutoffScore: 0,
+		cutoffMet: false,
+		progress: 0,
+		popularity: 0,
+		dateAdded: '',
+		fileName: null,
+		scoreBreakdown: []
+	})) as unknown as RadarrLibraryItem[];
 </script>
 
 <svelte:head>
@@ -158,13 +254,13 @@
 </svelte:head>
 
 <div class="mt-6 space-y-6">
-	{#if data.libraryError}
+	{#if libraryError && !loading}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/40">
 			<div class="flex items-center gap-3">
 				<AlertTriangle class="h-5 w-5 text-red-600 dark:text-red-400" />
 				<div>
 					<h3 class="font-medium text-red-800 dark:text-red-200">Failed to load library</h3>
-					<p class="mt-1 text-sm text-red-600 dark:text-red-400">{data.libraryError}</p>
+					<p class="mt-1 text-sm text-red-600 dark:text-red-400">{libraryError}</p>
 				</div>
 			</div>
 		</div>
@@ -180,55 +276,70 @@
 				</div>
 			</div>
 		</div>
-	{:else if allMoviesWithFiles.length === 0}
-		<div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-			<div class="flex items-center gap-3">
-				<Film class="h-5 w-5 text-neutral-400" />
-				<div>
-					<h3 class="font-medium text-neutral-900 dark:text-neutral-50">No movies with files</h3>
-					<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-						This library has {data.library.length} movies but none have downloaded files yet.
-					</p>
-				</div>
-			</div>
-		</div>
 	{:else}
 		<LibraryHeader
 			instance={data.instance}
-			library={data.library}
+			{library}
 			{allMoviesWithFiles}
+			{refreshing}
+			{loading}
+			onRefresh={handleRefresh}
 		/>
 
-		<LibraryActionBar
-			{searchStore}
-			visibleColumns={new Set([...visibleColumns])}
-			toggleableColumns={TOGGLEABLE_COLUMNS}
-			{columnLabels}
-			{activeFilters}
-			{uniqueQualities}
-			{uniqueProfiles}
-			profilesByDatabase={data.profilesByDatabase}
-			filteredCount={moviesWithFiles.length}
-			onToggleColumn={toggleColumn}
-			onToggleFilter={toggleFilter}
-			onChangeProfile={handleChangeProfile}
-		/>
+		{#if !loading}
+			<LibraryActionBar
+				{searchStore}
+				visibleColumns={new Set([...visibleColumns])}
+				toggleableColumns={TOGGLEABLE_COLUMNS}
+				{columnLabels}
+				{activeFilters}
+				{uniqueQualities}
+				{uniqueProfiles}
+				{profilesByDatabase}
+				filteredCount={moviesWithFiles.length}
+				onToggleColumn={toggleColumn}
+				onToggleFilter={toggleFilter}
+				onChangeProfile={handleChangeProfile}
+			/>
+		{/if}
 
-		<ExpandableTable
-			{columns}
-			data={moviesWithFiles}
-			getRowId={(row) => row.id}
-			compact={true}
-			{defaultSort}
-			emptyMessage={activeFilters.length > 0 || debouncedQuery ? 'No movies match the current filters' : 'No movies with files'}
-		>
-			<svelte:fragment slot="cell" let:row let:column>
-				<MovieRow {row} {column} {baseUrl} mode="cell" />
-			</svelte:fragment>
+		{#if allMoviesWithFiles.length === 0 && !loading}
+			<div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+				<div class="flex items-center gap-3">
+					<Film class="h-5 w-5 text-neutral-400" />
+					<div>
+						<h3 class="font-medium text-neutral-900 dark:text-neutral-50">No movies with files</h3>
+						<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+							This library has {library.length} movies but none have downloaded files yet.
+						</p>
+					</div>
+				</div>
+			</div>
+		{:else}
+			<div class="transition-all duration-300 {loading ? 'opacity-60' : 'opacity-100'}">
+				<ExpandableTable
+					{columns}
+					data={loading ? skeletonData : moviesWithFiles}
+					getRowId={(row) => row.id}
+					compact={true}
+					{defaultSort}
+					emptyMessage={activeFilters.length > 0 || debouncedQuery ? 'No movies match the current filters' : 'No movies with files'}
+				>
+					<svelte:fragment slot="cell" let:row let:column>
+						{#if loading}
+							<MovieRowSkeleton {column} />
+						{:else}
+							<MovieRow {row} {column} {baseUrl} mode="cell" />
+						{/if}
+					</svelte:fragment>
 
-			<svelte:fragment slot="expanded" let:row>
-				<MovieRow {row} column={allColumns[0]} {baseUrl} mode="expanded" />
-			</svelte:fragment>
-		</ExpandableTable>
+					<svelte:fragment slot="expanded" let:row>
+						{#if !loading}
+							<MovieRow {row} column={allColumns[0]} {baseUrl} mode="expanded" />
+						{/if}
+					</svelte:fragment>
+				</ExpandableTable>
+			</div>
+		{/if}
 	{/if}
 </div>
