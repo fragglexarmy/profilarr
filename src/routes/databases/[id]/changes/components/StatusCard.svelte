@@ -7,7 +7,6 @@
 		Star,
 		GitFork,
 		CircleDot,
-		History,
 		ChevronDown,
 		Check
 	} from 'lucide-svelte';
@@ -17,7 +16,6 @@
 	export let status: GitStatus;
 	export let repoInfo: RepoInfo | null;
 	export let branches: string[];
-	export let databaseId: number;
 
 	let branchDropdownOpen = false;
 	let switching = false;
@@ -156,14 +154,6 @@
 				{/if}
 			</div>
 
-			<!-- Commits button -->
-			<a
-				href="/databases/{databaseId}/changes/commits"
-				class="flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-			>
-				<History size={14} class="text-neutral-500 dark:text-neutral-400" />
-				<code class="font-mono text-neutral-700 dark:text-neutral-300">Commits</code>
-			</a>
 		</div>
 	</div>
 </div>

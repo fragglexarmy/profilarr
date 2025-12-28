@@ -41,9 +41,11 @@
 		return new Date(date).toLocaleDateString();
 	}
 
-	// Handle row click
+	// Handle row click - only navigate for dev databases
 	function handleRowClick(database: DatabaseInstance) {
-		goto(`/databases/${database.id}`);
+		if (database.personal_access_token) {
+			goto(`/databases/${database.id}`);
+		}
 	}
 
 	// Handle unlink click
@@ -97,7 +99,7 @@
 		<!-- Database Table -->
 		<Table {columns} data={data.databases} hoverable={true}>
 			<svelte:fragment slot="cell" let:row let:column>
-				<div on:click={() => handleRowClick(row)} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)} class="cursor-pointer">
+				<div on:click={() => handleRowClick(row)} role={row.personal_access_token ? "button" : undefined} tabindex={row.personal_access_token ? 0 : undefined} on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)} class={row.personal_access_token ? "cursor-pointer" : ""}>
 					{#if column.key === 'name'}
 						<div class="flex items-center gap-3">
 							<img

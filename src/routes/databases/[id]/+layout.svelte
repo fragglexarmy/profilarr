@@ -1,29 +1,24 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
-	import { RefreshCw, GitBranch } from 'lucide-svelte';
+	import { GitBranch, History } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
 	$: instanceId = $page.params.id;
 	$: currentPath = $page.url.pathname;
-	$: hasToken = !!$page.data.database?.personal_access_token;
 
 	$: tabs = [
 		{
-			label: 'Sync',
-			href: `/databases/${instanceId}/sync`,
-			icon: RefreshCw,
-			active: currentPath.includes('/sync')
+			label: 'Changes',
+			href: `/databases/${instanceId}/changes`,
+			icon: GitBranch,
+			active: currentPath.endsWith('/changes')
 		},
-		...(hasToken
-			? [
-					{
-						label: 'Changes',
-						href: `/databases/${instanceId}/changes`,
-						icon: GitBranch,
-						active: currentPath.includes('/changes')
-					}
-				]
-			: [])
+		{
+			label: 'Commits',
+			href: `/databases/${instanceId}/commits`,
+			icon: History,
+			active: currentPath.includes('/commits')
+		}
 	];
 
 	$: backButton = {

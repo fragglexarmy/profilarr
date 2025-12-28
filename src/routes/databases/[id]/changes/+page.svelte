@@ -151,7 +151,6 @@
 		status={data.status}
 		repoInfo={data.repoInfo}
 		branches={data.branches}
-		databaseId={data.database.id}
 	/>
 
 	<!-- Actions Bar -->
