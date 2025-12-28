@@ -161,9 +161,9 @@
 
 				<!-- Tags -->
 				<div>
-					<label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+					<div class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 						Tags <span class="text-red-500">*</span>
-					</label>
+					</div>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 						Delay profiles apply to items with matching tags
 					</p>

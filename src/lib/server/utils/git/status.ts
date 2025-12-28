@@ -134,6 +134,23 @@ export async function getBranches(repoPath: string): Promise<string[]> {
 }
 
 /**
+ * Check if a file is uncommitted (untracked or staged but not yet committed)
+ */
+export async function isFileUncommitted(repoPath: string, filepath: string): Promise<boolean> {
+	// Get relative path from repo root
+	const relativePath = filepath.startsWith(repoPath + '/')
+		? filepath.slice(repoPath.length + 1)
+		: filepath;
+
+	const output = await execGitSafe(['status', '--porcelain', relativePath], repoPath);
+	if (!output) return false;
+
+	const status = output.substring(0, 2);
+	// ?? = untracked, A = added (staged), AM = added and modified
+	return status.startsWith('??') || status[0] === 'A';
+}
+
+/**
  * Get commit history
  */
 export async function getCommits(repoPath: string, limit: number = 50): Promise<Commit[]> {

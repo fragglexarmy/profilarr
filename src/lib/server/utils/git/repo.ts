@@ -115,10 +115,10 @@ export async function fetch(repoPath: string): Promise<void> {
 }
 
 /**
- * Pull with rebase
+ * Pull from remote
  */
 export async function pull(repoPath: string): Promise<void> {
-	await execGit(['pull', '--rebase'], repoPath);
+	await execGit(['pull'], repoPath);
 }
 
 /**

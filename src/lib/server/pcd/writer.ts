@@ -7,6 +7,7 @@ import { getBaseOpsPath, getUserOpsPath } from './ops.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
 import { compile } from './cache.ts';
+import { isFileUncommitted } from '$utils/git/status.ts';
 
 export type OperationLayer = 'base' | 'user';
 export type OperationType = 'create' | 'update' | 'delete';
@@ -176,9 +177,11 @@ async function parseOperationMetadata(filepath: string): Promise<OperationMetada
 /**
  * Find and remove a matching create operation for a delete
  * Returns true if a create was found and removed (no delete needed)
+ * Only cancels out if the create file is uncommitted (untracked or staged)
  */
 async function cancelOutCreate(
 	targetDir: string,
+	repoPath: string,
 	metadata: OperationMetadata
 ): Promise<boolean> {
 	if (metadata.operation !== 'delete') {
@@ -199,9 +202,16 @@ async function cancelOutCreate(
 				fileMeta.entity === metadata.entity &&
 				fileMeta.name === metadata.name
 			) {
+				// Only cancel out if the file is uncommitted
+				const uncommitted = await isFileUncommitted(repoPath, filepath);
+				if (!uncommitted) {
+					// File has been committed - don't cancel, proceed with delete operation
+					continue;
+				}
+
 				// Remove the create file - it cancels out with the delete
 				await Deno.remove(filepath);
-				await logger.info('Cancelled out create operation with delete', {
+				await logger.info('Cancelled out uncommitted create operation with delete', {
 					source: 'PCDWriter',
 					meta: { filepath, entity: metadata.entity, name: metadata.name }
 				});
@@ -245,7 +255,7 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		await ensureDir(targetDir);
 
 		// Optimization: if this is a delete and there's an uncommitted create, just remove the create
-		if (metadata && await cancelOutCreate(targetDir, metadata)) {
+		if (metadata && await cancelOutCreate(targetDir, instance.local_path, metadata)) {
 			// Recompile the cache after removing the create file
 			await compile(instance.local_path, instance.id);
 			return { success: true };

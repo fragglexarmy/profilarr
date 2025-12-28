@@ -66,18 +66,20 @@
 
 		const response = await fetch('?/discard', {
 			method: 'POST',
-			body: formData
+			body: formData,
+			headers: { 'Accept': 'application/json' }
 		});
 
 		const result = await response.json();
 
 		if (result.type === 'success' && result.data?.success) {
-			selected = new Set();
 			alertStore.add('success', 'Changes discarded');
-			await fetchChanges();
 		} else {
 			alertStore.add('error', result.data?.error || 'Failed to discard changes');
 		}
+
+		selected = new Set();
+		await fetchChanges();
 	}
 
 	async function handleAdd() {
@@ -89,17 +91,20 @@
 
 		const response = await fetch('?/add', {
 			method: 'POST',
-			body: formData
+			body: formData,
+			headers: { 'Accept': 'application/json' }
 		});
 
 		const result = await response.json();
 
 		if (result.type === 'success' && result.data?.success) {
-			commitMessage = '';
 			alertStore.add('success', 'Changes committed and pushed');
 		} else {
 			alertStore.add('error', result.data?.error || 'Failed to add changes');
 		}
+
+		// Always clear and refresh
+		commitMessage = '';
 
 		// Always refresh to keep UI in sync with file system
 		selected = new Set();
