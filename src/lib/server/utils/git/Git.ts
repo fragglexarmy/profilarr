@@ -24,6 +24,7 @@ export class Git {
 	checkForUpdates = (): Promise<UpdateInfo> => status.checkForUpdates(this.repoPath);
 	getLastPushed = () => status.getLastPushed(this.repoPath);
 	getCommits = (limit?: number): Promise<Commit[]> => status.getCommits(this.repoPath, limit);
+	getDiff = (filepaths?: string[]): Promise<string> => status.getDiff(this.repoPath, filepaths);
 
 	// Operation file methods
 	getUncommittedOps = (): Promise<OperationFile[]> => ops.getUncommittedOps(this.repoPath);

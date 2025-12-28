@@ -1,17 +1,49 @@
 <script lang="ts">
-	import { Trash2, Upload } from 'lucide-svelte';
+	import { Trash2, Upload, Sparkles, Loader2 } from 'lucide-svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
+	import { alertStore } from '$alerts/store';
 
+	export let databaseId: number;
 	export let selectedCount: number;
+	export let selectedFiles: string[] = [];
 	export let commitMessage: string;
+	export let aiEnabled: boolean = false;
 
 	export let onDiscard: () => void;
 	export let onAdd: () => void;
 
+	let generating = false;
+
 	$: canDiscard = selectedCount > 0;
 	$: canAdd = selectedCount > 0 && commitMessage.trim().length > 0;
+	$: canGenerate = aiEnabled && selectedCount > 0 && !generating;
+
+	async function handleGenerate() {
+		if (!canGenerate) return;
+
+		generating = true;
+		try {
+			const response = await fetch(`/api/databases/${databaseId}/generate-commit-message`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ files: selectedFiles })
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				commitMessage = data.message;
+			} else {
+				const error = await response.json();
+				alertStore.add('error', error.message || 'Failed to generate commit message');
+			}
+		} catch (err) {
+			alertStore.add('error', 'Failed to generate commit message');
+		} finally {
+			generating = false;
+		}
+	}
 </script>
 
 <ActionsBar className="w-full">
@@ -27,6 +59,30 @@
 			/>
 		</div>
 	</div>
+
+	{#if aiEnabled}
+		<ActionButton
+			icon={generating ? Loader2 : Sparkles}
+			iconClass={generating ? 'animate-spin' : ''}
+			hasDropdown={true}
+			dropdownPosition="right"
+			on:click={canGenerate ? handleGenerate : undefined}
+		>
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} {open} minWidth="12rem">
+					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
+						{#if generating}
+							Generating...
+						{:else if !selectedCount}
+							Select changes first
+						{:else}
+							Generate commit message
+						{/if}
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+	{/if}
 
 	<ActionButton
 		icon={Upload}

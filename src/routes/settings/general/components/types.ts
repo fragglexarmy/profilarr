@@ -17,3 +17,10 @@ export interface BackupSettings {
 	include_database: boolean;
 	compression_enabled: boolean;
 }
+
+export interface AISettings {
+	enabled: boolean;
+	api_url: string;
+	api_key: string;
+	model: string;
+}

@@ -151,6 +151,55 @@ export async function isFileUncommitted(repoPath: string, filepath: string): Pro
 }
 
 /**
+ * Get diff for specific files (or all uncommitted changes if no files specified)
+ * Handles both tracked (modified) and untracked (new) files
+ */
+export async function getDiff(repoPath: string, filepaths?: string[]): Promise<string> {
+	const diffs: string[] = [];
+
+	if (filepaths && filepaths.length > 0) {
+		for (const filepath of filepaths) {
+			const relativePath = filepath.startsWith(repoPath + '/')
+				? filepath.slice(repoPath.length + 1)
+				: filepath;
+
+			// Check if file is untracked
+			const status = await execGitSafe(['status', '--porcelain', relativePath], repoPath);
+			const isUntracked = status?.startsWith('??');
+
+			if (isUntracked) {
+				// For untracked files, show as new file diff
+				try {
+					const content = await Deno.readTextFile(`${repoPath}/${relativePath}`);
+					diffs.push(`diff --git a/${relativePath} b/${relativePath}
+new file mode 100644
+--- /dev/null
++++ b/${relativePath}
+@@ -0,0 +1,${content.split('\n').length} @@
+${content.split('\n').map(line => '+' + line).join('\n')}`);
+				} catch {
+					// File doesn't exist or can't be read
+				}
+			} else {
+				// For tracked files, use git diff
+				const diff = await execGitSafe(['diff', 'HEAD', '--', relativePath], repoPath);
+				if (diff) {
+					diffs.push(diff);
+				}
+			}
+		}
+	} else {
+		// No specific files, get all changes
+		const diff = await execGitSafe(['diff', 'HEAD'], repoPath);
+		if (diff) {
+			diffs.push(diff);
+		}
+	}
+
+	return diffs.join('\n\n');
+}
+
+/**
  * Get commit history
  */
 export async function getCommits(repoPath: string, limit: number = 50): Promise<Commit[]> {

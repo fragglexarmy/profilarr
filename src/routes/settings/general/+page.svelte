@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LoggingSettings from './components/LoggingSettings.svelte';
 	import BackupSettings from './components/BackupSettings.svelte';
+	import AISettings from './components/AISettings.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -20,5 +21,8 @@
 
 		<!-- Logging Configuration -->
 		<LoggingSettings settings={data.logSettings} />
+
+		<!-- AI Configuration -->
+		<AISettings settings={data.aiSettings} />
 	</div>
 </div>

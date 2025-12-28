@@ -2,12 +2,14 @@ import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
 import { logSettingsQueries } from '$db/queries/logSettings.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
+import { aiSettingsQueries } from '$db/queries/aiSettings.ts';
 import { logSettings } from '$logger/settings.ts';
 import { logger } from '$logger/logger.ts';
 
 export const load = () => {
 	const logSetting = logSettingsQueries.get();
 	const backupSetting = backupSettingsQueries.get();
+	const aiSetting = aiSettingsQueries.get();
 
 	if (!logSetting) {
 		throw new Error('Log settings not found in database');
@@ -15,6 +17,10 @@ export const load = () => {
 
 	if (!backupSetting) {
 		throw new Error('Backup settings not found in database');
+	}
+
+	if (!aiSetting) {
+		throw new Error('AI settings not found in database');
 	}
 
 	return {
@@ -31,6 +37,12 @@ export const load = () => {
 			enabled: backupSetting.enabled === 1,
 			include_database: backupSetting.include_database === 1,
 			compression_enabled: backupSetting.compression_enabled === 1
+		},
+		aiSettings: {
+			enabled: aiSetting.enabled === 1,
+			api_url: aiSetting.api_url,
+			api_key: aiSetting.api_key,
+			model: aiSetting.model
 		}
 	};
 };
@@ -148,6 +160,52 @@ export const actions: Actions = {
 				retentionDays,
 				enabled,
 				compressionEnabled
+			}
+		});
+
+		return { success: true };
+	},
+
+	updateAI: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+
+		// Parse form data
+		const enabled = formData.get('enabled') === 'on';
+		const apiUrl = formData.get('api_url') as string;
+		const apiKey = formData.get('api_key') as string;
+		const model = formData.get('model') as string;
+
+		// Validate
+		if (enabled && !apiUrl) {
+			return fail(400, { error: 'API URL is required when AI is enabled' });
+		}
+
+		if (enabled && !model) {
+			return fail(400, { error: 'Model is required when AI is enabled' });
+		}
+
+		// Update settings
+		const updated = aiSettingsQueries.update({
+			enabled,
+			apiUrl: apiUrl || 'https://api.openai.com/v1',
+			apiKey: apiKey || '',
+			model: model || 'gpt-4o-mini'
+		});
+
+		if (!updated) {
+			await logger.error('Failed to update AI settings', {
+				source: 'settings/general'
+			});
+			return fail(500, { error: 'Failed to update settings' });
+		}
+
+		await logger.info('AI settings updated', {
+			source: 'settings/general',
+			meta: {
+				enabled,
+				apiUrl,
+				model
+				// Note: Don't log apiKey for security
 			}
 		});
 

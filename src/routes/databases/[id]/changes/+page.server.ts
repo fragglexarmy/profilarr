@@ -3,6 +3,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { Git } from '$utils/git/index.ts';
 import { logger } from '$logger/logger.ts';
+import { compile, startWatch } from '$lib/server/pcd/cache.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { database } = await parent();
@@ -32,6 +33,19 @@ export const actions: Actions = {
 
 		const git = new Git(database.local_path);
 		await git.discardOps(files);
+
+		// Recompile cache directly instead of relying on file watcher
+		if (database.enabled) {
+			try {
+				await compile(database.local_path, id);
+				await startWatch(database.local_path, id);
+			} catch (err) {
+				await logger.error('Failed to recompile cache after discard', {
+					source: 'changes',
+					meta: { databaseId: id, error: String(err) }
+				});
+			}
+		}
 
 		return { success: true };
 	},

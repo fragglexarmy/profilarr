@@ -14,11 +14,13 @@
 	let uncommittedOps: OperationFile[] = [];
 	let branches: string[] = [];
 	let repoInfo: RepoInfo | null = null;
+	let aiEnabled = false;
 
 	let selected = new Set<string>();
 	let commitMessage = '';
 
 	$: allSelected = uncommittedOps.length > 0 && selected.size === uncommittedOps.length;
+	$: selectedFiles = Array.from(selected);
 
 	async function fetchChanges() {
 		loading = true;
@@ -36,8 +38,21 @@
 		}
 	}
 
+	async function checkAiStatus() {
+		try {
+			const response = await fetch('/api/ai/status');
+			if (response.ok) {
+				const result = await response.json();
+				aiEnabled = result.enabled;
+			}
+		} catch {
+			aiEnabled = false;
+		}
+	}
+
 	afterNavigate(() => {
 		fetchChanges();
+		checkAiStatus();
 	});
 
 	function toggleAll() {
@@ -72,10 +87,15 @@
 
 		const result = await response.json();
 
-		if (result.type === 'success' && result.data?.success) {
+		// SvelteKit form action response types: 'success', 'redirect', 'failure', 'error'
+		// Redirect is also considered success for our purposes
+		const isSuccess = result.type === 'success' || result.type === 'redirect' || result.data?.success;
+		const errorMsg = result.data?.error || result.error;
+
+		if (isSuccess && !errorMsg) {
 			alertStore.add('success', 'Changes discarded');
 		} else {
-			alertStore.add('error', result.data?.error || 'Failed to discard changes');
+			alertStore.add('error', errorMsg || 'Failed to discard changes');
 		}
 
 		selected = new Set();
@@ -97,10 +117,14 @@
 
 		const result = await response.json();
 
-		if (result.type === 'success' && result.data?.success) {
+		// SvelteKit form action response types: 'success', 'redirect', 'failure', 'error'
+		const isSuccess = result.type === 'success' || result.type === 'redirect' || result.data?.success;
+		const errorMsg = result.data?.error || result.error;
+
+		if (isSuccess && !errorMsg) {
 			alertStore.add('success', 'Changes committed and pushed');
 		} else {
-			alertStore.add('error', result.data?.error || 'Failed to add changes');
+			alertStore.add('error', errorMsg || 'Failed to add changes');
 		}
 
 		// Always clear and refresh
@@ -166,8 +190,11 @@
 		</div>
 	{:else}
 		<ChangesActionsBar
+			databaseId={data.database.id}
 			selectedCount={selected.size}
+			{selectedFiles}
 			bind:commitMessage
+			{aiEnabled}
 			onDiscard={handleDiscard}
 			onAdd={handleAdd}
 		/>
