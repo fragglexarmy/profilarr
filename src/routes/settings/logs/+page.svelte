@@ -1,7 +1,10 @@
 <script lang="ts">
-	import { Search, Download, RefreshCw, Eye, Copy } from 'lucide-svelte';
+	import { Eye, Copy } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
 	import Modal from '$ui/modal/Modal.svelte';
+	import LogsActionsBar from './components/LogsActionsBar.svelte';
+	import { createSearchStore } from '$lib/client/stores/search';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -14,12 +17,25 @@
 		meta?: unknown;
 	}
 
+	// Initialize search store
+	const searchStore = createSearchStore({ debounceMs: 300 });
+
 	// Filter state
 	let selectedLevel: 'ALL' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' = 'ALL';
-	let searchQuery = '';
+	let selectedSources: Set<string> = new Set();
+	let isRefreshing = false;
 
-	// Available log levels for filtering
-	const logLevels = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR'] as const;
+	// Extract unique sources from logs (excluding 'ALL' since empty set means all)
+	$: uniqueSources = [...new Set(data.logs.map((log) => log.source).filter(Boolean))] as string[];
+
+	function toggleSource(source: string) {
+		selectedSources = new Set(selectedSources);
+		if (selectedSources.has(source)) {
+			selectedSources.delete(source);
+		} else {
+			selectedSources.add(source);
+		}
+	}
 
 	// Level colors
 	const levelColors: Record<string, string> = {
@@ -55,9 +71,11 @@
 		URL.revokeObjectURL(url);
 	}
 
-	// Refresh page to reload logs
-	function refreshLogs() {
-		window.location.reload();
+	// Refresh logs by refetching data
+	async function refreshLogs() {
+		isRefreshing = true;
+		await invalidateAll();
+		isRefreshing = false;
 	}
 
 	// Change log file
@@ -65,13 +83,6 @@
 		const url = new URL(window.location.href);
 		url.searchParams.set('file', filename);
 		window.location.href = url.toString();
-	}
-
-	// Format file size
-	function formatFileSize(bytes: number): string {
-		if (bytes < 1024) return `${bytes} B`;
-		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 	}
 
 	// Copy log entry to clipboard
@@ -86,18 +97,24 @@
 		}
 	}
 
-	// Reactive filtering - use data.logs directly
+	// Reactive filtering
 	$: filteredLogs = data.logs.filter((log) => {
 		// Level filter
 		if (selectedLevel !== 'ALL' && log.level !== selectedLevel) {
 			return false;
 		}
 
+		// Source filter (empty set means show all)
+		if (selectedSources.size > 0 && !selectedSources.has(log.source || '')) {
+			return false;
+		}
+
 		// Search filter
-		if (searchQuery) {
-			const query = searchQuery.toLowerCase();
-			const matchMessage = log.message.toLowerCase().includes(query);
-			const matchSource = log.source?.toLowerCase().includes(query);
+		const query = $searchStore.query;
+		if (query) {
+			const searchLower = query.toLowerCase();
+			const matchMessage = log.message.toLowerCase().includes(searchLower);
+			const matchSource = log.source?.toLowerCase().includes(searchLower);
 			return matchMessage || matchSource;
 		}
 
@@ -114,83 +131,24 @@
 		</p>
 	</div>
 
-	<!-- Controls -->
-	<div class="mb-6 flex flex-wrap items-center gap-4">
-		<!-- Log File Selector -->
-		<div class="flex items-center gap-2">
-			<label
-				for="log-file-select"
-				class="text-sm font-medium text-neutral-700 dark:text-neutral-300"
-			>
-				Log File:
-			</label>
-			<select
-				id="log-file-select"
-				value={data.selectedFile}
-				on:change={(e) => changeLogFile(e.currentTarget.value)}
-				class="min-w-64 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
-			>
-				{#each data.logFiles as file (file.filename)}
-					<option value={file.filename}>
-						{file.filename} ({formatFileSize(file.size)})
-					</option>
-				{/each}
-			</select>
-		</div>
-
-		<!-- Level Filter Buttons -->
-		<div class="flex gap-2">
-			{#each logLevels as level (level)}
-				<button
-					type="button"
-					on:click={() => (selectedLevel = level)}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {selectedLevel ===
-					level
-						? 'bg-blue-600 text-white dark:bg-blue-500'
-						: 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800'}"
-				>
-					{level}
-				</button>
-			{/each}
-		</div>
-
-		<!-- Search Input -->
-		<div class="flex flex-1 items-center gap-2">
-			<div class="relative max-w-md flex-1">
-				<Search size={18} class="absolute top-1/2 left-3 -translate-y-1/2 text-neutral-400" />
-				<input
-					type="text"
-					bind:value={searchQuery}
-					placeholder="Search logs..."
-					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pr-3 pl-10 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
-				/>
-			</div>
-		</div>
-
-		<!-- Action Buttons -->
-		<div class="flex gap-2">
-			<button
-				type="button"
-				on:click={refreshLogs}
-				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-			>
-				<RefreshCw size={16} />
-				Refresh
-			</button>
-
-			<button
-				type="button"
-				on:click={downloadLogs}
-				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-			>
-				<Download size={16} />
-				Download
-			</button>
-		</div>
-	</div>
+	<!-- Actions Bar -->
+	<LogsActionsBar
+		{searchStore}
+		logFiles={data.logFiles}
+		selectedFile={data.selectedFile}
+		{selectedLevel}
+		{selectedSources}
+		{uniqueSources}
+		{isRefreshing}
+		onChangeFile={changeLogFile}
+		onChangeLevel={(level) => (selectedLevel = level)}
+		onToggleSource={toggleSource}
+		onRefresh={refreshLogs}
+		onDownload={downloadLogs}
+	/>
 
 	<!-- Stats -->
-	<div class="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+	<div class="mt-6 mb-4 text-sm text-neutral-600 dark:text-neutral-400">
 		Showing {filteredLogs.length} of {data.logs.length} logs
 		{#if data.selectedFile}
 			from {data.selectedFile}

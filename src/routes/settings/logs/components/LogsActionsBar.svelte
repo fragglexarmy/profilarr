@@ -1,0 +1,162 @@
+<script lang="ts">
+	import { Download, RefreshCw, FileText, Filter, Layers, Check } from 'lucide-svelte';
+	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import Dropdown from '$ui/dropdown/Dropdown.svelte';
+	import { type SearchStore } from '$stores/search';
+
+	interface LogFile {
+		filename: string;
+		size: number;
+		modified: Date;
+	}
+
+	export let searchStore: SearchStore;
+	export let logFiles: LogFile[];
+	export let selectedFile: string;
+	export let selectedLevel: string;
+	export let selectedSources: Set<string>;
+	export let uniqueSources: string[];
+
+	export let isRefreshing: boolean = false;
+
+	export let onChangeFile: (filename: string) => void;
+	export let onChangeLevel: (level: string) => void;
+	export let onToggleSource: (source: string) => void;
+	export let onRefresh: () => void;
+	export let onDownload: () => void;
+
+	const logLevels = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR'] as const;
+
+	const levelColors: Record<string, string> = {
+		ALL: 'text-neutral-600 dark:text-neutral-400',
+		DEBUG: 'text-cyan-600 dark:text-cyan-400',
+		INFO: 'text-green-600 dark:text-green-400',
+		WARN: 'text-yellow-600 dark:text-yellow-400',
+		ERROR: 'text-red-600 dark:text-red-400'
+	};
+
+	function formatFileSize(bytes: number): string {
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	}
+
+	function formatDate(date: Date): string {
+		const d = new Date(date);
+		return d.toLocaleDateString(undefined, {
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+</script>
+
+<ActionsBar className="justify-end">
+	<SearchAction {searchStore} placeholder="Search logs..." />
+
+	<!-- Log File Selector -->
+	<ActionButton icon={FileText} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="20rem">
+				<div class="max-h-64 overflow-y-auto">
+					{#each logFiles as file}
+						<button
+							type="button"
+							on:click={() => onChangeFile(file.filename)}
+							class="flex w-full items-center justify-between gap-4 border-b border-neutral-200 px-4 py-2.5 text-left transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
+								{selectedFile === file.filename
+									? 'bg-neutral-100 dark:bg-neutral-700'
+									: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+						>
+							<div class="flex flex-col gap-0.5">
+								<span class="font-mono text-sm text-neutral-900 dark:text-neutral-100">
+									{file.filename}
+								</span>
+								<span class="text-xs text-neutral-500 dark:text-neutral-400">
+									{formatDate(file.modified)}
+								</span>
+							</div>
+							<span class="text-xs text-neutral-400 dark:text-neutral-500">
+								{formatFileSize(file.size)}
+							</span>
+						</button>
+					{/each}
+				</div>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+
+	<!-- Level Filter -->
+	<ActionButton icon={Filter} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="8rem">
+				{#each logLevels as level}
+					<button
+						type="button"
+						on:click={() => onChangeLevel(level)}
+						class="flex w-full items-center justify-between gap-3 border-b border-neutral-200 px-4 py-2 text-left transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
+							{selectedLevel === level
+								? 'bg-neutral-100 dark:bg-neutral-700'
+								: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+					>
+						<span class="font-medium {levelColors[level]}">{level}</span>
+					</button>
+				{/each}
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+
+	<!-- Source Filter -->
+	<ActionButton icon={Layers} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="12rem">
+				<div class="max-h-64 overflow-y-auto">
+					{#each uniqueSources as source}
+						<button
+							type="button"
+							on:click={() => onToggleSource(source)}
+							class="flex w-full items-center justify-between gap-3 border-b border-neutral-200 px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
+								{selectedSources.has(source)
+									? 'bg-neutral-100 dark:bg-neutral-700'
+									: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">{source}</span>
+							{#if selectedSources.has(source)}
+								<Check size={16} class="text-blue-600 dark:text-blue-400" />
+							{/if}
+						</button>
+					{/each}
+				</div>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+
+	<!-- Refresh -->
+	<ActionButton hasDropdown={true} dropdownPosition="right" on:click={onRefresh}>
+		<RefreshCw
+			size={20}
+			class="text-neutral-700 dark:text-neutral-300 {isRefreshing ? 'animate-spin' : ''}"
+		/>
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="6rem">
+				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
+					Refresh logs
+				</div>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+
+	<!-- Download -->
+	<ActionButton icon={Download} hasDropdown={true} dropdownPosition="right" on:click={onDownload}>
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="8rem">
+				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
+					Download logs as JSON
+				</div>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+</ActionsBar>
