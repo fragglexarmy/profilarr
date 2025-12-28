@@ -1,36 +1,23 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
-	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
-	import Dropdown from '$ui/dropdown/Dropdown.svelte';
-	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
+	import ViewToggle from '$ui/actions/ViewToggle.svelte';
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
-	import { createSearchStore } from '$lib/client/stores/search';
-	import { Eye, LayoutGrid, Table } from 'lucide-svelte';
-	import { browser } from '$app/environment';
+	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	// Initialize search store
-	const searchStore = createSearchStore({ debounceMs: 300 });
+	// Initialize data page store
+	const { search, view, filtered, setItems } = createDataPageStore(data.qualityProfiles, {
+		storageKey: 'qualityProfilesView',
+		searchKeys: ['name']
+	});
 
-	// View state - load from localStorage or default to 'table'
-	let currentView: 'cards' | 'table' = 'table';
-
-	if (browser) {
-		const savedView = localStorage.getItem('qualityProfilesView') as 'cards' | 'table' | null;
-		if (savedView) {
-			currentView = savedView;
-		}
-	}
-
-	// Save view to localStorage when it changes
-	$: if (browser && currentView) {
-		localStorage.setItem('qualityProfilesView', currentView);
-	}
+	// Update items when data changes (e.g., switching databases)
+	$: setItems(data.qualityProfiles);
 
 	// Map databases to tabs
 	$: tabs = data.databases.map((db) => ({
@@ -38,15 +25,6 @@
 		href: `/quality-profiles/${db.id}`,
 		active: db.id === data.currentDatabase.id
 	}));
-
-	// Filter quality profiles based on search
-	$: filteredProfiles = data.qualityProfiles.filter((profile) => {
-		const query = $searchStore.query;
-		if (!query) return true;
-
-		const searchLower = query.toLowerCase();
-		return profile.name?.toLowerCase().includes(searchLower);
-	});
 </script>
 
 <svelte:head>
@@ -59,23 +37,8 @@
 
 	<!-- Actions Bar -->
 	<ActionsBar>
-		<SearchAction {searchStore} placeholder="Search quality profiles..." />
-		<ActionButton icon={Eye} hasDropdown={true} dropdownPosition="right">
-			<Dropdown slot="dropdown" let:open position="right">
-				<DropdownItem
-					icon={LayoutGrid}
-					label="Cards"
-					selected={currentView === 'cards'}
-					on:click={() => (currentView = 'cards')}
-				/>
-				<DropdownItem
-					icon={Table}
-					label="Table"
-					selected={currentView === 'table'}
-					on:click={() => (currentView = 'table')}
-				/>
-			</Dropdown>
-		</ActionButton>
+		<SearchAction searchStore={search} placeholder="Search quality profiles..." />
+		<ViewToggle bind:value={$view} />
 	</ActionsBar>
 
 	<!-- Quality Profiles Content -->
@@ -88,7 +51,7 @@
 					No quality profiles found for {data.currentDatabase.name}
 				</p>
 			</div>
-		{:else if filteredProfiles.length === 0}
+		{:else if $filtered.length === 0}
 			<div
 				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 			>
@@ -96,10 +59,10 @@
 					No quality profiles match your search
 				</p>
 			</div>
-		{:else if currentView === 'table'}
-			<TableView profiles={filteredProfiles} />
+		{:else if $view === 'table'}
+			<TableView profiles={$filtered} />
 		{:else}
-			<CardView profiles={filteredProfiles} />
+			<CardView profiles={$filtered} />
 		{/if}
 	</div>
 </div>
