@@ -98,18 +98,30 @@
 
 		<!-- Action Buttons -->
 		<div class="flex justify-end gap-3">
+			{#if !isNewConfig && data.config?.dryRun}
+				<button
+					type="button"
+					disabled={running || saving}
+					on:click={() => {
+						const runForm = document.getElementById('run-form') as HTMLFormElement;
+						runForm?.requestSubmit();
+					}}
+					class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				>
+					<Play size={16} class="text-amber-600 dark:text-amber-400" />
+					{running ? 'Running...' : 'Test Run'}
+				</button>
+			{/if}
 			<button
 				type="submit"
 				disabled={saving || running}
-				class="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 {isNewConfig
-					? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-					: 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600'}"
+				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
 				{#if isNewConfig}
-					<Save size={16} />
+					<Save size={16} class="text-blue-600 dark:text-blue-400" />
 					{saving ? 'Saving...' : 'Save'}
 				{:else}
-					<Pencil size={16} />
+					<Pencil size={16} class="text-green-600 dark:text-green-400" />
 					{saving ? 'Updating...' : 'Update'}
 				{/if}
 			</button>
@@ -117,11 +129,13 @@
 	</div>
 </form>
 
+<!-- Hidden form for test run -->
 {#if !isNewConfig && data.config?.dryRun}
 	<form
+		id="run-form"
 		method="POST"
 		action="?/run"
-		class="mt-4 flex justify-end"
+		class="hidden"
 		use:enhance={() => {
 			running = true;
 			return async ({ update }) => {
@@ -130,14 +144,6 @@
 			};
 		}}
 	>
-		<button
-			type="submit"
-			disabled={running || saving}
-			class="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50"
-		>
-			<Play size={16} />
-			{running ? 'Running...' : 'Test Run'}
-		</button>
 	</form>
 {/if}
 
