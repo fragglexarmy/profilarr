@@ -257,5 +257,87 @@ export const arrSyncQueries = {
 			'UPDATE arr_sync_media_management SET media_settings_database_id = NULL WHERE media_settings_database_id = ?',
 			databaseId
 		);
+	},
+
+	// ========== Should Sync Flags ==========
+
+	/**
+	 * Set should_sync flag for quality profiles
+	 */
+	setQualityProfilesShouldSync(instanceId: number, shouldSync: boolean): void {
+		db.execute(
+			'UPDATE arr_sync_quality_profiles_config SET should_sync = ? WHERE instance_id = ?',
+			shouldSync ? 1 : 0,
+			instanceId
+		);
+	},
+
+	/**
+	 * Set should_sync flag for delay profiles
+	 */
+	setDelayProfilesShouldSync(instanceId: number, shouldSync: boolean): void {
+		db.execute(
+			'UPDATE arr_sync_delay_profiles_config SET should_sync = ? WHERE instance_id = ?',
+			shouldSync ? 1 : 0,
+			instanceId
+		);
+	},
+
+	/**
+	 * Set should_sync flag for media management
+	 */
+	setMediaManagementShouldSync(instanceId: number, shouldSync: boolean): void {
+		db.execute(
+			'UPDATE arr_sync_media_management SET should_sync = ? WHERE instance_id = ?',
+			shouldSync ? 1 : 0,
+			instanceId
+		);
+	},
+
+	/**
+	 * Mark all configs with a specific trigger as should_sync
+	 * Used when events occur (pull, change)
+	 */
+	markForSync(trigger: 'on_pull' | 'on_change'): void {
+		const triggers = trigger === 'on_change' ? ['on_pull', 'on_change'] : ['on_pull'];
+		const placeholders = triggers.map(() => '?').join(', ');
+
+		db.execute(
+			`UPDATE arr_sync_quality_profiles_config SET should_sync = 1 WHERE trigger IN (${placeholders})`,
+			...triggers
+		);
+		db.execute(
+			`UPDATE arr_sync_delay_profiles_config SET should_sync = 1 WHERE trigger IN (${placeholders})`,
+			...triggers
+		);
+		db.execute(
+			`UPDATE arr_sync_media_management SET should_sync = 1 WHERE trigger IN (${placeholders})`,
+			...triggers
+		);
+	},
+
+	/**
+	 * Get all configs that need syncing (should_sync = true)
+	 */
+	getPendingSyncs(): {
+		qualityProfiles: number[];
+		delayProfiles: number[];
+		mediaManagement: number[];
+	} {
+		const qp = db.query<{ instance_id: number }>(
+			'SELECT instance_id FROM arr_sync_quality_profiles_config WHERE should_sync = 1'
+		);
+		const dp = db.query<{ instance_id: number }>(
+			'SELECT instance_id FROM arr_sync_delay_profiles_config WHERE should_sync = 1'
+		);
+		const mm = db.query<{ instance_id: number }>(
+			'SELECT instance_id FROM arr_sync_media_management WHERE should_sync = 1'
+		);
+
+		return {
+			qualityProfiles: qp.map((r) => r.instance_id),
+			delayProfiles: dp.map((r) => r.instance_id),
+			mediaManagement: mm.map((r) => r.instance_id)
+		};
 	}
 };

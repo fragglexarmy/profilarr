@@ -165,5 +165,107 @@ export const actions: Actions = {
 			});
 			return fail(500, { error: 'Failed to save media management sync config' });
 		}
+	},
+
+	syncDelayProfiles: async ({ params }) => {
+		const id = parseInt(params.id || '', 10);
+		if (isNaN(id)) {
+			return fail(400, { error: 'Invalid instance ID' });
+		}
+
+		const instance = arrInstancesQueries.getById(id);
+		if (!instance) {
+			return fail(404, { error: 'Instance not found' });
+		}
+
+		try {
+			const { createArrClient } = await import('$arr/factory.ts');
+			const { DelayProfileSyncer } = await import('$lib/server/sync/delayProfiles.ts');
+			const client = createArrClient(instance.type as 'radarr' | 'sonarr' | 'lidarr' | 'chaptarr', instance.url, instance.api_key);
+			const syncer = new DelayProfileSyncer(client, id, instance.name);
+			const result = await syncer.sync();
+
+			await logger.info(`Manual delay profiles sync completed for "${instance.name}"`, {
+				source: 'sync',
+				meta: { instanceId: id, result }
+			});
+
+			return { success: true, result };
+		} catch (e) {
+			const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+			await logger.error(`Manual delay profiles sync failed for "${instance.name}"`, {
+				source: 'sync',
+				meta: { instanceId: id, error: errorMsg }
+			});
+			return fail(500, { error: `Sync failed: ${errorMsg}` });
+		}
+	},
+
+	syncQualityProfiles: async ({ params }) => {
+		const id = parseInt(params.id || '', 10);
+		if (isNaN(id)) {
+			return fail(400, { error: 'Invalid instance ID' });
+		}
+
+		const instance = arrInstancesQueries.getById(id);
+		if (!instance) {
+			return fail(404, { error: 'Instance not found' });
+		}
+
+		try {
+			const { createArrClient } = await import('$arr/factory.ts');
+			const { QualityProfileSyncer } = await import('$lib/server/sync/qualityProfiles.ts');
+			const client = createArrClient(instance.type as 'radarr' | 'sonarr' | 'lidarr' | 'chaptarr', instance.url, instance.api_key);
+			const syncer = new QualityProfileSyncer(client, id, instance.name);
+			const result = await syncer.sync();
+
+			await logger.info(`Manual quality profiles sync completed for "${instance.name}"`, {
+				source: 'sync',
+				meta: { instanceId: id, result }
+			});
+
+			return { success: true, result };
+		} catch (e) {
+			const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+			await logger.error(`Manual quality profiles sync failed for "${instance.name}"`, {
+				source: 'sync',
+				meta: { instanceId: id, error: errorMsg }
+			});
+			return fail(500, { error: `Sync failed: ${errorMsg}` });
+		}
+	},
+
+	syncMediaManagement: async ({ params }) => {
+		const id = parseInt(params.id || '', 10);
+		if (isNaN(id)) {
+			return fail(400, { error: 'Invalid instance ID' });
+		}
+
+		const instance = arrInstancesQueries.getById(id);
+		if (!instance) {
+			return fail(404, { error: 'Instance not found' });
+		}
+
+		try {
+			const { createArrClient } = await import('$arr/factory.ts');
+			const { MediaManagementSyncer } = await import('$lib/server/sync/mediaManagement.ts');
+			const client = createArrClient(instance.type as 'radarr' | 'sonarr' | 'lidarr' | 'chaptarr', instance.url, instance.api_key);
+			const syncer = new MediaManagementSyncer(client, id, instance.name);
+			const result = await syncer.sync();
+
+			await logger.info(`Manual media management sync completed for "${instance.name}"`, {
+				source: 'sync',
+				meta: { instanceId: id, result }
+			});
+
+			return { success: true, result };
+		} catch (e) {
+			const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+			await logger.error(`Manual media management sync failed for "${instance.name}"`, {
+				source: 'sync',
+				meta: { instanceId: id, error: errorMsg }
+			});
+			return fail(500, { error: `Sync failed: ${errorMsg}` });
+		}
 	}
 };

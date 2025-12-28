@@ -1,5 +1,5 @@
 import { BaseHttpClient } from '../http/client.ts';
-import type { ArrSystemStatus } from './types.ts';
+import type { ArrSystemStatus, ArrDelayProfile, ArrTag } from './types.ts';
 import { logger } from '$logger/logger.ts';
 
 /**
@@ -48,5 +48,62 @@ export class BaseArrClient extends BaseHttpClient {
 
 			return false;
 		}
+	}
+
+	// =========================================================================
+	// Delay Profiles
+	// =========================================================================
+
+	/**
+	 * Get all delay profiles
+	 */
+	async getDelayProfiles(): Promise<ArrDelayProfile[]> {
+		return this.get<ArrDelayProfile[]>(`/api/${this.apiVersion}/delayprofile`);
+	}
+
+	/**
+	 * Get a delay profile by ID
+	 */
+	async getDelayProfile(id: number): Promise<ArrDelayProfile> {
+		return this.get<ArrDelayProfile>(`/api/${this.apiVersion}/delayprofile/${id}`);
+	}
+
+	/**
+	 * Create a new delay profile
+	 */
+	async createDelayProfile(profile: Omit<ArrDelayProfile, 'id' | 'order'>): Promise<ArrDelayProfile> {
+		return this.post<ArrDelayProfile>(`/api/${this.apiVersion}/delayprofile`, profile);
+	}
+
+	/**
+	 * Update an existing delay profile
+	 */
+	async updateDelayProfile(id: number, profile: ArrDelayProfile): Promise<ArrDelayProfile> {
+		return this.put<ArrDelayProfile>(`/api/${this.apiVersion}/delayprofile/${id}`, profile);
+	}
+
+	/**
+	 * Delete a delay profile
+	 */
+	async deleteDelayProfile(id: number): Promise<void> {
+		await this.delete(`/api/${this.apiVersion}/delayprofile/${id}`);
+	}
+
+	// =========================================================================
+	// Tags
+	// =========================================================================
+
+	/**
+	 * Get all tags
+	 */
+	async getTags(): Promise<ArrTag[]> {
+		return this.get<ArrTag[]>(`/api/${this.apiVersion}/tag`);
+	}
+
+	/**
+	 * Create a new tag
+	 */
+	async createTag(label: string): Promise<ArrTag> {
+		return this.post<ArrTag>(`/api/${this.apiVersion}/tag`, { label });
 	}
 }

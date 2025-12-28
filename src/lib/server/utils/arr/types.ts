@@ -198,6 +198,40 @@ export interface RadarrLibraryItem {
 	isProfilarrProfile: boolean; // true if profile name matches a Profilarr database profile
 }
 
+// =============================================================================
+// Delay Profile Types (shared across arr apps)
+// =============================================================================
+
+/**
+ * Delay profile from /api/v3/delayprofile
+ * Schema is identical for Radarr and Sonarr
+ */
+export interface ArrDelayProfile {
+	id: number;
+	enableUsenet: boolean;
+	enableTorrent: boolean;
+	preferredProtocol: string; // 'usenet' | 'torrent' | 'unknown'
+	usenetDelay: number;
+	torrentDelay: number;
+	bypassIfHighestQuality: boolean;
+	bypassIfAboveCustomFormatScore: boolean;
+	minimumCustomFormatScore: number;
+	order: number;
+	tags: number[];
+}
+
+/**
+ * Tag from /api/v3/tag (shared across arr apps)
+ */
+export interface ArrTag {
+	id: number;
+	label: string;
+}
+
+// =============================================================================
+// System Types
+// =============================================================================
+
 /**
  * System status response from /api/v3/system/status
  * Based on actual Radarr API response

@@ -6,8 +6,9 @@
 	export let syncTrigger: 'none' | 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'none';
 	export let cronExpression: string = '0 * * * *';
 	export let saving: boolean = false;
+	export let syncing: boolean = false;
 
-	const dispatch = createEventDispatcher<{ save: void }>();
+	const dispatch = createEventDispatcher<{ save: void; sync: void }>();
 
 	const triggerOptions = [
 		{ value: 'none', label: 'None' },
@@ -47,9 +48,15 @@
 		<div class="flex items-center gap-2">
 			<button
 				type="button"
-				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				disabled={syncing}
+				on:click={() => dispatch('sync')}
+				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
-				<RefreshCw size={14} />
+				{#if syncing}
+					<Loader2 size={14} class="animate-spin" />
+				{:else}
+					<RefreshCw size={14} />
+				{/if}
 				Sync Now
 			</button>
 			<button

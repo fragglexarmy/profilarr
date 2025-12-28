@@ -47,6 +47,7 @@
 	export let cronExpression: string = '0 * * * *';
 
 	let saving = false;
+	let syncing = false;
 
 	async function handleSave() {
 		saving = true;
@@ -72,6 +73,26 @@
 			alertStore.add('error', 'Failed to save media management sync config');
 		} finally {
 			saving = false;
+		}
+	}
+
+	async function handleSync() {
+		syncing = true;
+		try {
+			const response = await fetch('?/syncMediaManagement', {
+				method: 'POST',
+				body: new FormData()
+			});
+
+			if (response.ok) {
+				alertStore.add('success', 'Sync completed successfully');
+			} else {
+				alertStore.add('error', 'Sync failed');
+			}
+		} catch {
+			alertStore.add('error', 'Sync failed');
+		} finally {
+			syncing = false;
 		}
 	}
 </script>
@@ -225,5 +246,5 @@
 		</div>
 	</div>
 
-	<SyncFooter bind:syncTrigger bind:cronExpression {saving} on:save={handleSave} />
+	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} on:save={handleSave} on:sync={handleSync} />
 </div>

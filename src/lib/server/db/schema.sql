@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2025-12-27
+-- Last updated: 2025-12-29
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -228,7 +228,7 @@ CREATE TABLE database_instances (
 -- ==============================================================================
 -- TABLE: upgrade_configs
 -- Purpose: Store upgrade configuration per arr instance for automated quality upgrades
--- Migration: 011_create_upgrade_configs.ts
+-- Migration: 011_create_upgrade_configs.ts, 012_add_upgrade_last_run.ts, 013_add_upgrade_dry_run.ts
 -- ==============================================================================
 
 CREATE TABLE upgrade_configs (
@@ -239,6 +239,7 @@ CREATE TABLE upgrade_configs (
 
     -- Core settings
     enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch
+    dry_run INTEGER NOT NULL DEFAULT 0,         -- 1=dry run mode, 0=normal (Migration 013)
     schedule INTEGER NOT NULL DEFAULT 360,      -- Run interval in minutes (default 6 hours)
     filter_mode TEXT NOT NULL DEFAULT 'round_robin', -- 'round_robin' or 'random'
 
@@ -254,6 +255,101 @@ CREATE TABLE upgrade_configs (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (arr_instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
+-- TABLE: ai_settings
+-- Purpose: Store AI/LLM configuration for commit message generation
+-- Migration: 014_create_ai_settings.ts
+-- ==============================================================================
+
+CREATE TABLE ai_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+
+    -- Provider settings
+    provider TEXT NOT NULL DEFAULT 'openai',    -- 'openai', 'anthropic', etc.
+    api_key TEXT,                               -- Encrypted API key
+    model TEXT NOT NULL DEFAULT 'gpt-4o-mini',  -- Model identifier
+
+    -- Feature flags
+    enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: arr_sync_quality_profiles
+-- Purpose: Store quality profile sync selections (many-to-many)
+-- Migration: 015_create_arr_sync_tables.ts
+-- ==============================================================================
+
+CREATE TABLE arr_sync_quality_profiles (
+    instance_id INTEGER NOT NULL,
+    database_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    PRIMARY KEY (instance_id, database_id, profile_id),
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
+-- TABLE: arr_sync_quality_profiles_config
+-- Purpose: Store quality profile sync trigger configuration (one per instance)
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts
+-- ==============================================================================
+
+CREATE TABLE arr_sync_quality_profiles_config (
+    instance_id INTEGER PRIMARY KEY,
+    trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
+    cron TEXT,                                  -- Cron expression for schedule trigger
+    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
+-- TABLE: arr_sync_delay_profiles
+-- Purpose: Store delay profile sync selections (many-to-many)
+-- Migration: 015_create_arr_sync_tables.ts
+-- ==============================================================================
+
+CREATE TABLE arr_sync_delay_profiles (
+    instance_id INTEGER NOT NULL,
+    database_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    PRIMARY KEY (instance_id, database_id, profile_id),
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
+-- TABLE: arr_sync_delay_profiles_config
+-- Purpose: Store delay profile sync trigger configuration (one per instance)
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts
+-- ==============================================================================
+
+CREATE TABLE arr_sync_delay_profiles_config (
+    instance_id INTEGER PRIMARY KEY,
+    trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
+    cron TEXT,                                  -- Cron expression for schedule trigger
+    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- ==============================================================================
+-- TABLE: arr_sync_media_management
+-- Purpose: Store media management sync configuration (one per instance)
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts
+-- ==============================================================================
+
+CREATE TABLE arr_sync_media_management (
+    instance_id INTEGER PRIMARY KEY,
+    naming_database_id INTEGER,                 -- Database to use for naming settings
+    quality_definitions_database_id INTEGER,    -- Database to use for quality definitions
+    media_settings_database_id INTEGER,         -- Database to use for media settings
+    trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
+    cron TEXT,                                  -- Cron expression for schedule trigger
+    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
 );
 
 -- ==============================================================================
@@ -283,3 +379,7 @@ CREATE INDEX idx_database_instances_uuid ON database_instances(uuid);
 
 -- Upgrade configs indexes (Migration: 011_create_upgrade_configs.ts)
 CREATE INDEX idx_upgrade_configs_arr_instance ON upgrade_configs(arr_instance_id);
+
+-- Arr sync indexes (Migration: 015_create_arr_sync_tables.ts)
+CREATE INDEX idx_arr_sync_quality_profiles_instance ON arr_sync_quality_profiles(instance_id);
+CREATE INDEX idx_arr_sync_delay_profiles_instance ON arr_sync_delay_profiles(instance_id);
