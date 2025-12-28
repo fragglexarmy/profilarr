@@ -1,10 +1,11 @@
 <script lang="ts">
+	import AccentPicker from './accentPicker.svelte';
 	import ThemeToggle from './themeToggle.svelte';
 	import logo from '$assets/logo-firefox-circular-arrow.png';
 </script>
 
 <nav
-	class="fixed top-0 right-0 left-0 z-50 border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+	class="fixed top-0 left-0 z-50 w-72 border-b border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
 >
 	<div class="flex items-center justify-between px-4 py-4">
 		<!-- Left: Brand name with logo -->
@@ -13,7 +14,10 @@
 			<div class="text-xl font-bold text-neutral-900 dark:text-neutral-100">profilarr</div>
 		</div>
 
-		<!-- Right: Theme toggle -->
-		<ThemeToggle />
+		<!-- Right: Accent picker and Theme toggle -->
+		<div class="flex items-center gap-1">
+			<AccentPicker />
+			<ThemeToggle />
+		</div>
 	</div>
 </nav>

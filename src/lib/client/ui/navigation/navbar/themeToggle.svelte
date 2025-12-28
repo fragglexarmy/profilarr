@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { themeStore } from '$stores/theme.ts';
-	import { Moon, Sun } from 'lucide-svelte';
+	import { MoonStar, Sun } from 'lucide-svelte';
 
 	$: isDark = $themeStore === 'dark';
 </script>
@@ -16,7 +16,7 @@
 			? 'scale-100 rotate-0 opacity-100'
 			: 'scale-75 rotate-180 opacity-0'}"
 	>
-		<Sun class="h-[18px] w-[18px] text-neutral-700 dark:text-neutral-300" />
+		<MoonStar class="h-[18px] w-[18px] text-neutral-700 dark:text-neutral-300" />
 	</div>
 
 	<!-- Moon icon (visible in light mode) -->
@@ -25,6 +25,6 @@
 			? 'scale-75 -rotate-180 opacity-0'
 			: 'scale-100 rotate-0 opacity-100'}"
 	>
-		<Moon class="h-[18px] w-[18px] text-neutral-700 dark:text-neutral-300" />
+		<Sun class="h-[18px] w-[18px] text-neutral-700 dark:text-neutral-300" />
 	</div>
 </button>
