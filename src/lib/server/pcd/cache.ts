@@ -4,7 +4,7 @@
 
 import { Database } from '@jsr/db__sqlite';
 import { Kysely } from 'kysely';
-import { DenoSqlite3Dialect } from 'jsr:@soapbox/kysely-deno-sqlite';
+import { DenoSqlite3Dialect } from '@soapbox/kysely-deno-sqlite';
 import { logger } from '$logger/logger.ts';
 import { loadAllOperations, validateOperations } from './ops.ts';
 import { disableDatabaseInstance } from '$db/queries/databaseInstances.ts';
@@ -97,7 +97,7 @@ export class PCDCache {
 	}
 
 	/**
-	 * Register SQL helper functions (qp, cf)
+	 * Register SQL helper functions (qp, cf, dp, tag)
 	 */
 	private registerHelperFunctions(): void {
 		if (!this.db) return;
@@ -120,6 +120,28 @@ export class PCDCache {
 			) as { id: number } | undefined;
 			if (!result) {
 				throw new Error(`Custom format not found: ${name}`);
+			}
+			return result.id;
+		});
+
+		// dp(name) - Delay profile lookup by name
+		this.db.function('dp', (name: string) => {
+			const result = this.db!.prepare('SELECT id FROM delay_profiles WHERE name = ?').get(
+				name
+			) as { id: number } | undefined;
+			if (!result) {
+				throw new Error(`Delay profile not found: ${name}`);
+			}
+			return result.id;
+		});
+
+		// tag(name) - Tag lookup by name (creates if not exists)
+		this.db.function('tag', (name: string) => {
+			const result = this.db!.prepare('SELECT id FROM tags WHERE name = ?').get(
+				name
+			) as { id: number } | undefined;
+			if (!result) {
+				throw new Error(`Tag not found: ${name}`);
 			}
 			return result.id;
 		});
@@ -307,6 +329,20 @@ export async function startWatch(pcdPath: string, databaseInstanceId: number): P
 	} catch {
 		// tweaks directory doesn't exist, that's ok
 	}
+
+	// Watch user_ops directory (create if doesn't exist)
+	const userOpsPath = `${pcdPath}/user_ops`;
+	try {
+		await Deno.mkdir(userOpsPath, { recursive: true });
+	} catch (error) {
+		if (!(error instanceof Deno.errors.AlreadyExists)) {
+			await logger.warn('Failed to create user_ops directory', {
+				source: 'PCDCache',
+				meta: { error: String(error), pcdPath }
+			});
+		}
+	}
+	pathsToWatch.push(userOpsPath);
 
 	if (pathsToWatch.length === 0) {
 		await logger.warn('No directories to watch for PCD', {

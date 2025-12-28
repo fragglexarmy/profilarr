@@ -82,7 +82,7 @@ function extractOrderFromFilename(filename: string): number {
  * 1. Schema layer (from dependency)
  * 2. Base layer (from PCD)
  * 3. Tweaks layer (from PCD, optional)
- * 4. User ops layer (TODO: future implementation)
+ * 4. User ops layer (local user modifications)
  */
 export async function loadAllOperations(pcdPath: string): Promise<Operation[]> {
 	const allOperations: Operation[] = [];
@@ -102,12 +102,26 @@ export async function loadAllOperations(pcdPath: string): Promise<Operation[]> {
 	const tweakOps = await loadOperationsFromDir(tweaksPath, 'tweaks');
 	allOperations.push(...tweakOps);
 
-	// 4. User ops layer (TODO: implement in future)
-	// const userOpsPath = `${pcdPath}/user_ops`;
-	// const userOps = await loadOperationsFromDir(userOpsPath, 'user');
-	// allOperations.push(...userOps);
+	// 4. User ops layer (local user modifications)
+	const userOpsPath = `${pcdPath}/user_ops`;
+	const userOps = await loadOperationsFromDir(userOpsPath, 'user');
+	allOperations.push(...userOps);
 
 	return allOperations;
+}
+
+/**
+ * Get the user ops directory path for a PCD
+ */
+export function getUserOpsPath(pcdPath: string): string {
+	return `${pcdPath}/user_ops`;
+}
+
+/**
+ * Get the base ops directory path for a PCD
+ */
+export function getBaseOpsPath(pcdPath: string): string {
+	return `${pcdPath}/ops`;
 }
 
 /**

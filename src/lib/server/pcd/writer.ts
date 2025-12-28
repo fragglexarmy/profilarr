@@ -1,0 +1,229 @@
+/**
+ * PCD Operation Writer - Write operations to PCD layers using Kysely
+ */
+
+import type { CompiledQuery } from 'kysely';
+import { getBaseOpsPath, getUserOpsPath } from './ops.ts';
+import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+import { logger } from '$logger/logger.ts';
+import { compile } from './cache.ts';
+
+export type OperationLayer = 'base' | 'user';
+export type OperationType = 'create' | 'update' | 'delete';
+
+/**
+ * Metadata for an operation - used for optimization and tracking
+ */
+export interface OperationMetadata {
+	/** The type of operation */
+	operation: OperationType;
+	/** The entity type (e.g., 'delay_profile', 'quality_profile') */
+	entity: string;
+	/** The entity name (current name for create/update, name being deleted for delete) */
+	name: string;
+	/** Previous name if this is a rename operation */
+	previousName?: string;
+}
+
+export interface WriteOptions {
+	/** The database instance ID */
+	databaseId: number;
+	/** Which layer to write to */
+	layer: OperationLayer;
+	/** Description for the operation (used in filename) */
+	description: string;
+	/** The compiled Kysely queries to write */
+	queries: CompiledQuery[];
+	/** Metadata for optimization and tracking */
+	metadata?: OperationMetadata;
+}
+
+export interface WriteResult {
+	success: boolean;
+	filepath?: string;
+	error?: string;
+}
+
+/**
+ * Convert a compiled Kysely query to executable SQL
+ * Replaces ? placeholders with actual values
+ */
+function compiledQueryToSql(compiled: CompiledQuery): string {
+	let sql = compiled.sql;
+	const params = compiled.parameters as unknown[];
+
+	// Replace each ? placeholder with the actual value
+	for (const param of params) {
+		const replacement = formatValue(param);
+		sql = sql.replace('?', replacement);
+	}
+
+	return sql;
+}
+
+/**
+ * Format a value for SQL insertion
+ */
+function formatValue(value: unknown): string {
+	if (value === null || value === undefined) {
+		return 'NULL';
+	}
+	if (typeof value === 'number') {
+		return String(value);
+	}
+	if (typeof value === 'boolean') {
+		return value ? '1' : '0';
+	}
+	if (typeof value === 'string') {
+		// Escape single quotes by doubling them
+		return `'${value.replace(/'/g, "''")}'`;
+	}
+	// For other types, convert to string and quote
+	return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+/**
+ * Get the next available operation number for a directory
+ */
+async function getNextOperationNumber(dirPath: string): Promise<number> {
+	try {
+		let maxNumber = 0;
+
+		for await (const entry of Deno.readDir(dirPath)) {
+			if (!entry.isFile || !entry.name.endsWith('.sql')) continue;
+
+			const match = entry.name.match(/^(\d+)\./);
+			if (match) {
+				const num = parseInt(match[1], 10);
+				if (num > maxNumber) maxNumber = num;
+			}
+		}
+
+		return maxNumber + 1;
+	} catch {
+		// Directory doesn't exist yet
+		return 1;
+	}
+}
+
+/**
+ * Ensure a directory exists
+ */
+async function ensureDir(path: string): Promise<void> {
+	try {
+		await Deno.mkdir(path, { recursive: true });
+	} catch (error) {
+		if (!(error instanceof Deno.errors.AlreadyExists)) {
+			throw error;
+		}
+	}
+}
+
+/**
+ * Slugify a description for use in filename
+ */
+function slugify(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.substring(0, 50);
+}
+
+/**
+ * Generate a metadata header for the SQL file
+ */
+function generateMetadataHeader(metadata: OperationMetadata): string {
+	const lines = [
+		`-- @operation: ${metadata.operation}`,
+		`-- @entity: ${metadata.entity}`,
+		`-- @name: ${metadata.name}`
+	];
+
+	if (metadata.previousName) {
+		lines.push(`-- @previous_name: ${metadata.previousName}`);
+	}
+
+	return lines.join('\n') + '\n\n';
+}
+
+/**
+ * Write operations to a PCD layer
+ *
+ * For base layer: writes to ops/, user must manually commit/push
+ * For user layer: writes to user_ops/, stays local
+ */
+export async function writeOperation(options: WriteOptions): Promise<WriteResult> {
+	const { databaseId, layer, description, queries, metadata } = options;
+
+	try {
+		// Get the database instance
+		const instance = databaseInstancesQueries.getById(databaseId);
+		if (!instance) {
+			return { success: false, error: 'Database instance not found' };
+		}
+
+		// Check if base layer is allowed (requires PAT)
+		if (layer === 'base' && !instance.personal_access_token) {
+			return { success: false, error: 'Base layer requires a personal access token' };
+		}
+
+		// Get the target directory
+		const targetDir = layer === 'base'
+			? getBaseOpsPath(instance.local_path)
+			: getUserOpsPath(instance.local_path);
+
+		// Ensure directory exists
+		await ensureDir(targetDir);
+
+		// Get next operation number
+		const opNumber = await getNextOperationNumber(targetDir);
+
+		// Generate filename
+		const slug = slugify(description);
+		const filename = `${opNumber}.${slug}.sql`;
+		const filepath = `${targetDir}/${filename}`;
+
+		// Convert queries to SQL
+		const sqlStatements = queries.map(compiledQueryToSql);
+		const sqlContent = sqlStatements.join(';\n\n') + ';\n';
+
+		// Build final content with optional metadata header
+		const content = metadata
+			? generateMetadataHeader(metadata) + sqlContent
+			: sqlContent;
+
+		// Write the file
+		await Deno.writeTextFile(filepath, content);
+
+		await logger.info(`Wrote operation to ${layer} layer`, {
+			source: 'PCDWriter',
+			meta: { databaseId, filepath, layer, description }
+		});
+
+		// Recompile the cache immediately so the new operation is available
+		// This avoids waiting for the file watcher's debounce delay
+		await compile(instance.local_path, instance.id);
+
+		await logger.info('Cache recompiled after write', {
+			source: 'PCDWriter',
+			meta: { databaseId }
+		});
+
+		return { success: true, filepath };
+	} catch (error) {
+		await logger.error('Failed to write operation', {
+			source: 'PCDWriter',
+			meta: { error: String(error), databaseId, layer, description }
+		});
+		return { success: false, error: String(error) };
+	}
+}
+
+/**
+ * Check if a database instance can write to the base layer
+ */
+export function canWriteToBase(databaseId: number): boolean {
+	const instance = databaseInstancesQueries.getById(databaseId);
+	return !!instance?.personal_access_token;
+}
