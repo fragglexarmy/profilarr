@@ -1,6 +1,5 @@
 <script lang="ts">
 	export let position: 'left' | 'right' | 'middle' = 'left';
-	export let open: boolean = false;
 	export let minWidth: string = '12rem'; // Allow customization
 
 	// Compute position classes
