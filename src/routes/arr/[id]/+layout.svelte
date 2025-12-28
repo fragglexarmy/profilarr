@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import { page } from '$app/stores';
-	import { Library, ArrowUpCircle, ScrollText } from 'lucide-svelte';
+	import { Library, RefreshCw, ArrowUpCircle, ScrollText } from 'lucide-svelte';
 
 	$: instanceId = $page.params.id;
 	$: currentPath = $page.url.pathname;
@@ -12,6 +12,12 @@
 			href: `/arr/${instanceId}/library`,
 			active: currentPath.includes('/library'),
 			icon: Library
+		},
+		{
+			label: 'Sync',
+			href: `/arr/${instanceId}/sync`,
+			active: currentPath.includes('/sync'),
+			icon: RefreshCw
 		},
 		{
 			label: 'Upgrades',

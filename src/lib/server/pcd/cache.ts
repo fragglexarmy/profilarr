@@ -224,9 +224,9 @@ const caches = new Map<number, PCDCache>();
 const watchers = new Map<number, Deno.FsWatcher>();
 
 /**
- * Debounce timers - maps database instance ID to timer
+ * Debounce timers - maps "databaseInstanceId:pcdPath" to timer
  */
-const debounceTimers = new Map<number, number>();
+const debounceTimers = new Map<string, number>();
 
 /**
  * Debounce delay in milliseconds
@@ -397,18 +397,29 @@ export async function startWatch(pcdPath: string, databaseInstanceId: number): P
 /**
  * Stop watching a PCD for changes
  */
-function stopWatch(databaseInstanceId: number): void {
+function stopWatch(databaseInstanceId: number, pcdPath?: string): void {
 	const watcher = watchers.get(databaseInstanceId);
 	if (watcher) {
 		watcher.close();
 		watchers.delete(databaseInstanceId);
 	}
 
-	// Clear any pending debounce timer
-	const timer = debounceTimers.get(databaseInstanceId);
-	if (timer) {
-		clearTimeout(timer);
-		debounceTimers.delete(databaseInstanceId);
+	// Clear any pending debounce timer for this specific path
+	if (pcdPath) {
+		const timerKey = `${databaseInstanceId}:${pcdPath}`;
+		const timer = debounceTimers.get(timerKey);
+		if (timer) {
+			clearTimeout(timer);
+			debounceTimers.delete(timerKey);
+		}
+	} else {
+		// Clear all timers for this databaseInstanceId (fallback)
+		for (const [key, timer] of debounceTimers.entries()) {
+			if (key.startsWith(`${databaseInstanceId}:`)) {
+				clearTimeout(timer);
+				debounceTimers.delete(key);
+			}
+		}
 	}
 }
 
@@ -416,8 +427,10 @@ function stopWatch(databaseInstanceId: number): void {
  * Schedule a rebuild with debouncing
  */
 function scheduleRebuild(pcdPath: string, databaseInstanceId: number): void {
-	// Clear existing timer
-	const existingTimer = debounceTimers.get(databaseInstanceId);
+	const timerKey = `${databaseInstanceId}:${pcdPath}`;
+
+	// Clear existing timer for this specific path
+	const existingTimer = debounceTimers.get(timerKey);
 	if (existingTimer) {
 		clearTimeout(existingTimer);
 	}
@@ -426,7 +439,7 @@ function scheduleRebuild(pcdPath: string, databaseInstanceId: number): void {
 	const timer = setTimeout(async () => {
 		await logger.info('Rebuilding cache due to file changes', {
 			source: 'PCDCache',
-			meta: { databaseInstanceId }
+			meta: { databaseInstanceId, pcdPath }
 		});
 
 		try {
@@ -436,12 +449,12 @@ function scheduleRebuild(pcdPath: string, databaseInstanceId: number): void {
 		} catch (error) {
 			await logger.error('Failed to rebuild cache', {
 				source: 'PCDCache',
-				meta: { error: String(error), databaseInstanceId }
+				meta: { error: String(error), databaseInstanceId, pcdPath }
 			});
 		}
 
-		debounceTimers.delete(databaseInstanceId);
+		debounceTimers.delete(timerKey);
 	}, DEBOUNCE_DELAY);
 
-	debounceTimers.set(databaseInstanceId, timer);
+	debounceTimers.set(timerKey, timer);
 }

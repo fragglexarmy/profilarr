@@ -15,6 +15,8 @@ import { migration as migration010 } from './migrations/010_add_is_private.ts';
 import { migration as migration011 } from './migrations/011_create_upgrade_configs.ts';
 import { migration as migration012 } from './migrations/012_add_upgrade_last_run.ts';
 import { migration as migration013 } from './migrations/013_add_upgrade_dry_run.ts';
+import { migration as migration014 } from './migrations/014_create_ai_settings.ts';
+import { migration as migration015 } from './migrations/015_create_arr_sync_tables.ts';
 
 export interface Migration {
 	version: number;
@@ -245,7 +247,9 @@ export function loadMigrations(): Migration[] {
 		migration010,
 		migration011,
 		migration012,
-		migration013
+		migration013,
+		migration014,
+		migration015
 	];
 
 	// Sort by version number

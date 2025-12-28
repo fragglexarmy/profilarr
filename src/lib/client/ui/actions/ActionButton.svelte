@@ -3,6 +3,7 @@
 	import type { ComponentType } from 'svelte';
 
 	export let icon: ComponentType | undefined = undefined;
+	export let iconClass: string = '';
 	export let square: boolean = true; // Fixed size square button
 	export let hasDropdown: boolean = false;
 	export let dropdownPosition: 'left' | 'right' | 'middle' = 'left';
@@ -39,7 +40,7 @@
 		on:click
 	>
 		{#if icon}
-			<svelte:component this={icon} size={20} class="text-neutral-700 dark:text-neutral-300" />
+			<svelte:component this={icon} size={20} class="text-neutral-700 dark:text-neutral-300 {iconClass}" />
 		{/if}
 		<slot />
 	</button>
