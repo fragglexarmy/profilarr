@@ -69,24 +69,23 @@ export async function getUncommittedOps(repoPath: string): Promise<OperationFile
 }
 
 /**
- * Get the highest operation number in ops/
+ * Get the highest operation number from COMMITTED files in ops/
  */
 export async function getMaxOpNumber(repoPath: string): Promise<number> {
 	let maxNum = 0;
-	const opsPath = `${repoPath}/ops`;
 
-	try {
-		for await (const entry of Deno.readDir(opsPath)) {
-			if (entry.isFile && entry.name.endsWith('.sql')) {
-				const match = entry.name.match(/^(\d+)\./);
-				if (match) {
-					const num = parseInt(match[1], 10);
-					if (num > maxNum) maxNum = num;
-				}
-			}
+	// Use git ls-tree to only count committed files
+	const output = await execGitSafe(['ls-tree', '--name-only', 'HEAD', 'ops/'], repoPath);
+	if (!output) return maxNum;
+
+	for (const filename of output.split('\n')) {
+		if (!filename.trim() || !filename.endsWith('.sql')) continue;
+		const basename = filename.replace('ops/', '');
+		const match = basename.match(/^(\d+)\./);
+		if (match) {
+			const num = parseInt(match[1], 10);
+			if (num > maxNum) maxNum = num;
 		}
-	} catch {
-		// Directory might not exist
 	}
 
 	return maxNum;
@@ -112,6 +111,11 @@ export async function discardOps(repoPath: string, filepaths: string[]): Promise
 
 /**
  * Add operation files: pull, renumber if needed, commit, push
+ *
+ * TODO: This functionality needs to be redesigned. The current approach of
+ * pull -> renumber -> commit -> push has race conditions and edge cases that
+ * can leave files in inconsistent states if any step fails mid-way. We also want to better
+ * choose when / how renumbering happens (e.g., only when there are conflicts).
  */
 export async function addOps(
 	repoPath: string,

@@ -148,6 +148,74 @@ function generateMetadataHeader(metadata: OperationMetadata): string {
 }
 
 /**
+ * Parse metadata from an operation file
+ */
+async function parseOperationMetadata(filepath: string): Promise<OperationMetadata | null> {
+	try {
+		const content = await Deno.readTextFile(filepath);
+		const operationMatch = content.match(/^-- @operation:\s*(\w+)/m);
+		const entityMatch = content.match(/^-- @entity:\s*(\w+)/m);
+		const nameMatch = content.match(/^-- @name:\s*(.+)$/m);
+		const previousNameMatch = content.match(/^-- @previous_name:\s*(.+)$/m);
+
+		if (!operationMatch || !entityMatch || !nameMatch) {
+			return null;
+		}
+
+		return {
+			operation: operationMatch[1] as OperationType,
+			entity: entityMatch[1],
+			name: nameMatch[1].trim(),
+			previousName: previousNameMatch?.[1]?.trim()
+		};
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Find and remove a matching create operation for a delete
+ * Returns true if a create was found and removed (no delete needed)
+ */
+async function cancelOutCreate(
+	targetDir: string,
+	metadata: OperationMetadata
+): Promise<boolean> {
+	if (metadata.operation !== 'delete') {
+		return false;
+	}
+
+	try {
+		for await (const entry of Deno.readDir(targetDir)) {
+			if (!entry.isFile || !entry.name.endsWith('.sql')) continue;
+
+			const filepath = `${targetDir}/${entry.name}`;
+			const fileMeta = await parseOperationMetadata(filepath);
+
+			// Check if this is a create operation for the same entity/name
+			if (
+				fileMeta &&
+				fileMeta.operation === 'create' &&
+				fileMeta.entity === metadata.entity &&
+				fileMeta.name === metadata.name
+			) {
+				// Remove the create file - it cancels out with the delete
+				await Deno.remove(filepath);
+				await logger.info('Cancelled out create operation with delete', {
+					source: 'PCDWriter',
+					meta: { filepath, entity: metadata.entity, name: metadata.name }
+				});
+				return true;
+			}
+		}
+	} catch {
+		// Directory doesn't exist or other error - proceed with normal write
+	}
+
+	return false;
+}
+
+/**
  * Write operations to a PCD layer
  *
  * For base layer: writes to ops/, user must manually commit/push
@@ -175,6 +243,13 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 
 		// Ensure directory exists
 		await ensureDir(targetDir);
+
+		// Optimization: if this is a delete and there's an uncommitted create, just remove the create
+		if (metadata && await cancelOutCreate(targetDir, metadata)) {
+			// Recompile the cache after removing the create file
+			await compile(instance.local_path, instance.id);
+			return { success: true };
+		}
 
 		// Get next operation number
 		const opNumber = await getNextOperationNumber(targetDir);

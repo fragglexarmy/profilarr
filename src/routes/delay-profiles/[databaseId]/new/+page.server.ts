@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/writer.ts';
 import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import type { PreferredProtocol } from '$pcd/queries/delayProfiles/index.ts';
+import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = ({ params }) => {
 	const { databaseId } = params;
@@ -58,7 +59,17 @@ export const actions: Actions = {
 		const bypassIfHighestQuality = formData.get('bypassIfHighestQuality') === 'true';
 		const bypassIfAboveCfScore = formData.get('bypassIfAboveCfScore') === 'true';
 		const minimumCfScore = parseInt(formData.get('minimumCfScore') as string, 10) || 0;
-		const layer = (formData.get('layer') as OperationLayer) || 'user';
+		const layerFromForm = formData.get('layer');
+		const layer = (layerFromForm as OperationLayer) || 'user';
+
+		await logger.debug('Create action received', {
+			source: 'DelayProfileCreate',
+			meta: {
+				profileName: name,
+				layerFromForm,
+				layerUsed: layer
+			}
+		});
 
 		// Validate
 		if (!name?.trim()) {

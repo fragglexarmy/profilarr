@@ -3,11 +3,24 @@
 	import { X, User, GitBranch } from 'lucide-svelte';
 
 	export let open = false;
+	export let mode: 'save' | 'delete' = 'save';
 
 	const dispatch = createEventDispatcher<{
 		select: 'user' | 'base';
 		cancel: void;
 	}>();
+
+	$: title = mode === 'save' ? 'Where to save?' : 'Where to delete from?';
+	$: userLabel = mode === 'save' ? 'Personal Override' : 'Remove Personal Override';
+	$: userDescription =
+		mode === 'save'
+			? "Save locally only. Changes won't sync upstream and stay on this machine."
+			: 'Remove your local override. The base database version will apply.';
+	$: baseLabel = mode === 'save' ? 'Contribute to Database' : 'Delete from Database';
+	$: baseDescription =
+		mode === 'save'
+			? "Add to base operations. You'll need to commit and push manually."
+			: "Create a delete operation. You'll need to commit and push manually.";
 
 	function handleSelect(layer: 'user' | 'base') {
 		dispatch('select', layer);
@@ -54,7 +67,7 @@
 		>
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Where to save?</h2>
+				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{title}</h2>
 				<button
 					type="button"
 					on:click={handleCancel}
@@ -75,9 +88,9 @@
 						<User size={20} />
 					</div>
 					<div>
-						<div class="font-medium text-neutral-900 dark:text-neutral-100">Personal Override</div>
+						<div class="font-medium text-neutral-900 dark:text-neutral-100">{userLabel}</div>
 						<div class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-							Save locally only. Changes won't sync upstream and stay on this machine.
+							{userDescription}
 						</div>
 					</div>
 				</button>
@@ -91,9 +104,9 @@
 						<GitBranch size={20} />
 					</div>
 					<div>
-						<div class="font-medium text-neutral-900 dark:text-neutral-100">Contribute to Database</div>
+						<div class="font-medium text-neutral-900 dark:text-neutral-100">{baseLabel}</div>
 						<div class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-							Add to base operations. You'll need to commit and push manually.
+							{baseDescription}
 						</div>
 					</div>
 				</button>

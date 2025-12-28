@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { tick } from 'svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
-	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2, Loader2 } from 'lucide-svelte';
@@ -36,9 +36,12 @@
 
 	// Modal states
 	let showSaveTargetModal = false;
-	let showDeleteModal = false;
+	let showDeleteTargetModal = false;
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+
+	// Delete layer selection
+	let deleteLayer: 'user' | 'base' = 'user';
 
 	// Display text based on mode
 	$: title = mode === 'create' ? 'New Delay Profile' : 'Edit Delay Profile';
@@ -61,21 +64,40 @@
 
 	$: isValid = name.trim() !== '' && tags.length > 0;
 
-	function handleSaveClick() {
+	async function handleSaveClick() {
 		if (canWriteToBase) {
 			// Show modal to ask where to save
 			showSaveTargetModal = true;
 		} else {
 			// No choice, just submit with 'user' layer
 			selectedLayer = 'user';
+			await tick();
 			mainFormElement?.requestSubmit();
 		}
 	}
 
-	function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
+	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
 		selectedLayer = event.detail;
 		showSaveTargetModal = false;
+		await tick();
 		mainFormElement?.requestSubmit();
+	}
+
+	async function handleDeleteClick() {
+		if (canWriteToBase) {
+			showDeleteTargetModal = true;
+		} else {
+			deleteLayer = 'user';
+			await tick();
+			deleteFormElement?.requestSubmit();
+		}
+	}
+
+	async function handleDeleteLayerSelect(event: CustomEvent<'user' | 'base'>) {
+		deleteLayer = event.detail;
+		showDeleteTargetModal = false;
+		await tick();
+		deleteFormElement?.requestSubmit();
 	}
 </script>
 
@@ -292,7 +314,7 @@
 				{#if mode === 'edit'}
 					<button
 						type="button"
-						on:click={() => (showDeleteModal = true)}
+						on:click={handleDeleteClick}
 						class="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900"
 					>
 						<Trash2 size={14} />
@@ -348,32 +370,25 @@
 				};
 			}}
 		>
+			<input type="hidden" name="layer" value={deleteLayer} />
 		</form>
 	{/if}
 </div>
-
-<!-- Delete Confirmation Modal -->
-{#if mode === 'edit'}
-	<Modal
-		open={showDeleteModal}
-		header="Delete Delay Profile"
-		bodyMessage={`Are you sure you want to delete "${name}"? This action cannot be undone.`}
-		confirmText="Delete"
-		cancelText="Cancel"
-		confirmDanger={true}
-		on:confirm={() => {
-			showDeleteModal = false;
-			deleteFormElement?.requestSubmit();
-		}}
-		on:cancel={() => (showDeleteModal = false)}
-	/>
-{/if}
 
 <!-- Save Target Modal -->
 {#if canWriteToBase}
 	<SaveTargetModal
 		open={showSaveTargetModal}
+		mode="save"
 		on:select={handleLayerSelect}
 		on:cancel={() => (showSaveTargetModal = false)}
+	/>
+
+	<!-- Delete Target Modal -->
+	<SaveTargetModal
+		open={showDeleteTargetModal}
+		mode="delete"
+		on:select={handleDeleteLayerSelect}
+		on:cancel={() => (showDeleteTargetModal = false)}
 	/>
 {/if}

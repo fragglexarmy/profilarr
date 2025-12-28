@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/writer.ts';
 import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import type { PreferredProtocol } from '$pcd/queries/delayProfiles/index.ts';
+import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -127,7 +128,7 @@ export const actions: Actions = {
 		throw redirect(303, `/delay-profiles/${databaseId}`);
 	},
 
-	delete: async ({ params }) => {
+	delete: async ({ request, params }) => {
 		const { databaseId, id } = params;
 
 		if (!databaseId || !id) {
@@ -152,11 +153,29 @@ export const actions: Actions = {
 			return fail(404, { error: 'Delay profile not found' });
 		}
 
-		// Delete always goes to user layer (can't remove base ops)
+		const formData = await request.formData();
+		const layerFromForm = formData.get('layer');
+		const layer = (layerFromForm as OperationLayer) || 'user';
+
+		await logger.debug('Delete action received', {
+			source: 'DelayProfileDelete',
+			meta: {
+				profileId,
+				profileName: current.name,
+				layerFromForm,
+				layerUsed: layer
+			}
+		});
+
+		// Check layer permission
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer without personal access token' });
+		}
+
 		const result = await delayProfileQueries.remove({
 			databaseId: currentDatabaseId,
 			cache,
-			layer: 'user',
+			layer,
 			current
 		});
 

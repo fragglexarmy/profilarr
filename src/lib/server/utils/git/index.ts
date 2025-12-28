@@ -4,6 +4,7 @@
 
 export { Git } from './Git.ts';
 export * from './types.ts';
+export type { GetStatusOptions } from './status.ts';
 
 // Direct function exports
-export { clone } from './repo.ts';
+export { clone, getRepoInfo } from './repo.ts';

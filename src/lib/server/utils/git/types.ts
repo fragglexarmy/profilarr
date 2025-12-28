@@ -33,3 +33,15 @@ export interface UpdateInfo {
 	latestRemoteCommit: string;
 	currentLocalCommit: string;
 }
+
+export interface RepoInfo {
+	owner: string;
+	repo: string;
+	description: string | null;
+	stars: number;
+	forks: number;
+	openIssues: number;
+	ownerAvatarUrl: string;
+	ownerType: 'User' | 'Organization';
+	htmlUrl: string;
+}

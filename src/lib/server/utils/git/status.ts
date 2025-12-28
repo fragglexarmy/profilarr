@@ -13,14 +13,21 @@ export async function getBranch(repoPath: string): Promise<string> {
 	return await execGit(['branch', '--show-current'], repoPath);
 }
 
+export interface GetStatusOptions {
+	/** Whether to fetch from remote first (slower but accurate ahead/behind) */
+	fetch?: boolean;
+}
+
 /**
  * Get full repository status
  */
-export async function getStatus(repoPath: string): Promise<GitStatus> {
+export async function getStatus(repoPath: string, options: GetStatusOptions = {}): Promise<GitStatus> {
 	const branch = await getBranch(repoPath);
 
-	// Fetch to get accurate ahead/behind
-	await fetch(repoPath);
+	// Optionally fetch to get accurate ahead/behind
+	if (options.fetch) {
+		await fetch(repoPath);
+	}
 
 	// Get ahead/behind
 	let ahead = 0;
@@ -108,4 +115,20 @@ export async function getLastPushed(repoPath: string): Promise<string | null> {
 	const branch = await getBranch(repoPath);
 	const output = await execGitSafe(['log', '-1', '--format=%cI', `origin/${branch}`], repoPath);
 	return output || null;
+}
+
+/**
+ * Get all local and remote branches
+ */
+export async function getBranches(repoPath: string): Promise<string[]> {
+	// Get all branches (local and remote tracking)
+	const output = await execGit(['branch', '-a', '--format=%(refname:short)'], repoPath);
+	const branches = output
+		.split('\n')
+		.map((b) => b.trim())
+		.filter((b) => b && !b.includes('HEAD'))
+		.map((b) => b.replace(/^origin\//, ''))
+		.filter((b, i, arr) => arr.indexOf(b) === i); // dedupe
+
+	return branches;
 }

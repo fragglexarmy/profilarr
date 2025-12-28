@@ -1,21 +1,13 @@
-import { error } from '@sveltejs/kit';
-import type { ServerLoad } from '@sveltejs/kit';
-import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load: ServerLoad = ({ params }) => {
-	const id = parseInt(params.id || '', 10);
+export const load: PageServerLoad = async ({ params, parent }) => {
+	const { database } = await parent();
 
-	if (isNaN(id)) {
-		error(400, 'Invalid database ID');
+	// Dev databases (with PAT) go to changes, others go to sync
+	if (database.personal_access_token) {
+		redirect(302, `/databases/${params.id}/changes`);
+	} else {
+		redirect(302, `/databases/${params.id}/sync`);
 	}
-
-	const database = databaseInstancesQueries.getById(id);
-
-	if (!database) {
-		error(404, 'Database not found');
-	}
-
-	return {
-		database
-	};
 };
