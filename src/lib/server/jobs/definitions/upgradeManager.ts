@@ -1,5 +1,6 @@
 import { logger } from '$logger/logger.ts';
 import { runUpgradeManager } from '../logic/upgradeManager.ts';
+import { notificationManager } from '$notifications/NotificationManager.ts';
 import type { JobDefinition, JobResult } from '../types.ts';
 
 /**
@@ -52,6 +53,65 @@ export const upgradeManagerJob: JobDefinition = {
 				}
 			}
 
+			// Send notification summary (only if something was processed, excluding skipped)
+			const processedCount = result.successCount + result.failureCount;
+			if (processedCount > 0) {
+				const successfulInstances = result.instances.filter((i) => i.success);
+				const failedInstances = result.instances.filter((i) => !i.success && i.error && !i.error.includes('disabled') && !i.error.includes('not yet supported'));
+				const hasDryRun = result.instances.some((i) => i.dryRun);
+
+				// Build message lines for each successful instance
+				const messageLines: string[] = [];
+				for (const inst of successfulInstances) {
+					const dryRunLabel = inst.dryRun ? ' [DRY RUN]' : '';
+					messageLines.push(`**${inst.instanceName}: ${inst.filterName}${dryRunLabel}**`);
+					messageLines.push(`Filter: ${inst.matchedCount} matched → ${inst.afterCooldown} after cooldown`);
+					messageLines.push(`Selection: ${inst.itemsSearched}/${inst.itemsRequested} items`);
+					if (inst.items && inst.items.length > 0) {
+						messageLines.push(`Items: ${inst.items.join(', ')}`);
+					}
+					messageLines.push('');
+				}
+
+				// Add failed instances
+				for (const inst of failedInstances) {
+					messageLines.push(`**${inst.instanceName}: Failed**`);
+					messageLines.push(`Error: ${inst.error}`);
+					messageLines.push('');
+				}
+
+				let notificationType: string;
+				let title: string;
+
+				if (result.failureCount === 0) {
+					notificationType = 'upgrade.success';
+					title = hasDryRun ? 'Upgrade Completed (Dry Run)' : 'Upgrade Completed';
+				} else if (result.successCount === 0) {
+					notificationType = 'upgrade.failed';
+					title = 'Upgrade Failed';
+				} else {
+					notificationType = 'upgrade.partial';
+					title = 'Upgrade Partially Completed';
+				}
+
+				await notificationManager.notify({
+					type: notificationType,
+					title,
+					message: messageLines.join('\n').trim(),
+					metadata: {
+						successCount: result.successCount,
+						failureCount: result.failureCount,
+						dryRun: hasDryRun,
+						instances: result.instances.filter((i) => i.success).map((i) => ({
+							name: i.instanceName,
+							filter: i.filterName,
+							searched: i.itemsSearched,
+							items: i.items
+						}))
+					}
+				});
+			}
+
 			// Consider job failed only if all configs failed
 			if (result.failureCount > 0 && result.successCount === 0) {
 				return {
@@ -65,14 +125,23 @@ export const upgradeManagerJob: JobDefinition = {
 				output: message
 			};
 		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+
 			await logger.error('Upgrade manager job failed', {
 				source: 'UpgradeManagerJob',
-				meta: { error: error instanceof Error ? error.message : String(error) }
+				meta: { error: errorMessage }
+			});
+
+			await notificationManager.notify({
+				type: 'upgrade.failed',
+				title: 'Upgrade Failed',
+				message: `Upgrade manager encountered an error: ${errorMessage}`,
+				metadata: { error: errorMessage }
 			});
 
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : String(error)
+				error: errorMessage
 			};
 		}
 	}

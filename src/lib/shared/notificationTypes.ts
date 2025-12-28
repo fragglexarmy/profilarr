@@ -84,6 +84,26 @@ export const notificationTypes: NotificationType[] = [
 		label: 'Database Sync (Failed)',
 		category: 'Databases',
 		description: 'Notification when database sync fails'
+	},
+
+	// Upgrades
+	{
+		id: 'upgrade.success',
+		label: 'Upgrade Completed (Success)',
+		category: 'Upgrades',
+		description: 'Notification when all upgrade searches complete successfully'
+	},
+	{
+		id: 'upgrade.partial',
+		label: 'Upgrade Completed (Partial)',
+		category: 'Upgrades',
+		description: 'Notification when some upgrade searches succeed and some fail'
+	},
+	{
+		id: 'upgrade.failed',
+		label: 'Upgrade Failed',
+		category: 'Upgrades',
+		description: 'Notification when all upgrade searches fail'
 	}
 ];
 

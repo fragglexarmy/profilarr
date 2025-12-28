@@ -15,6 +15,11 @@ export interface UpgradeInstanceStatus {
 	success: boolean;
 	filterName?: string;
 	itemsSearched?: number;
+	itemsRequested?: number;
+	matchedCount?: number;
+	afterCooldown?: number;
+	items?: string[];
+	dryRun?: boolean;
 	error?: string;
 }
 
@@ -79,6 +84,11 @@ async function processConfig(config: UpgradeConfig): Promise<UpgradeInstanceStat
 			success: log.status === 'success' || log.status === 'partial',
 			filterName: log.config.selectedFilter,
 			itemsSearched: log.selection.actualCount,
+			itemsRequested: log.selection.requestedCount,
+			matchedCount: log.filter.matchedCount,
+			afterCooldown: log.filter.afterCooldown,
+			items: log.selection.items.map((i) => i.title),
+			dryRun: config.dryRun,
 			error: log.status === 'failed' ? log.results.errors.join('; ') : undefined
 		};
 	} catch (error) {
