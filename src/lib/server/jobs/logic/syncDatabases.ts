@@ -4,7 +4,8 @@
  */
 
 import { pcdManager } from '$pcd/pcd.ts';
-import { notificationManager } from '$notifications/NotificationManager.ts';
+import { notify } from '$notifications/builder.ts';
+import { NotificationTypes } from '$notifications/types.ts';
 
 export interface DatabaseSyncStatus {
 	id: number;
@@ -56,17 +57,11 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 				const syncResult = await pcdManager.sync(db.id);
 
 				if (syncResult.success) {
-					// Send success notification
-					await notificationManager.notify({
-						type: 'pcd.sync_success',
-						title: 'Database Synced Successfully',
-						message: `Database "${db.name}" has been updated (${syncResult.commitsBehind} commit${syncResult.commitsBehind === 1 ? '' : 's'} pulled)`,
-						metadata: {
-							databaseId: db.id,
-							databaseName: db.name,
-							commitsPulled: syncResult.commitsBehind
-						}
-					});
+					await notify(NotificationTypes.PCD_SYNC_SUCCESS)
+						.title('Database Synced Successfully')
+						.message(`Database "${db.name}" has been updated (${syncResult.commitsBehind} commit${syncResult.commitsBehind === 1 ? '' : 's'} pulled)`)
+						.meta({ databaseId: db.id, databaseName: db.name, commitsPulled: syncResult.commitsBehind })
+						.send();
 
 					statuses.push({
 						id: db.id,
@@ -76,17 +71,11 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 					});
 					successCount++;
 				} else {
-					// Send failure notification
-					await notificationManager.notify({
-						type: 'pcd.sync_failed',
-						title: 'Database Sync Failed',
-						message: `Failed to sync database "${db.name}": ${syncResult.error}`,
-						metadata: {
-							databaseId: db.id,
-							databaseName: db.name,
-							error: syncResult.error
-						}
-					});
+					await notify(NotificationTypes.PCD_SYNC_FAILED)
+						.title('Database Sync Failed')
+						.message(`Failed to sync database "${db.name}": ${syncResult.error}`)
+						.meta({ databaseId: db.id, databaseName: db.name, error: syncResult.error })
+						.send();
 
 					statuses.push({
 						id: db.id,
@@ -98,17 +87,12 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 					failureCount++;
 				}
 			} else {
-				// Auto-pull is disabled, send notification
-				await notificationManager.notify({
-					type: 'pcd.updates_available',
-					title: 'Database Updates Available',
-					message: `Updates are available for database "${db.name}" (${updateInfo.commitsBehind} commit${updateInfo.commitsBehind === 1 ? '' : 's'} behind)`,
-					metadata: {
-						databaseId: db.id,
-						databaseName: db.name,
-						commitsBehind: updateInfo.commitsBehind
-					}
-				});
+				// Auto-pull is disabled, notify about available updates
+				await notify(NotificationTypes.PCD_UPDATES_AVAILABLE)
+					.title('Database Updates Available')
+					.message(`Updates are available for database "${db.name}" (${updateInfo.commitsBehind} commit${updateInfo.commitsBehind === 1 ? '' : 's'} behind)`)
+					.meta({ databaseId: db.id, databaseName: db.name, commitsBehind: updateInfo.commitsBehind })
+					.send();
 
 				statuses.push({
 					id: db.id,

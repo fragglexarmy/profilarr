@@ -1,6 +1,7 @@
 import { logger } from '$logger/logger.ts';
 import { runUpgradeManager } from '../logic/upgradeManager.ts';
-import { notificationManager } from '$notifications/NotificationManager.ts';
+import { notify } from '$notifications/builder.ts';
+import { NotificationTypes } from '$notifications/types.ts';
 import type { JobDefinition, JobResult } from '../types.ts';
 
 /**
@@ -80,25 +81,26 @@ export const upgradeManagerJob: JobDefinition = {
 					messageLines.push('');
 				}
 
-				let notificationType: string;
-				let title: string;
+				const notificationType =
+					result.failureCount === 0
+						? NotificationTypes.UPGRADE_SUCCESS
+						: result.successCount === 0
+							? NotificationTypes.UPGRADE_FAILED
+							: NotificationTypes.UPGRADE_PARTIAL;
 
-				if (result.failureCount === 0) {
-					notificationType = 'upgrade.success';
-					title = hasDryRun ? 'Upgrade Completed (Dry Run)' : 'Upgrade Completed';
-				} else if (result.successCount === 0) {
-					notificationType = 'upgrade.failed';
-					title = 'Upgrade Failed';
-				} else {
-					notificationType = 'upgrade.partial';
-					title = 'Upgrade Partially Completed';
-				}
+				const title =
+					result.failureCount === 0
+						? hasDryRun
+							? 'Upgrade Completed (Dry Run)'
+							: 'Upgrade Completed'
+						: result.successCount === 0
+							? 'Upgrade Failed'
+							: 'Upgrade Partially Completed';
 
-				await notificationManager.notify({
-					type: notificationType,
-					title,
-					message: messageLines.join('\n').trim(),
-					metadata: {
+				await notify(notificationType)
+					.title(title)
+					.lines(messageLines)
+					.meta({
 						successCount: result.successCount,
 						failureCount: result.failureCount,
 						dryRun: hasDryRun,
@@ -108,8 +110,8 @@ export const upgradeManagerJob: JobDefinition = {
 							searched: i.itemsSearched,
 							items: i.items
 						}))
-					}
-				});
+					})
+					.send();
 			}
 
 			// Consider job failed only if all configs failed
@@ -132,12 +134,11 @@ export const upgradeManagerJob: JobDefinition = {
 				meta: { error: errorMessage }
 			});
 
-			await notificationManager.notify({
-				type: 'upgrade.failed',
-				title: 'Upgrade Failed',
-				message: `Upgrade manager encountered an error: ${errorMessage}`,
-				metadata: { error: errorMessage }
-			});
+			await notify(NotificationTypes.UPGRADE_FAILED)
+				.title('Upgrade Failed')
+				.message(`Upgrade manager encountered an error: ${errorMessage}`)
+				.meta({ error: errorMessage })
+				.send();
 
 			return {
 				success: false,

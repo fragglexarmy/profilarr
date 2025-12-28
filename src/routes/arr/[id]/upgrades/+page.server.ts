@@ -3,7 +3,8 @@ import type { Actions, ServerLoad } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { logger } from '$logger/logger.ts';
-import { notificationManager } from '$notifications/NotificationManager.ts';
+import { notify } from '$notifications/builder.ts';
+import { NotificationTypes } from '$notifications/types.ts';
 import type { FilterConfig, FilterMode } from '$lib/shared/filters.ts';
 import { processUpgradeConfig } from '$lib/server/upgrades/processor.ts';
 
@@ -227,16 +228,15 @@ export const actions: Actions = {
 			const dryRunLabel = result.config.dryRun ? ' [DRY RUN]' : '';
 			const itemsList = result.selection.items.map((i) => i.title).join(', ');
 
-			await notificationManager.notify({
-				type: isSuccess ? 'upgrade.success' : 'upgrade.failed',
-				title: `${instance.name}: ${result.config.selectedFilter}${dryRunLabel}`,
-				message: [
+			await notify(isSuccess ? NotificationTypes.UPGRADE_SUCCESS : NotificationTypes.UPGRADE_FAILED)
+				.title(`${instance.name}: ${result.config.selectedFilter}${dryRunLabel}`)
+				.lines([
 					`Filter: ${result.filter.matchedCount} matched → ${result.filter.afterCooldown} after cooldown`,
 					`Selection: ${result.selection.actualCount}/${result.selection.requestedCount} items`,
 					`Results: ${result.results.searchesTriggered} searches, ${result.results.successful} successful`,
 					itemsList ? `Items: ${itemsList}` : null
-				].filter(Boolean).join('\n'),
-				metadata: {
+				])
+				.meta({
 					instanceId: id,
 					instanceName: instance.name,
 					filterName: result.config.selectedFilter,
@@ -244,8 +244,8 @@ export const actions: Actions = {
 					matchedCount: result.filter.matchedCount,
 					dryRun: result.config.dryRun,
 					items: result.selection.items.map((i) => i.title)
-				}
-			});
+				})
+				.send();
 
 			return {
 				success: true,
@@ -267,17 +267,11 @@ export const actions: Actions = {
 				meta: { instanceId: id, error: err }
 			});
 
-			await notificationManager.notify({
-				type: 'upgrade.failed',
-				title: 'Upgrade Failed',
-				message: `${instance.name}: ${errorMessage}`,
-				metadata: {
-					instanceId: id,
-					instanceName: instance.name,
-					error: errorMessage,
-					dryRun: true
-				}
-			});
+			await notify(NotificationTypes.UPGRADE_FAILED)
+				.title('Upgrade Failed')
+				.message(`${instance.name}: ${errorMessage}`)
+				.meta({ instanceId: id, instanceName: instance.name, error: errorMessage, dryRun: true })
+				.send();
 
 			return fail(500, { error: 'Upgrade run failed. Check logs for details.' });
 		}
