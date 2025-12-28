@@ -7,7 +7,7 @@ import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 import { loadManifest, type Manifest } from './manifest.ts';
 import { getPCDPath } from './paths.ts';
-import { processDependencies } from './deps.ts';
+import { processDependencies, syncDependencies } from './deps.ts';
 import { notificationManager } from '$notifications/NotificationManager.ts';
 import { compile, invalidate, startWatch, getCache } from './cache.ts';
 import { logger } from '$logger/logger.ts';
@@ -177,6 +177,9 @@ class PCDManager {
 
 			// Pull updates
 			await git.pull(instance.local_path);
+
+			// Sync dependencies (schema, etc.) if versions changed
+			await syncDependencies(instance.local_path);
 
 			// Update last_synced_at
 			databaseInstancesQueries.updateSyncedAt(id);

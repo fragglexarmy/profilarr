@@ -83,6 +83,60 @@ export async function processDependencies(pcdPath: string): Promise<void> {
 }
 
 /**
+ * Get the installed version of a dependency from its manifest
+ */
+async function getInstalledVersion(pcdPath: string, repoName: string): Promise<string | null> {
+	const depManifestPath = `${pcdPath}/deps/${repoName}/pcd.json`;
+	try {
+		const content = await Deno.readTextFile(depManifestPath);
+		const manifest = JSON.parse(content);
+		return manifest.version ?? null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Sync dependencies - update any that have changed versions in the manifest
+ * Called after pulling updates to ensure dependencies match manifest requirements
+ */
+export async function syncDependencies(pcdPath: string): Promise<void> {
+	const manifest = await loadManifest(pcdPath);
+
+	if (!manifest.dependencies || Object.keys(manifest.dependencies).length === 0) {
+		return;
+	}
+
+	// Ensure deps directory exists
+	const depsDir = `${pcdPath}/deps`;
+	await Deno.mkdir(depsDir, { recursive: true });
+
+	for (const [repoUrl, requiredVersion] of Object.entries(manifest.dependencies)) {
+		const repoName = getRepoName(repoUrl);
+		const depPath = getDependencyPath(pcdPath, repoName);
+		const installedVersion = await getInstalledVersion(pcdPath, repoName);
+
+		if (installedVersion === requiredVersion) {
+			// Already at correct version, skip
+			continue;
+		}
+
+		// Version changed or not installed - remove old and clone new
+		try {
+			await Deno.remove(depPath, { recursive: true });
+		} catch {
+			// Didn't exist, that's fine
+		}
+
+		// Clone and checkout the new version
+		await cloneDependency(pcdPath, repoUrl, requiredVersion);
+
+		// Validate the dependency's manifest
+		await loadManifest(depPath);
+	}
+}
+
+/**
  * Check if all dependencies are present and valid
  */
 export async function validateDependencies(pcdPath: string): Promise<boolean> {
