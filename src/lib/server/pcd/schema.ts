@@ -39,6 +39,13 @@ export interface QualitiesTable {
 	updated_at: Generated<string>;
 }
 
+export interface QualityApiMappingsTable {
+	quality_id: number;
+	arr_type: string;
+	api_name: string;
+	created_at: Generated<string>;
+}
+
 export interface CustomFormatsTable {
 	id: Generated<number>;
 	name: string;
@@ -183,6 +190,93 @@ export interface ConditionYearsTable {
 }
 
 // ============================================================================
+// DELAY PROFILES
+// ============================================================================
+
+export interface DelayProfilesTable {
+	id: Generated<number>;
+	name: string;
+	preferred_protocol: string;
+	usenet_delay: number | null;
+	torrent_delay: number | null;
+	bypass_if_highest_quality: number;
+	bypass_if_above_custom_format_score: number;
+	minimum_custom_format_score: number | null;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface DelayProfileTagsTable {
+	delay_profile_id: number;
+	tag_id: number;
+}
+
+// ============================================================================
+// MEDIA MANAGEMENT TABLES
+// ============================================================================
+
+export interface RadarrQualityDefinitionsTable {
+	quality_id: number;
+	min_size: number;
+	max_size: number;
+	preferred_size: number;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface SonarrQualityDefinitionsTable {
+	quality_id: number;
+	min_size: number;
+	max_size: number;
+	preferred_size: number;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface RadarrNamingTable {
+	id: number;
+	rename: number;
+	movie_format: string;
+	movie_folder_format: string;
+	replace_illegal_characters: number;
+	colon_replacement_format: string;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface SonarrNamingTable {
+	id: number;
+	rename: number;
+	standard_episode_format: string;
+	daily_episode_format: string;
+	anime_episode_format: string;
+	series_folder_format: string;
+	season_folder_format: string;
+	replace_illegal_characters: number;
+	colon_replacement_format: number;
+	custom_colon_replacement_format: string | null;
+	multi_episode_style: number;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface RadarrMediaSettingsTable {
+	id: number;
+	propers_repacks: string;
+	enable_media_info: number;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface SonarrMediaSettingsTable {
+	id: number;
+	propers_repacks: string;
+	enable_media_info: number;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+// ============================================================================
 // DATABASE INTERFACE
 // ============================================================================
 
@@ -211,4 +305,13 @@ export interface PCDDatabase {
 	condition_sizes: ConditionSizesTable;
 	condition_release_types: ConditionReleaseTypesTable;
 	condition_years: ConditionYearsTable;
+	delay_profiles: DelayProfilesTable;
+	delay_profile_tags: DelayProfileTagsTable;
+	quality_api_mappings: QualityApiMappingsTable;
+	radarr_quality_definitions: RadarrQualityDefinitionsTable;
+	sonarr_quality_definitions: SonarrQualityDefinitionsTable;
+	radarr_naming: RadarrNamingTable;
+	sonarr_naming: SonarrNamingTable;
+	radarr_media_settings: RadarrMediaSettingsTable;
+	sonarr_media_settings: SonarrMediaSettingsTable;
 }
