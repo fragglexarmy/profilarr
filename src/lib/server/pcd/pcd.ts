@@ -2,7 +2,7 @@
  * PCD Manager - High-level orchestration for PCD lifecycle
  */
 
-import * as git from '$utils/git/git.ts';
+import { Git, clone, type GitStatus, type UpdateInfo } from '$utils/git/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 import { loadManifest, type Manifest } from './manifest.ts';
@@ -51,7 +51,7 @@ class PCDManager {
 
 		try {
 			// Clone the repository and detect if it's private
-			const isPrivate = await git.clone(options.repositoryUrl, localPath, options.branch, options.personalAccessToken);
+			const isPrivate = await clone(options.repositoryUrl, localPath, options.branch, options.personalAccessToken);
 
 			// Validate manifest (loadManifest throws if invalid)
 			await loadManifest(localPath);
@@ -151,9 +151,11 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
+		const git = new Git(instance.local_path);
+
 		try {
 			// Check for updates first
-			const updateInfo = await git.checkForUpdates(instance.local_path);
+			const updateInfo = await git.checkForUpdates();
 
 			if (!updateInfo.hasUpdates) {
 				// Already up to date
@@ -165,7 +167,7 @@ class PCDManager {
 			}
 
 			// Pull updates
-			await git.pull(instance.local_path);
+			await git.pull();
 
 			// Sync dependencies (schema, etc.) if versions changed
 			await syncDependencies(instance.local_path);
@@ -202,13 +204,14 @@ class PCDManager {
 	/**
 	 * Check for available updates without pulling
 	 */
-	async checkForUpdates(id: number): Promise<git.UpdateInfo> {
+	async checkForUpdates(id: number): Promise<UpdateInfo> {
 		const instance = databaseInstancesQueries.getById(id);
 		if (!instance) {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		return await git.checkForUpdates(instance.local_path);
+		const git = new Git(instance.local_path);
+		return await git.checkForUpdates();
 	}
 
 	/**
@@ -232,21 +235,23 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		await git.checkout(instance.local_path, branch);
-		await git.pull(instance.local_path);
+		const git = new Git(instance.local_path);
+		await git.checkout(branch);
+		await git.pull();
 		databaseInstancesQueries.updateSyncedAt(id);
 	}
 
 	/**
 	 * Get git status for a PCD
 	 */
-	async getStatus(id: number): Promise<git.GitStatus> {
+	async getStatus(id: number): Promise<GitStatus> {
 		const instance = databaseInstancesQueries.getById(id);
 		if (!instance) {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		return await git.getStatus(instance.local_path);
+		const git = new Git(instance.local_path);
+		return await git.status();
 	}
 
 	/**

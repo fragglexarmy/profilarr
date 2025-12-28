@@ -3,7 +3,7 @@
  * Handles cloning and managing PCD dependencies
  */
 
-import * as git from '$utils/git/git.ts';
+import { Git, clone } from '$utils/git/index.ts';
 import { loadManifest } from './manifest.ts';
 
 /**
@@ -34,10 +34,11 @@ async function cloneDependency(
 	const depPath = getDependencyPath(pcdPath, repoName);
 
 	// Clone the dependency repository
-	await git.clone(repoUrl, depPath);
+	await clone(repoUrl, depPath);
 
 	// Checkout the specific version tag
-	await git.checkout(depPath, version);
+	const git = new Git(depPath);
+	await git.checkout(version);
 
 	// Clean up dependency - keep only ops folder and pcd.json
 	const keepItems = new Set(['ops', 'pcd.json']);
