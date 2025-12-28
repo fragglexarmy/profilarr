@@ -167,7 +167,7 @@
 											</span>
 											{#if migration.latest}
 												<span
-													class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+													class="rounded-full bg-accent-100 px-2 py-0.5 text-xs font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
 												>
 													Latest
 												</span>
@@ -215,13 +215,13 @@
 													target="_blank"
 													rel="noopener noreferrer"
 													data-sveltekit-reload
-													class="font-mono text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+													class="font-mono text-sm font-medium text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
 												>
 													{release.tag_name}
 												</a>
 												{#if index === 0}
 													<span
-														class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+														class="rounded-full bg-accent-100 px-2 py-0.5 text-xs font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
 													>
 														Latest
 													</span>

@@ -24,7 +24,7 @@
 				{#if profile.tags.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each profile.tags as tag}
-							<span class="inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+							<span class="inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 								{tag.name}
 							</span>
 						{/each}
@@ -47,7 +47,7 @@
 					{/if}
 					<span class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-mono text-neutral-900 dark:text-neutral-100
 						{quality.is_upgrade_until
-							? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
+							? 'border-accent-200 bg-accent-50 dark:border-accent-800 dark:bg-accent-950'
 							: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}">
 						{quality.name}
 					</span>

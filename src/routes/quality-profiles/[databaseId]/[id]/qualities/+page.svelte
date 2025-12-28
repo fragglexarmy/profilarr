@@ -356,7 +356,7 @@
 									<div class="absolute inset-0 rounded-lg border-2 border-dashed border-green-500 bg-green-50/30 dark:border-green-400 dark:bg-green-950/30 pointer-events-none"></div>
 								{/if}
 								{#if hoverTargetIndex === index && willAddToGroup}
-									<div class="absolute inset-0 rounded-lg border-2 border-dashed border-blue-500 bg-blue-50/30 dark:border-blue-400 dark:bg-blue-950/30 pointer-events-none"></div>
+									<div class="absolute inset-0 rounded-lg border-2 border-dashed border-accent-500 bg-accent-50/30 dark:border-accent-400 dark:bg-accent-950/30 pointer-events-none"></div>
 								{/if}
 								<div class="flex items-center justify-between relative">
 									<div class="flex-1">
@@ -370,13 +370,13 @@
 														if (e.key === 'Enter') saveGroupName();
 														if (e.key === 'Escape') cancelEditingGroupName();
 													}}
-													class="max-w-xs rounded border border-blue-500 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-neutral-100"
+													class="max-w-xs rounded border border-accent-500 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-neutral-800 dark:text-neutral-100"
 												/>
 											{:else}
 												<div class="font-medium text-neutral-900 dark:text-neutral-100">
 													{#if item.type === 'group'}
 														<span
-															class="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+															class="cursor-pointer hover:text-accent-600 dark:hover:text-accent-400"
 															on:click={(e) => {
 																e.stopPropagation();
 																startEditingGroupName(item, index);
@@ -411,7 +411,7 @@
 												Create Group
 											</div>
 										{:else if hoverTargetIndex === index && willAddToGroup}
-											<div class="text-xs font-medium text-blue-600 dark:text-blue-400">
+											<div class="text-xs font-medium text-accent-600 dark:text-accent-400">
 												Add to Group
 											</div>
 										{/if}

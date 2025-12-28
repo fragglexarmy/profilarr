@@ -82,7 +82,7 @@
 				<button
 					type="button"
 					on:click={() => handleSelect('user')}
-					class="flex w-full items-start gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-blue-600 dark:hover:bg-blue-950"
+					class="flex w-full items-start gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-accent-300 hover:bg-accent-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-accent-600 dark:hover:bg-accent-950"
 				>
 					<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
 						<User size={20} />
@@ -98,7 +98,7 @@
 				<button
 					type="button"
 					on:click={() => handleSelect('base')}
-					class="flex w-full items-start gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-blue-600 dark:hover:bg-blue-950"
+					class="flex w-full items-start gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-accent-300 hover:bg-accent-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-accent-600 dark:hover:bg-accent-950"
 				>
 					<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
 						<GitBranch size={20} />

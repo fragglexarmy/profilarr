@@ -26,7 +26,7 @@
 					href={tab.href}
 					data-sveltekit-preload-data="tap"
 					class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors {tab.active
-						? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+						? 'border-accent-600 text-accent-600 dark:border-accent-500 dark:text-accent-500'
 						: 'border-transparent text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:text-neutral-50'}"
 				>
 					{#if tab.icon}

@@ -31,7 +31,7 @@
 		<!-- Action Button -->
 		<a
 			href={buttonHref}
-			class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+			class="inline-flex items-center gap-2 rounded-lg bg-accent-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 		>
 			<svelte:component this={buttonIcon} size={18} />
 			{buttonText}

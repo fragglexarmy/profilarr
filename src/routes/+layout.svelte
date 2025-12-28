@@ -15,6 +15,6 @@
 <PageNav />
 <AlertContainer />
 
-<main class="pt-16 pl-72">
+<main class="pl-72">
 	<slot />
 </main>

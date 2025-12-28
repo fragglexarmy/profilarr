@@ -34,13 +34,13 @@
 >
 	{#each tags as tag, index (tag)}
 		<div
-			class="flex items-center gap-1 rounded bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+			class="flex items-center gap-1 rounded bg-accent-100 px-2 py-1 text-sm text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
 		>
 			<span>{tag}</span>
 			<button
 				type="button"
 				on:click={() => removeTag(index)}
-				class="hover:text-blue-900 dark:hover:text-blue-100"
+				class="hover:text-accent-900 dark:hover:text-accent-100"
 				aria-label="Remove tag"
 			>
 				<X size={14} />

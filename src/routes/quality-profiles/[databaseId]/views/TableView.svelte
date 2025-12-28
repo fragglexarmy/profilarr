@@ -29,7 +29,7 @@
 						${row.tags.length > 0 ? `
 							<div class="mt-1 flex flex-wrap gap-1">
 								${row.tags.map(tag => `
-									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 										${tag.name}
 									</span>
 								`).join('')}
@@ -59,7 +59,7 @@
 							${row.qualities.map(q => `
 								<div class="relative px-2 py-0.5 rounded border ${
 									q.is_upgrade_until
-										? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
+										? 'border-accent-200 bg-accent-50 dark:border-accent-800 dark:bg-accent-950'
 										: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'
 								}">
 									<span class="font-mono text-xs">${q.name}</span>

@@ -22,7 +22,7 @@
 				target="_blank"
 				rel="noopener noreferrer"
 				data-sveltekit-reload
-				class="rounded bg-neutral-100 px-2 py-1 font-mono text-blue-600 hover:text-blue-700 dark:bg-neutral-800 dark:text-blue-400 dark:hover:text-blue-300"
+				class="rounded bg-neutral-100 px-2 py-1 font-mono text-accent-600 hover:text-accent-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:text-accent-300"
 			>
 				{value}
 			</a>

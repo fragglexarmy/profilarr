@@ -155,7 +155,7 @@
 						name="name"
 						bind:value={name}
 						placeholder="e.g., Standard Delay"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 					/>
 				</div>
 
@@ -186,11 +186,11 @@
 						type="button"
 						on:click={() => (preferredProtocol = option.value)}
 						class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {preferredProtocol === option.value
-							? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950'
+							? 'border-accent-500 bg-accent-50 dark:border-accent-400 dark:bg-accent-950'
 							: 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'}"
 					>
 						<div class="flex h-5 w-5 items-center justify-center rounded-full border-2 {preferredProtocol === option.value
-							? 'border-blue-500 bg-blue-500 dark:border-blue-400 dark:bg-blue-400'
+							? 'border-accent-500 bg-accent-500 dark:border-accent-400 dark:bg-accent-400'
 							: 'border-neutral-300 dark:border-neutral-600'}">
 							{#if preferredProtocol === option.value}
 								<Check size={12} class="text-white" />
@@ -266,7 +266,7 @@
 					<input
 						type="checkbox"
 						bind:checked={bypassIfHighestQuality}
-						class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700"
+						class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-600 dark:bg-neutral-700"
 					/>
 					<div>
 						<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Bypass if Highest Quality</div>
@@ -280,7 +280,7 @@
 						<input
 							type="checkbox"
 							bind:checked={bypassIfAboveCfScore}
-							class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700"
+							class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-600 dark:bg-neutral-700"
 						/>
 						<div>
 							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Bypass if Above Custom Format Score</div>
@@ -336,7 +336,7 @@
 					type="button"
 					disabled={saving || !isValid}
 					on:click={handleSaveClick}
-					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+					class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
 				>
 					{#if saving}
 						<Loader2 size={14} class="animate-spin" />

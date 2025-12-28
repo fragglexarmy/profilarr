@@ -148,7 +148,7 @@
 				placeholder="Search for a language..."
 				class="block w-full rounded-lg border px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none focus:ring-1 dark:text-neutral-50 dark:placeholder-neutral-500 {showValidationError
 					? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500 dark:border-red-700 dark:bg-red-950 dark:focus:border-red-500'
-					: 'border-neutral-300 bg-white focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800'}"
+					: 'border-neutral-300 bg-white focus:border-accent-500 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800'}"
 			/>
 
 			{#if showValidationError}
@@ -182,7 +182,7 @@
 		<div>
 			<div class="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100">
 				<span>Preferred</span>
-				<span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Radarr Only</span>
+				<span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">Radarr Only</span>
 			</div>
 			<div class="mt-1">Uses Radarr's built-in language preference setting</div>
 		</div>

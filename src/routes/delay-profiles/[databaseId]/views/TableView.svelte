@@ -51,7 +51,7 @@
 						${row.tags.length > 0 ? `
 							<div class="mt-1 flex flex-wrap gap-1">
 								${row.tags.map(tag => `
-									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 										${tag.name}
 									</span>
 								`).join('')}

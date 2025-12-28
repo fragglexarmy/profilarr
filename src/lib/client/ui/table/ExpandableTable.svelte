@@ -118,9 +118,9 @@
 								{column.header}
 								{#if sortState?.key === column.key}
 									{#if sortState.direction === 'asc'}
-										<ArrowUp size={12} class="text-blue-500" />
+										<ArrowUp size={12} class="text-accent-500" />
 									{:else}
-										<ArrowDown size={12} class="text-blue-500" />
+										<ArrowDown size={12} class="text-accent-500" />
 									{/if}
 								{:else}
 									<ArrowUpDown size={12} class="opacity-30" />
