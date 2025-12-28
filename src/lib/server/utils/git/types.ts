@@ -45,3 +45,13 @@ export interface RepoInfo {
 	ownerType: 'User' | 'Organization';
 	htmlUrl: string;
 }
+
+export interface Commit {
+	hash: string;
+	shortHash: string;
+	message: string;
+	author: string;
+	authorEmail: string;
+	date: string;
+	files: string[];
+}

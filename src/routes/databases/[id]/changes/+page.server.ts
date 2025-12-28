@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
-import { Git, getRepoInfo } from '$utils/git/index.ts';
+import { Git } from '$utils/git/index.ts';
 import { logger } from '$logger/logger.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -11,23 +11,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 		error(403, 'Changes page requires a personal access token');
 	}
 
-	const git = new Git(database.local_path);
-
-	const [status, uncommittedOps, lastPushed, branches, repoInfo] = await Promise.all([
-		git.status(),
-		git.getUncommittedOps(),
-		git.getLastPushed(),
-		git.getBranches(),
-		getRepoInfo(database.repository_url, database.personal_access_token)
-	]);
-
-	return {
-		status,
-		uncommittedOps,
-		lastPushed,
-		branches,
-		repoInfo
-	};
+	return {};
 };
 
 export const actions: Actions = {

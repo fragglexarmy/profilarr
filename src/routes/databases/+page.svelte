@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Database, Plus, Lock, Code, Trash2, Pencil, ExternalLink } from 'lucide-svelte';
+	import { Database, Plus, Lock, Code, Trash2, Pencil, ExternalLink, ChevronRight } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import EmptyState from '$ui/state/EmptyState.svelte';
@@ -17,6 +17,9 @@
 	let selectedDatabase: DatabaseInstance | null = null;
 	let unlinkFormElement: HTMLFormElement;
 
+	// Track loaded images
+	let loadedImages: Set<number> = new Set();
+
 	// Extract GitHub username/org from repository URL
 	function getGitHubAvatar(repoUrl: string): string {
 		const match = repoUrl.match(/github\.com\/([^\/]+)\//);
@@ -24,6 +27,11 @@
 			return `https://github.com/${match[1]}.png?size=40`;
 		}
 		return '';
+	}
+
+	function handleImageLoad(id: number) {
+		loadedImages.add(id);
+		loadedImages = loadedImages;
 	}
 
 	// Format sync strategy for display
@@ -41,11 +49,9 @@
 		return new Date(date).toLocaleDateString();
 	}
 
-	// Handle row click - only navigate for dev databases
+	// Handle row click - navigate to database details
 	function handleRowClick(database: DatabaseInstance) {
-		if (database.personal_access_token) {
-			goto(`/databases/${database.id}`);
-		}
+		goto(`/databases/${database.id}`);
 	}
 
 	// Handle unlink click
@@ -89,7 +95,7 @@
 			</div>
 			<a
 				href="/databases/new"
-				class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+				class="inline-flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 			>
 				<Plus size={16} />
 				Link Database
@@ -99,14 +105,20 @@
 		<!-- Database Table -->
 		<Table {columns} data={data.databases} hoverable={true}>
 			<svelte:fragment slot="cell" let:row let:column>
-				<div on:click={() => handleRowClick(row)} role={row.personal_access_token ? "button" : undefined} tabindex={row.personal_access_token ? 0 : undefined} on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)} class={row.personal_access_token ? "cursor-pointer" : ""}>
+				<div on:click={() => handleRowClick(row)} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)} class="cursor-pointer">
 					{#if column.key === 'name'}
 						<div class="flex items-center gap-3">
-							<img
-								src={getGitHubAvatar(row.repository_url)}
-								alt="{row.name} avatar"
-								class="h-8 w-8 rounded-lg"
-							/>
+							<div class="relative h-8 w-8">
+								{#if !loadedImages.has(row.id)}
+									<div class="absolute inset-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
+								{/if}
+								<img
+									src={getGitHubAvatar(row.repository_url)}
+									alt="{row.name} avatar"
+									class="h-8 w-8 rounded-lg {loadedImages.has(row.id) ? 'opacity-100' : 'opacity-0'}"
+									on:load={() => handleImageLoad(row.id)}
+								/>
+							</div>
 							<div class="flex items-center gap-2">
 								<div class="font-medium text-neutral-900 dark:text-neutral-50">
 									{row.name}
@@ -149,7 +161,7 @@
 						target="_blank"
 						rel="noopener noreferrer"
 						on:click={(e) => e.stopPropagation()}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-blue-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-blue-400 dark:hover:bg-neutral-700"
+						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-accent-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
 						title="View on GitHub"
 					>
 						<ExternalLink size={14} />
@@ -173,6 +185,16 @@
 						title="Unlink database"
 					>
 						<Trash2 size={14} />
+					</button>
+
+					<!-- View Button -->
+					<button
+						type="button"
+						on:click={() => handleRowClick(row)}
+						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+						title={row.personal_access_token ? "View changes" : "View commits"}
+					>
+						<ChevronRight size={14} />
 					</button>
 				</div>
 			</svelte:fragment>

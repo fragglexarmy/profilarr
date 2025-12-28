@@ -4,7 +4,7 @@
 
 import { execGit, execGitSafe } from './exec.ts';
 import { fetch } from './repo.ts';
-import type { GitStatus, UpdateInfo } from './types.ts';
+import type { GitStatus, UpdateInfo, Commit } from './types.ts';
 
 /**
  * Get current branch name
@@ -131,4 +131,47 @@ export async function getBranches(repoPath: string): Promise<string[]> {
 		.filter((b, i, arr) => arr.indexOf(b) === i); // dedupe
 
 	return branches;
+}
+
+/**
+ * Get commit history
+ */
+export async function getCommits(repoPath: string, limit: number = 50): Promise<Commit[]> {
+	// Format: hash|shortHash|message|author|email|date
+	const format = '%H|%h|%s|%an|%ae|%cI';
+	const output = await execGit(
+		['log', `--format=${format}`, `-${limit}`],
+		repoPath
+	);
+
+	if (!output.trim()) {
+		return [];
+	}
+
+	const commits: Commit[] = [];
+
+	for (const line of output.split('\n')) {
+		if (!line.trim()) continue;
+
+		const [hash, shortHash, message, author, authorEmail, date] = line.split('|');
+
+		// Get files changed for this commit
+		const statOutput = await execGitSafe(
+			['diff-tree', '--no-commit-id', '--name-only', '-r', hash],
+			repoPath
+		);
+		const files = statOutput ? statOutput.split('\n').filter(f => f.trim()) : [];
+
+		commits.push({
+			hash,
+			shortHash,
+			message,
+			author,
+			authorEmail,
+			date,
+			files
+		});
+	}
+
+	return commits;
 }

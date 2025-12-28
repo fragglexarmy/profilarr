@@ -1,26 +1,50 @@
 <script lang="ts">
-	import Table from '$ui/table/Table.svelte';
-	import type { Column } from '$ui/table/types';
 	import ChangesActionsBar from './components/ChangesActionsBar.svelte';
 	import StatusCard from './components/StatusCard.svelte';
 	import { Check } from 'lucide-svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { afterNavigate } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
-	import type { OperationFile } from '$utils/git/types';
+	import type { OperationFile, GitStatus, RepoInfo } from '$utils/git/types';
 
 	export let data: PageData;
+
+	let loading = true;
+	let status: GitStatus | null = null;
+	let uncommittedOps: OperationFile[] = [];
+	let branches: string[] = [];
+	let repoInfo: RepoInfo | null = null;
 
 	let selected = new Set<string>();
 	let commitMessage = '';
 
-	$: allSelected = data.uncommittedOps.length > 0 && selected.size === data.uncommittedOps.length;
+	$: allSelected = uncommittedOps.length > 0 && selected.size === uncommittedOps.length;
+
+	async function fetchChanges() {
+		loading = true;
+		try {
+			const response = await fetch(`/api/databases/${data.database.id}/changes`);
+			if (response.ok) {
+				const result = await response.json();
+				status = result.status;
+				uncommittedOps = result.uncommittedOps;
+				branches = result.branches;
+				repoInfo = result.repoInfo;
+			}
+		} finally {
+			loading = false;
+		}
+	}
+
+	afterNavigate(() => {
+		fetchChanges();
+	});
 
 	function toggleAll() {
 		if (allSelected) {
 			selected = new Set();
 		} else {
-			selected = new Set(data.uncommittedOps.map((op) => op.filepath));
+			selected = new Set(uncommittedOps.map((op) => op.filepath));
 		}
 	}
 
@@ -50,7 +74,7 @@
 		if (result.type === 'success' && result.data?.success) {
 			selected = new Set();
 			alertStore.add('success', 'Changes discarded');
-			await invalidateAll();
+			await fetchChanges();
 		} else {
 			alertStore.add('error', result.data?.error || 'Failed to discard changes');
 		}
@@ -79,7 +103,7 @@
 
 		// Always refresh to keep UI in sync with file system
 		selected = new Set();
-		await invalidateAll();
+		await fetchChanges();
 	}
 
 	function formatOperation(op: string | null): string {
@@ -99,47 +123,6 @@
 				return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200';
 		}
 	}
-
-	const columns: Column<OperationFile>[] = [
-		{
-			key: 'operation',
-			header: 'Operation',
-			width: 'w-28',
-			sortable: true,
-			cell: (row: OperationFile) => {
-				const op = formatOperation(row.operation);
-				return {
-					html: `<span class="inline-flex px-2 py-0.5 rounded text-xs font-mono ${getOperationClass(row.operation)}">${op}</span>`
-				};
-			}
-		},
-		{
-			key: 'entity',
-			header: 'Entity',
-			width: 'w-36',
-			sortable: true,
-			cell: (row: OperationFile) => row.entity || '-'
-		},
-		{
-			key: 'name',
-			header: 'Name',
-			sortable: true,
-			cell: (row: OperationFile) => ({
-				html:
-					row.previousName && row.previousName !== row.name
-						? `<div><span class="line-through text-neutral-400">${row.previousName}</span> → ${row.name || '-'}</div>`
-						: row.name || '-'
-			})
-		},
-		{
-			key: 'filename',
-			header: 'File',
-			width: 'w-48',
-			cell: (row: OperationFile) => ({
-				html: `<span class="font-mono text-xs text-neutral-500 dark:text-neutral-400">${row.filename}</span>`
-			})
-		}
-	];
 </script>
 
 <svelte:head>
@@ -147,33 +130,80 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<StatusCard
-		status={data.status}
-		repoInfo={data.repoInfo}
-		branches={data.branches}
-	/>
+	<!-- Status Card -->
+	{#if loading || !status}
+		<div class="mt-6 animate-pulse rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-4">
+					<div class="h-8 w-8 rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
+					<div class="flex flex-col gap-2">
+						<div class="h-4 w-32 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+						<div class="h-3 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+					</div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="h-8 w-24 rounded-md bg-neutral-200 dark:bg-neutral-700"></div>
+				</div>
+			</div>
+		</div>
+	{:else}
+		<StatusCard {status} {repoInfo} {branches} />
+	{/if}
 
 	<!-- Actions Bar -->
-	<ChangesActionsBar
-		selectedCount={selected.size}
-		bind:commitMessage
-		onDiscard={handleDiscard}
-		onAdd={handleAdd}
-	/>
+	{#if loading}
+		<div class="animate-pulse rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
+			<div class="flex items-center gap-4">
+				<div class="h-9 w-48 rounded-md bg-neutral-200 dark:bg-neutral-700"></div>
+				<div class="h-9 w-24 rounded-md bg-neutral-200 dark:bg-neutral-700"></div>
+				<div class="h-9 w-24 rounded-md bg-neutral-200 dark:bg-neutral-700"></div>
+			</div>
+		</div>
+	{:else}
+		<ChangesActionsBar
+			selectedCount={selected.size}
+			bind:commitMessage
+			onDiscard={handleDiscard}
+			onAdd={handleAdd}
+		/>
+	{/if}
 
 	<!-- Table -->
-	{#if data.uncommittedOps.length === 0}
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
-		>
+	{#if loading}
+		<div class="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
+			<table class="w-full">
+				<thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800">
+					<tr>
+						<th class="w-12 px-4 py-3"></th>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Operation</th>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Entity</th>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Name</th>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">File</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
+					{#each Array(5) as _}
+						<tr class="animate-pulse">
+							<td class="px-4 py-3 text-center">
+								<div class="mx-auto h-5 w-5 rounded border-2 border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"></div>
+							</td>
+							<td class="px-4 py-3"><div class="h-5 w-16 rounded bg-neutral-200 dark:bg-neutral-700"></div></td>
+							<td class="px-4 py-3"><div class="h-4 w-20 rounded bg-neutral-200 dark:bg-neutral-700"></div></td>
+							<td class="px-4 py-3"><div class="h-4 w-32 rounded bg-neutral-200 dark:bg-neutral-700"></div></td>
+							<td class="px-4 py-3"><div class="h-4 w-28 rounded bg-neutral-200 dark:bg-neutral-700"></div></td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{:else if uncommittedOps.length === 0}
+		<div class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900">
 			<p class="text-neutral-600 dark:text-neutral-400">No uncommitted changes</p>
 		</div>
 	{:else}
 		<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
 			<table class="w-full">
-				<thead
-					class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
-				>
+				<thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800">
 					<tr>
 						<th class="w-12 px-4 py-3 text-center">
 							<button type="button" on:click={toggleAll} class="inline-flex">
@@ -188,32 +218,22 @@
 								</div>
 							</button>
 						</th>
-						<th
-							class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300"
-						>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
 							Operation
 						</th>
-						<th
-							class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300"
-						>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
 							Entity
 						</th>
-						<th
-							class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300"
-						>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
 							Name
 						</th>
-						<th
-							class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300"
-						>
+						<th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
 							File
 						</th>
 					</tr>
 				</thead>
-				<tbody
-					class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900"
-				>
-					{#each data.uncommittedOps as op}
+				<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
+					{#each uncommittedOps as op}
 						<tr
 							class="cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
 							on:click={() => toggleRow(op.filepath)}
@@ -230,11 +250,7 @@
 								</div>
 							</td>
 							<td class="px-4 py-3">
-								<span
-									class="inline-flex rounded px-2 py-0.5 font-mono text-xs {getOperationClass(
-										op.operation
-									)}"
-								>
+								<span class="inline-flex rounded px-2 py-0.5 font-mono text-xs {getOperationClass(op.operation)}">
 									{formatOperation(op.operation)}
 								</span>
 							</td>
@@ -244,7 +260,7 @@
 							<td class="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
 								{#if op.previousName && op.previousName !== op.name}
 									<span class="text-neutral-400 line-through">{op.previousName}</span>
-									→
+									&rarr;
 									{op.name || '-'}
 								{:else}
 									{op.name || '-'}

@@ -3,23 +3,27 @@
 	import { GitBranch, History } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
-	$: instanceId = $page.params.id;
+	$: database = $page.data.database;
 	$: currentPath = $page.url.pathname;
 
-	$: tabs = [
-		{
-			label: 'Changes',
-			href: `/databases/${instanceId}/changes`,
-			icon: GitBranch,
-			active: currentPath.endsWith('/changes')
-		},
+	$: tabs = database ? [
+		...(database.personal_access_token
+			? [
+					{
+						label: 'Changes',
+						href: `/databases/${database.id}/changes`,
+						icon: GitBranch,
+						active: currentPath.endsWith('/changes')
+					}
+				]
+			: []),
 		{
 			label: 'Commits',
-			href: `/databases/${instanceId}/commits`,
+			href: `/databases/${database.id}/commits`,
 			icon: History,
 			active: currentPath.includes('/commits')
 		}
-	];
+	] : [];
 
 	$: backButton = {
 		label: 'Back',
