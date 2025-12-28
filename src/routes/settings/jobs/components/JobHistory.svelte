@@ -25,6 +25,14 @@
 		return new Date(dateStr).toLocaleString();
 	}
 
+	// Format job name: sync_databases -> Sync Databases
+	function formatJobName(name: string): string {
+		return name
+			.split('_')
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(' ');
+	}
+
 	// Get relative time (e.g., "5m ago", "2h ago")
 	function getRelativeTime(dateStr: string): string {
 		const date = new Date(dateStr);
@@ -93,7 +101,7 @@
 						<td
 							class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
 						>
-							{run.job_name}
+							{formatJobName(run.job_name)}
 						</td>
 
 						<!-- Status -->

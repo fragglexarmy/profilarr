@@ -31,6 +31,14 @@
 		return new Date(dateStr).toLocaleString();
 	}
 
+	// Format job name: sync_databases -> Sync Databases
+	function formatJobName(name: string): string {
+		return name
+			.split('_')
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(' ');
+	}
+
 	// Get relative time (e.g., "in 5 minutes", "2 hours ago")
 	function getRelativeTime(dateStr: string | null): string {
 		if (!dateStr) return 'Not scheduled';
@@ -69,7 +77,7 @@
 			<div class="flex-1">
 				<div class="flex items-center gap-3">
 					<h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-						{job.name}
+						{formatJobName(job.name)}
 					</h3>
 
 					<!-- Enabled/Disabled Badge -->
@@ -112,7 +120,7 @@
 									(result.data as { error?: string }).error || 'Failed to trigger job'
 								);
 							} else if (result.type === 'success') {
-								alertStore.add('success', `Job "${job.name}" triggered successfully`);
+								alertStore.add('success', `Job "${formatJobName(job.name)}" triggered successfully`);
 							}
 							await update();
 						};

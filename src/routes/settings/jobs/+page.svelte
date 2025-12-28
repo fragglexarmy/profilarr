@@ -16,12 +16,12 @@
 	</div>
 
 	<!-- Jobs List -->
-	<div class="mb-8 space-y-4">
+	<div class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
 		{#each data.jobs as job (job.id)}
 			<JobCard {job} />
 		{:else}
 			<div
-				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
+				class="col-span-full rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 			>
 				<p class="text-neutral-600 dark:text-neutral-400">No background jobs configured</p>
 			</div>
