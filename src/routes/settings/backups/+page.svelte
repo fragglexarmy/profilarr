@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
-	import { Download, Plus, Trash2, RotateCcw, Database, Upload } from 'lucide-svelte';
+	import { Download, FolderArchive, Trash2, RotateCcw, Database, Upload } from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import type { PageData } from './$types';
 
@@ -148,9 +148,9 @@
 				>
 					<button
 						type="submit"
-						class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+						class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 					>
-						<Plus size={16} />
+						<FolderArchive size={16} />
 						Create Backup
 					</button>
 				</form>
