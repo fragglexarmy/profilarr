@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { Check } from 'lucide-svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+
 	export let config: Record<string, unknown> = {};
 	export let mode: 'create' | 'edit' = 'create';
 
@@ -34,7 +37,7 @@
 				name="webhook_url"
 				required={mode === 'create'}
 				placeholder="https://discord.com/api/webhooks/..."
-				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>
 			<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 				{#if mode === 'edit'}
@@ -58,7 +61,7 @@
 				id="username"
 				name="username"
 				placeholder="Profilarr"
-				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>
 			<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 				Custom username for the webhook bot
@@ -78,7 +81,7 @@
 				id="avatar_url"
 				name="avatar_url"
 				placeholder="https://example.com/avatar.png"
-				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>
 			<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 				Custom avatar image for the webhook bot
@@ -87,23 +90,24 @@
 
 		<!-- Enable Mentions -->
 		<div class="flex items-start gap-3">
-			<input
-				type="checkbox"
-				id="enable_mentions"
-				name="enable_mentions"
-				class="mt-1 h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+			<IconCheckbox
+				icon={Check}
+				checked={enableMentions}
+				on:click={() => (enableMentions = !enableMentions)}
 			/>
-			<div class="flex-1">
-				<label
-					for="enable_mentions"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
+			<input type="hidden" name="enable_mentions" value={enableMentions ? 'on' : ''} />
+			<button
+				type="button"
+				class="flex-1 text-left"
+				on:click={() => (enableMentions = !enableMentions)}
+			>
+				<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 					Enable @here mentions
-				</label>
+				</span>
 				<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 					Mention @here in notifications to alert online users
 				</p>
-			</div>
+			</button>
 		</div>
 	</div>
 </div>

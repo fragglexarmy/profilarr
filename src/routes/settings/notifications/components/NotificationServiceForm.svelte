@@ -4,6 +4,8 @@
 	import DiscordConfiguration from './DiscordConfiguration.svelte';
 	import { siDiscord } from 'simple-icons';
 	import { groupNotificationTypesByCategory } from '$shared/notificationTypes';
+	import { Plus, Save, Check } from 'lucide-svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 
 	export let mode: 'create' | 'edit' = 'create';
 	export let initialData: {
@@ -19,9 +21,18 @@
 	// Group notification types by category
 	const groupedTypes = groupNotificationTypesByCategory();
 
-	// Check if a notification type should be checked by default
-	function isTypeEnabled(typeId: string): boolean {
-		return initialData.enabledTypes?.includes(typeId) || false;
+	// Track enabled types state
+	let enabledTypesState: Record<string, boolean> = {};
+
+	// Initialize enabled types from initialData
+	$: {
+		for (const [, types] of Object.entries(groupedTypes)) {
+			for (const type of types) {
+				if (enabledTypesState[type.id] === undefined) {
+					enabledTypesState[type.id] = initialData.enabledTypes?.includes(type.id) || false;
+				}
+			}
+		}
 	}
 </script>
 
@@ -80,7 +91,7 @@
 						bind:value={selectedType}
 						required
 						disabled={mode === 'edit'}
-						class="block w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+						class="block w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 					>
 						<option value="discord">Discord</option>
 					</select>
@@ -108,7 +119,7 @@
 					bind:value={serviceName}
 					required
 					placeholder="e.g., Main Discord Server"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 				/>
 				<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 					A friendly name to identify this notification service
@@ -141,17 +152,20 @@
 					</h3>
 					<div class="space-y-2">
 						{#each types as type}
-							<div class="flex items-start gap-3">
-								<input
-									type="checkbox"
-									id={type.id}
-									name={type.id}
-									checked={isTypeEnabled(type.id)}
-									class="mt-0.5 h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+							<div class="flex items-center gap-3">
+								<IconCheckbox
+									icon={Check}
+									checked={enabledTypesState[type.id]}
+									on:click={() => (enabledTypesState[type.id] = !enabledTypesState[type.id])}
 								/>
-								<label for={type.id} class="text-sm text-neutral-700 dark:text-neutral-300">
+								<input type="hidden" name={type.id} value={enabledTypesState[type.id] ? 'on' : ''} />
+								<button
+									type="button"
+									class="text-sm text-neutral-700 dark:text-neutral-300"
+									on:click={() => (enabledTypesState[type.id] = !enabledTypesState[type.id])}
+								>
 									{type.label}
-								</label>
+								</button>
 							</div>
 						{/each}
 					</div>
@@ -170,9 +184,15 @@
 		</a>
 		<button
 			type="submit"
-			class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+			class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 		>
-			{mode === 'create' ? 'Create Service' : 'Update Service'}
+			{#if mode === 'create'}
+				<Plus size={16} />
+				Create Service
+			{:else}
+				<Save size={16} />
+				Update Service
+			{/if}
 		</button>
 	</div>
 </form>

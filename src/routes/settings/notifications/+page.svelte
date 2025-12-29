@@ -104,7 +104,7 @@
 			<!-- Add Service Button -->
 			<a
 				href="/settings/notifications/new"
-				class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+				class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 			>
 				<Plus size={16} />
 				Add Service
@@ -239,7 +239,7 @@
 								<div class="flex max-w-sm flex-wrap gap-1">
 									{#each getEnabledTypes(service.enabled_types) as type}
 										<span
-											class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+											class="inline-flex items-center rounded-full bg-accent-100 px-2 py-0.5 text-xs font-medium text-accent-800 dark:bg-accent-900 dark:text-accent-200"
 										>
 											{formatNotificationType(type)}
 										</span>
@@ -293,7 +293,7 @@
 										<button
 											type="submit"
 											disabled={testingServiceId === service.id}
-											class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-blue-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-blue-400 dark:hover:bg-neutral-700"
+											class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-accent-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
 											title="Send test notification"
 										>
 											{#if testingServiceId === service.id}
