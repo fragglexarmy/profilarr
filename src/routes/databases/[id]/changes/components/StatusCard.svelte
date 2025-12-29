@@ -8,14 +8,17 @@
 		GitFork,
 		CircleDot,
 		ChevronDown,
-		Check
+		Check,
+		Database
 	} from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import type { GitStatus, RepoInfo } from '$utils/git/types';
+	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 
 	export let status: GitStatus;
 	export let repoInfo: RepoInfo | null;
 	export let branches: string[];
+	export let database: DatabaseInstance;
 
 	let branchDropdownOpen = false;
 	let switching = false;
@@ -93,6 +96,28 @@
 							<code class="font-mono">{repoInfo.openIssues.toLocaleString()}</code>
 						</span>
 					</div>
+				</div>
+			{:else}
+				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-700">
+					<Database size={16} class="text-neutral-500 dark:text-neutral-400" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<div class="flex items-center gap-2">
+						<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+							{database.name}
+						</span>
+						<a
+							href={database.repository_url}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-neutral-400 transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
+						>
+							<ExternalLink size={14} />
+						</a>
+					</div>
+					<code class="font-mono text-xs text-neutral-500 dark:text-neutral-400">
+						{database.repository_url.replace('https://github.com/', '')}
+					</code>
 				</div>
 			{/if}
 		</div>

@@ -176,7 +176,7 @@
 			</div>
 		</div>
 	{:else}
-		<StatusCard {status} {repoInfo} {branches} />
+		<StatusCard {status} {repoInfo} {branches} database={data.database} />
 	{/if}
 
 	<!-- Actions Bar -->

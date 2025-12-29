@@ -25,7 +25,7 @@ export const load: ServerLoad = ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ params, request }) => {
+	update: async ({ params, request }) => {
 		const id = parseInt(params.id || '', 10);
 
 		// Validate ID
