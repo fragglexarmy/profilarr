@@ -18,7 +18,7 @@
 	<!-- Main navigation button (left side) - rounded left, square right (or fully rounded if no items) -->
 	<a
 		{href}
-		class="flex flex-1 items-center gap-2 py-1.5 pr-2 pl-3 font-mono text-sm font-semibold text-neutral-700 transition-colors group-hover/header:bg-neutral-200 hover:bg-neutral-200 dark:text-neutral-300 dark:group-hover/header:bg-neutral-800 dark:hover:bg-neutral-800 {hasItems
+		class="flex flex-1 items-center gap-2 py-1.5 pr-2 pl-3 font-sans text-sm font-semibold text-neutral-700 transition-colors group-hover/header:bg-neutral-200 hover:bg-neutral-200 dark:text-neutral-300 dark:group-hover/header:bg-neutral-800 dark:hover:bg-neutral-800 {hasItems
 			? 'rounded-l-lg'
 			: 'rounded-lg'} {isActive
 			? 'bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700'

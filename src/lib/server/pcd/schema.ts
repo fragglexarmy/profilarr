@@ -239,7 +239,7 @@ export interface RadarrNamingTable {
 	movie_format: string;
 	movie_folder_format: string;
 	replace_illegal_characters: number;
-	colon_replacement_format: string;
+	colon_replacement_format: number;
 	created_at: Generated<string>;
 	updated_at: Generated<string>;
 }

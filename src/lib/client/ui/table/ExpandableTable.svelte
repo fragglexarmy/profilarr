@@ -8,6 +8,7 @@
 	export let compact: boolean = false;
 	export let emptyMessage: string = 'No data available';
 	export let defaultSort: SortState | null = null;
+	export let flushExpanded: boolean = false;
 
 	let expandedRows: Set<string | number> = new Set();
 	let sortState: SortState | null = defaultSort;
@@ -175,8 +176,8 @@
 					<!-- Expanded Row -->
 					{#if expandedRows.has(rowId)}
 						<tr class="bg-neutral-50 dark:bg-neutral-800/30">
-							<td colspan={columns.length + 1} class="{compact ? 'px-4 py-3' : 'px-6 py-4'}">
-								<div class="ml-6">
+							<td colspan={columns.length + 1} class="{flushExpanded ? '' : compact ? 'px-4 py-3' : 'px-6 py-4'}">
+								<div class="{flushExpanded ? '' : 'ml-6'}">
 									<slot name="expanded" {row}>
 										<!-- Default expanded content -->
 										<div class="text-sm text-neutral-500 dark:text-neutral-400">
