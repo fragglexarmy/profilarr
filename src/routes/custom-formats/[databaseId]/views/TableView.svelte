@@ -1,0 +1,134 @@
+<script lang="ts">
+	import Table from '$ui/table/Table.svelte';
+	import type { Column } from '$ui/table/types';
+	import type { CustomFormatTableRow } from '$pcd/queries/customFormats';
+	import { Tag, FileText, Layers } from 'lucide-svelte';
+	import { marked } from 'marked';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+
+	export let formats: CustomFormatTableRow[];
+
+	function handleRowClick(row: CustomFormatTableRow) {
+		const databaseId = $page.params.databaseId;
+		goto(`/custom-formats/${databaseId}/${row.id}`);
+	}
+
+	function escapeHtml(text: string): string {
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
+	function parseMarkdown(text: string | null): string {
+		if (!text) return '';
+		return marked.parseInline(text) as string;
+	}
+
+	const columns: Column<CustomFormatTableRow>[] = [
+		{
+			key: 'name',
+			header: 'Name',
+			headerIcon: Tag,
+			align: 'left',
+			sortable: true,
+			width: 'w-48',
+			cell: (row: CustomFormatTableRow) => ({
+				html: `
+					<div>
+						<div class="font-medium">${escapeHtml(row.name)}</div>
+						${
+							row.tags.length > 0
+								? `
+							<div class="mt-1 flex flex-wrap gap-1">
+								${row.tags
+									.map(
+										(tag) => `
+									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
+										${escapeHtml(tag.name)}
+									</span>
+								`
+									)
+									.join('')}
+							</div>
+						`
+								: ''
+						}
+					</div>
+				`
+			})
+		},
+		{
+			key: 'description',
+			header: 'Description',
+			headerIcon: FileText,
+			align: 'left',
+			cell: (row: CustomFormatTableRow) => ({
+				html: row.description
+					? `<span class="text-sm text-neutral-600 dark:text-neutral-400 prose-inline">${parseMarkdown(row.description)}</span>`
+					: `<span class="text-neutral-400">-</span>`
+			})
+		},
+		{
+			key: 'conditions',
+			header: 'Conditions',
+			headerIcon: Layers,
+			align: 'left',
+			cell: (row: CustomFormatTableRow) => ({
+				html: row.conditions.length > 0
+					? `<div class="flex flex-wrap gap-1">${row.conditions.map((c) => {
+						// Color based on required/negate:
+						// required + negate = red (must NOT match)
+						// required + !negate = accent (must match)
+						// !required + negate = amber (optional negative)
+						// !required + !negate = neutral (optional)
+						let colorClass: string;
+						if (c.required && c.negate) {
+							colorClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+						} else if (c.required) {
+							colorClass = 'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200';
+						} else if (c.negate) {
+							colorClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+						} else {
+							colorClass = 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
+						}
+						return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${colorClass}">${escapeHtml(c.name)}</span>`;
+					}).join('')}</div>`
+					: `<span class="text-neutral-400 text-xs">None</span>`
+			})
+		}
+	];
+</script>
+
+<Table data={formats} {columns} emptyMessage="No custom formats found" hoverable={true} compact={false} onRowClick={handleRowClick} />
+
+<style>
+	/* Inline prose styles for markdown content */
+	:global(.prose-inline code) {
+		background-color: rgb(229 231 235);
+		padding: 0.125rem 0.25rem;
+		border-radius: 0.25rem;
+		font-size: 0.75rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	:global(.dark .prose-inline code) {
+		background-color: rgb(38 38 38);
+	}
+
+	:global(.prose-inline strong) {
+		font-weight: 600;
+	}
+
+	:global(.prose-inline a) {
+		color: rgb(var(--color-accent-600));
+		text-decoration: underline;
+	}
+
+	:global(.dark .prose-inline a) {
+		color: rgb(var(--color-accent-400));
+	}
+</style>
