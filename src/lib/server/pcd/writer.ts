@@ -48,18 +48,38 @@ export interface WriteResult {
 /**
  * Convert a compiled Kysely query to executable SQL
  * Replaces ? placeholders with actual values
+ *
+ * Note: We can't use simple string.replace() because parameter values
+ * might contain '?' characters (e.g., regex patterns like '(?<=...)')
+ * which would get incorrectly replaced on subsequent iterations.
  */
 function compiledQueryToSql(compiled: CompiledQuery): string {
-	let sql = compiled.sql;
+	const sql = compiled.sql;
 	const params = compiled.parameters as unknown[];
 
-	// Replace each ? placeholder with the actual value
-	for (const param of params) {
-		const replacement = formatValue(param);
-		sql = sql.replace('?', replacement);
+	if (params.length === 0) {
+		return sql;
 	}
 
-	return sql;
+	// Build result by finding each ? placeholder and replacing with the next param
+	// We track our position to avoid replacing ? inside already-substituted values
+	const result: string[] = [];
+	let paramIndex = 0;
+	let i = 0;
+
+	while (i < sql.length) {
+		if (sql[i] === '?' && paramIndex < params.length) {
+			// Replace this placeholder with the formatted parameter value
+			result.push(formatValue(params[paramIndex]));
+			paramIndex++;
+			i++;
+		} else {
+			result.push(sql[i]);
+			i++;
+		}
+	}
+
+	return result.join('');
 }
 
 /**
