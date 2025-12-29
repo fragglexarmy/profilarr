@@ -125,7 +125,7 @@
 						>
 							<span class="text-neutral-700 dark:text-neutral-300">{source}</span>
 							{#if selectedSources.has(source)}
-								<Check size={16} class="text-blue-600 dark:text-blue-400" />
+								<Check size={16} class="text-accent-600 dark:text-accent-400" />
 							{/if}
 						</button>
 					{/each}
