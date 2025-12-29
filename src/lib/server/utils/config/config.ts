@@ -9,8 +9,16 @@ class Config {
 	constructor() {
 		// Default base path logic:
 		// 1. Check environment variable
-		// 2. Fall back to /app (Docker default)
-		this.basePath = Deno.env.get('APP_BASE_PATH') || '/app';
+		// 2. Fall back to directory containing the executable
+		const envPath = Deno.env.get('APP_BASE_PATH');
+		if (envPath) {
+			this.basePath = envPath;
+		} else {
+			// Use the directory where the executable is located
+			const execPath = Deno.execPath();
+			const lastSlash = Math.max(execPath.lastIndexOf('/'), execPath.lastIndexOf('\\'));
+			this.basePath = lastSlash > 0 ? execPath.substring(0, lastSlash) : '.';
+		}
 
 		// Timezone configuration:
 		// 1. Check TZ environment variable
