@@ -35,6 +35,14 @@ async function parseOperationMetadata(filepath: string): Promise<Partial<Operati
 }
 
 /**
+ * Extract leading number from filename for natural sorting
+ */
+function extractOpNumber(filename: string): number {
+	const match = filename.match(/^(\d+)\./);
+	return match ? parseInt(match[1], 10) : Infinity;
+}
+
+/**
  * Get uncommitted operation files from ops/ directory
  */
 export async function getUncommittedOps(repoPath: string): Promise<OperationFile[]> {
@@ -64,6 +72,9 @@ export async function getUncommittedOps(repoPath: string): Promise<OperationFile
 			});
 		}
 	}
+
+	// Sort by operation number (natural sort)
+	files.sort((a, b) => extractOpNumber(a.filename) - extractOpNumber(b.filename));
 
 	return files;
 }
