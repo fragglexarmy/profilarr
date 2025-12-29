@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
-	import { Save, RotateCcw } from 'lucide-svelte';
+	import { Save, RotateCcw, Check } from 'lucide-svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import type { LogSettings } from './types';
 
 	export let settings: LogSettings;
@@ -61,54 +62,66 @@
 				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Enable Features</h3>
 				<div class="space-y-2">
 					<!-- Enable Logging -->
-					<label class="flex cursor-pointer items-center gap-3">
-						<input
-							type="checkbox"
-							name="enabled"
-							bind:checked={settings.enabled}
-							class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+					<div class="flex items-center gap-3">
+						<IconCheckbox
+							icon={Check}
+							checked={settings.enabled}
+							on:click={() => (settings.enabled = !settings.enabled)}
 						/>
-						<div class="flex-1">
+						<input type="hidden" name="enabled" value={settings.enabled ? 'on' : ''} />
+						<button
+							type="button"
+							class="flex-1 text-left"
+							on:click={() => (settings.enabled = !settings.enabled)}
+						>
 							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
 								Enable Logging
 							</span>
 							<p class="text-xs text-neutral-500 dark:text-neutral-400">
 								Master switch for all logging functionality
 							</p>
-						</div>
-					</label>
+						</button>
+					</div>
 
 					<!-- File Logging -->
-					<label class="flex cursor-pointer items-center gap-3">
-						<input
-							type="checkbox"
-							name="file_logging"
-							bind:checked={settings.file_logging}
-							class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+					<div class="flex items-center gap-3">
+						<IconCheckbox
+							icon={Check}
+							checked={settings.file_logging}
+							on:click={() => (settings.file_logging = !settings.file_logging)}
 						/>
-						<div class="flex-1">
+						<input type="hidden" name="file_logging" value={settings.file_logging ? 'on' : ''} />
+						<button
+							type="button"
+							class="flex-1 text-left"
+							on:click={() => (settings.file_logging = !settings.file_logging)}
+						>
 							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
 								File Logging
 							</span>
 							<p class="text-xs text-neutral-500 dark:text-neutral-400">Write logs to disk</p>
-						</div>
-					</label>
+						</button>
+					</div>
 
 					<!-- Console Logging -->
-					<label class="flex cursor-pointer items-center gap-3">
-						<input
-							type="checkbox"
-							name="console_logging"
-							bind:checked={settings.console_logging}
-							class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+					<div class="flex items-center gap-3">
+						<IconCheckbox
+							icon={Check}
+							checked={settings.console_logging}
+							on:click={() => (settings.console_logging = !settings.console_logging)}
 						/>
-						<div class="flex-1">
+						<input type="hidden" name="console_logging" value={settings.console_logging ? 'on' : ''} />
+						<button
+							type="button"
+							class="flex-1 text-left"
+							on:click={() => (settings.console_logging = !settings.console_logging)}
+						>
 							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
 								Console Logging
 							</span>
 							<p class="text-xs text-neutral-500 dark:text-neutral-400">Output logs to terminal</p>
-						</div>
-					</label>
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -128,7 +141,7 @@
 					name="min_level"
 					bind:value={settings.min_level}
 					required
-					class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
+					class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 				>
 					<option value="DEBUG">DEBUG - All logs including debug information</option>
 					<option value="INFO">INFO - Informational messages and above</option>
@@ -178,7 +191,7 @@
 			<button
 				type="button"
 				on:click={resetToDefaults}
-				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
 				<RotateCcw size={16} />
 				Reset to Defaults
@@ -186,7 +199,7 @@
 
 			<button
 				type="submit"
-				class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-blue-500 dark:hover:bg-blue-600"
+				class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 			>
 				<Save size={16} />
 				Save Settings

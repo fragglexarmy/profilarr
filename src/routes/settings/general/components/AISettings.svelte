@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
-	import { Save, RotateCcw, Eye, EyeOff } from 'lucide-svelte';
+	import { Save, RotateCcw, Eye, EyeOff, Check } from 'lucide-svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import type { AISettings } from './types';
 
 	export let settings: AISettings;
@@ -55,23 +56,25 @@
 	>
 		<div class="space-y-6">
 			<!-- Enable Toggle -->
-			<div>
-				<label class="flex cursor-pointer items-center gap-3">
-					<input
-						type="checkbox"
-						name="enabled"
-						bind:checked={settings.enabled}
-						class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800"
-					/>
-					<div class="flex-1">
-						<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
-							Enable AI Features
-						</span>
-						<p class="text-xs text-neutral-500 dark:text-neutral-400">
-							Enable AI-powered commit message generation
-						</p>
-					</div>
-				</label>
+			<div class="flex items-center gap-3">
+				<IconCheckbox
+					icon={Check}
+					checked={settings.enabled}
+					on:click={() => (settings.enabled = !settings.enabled)}
+				/>
+				<input type="hidden" name="enabled" value={settings.enabled ? 'on' : ''} />
+				<button
+					type="button"
+					class="flex-1 text-left"
+					on:click={() => (settings.enabled = !settings.enabled)}
+				>
+					<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
+						Enable AI Features
+					</span>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
+						Enable AI-powered commit message generation
+					</p>
+				</button>
 			</div>
 
 			{#if settings.enabled}
@@ -92,7 +95,7 @@
 						name="api_url"
 						bind:value={settings.api_url}
 						placeholder="https://api.openai.com/v1"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
 					/>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 						OpenAI-compatible endpoint. Examples: Ollama (http://localhost:11434/v1), LM Studio (http://localhost:1234/v1)
@@ -114,7 +117,7 @@
 							name="api_key"
 							bind:value={settings.api_key}
 							placeholder="sk-..."
-							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
 						/>
 						<button
 							type="button"
@@ -147,7 +150,7 @@
 						name="model"
 						bind:value={settings.model}
 						placeholder="gpt-4o-mini"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
 					/>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 						Model name. Examples: gpt-4o-mini, llama3.2, claude-3-haiku
@@ -163,7 +166,7 @@
 			<button
 				type="button"
 				on:click={resetToDefaults}
-				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:ring-2 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
 				<RotateCcw size={16} />
 				Reset to Defaults
@@ -171,7 +174,7 @@
 
 			<button
 				type="submit"
-				class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white hover:bg-accent-700 focus:ring-2 focus:ring-accent-500 focus:outline-none dark:bg-accent-500 dark:hover:bg-accent-600"
+				class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 			>
 				<Save size={16} />
 				Save Settings
