@@ -1,5 +1,5 @@
 import { BaseHttpClient } from '../http/client.ts';
-import type { ArrSystemStatus, ArrDelayProfile, ArrTag } from './types.ts';
+import type { ArrSystemStatus, ArrDelayProfile, ArrTag, ArrMediaManagementConfig, ArrNamingConfig, ArrQualityDefinition } from './types.ts';
 import { logger } from '$logger/logger.ts';
 
 /**
@@ -105,5 +105,71 @@ export class BaseArrClient extends BaseHttpClient {
 	 */
 	async createTag(label: string): Promise<ArrTag> {
 		return this.post<ArrTag>(`/api/${this.apiVersion}/tag`, { label });
+	}
+
+	// =========================================================================
+	// Media Management Config
+	// =========================================================================
+
+	/**
+	 * Get media management config
+	 */
+	async getMediaManagementConfig(): Promise<ArrMediaManagementConfig> {
+		return this.get<ArrMediaManagementConfig>(`/api/${this.apiVersion}/config/mediamanagement`);
+	}
+
+	/**
+	 * Update media management config
+	 * Note: Must PUT to /{id} endpoint
+	 */
+	async updateMediaManagementConfig(config: ArrMediaManagementConfig): Promise<ArrMediaManagementConfig> {
+		return this.put<ArrMediaManagementConfig>(
+			`/api/${this.apiVersion}/config/mediamanagement/${config.id}`,
+			config
+		);
+	}
+
+	// =========================================================================
+	// Naming Config
+	// =========================================================================
+
+	/**
+	 * Get naming config
+	 */
+	async getNamingConfig(): Promise<ArrNamingConfig> {
+		return this.get<ArrNamingConfig>(`/api/${this.apiVersion}/config/naming`);
+	}
+
+	/**
+	 * Update naming config
+	 * Note: Must PUT to /{id} endpoint
+	 */
+	async updateNamingConfig(config: ArrNamingConfig): Promise<ArrNamingConfig> {
+		return this.put<ArrNamingConfig>(
+			`/api/${this.apiVersion}/config/naming/${config.id}`,
+			config
+		);
+	}
+
+	// =========================================================================
+	// Quality Definitions
+	// =========================================================================
+
+	/**
+	 * Get all quality definitions
+	 */
+	async getQualityDefinitions(): Promise<ArrQualityDefinition[]> {
+		return this.get<ArrQualityDefinition[]>(`/api/${this.apiVersion}/qualitydefinition`);
+	}
+
+	/**
+	 * Update all quality definitions
+	 * Note: PUT to /update endpoint with full array
+	 */
+	async updateQualityDefinitions(definitions: ArrQualityDefinition[]): Promise<ArrQualityDefinition[]> {
+		return this.put<ArrQualityDefinition[]>(
+			`/api/${this.apiVersion}/qualitydefinition/update`,
+			definitions
+		);
 	}
 }

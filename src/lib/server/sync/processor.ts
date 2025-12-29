@@ -108,7 +108,7 @@ export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
 
 			// Process media management if pending
 			if (pending.mediaManagement.includes(instanceId)) {
-				const syncer = new MediaManagementSyncer(client, instanceId, instance.name);
+				const syncer = new MediaManagementSyncer(client, instanceId, instance.name, instance.type as ArrType);
 				instanceResult.mediaManagement = await syncer.sync();
 				totalSynced += instanceResult.mediaManagement.itemsSynced;
 
@@ -178,7 +178,7 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 		mmConfig.trigger !== 'none' &&
 		(mmConfig.namingDatabaseId || mmConfig.qualityDefinitionsDatabaseId || mmConfig.mediaSettingsDatabaseId)
 	) {
-		const syncer = new MediaManagementSyncer(client, instanceId, instance.name);
+		const syncer = new MediaManagementSyncer(client, instanceId, instance.name, instance.type as ArrType);
 		result.mediaManagement = await syncer.sync();
 	}
 

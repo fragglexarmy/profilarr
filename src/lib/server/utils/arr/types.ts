@@ -229,6 +229,104 @@ export interface ArrTag {
 }
 
 // =============================================================================
+// Media Management Config Types
+// =============================================================================
+
+/**
+ * Propers and repacks download preference
+ * Shared between Radarr and Sonarr
+ * API values: doNotPrefer, preferAndUpgrade, doNotUpgrade
+ */
+export type ArrPropersAndRepacks = 'doNotPrefer' | 'preferAndUpgrade' | 'doNotUpgrade';
+
+/**
+ * Media management config from /api/v3/config/mediamanagement
+ * Only includes fields we care about syncing - the full response has many more fields
+ * We GET the full config, modify these fields, and PUT the whole thing back
+ */
+export interface ArrMediaManagementConfig {
+	id: number;
+	downloadPropersAndRepacks: ArrPropersAndRepacks;
+	enableMediaInfo: boolean;
+	// The API returns many more fields - we preserve them when updating
+	[key: string]: unknown;
+}
+
+// =============================================================================
+// Naming Config Types
+// =============================================================================
+
+/**
+ * Radarr colon replacement format (string enum)
+ */
+export type RadarrColonReplacementFormat = 'delete' | 'dash' | 'spaceDash' | 'spaceDashSpace' | 'smart';
+
+/**
+ * Radarr naming config from /api/v3/config/naming
+ */
+export interface RadarrNamingConfig {
+	id: number;
+	renameMovies: boolean;
+	replaceIllegalCharacters: boolean;
+	colonReplacementFormat: RadarrColonReplacementFormat;
+	standardMovieFormat: string | null;
+	movieFolderFormat: string | null;
+	[key: string]: unknown;
+}
+
+/**
+ * Sonarr naming config from /api/v3/config/naming
+ * Note: colonReplacementFormat and multiEpisodeStyle are integers, not strings
+ */
+export interface SonarrNamingConfig {
+	id: number;
+	renameEpisodes: boolean;
+	replaceIllegalCharacters: boolean;
+	colonReplacementFormat: number;
+	customColonReplacementFormat: string | null;
+	multiEpisodeStyle: number;
+	standardEpisodeFormat: string | null;
+	dailyEpisodeFormat: string | null;
+	animeEpisodeFormat: string | null;
+	seriesFolderFormat: string | null;
+	seasonFolderFormat: string | null;
+	specialsFolderFormat: string | null;
+	[key: string]: unknown;
+}
+
+/**
+ * Union type for naming config (varies by arr type)
+ */
+export type ArrNamingConfig = RadarrNamingConfig | SonarrNamingConfig;
+
+// =============================================================================
+// Quality Definition Types
+// =============================================================================
+
+/**
+ * Quality info within a quality definition
+ */
+export interface ArrQuality {
+	id: number;
+	name: string | null;
+	source?: string;
+	resolution?: number;
+}
+
+/**
+ * Quality definition from /api/v3/qualitydefinition
+ */
+export interface ArrQualityDefinition {
+	id: number;
+	quality: ArrQuality;
+	title: string | null;
+	weight: number;
+	minSize: number | null;
+	maxSize: number | null;
+	preferredSize: number | null;
+}
+
+// =============================================================================
 // System Types
 // =============================================================================
 

@@ -250,7 +250,7 @@ export const actions: Actions = {
 			const { createArrClient } = await import('$arr/factory.ts');
 			const { MediaManagementSyncer } = await import('$lib/server/sync/mediaManagement.ts');
 			const client = createArrClient(instance.type as 'radarr' | 'sonarr' | 'lidarr' | 'chaptarr', instance.url, instance.api_key);
-			const syncer = new MediaManagementSyncer(client, id, instance.name);
+			const syncer = new MediaManagementSyncer(client, id, instance.name, instance.type as 'radarr' | 'sonarr' | 'lidarr' | 'chaptarr');
 			const result = await syncer.sync();
 
 			await logger.info(`Manual media management sync completed for "${instance.name}"`, {

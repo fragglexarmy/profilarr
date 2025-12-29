@@ -149,14 +149,14 @@ export class RadarrClient extends BaseArrClient {
 	/**
 	 * Get all tags
 	 */
-	getTags(): Promise<RadarrTag[]> {
+	override getTags(): Promise<RadarrTag[]> {
 		return this.get<RadarrTag[]>(`/api/${this.apiVersion}/tag`);
 	}
 
 	/**
 	 * Create a new tag
 	 */
-	createTag(label: string): Promise<RadarrTag> {
+	override createTag(label: string): Promise<RadarrTag> {
 		return this.post<RadarrTag>(`/api/${this.apiVersion}/tag`, { label });
 	}
 
