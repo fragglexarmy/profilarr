@@ -6,7 +6,9 @@
 	export let services: Array<{ id: string; name: string }>;
 
 	function formatDateTime(date: string): string {
-		return new Date(date).toLocaleString();
+		// SQLite stores as UTC without timezone indicator, append Z to parse correctly
+		const utcDate = date.endsWith('Z') ? date : date.replace(' ', 'T') + 'Z';
+		return new Date(utcDate).toLocaleString();
 	}
 
 	function getServiceName(serviceId: string): string {
