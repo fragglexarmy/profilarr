@@ -27,6 +27,9 @@
 	let isEditing = false;
 	let isSaving = false;
 
+	// Shared expanded state between read-only and edit mode tables
+	let expandedRows: Set<string | number> = new Set();
+
 	// Layer selection
 	let selectedLayer: 'user' | 'base' = 'user';
 	let showSaveTargetModal = false;
@@ -305,6 +308,7 @@
 					getRowId={(group) => group.resolution}
 					emptyMessage="No quality definitions"
 					flushExpanded
+					bind:expandedRows
 				>
 					<svelte:fragment slot="cell" let:row let:column>
 						{#if column.key === 'label'}
@@ -439,6 +443,7 @@
 			getRowId={(group) => group.resolution}
 			emptyMessage="No quality definitions"
 			flushExpanded
+			bind:expandedRows
 		>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'label'}
