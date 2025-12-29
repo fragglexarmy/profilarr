@@ -1,0 +1,69 @@
+/**
+ * Delete a regular expression operation
+ */
+
+import type { PCDCache } from '../../cache.ts';
+import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { RegularExpressionTableRow } from './types.ts';
+
+export interface DeleteRegularExpressionOptions {
+	databaseId: number;
+	cache: PCDCache;
+	layer: OperationLayer;
+	/** The current regular expression data (for value guards) */
+	current: RegularExpressionTableRow;
+}
+
+/**
+ * Escape a string for SQL
+ */
+function esc(value: string): string {
+	return value.replace(/'/g, "''");
+}
+
+/**
+ * Delete a regular expression by writing an operation to the specified layer
+ * Uses value guards to detect conflicts with upstream changes
+ */
+export async function remove(options: DeleteRegularExpressionOptions) {
+	const { databaseId, cache, layer, current } = options;
+	const db = cache.kb;
+
+	const queries = [];
+
+	// 1. Delete tag links first (foreign key constraint)
+	for (const tag of current.tags) {
+		const removeTagLink = {
+			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_id = (SELECT id FROM regular_expressions WHERE name = '${esc(current.name)}') AND tag_id = tag('${esc(tag.name)}')`,
+			parameters: [],
+			query: {} as never
+		};
+		queries.push(removeTagLink);
+	}
+
+	// 2. Delete the regular expression with value guards
+	const deleteRegex = db
+		.deleteFrom('regular_expressions')
+		.where('id', '=', current.id)
+		// Value guards - ensure this is the regex we expect
+		.where('name', '=', current.name)
+		.where('pattern', '=', current.pattern)
+		.compile();
+
+	queries.push(deleteRegex);
+
+	// Write the operation
+	const result = await writeOperation({
+		databaseId,
+		layer,
+		description: `delete-regular-expression-${current.name}`,
+		queries,
+		metadata: {
+			operation: 'delete',
+			entity: 'regular_expression',
+			name: current.name
+		}
+	});
+
+	return result;
+}

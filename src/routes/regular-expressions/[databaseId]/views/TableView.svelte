@@ -1,0 +1,127 @@
+<script lang="ts">
+	import Table from '$ui/table/Table.svelte';
+	import type { Column } from '$ui/table/types';
+	import type { RegularExpressionTableRow } from '$pcd/queries/regularExpressions';
+	import { Tag, Code, FileText, Link } from 'lucide-svelte';
+	import { marked } from 'marked';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+
+	export let expressions: RegularExpressionTableRow[];
+
+	function handleRowClick(row: RegularExpressionTableRow) {
+		const databaseId = $page.params.databaseId;
+		goto(`/regular-expressions/${databaseId}/${row.id}`);
+	}
+
+	function escapeHtml(text: string): string {
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
+	function parseMarkdown(text: string | null): string {
+		if (!text) return '';
+		return marked.parseInline(text) as string;
+	}
+
+	const columns: Column<RegularExpressionTableRow>[] = [
+		{
+			key: 'name',
+			header: 'Name',
+			headerIcon: Tag,
+			align: 'left',
+			sortable: true,
+			width: 'w-48',
+			cell: (row: RegularExpressionTableRow) => ({
+				html: `
+					<div>
+						<div class="font-medium">${escapeHtml(row.name)}</div>
+						${
+							row.tags.length > 0
+								? `
+							<div class="mt-1 flex flex-wrap gap-1">
+								${row.tags
+									.map(
+										(tag) => `
+									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
+										${escapeHtml(tag.name)}
+									</span>
+								`
+									)
+									.join('')}
+							</div>
+						`
+								: ''
+						}
+					</div>
+				`
+			})
+		},
+		{
+			key: 'pattern',
+			header: 'Pattern',
+			headerIcon: Code,
+			align: 'left',
+			cell: (row: RegularExpressionTableRow) => ({
+				html: `<code class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded break-all">${escapeHtml(row.pattern)}</code>`
+			})
+		},
+		{
+			key: 'description',
+			header: 'Description',
+			headerIcon: FileText,
+			align: 'left',
+			cell: (row: RegularExpressionTableRow) => ({
+				html: row.description
+					? `<span class="text-sm text-neutral-600 dark:text-neutral-400 prose-inline">${parseMarkdown(row.description)}</span>`
+					: `<span class="text-neutral-400">-</span>`
+			})
+		},
+		{
+			key: 'regex101_id',
+			header: 'Regex101',
+			headerIcon: Link,
+			align: 'left',
+			width: 'w-32',
+			cell: (row: RegularExpressionTableRow) => ({
+				html: row.regex101_id
+					? `<a href="https://regex101.com/r/${escapeHtml(row.regex101_id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-mono text-xs text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 hover:underline">${escapeHtml(row.regex101_id)}<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>`
+					: `<span class="text-neutral-400">-</span>`
+			})
+		}
+	];
+</script>
+
+<Table data={expressions} {columns} emptyMessage="No regular expressions found" hoverable={true} compact={false} onRowClick={handleRowClick} />
+
+<style>
+	/* Inline prose styles for markdown content */
+	:global(.prose-inline code) {
+		background-color: rgb(229 231 235);
+		padding: 0.125rem 0.25rem;
+		border-radius: 0.25rem;
+		font-size: 0.75rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	:global(.dark .prose-inline code) {
+		background-color: rgb(38 38 38);
+	}
+
+	:global(.prose-inline strong) {
+		font-weight: 600;
+	}
+
+	:global(.prose-inline a) {
+		color: rgb(var(--color-accent-600));
+		text-decoration: underline;
+	}
+
+	:global(.dark .prose-inline a) {
+		color: rgb(var(--color-accent-400));
+	}
+</style>
