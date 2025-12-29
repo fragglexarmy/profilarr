@@ -83,7 +83,7 @@
 					<!-- Enabled/Disabled Badge -->
 					<span
 						class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium {job.enabled
-							? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100'
+							? 'bg-accent-100 text-accent-800 dark:bg-accent-900/40 dark:text-accent-100'
 							: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-100'}"
 					>
 						{job.enabled ? 'Enabled' : 'Disabled'}
