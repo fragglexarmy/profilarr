@@ -2,10 +2,13 @@
 	import Group from './group.svelte';
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
+
+	export let collapsed: boolean = false;
 </script>
 
 <nav
-	class="fixed top-16 left-0 flex h-[calc(100vh-4rem)] w-72 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+	class="fixed top-16 left-0 flex h-[calc(100vh-4rem)] w-72 flex-col border-r border-neutral-200 bg-neutral-50 transition-transform duration-200 dark:border-neutral-800 dark:bg-neutral-900"
+	class:-translate-x-[calc(100%-24px)]={collapsed}
 >
 	<div class="flex-1 overflow-y-auto p-4">
 		<Group label="🏠 Home" href="/" hasItems={true}>
