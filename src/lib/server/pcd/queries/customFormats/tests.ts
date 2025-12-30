@@ -13,11 +13,16 @@ export async function getById(cache: PCDCache, formatId: number): Promise<Custom
 
 	const format = await db
 		.selectFrom('custom_formats')
-		.select(['id', 'name', 'description'])
+		.select(['id', 'name', 'description', 'include_in_rename'])
 		.where('id', '=', formatId)
 		.executeTakeFirst();
 
-	return format ?? null;
+	if (!format) return null;
+
+	return {
+		...format,
+		include_in_rename: format.include_in_rename === 1
+	};
 }
 
 /**

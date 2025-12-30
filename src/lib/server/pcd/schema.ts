@@ -50,6 +50,7 @@ export interface CustomFormatsTable {
 	id: Generated<number>;
 	name: string;
 	description: string | null;
+	include_in_rename: Generated<number>;
 	created_at: Generated<string>;
 	updated_at: Generated<string>;
 }

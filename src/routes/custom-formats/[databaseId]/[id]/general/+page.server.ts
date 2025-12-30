@@ -29,8 +29,8 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	// Get custom format basic info
-	const format = await customFormatQueries.getById(cache, formatId);
+	// Load general information for the custom format
+	const format = await customFormatQueries.general(cache, formatId);
 	if (!format) {
 		throw error(404, 'Custom format not found');
 	}

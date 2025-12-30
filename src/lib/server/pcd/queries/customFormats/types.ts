@@ -27,6 +27,16 @@ export interface CustomFormatBasic {
 	id: number;
 	name: string;
 	description: string | null;
+	include_in_rename: boolean;
+}
+
+/** Custom format general information (for general tab) */
+export interface CustomFormatGeneral {
+	id: number;
+	name: string;
+	description: string;
+	include_in_rename: boolean;
+	tags: Tag[];
 }
 
 /** Custom format test case */

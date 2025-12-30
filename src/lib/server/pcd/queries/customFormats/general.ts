@@ -1,0 +1,43 @@
+/**
+ * Custom format general queries
+ */
+
+import type { PCDCache } from '../../cache.ts';
+import type { CustomFormatGeneral } from './types.ts';
+
+/**
+ * Get general information for a single custom format
+ */
+export async function general(cache: PCDCache, formatId: number): Promise<CustomFormatGeneral | null> {
+	const db = cache.kb;
+
+	// Get the custom format
+	const format = await db
+		.selectFrom('custom_formats')
+		.select(['id', 'name', 'description', 'include_in_rename'])
+		.where('id', '=', formatId)
+		.executeTakeFirst();
+
+	if (!format) return null;
+
+	// Get tags for this format
+	const tags = await db
+		.selectFrom('custom_format_tags as cft')
+		.innerJoin('tags as t', 't.id', 'cft.tag_id')
+		.select(['t.id as tag_id', 't.name as tag_name', 't.created_at as tag_created_at'])
+		.where('cft.custom_format_id', '=', formatId)
+		.orderBy('t.name')
+		.execute();
+
+	return {
+		id: format.id,
+		name: format.name,
+		description: format.description || '',
+		include_in_rename: format.include_in_rename === 1,
+		tags: tags.map((tag) => ({
+			id: tag.tag_id,
+			name: tag.tag_name,
+			created_at: tag.tag_created_at
+		}))
+	};
+}
