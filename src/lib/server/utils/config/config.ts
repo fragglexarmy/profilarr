@@ -5,6 +5,7 @@
 class Config {
 	private basePath: string;
 	public readonly timezone: string;
+	public readonly parserUrl: string;
 
 	constructor() {
 		// Default base path logic:
@@ -24,6 +25,11 @@ class Config {
 		// 1. Check TZ environment variable
 		// 2. Fall back to system timezone
 		this.timezone = Deno.env.get('TZ') || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+		// Parser service configuration
+		const parserHost = Deno.env.get('PARSER_HOST') || 'localhost';
+		const parserPort = Deno.env.get('PARSER_PORT') || '5000';
+		this.parserUrl = `http://${parserHost}:${parserPort}`;
 	}
 
 	/**
