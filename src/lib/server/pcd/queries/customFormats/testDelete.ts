@@ -1,0 +1,51 @@
+/**
+ * Delete a custom format test operation
+ */
+
+import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { CustomFormatTest } from './types.ts';
+
+export interface DeleteTestOptions {
+	databaseId: number;
+	layer: OperationLayer;
+	formatName: string;
+	/** The current test data (for value guards) */
+	current: CustomFormatTest;
+}
+
+/**
+ * Escape a string for SQL
+ */
+function esc(value: string): string {
+	return value.replace(/'/g, "''");
+}
+
+/**
+ * Delete a custom format test by writing an operation to the specified layer
+ * Uses value guards to detect conflicts with upstream changes
+ */
+export async function deleteTest(options: DeleteTestOptions) {
+	const { databaseId, layer, formatName, current } = options;
+
+	// Delete with value guards to ensure we're deleting the expected record
+	const deleteTestQuery = {
+		sql: `DELETE FROM custom_format_tests WHERE custom_format_id = cf('${esc(formatName)}') AND title = '${esc(current.title)}' AND type = '${esc(current.type)}'`,
+		parameters: [],
+		query: {} as never
+	};
+
+	// Write the operation
+	const result = await writeOperation({
+		databaseId,
+		layer,
+		description: `delete-test-${formatName}`,
+		queries: [deleteTestQuery],
+		metadata: {
+			operation: 'delete',
+			entity: 'custom_format_test',
+			name: `${formatName}: ${current.title.substring(0, 30)}`
+		}
+	});
+
+	return result;
+}

@@ -132,13 +132,18 @@
 						{/if}
 					</th>
 				{/each}
+				{#if $$slots.actions}
+					<th class="{compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 text-right">
+						Actions
+					</th>
+				{/if}
 			</tr>
 		</thead>
 		<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
 			{#if sortedData.length === 0}
 				<tr>
 					<td
-						colspan={columns.length + 1}
+						colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)}
 						class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400"
 					>
 						{emptyMessage}
@@ -171,12 +176,17 @@
 								</slot>
 							</td>
 						{/each}
+						{#if $$slots.actions}
+							<td class="{compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-right" on:click|stopPropagation>
+								<slot name="actions" {row} />
+							</td>
+						{/if}
 					</tr>
 
 					<!-- Expanded Row -->
 					{#if expandedRows.has(rowId)}
 						<tr class="bg-neutral-50 dark:bg-neutral-800/30">
-							<td colspan={columns.length + 1} class="{flushExpanded ? '' : compact ? 'px-4 py-3' : 'px-6 py-4'}">
+							<td colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)} class="{flushExpanded ? '' : compact ? 'px-4 py-3' : 'px-6 py-4'}">
 								<div class="{flushExpanded ? '' : 'ml-6'}">
 									<slot name="expanded" {row}>
 										<!-- Default expanded content -->

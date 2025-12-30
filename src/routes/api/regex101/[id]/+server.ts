@@ -100,6 +100,11 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		return json(JSON.parse(cached.response));
 	}
 
+	await logger.debug('regex101 cache miss', {
+		source: 'Regex101API',
+		meta: { id }
+	});
+
 	// Handle ID with optional version (e.g., "ABC123" or "ABC123/1")
 	const [regexId, version] = id.split('/');
 

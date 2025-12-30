@@ -190,6 +190,20 @@ export interface ConditionYearsTable {
 }
 
 // ============================================================================
+// CUSTOM FORMAT TESTING
+// ============================================================================
+
+export interface CustomFormatTestsTable {
+	id: Generated<number>;
+	custom_format_id: number;
+	title: string;
+	type: string;
+	should_match: number;
+	description: string | null;
+	created_at: Generated<string>;
+}
+
+// ============================================================================
 // DELAY PROFILES
 // ============================================================================
 
@@ -305,6 +319,7 @@ export interface PCDDatabase {
 	condition_sizes: ConditionSizesTable;
 	condition_release_types: ConditionReleaseTypesTable;
 	condition_years: ConditionYearsTable;
+	custom_format_tests: CustomFormatTestsTable;
 	delay_profiles: DelayProfilesTable;
 	delay_profile_tags: DelayProfileTagsTable;
 	quality_api_mappings: QualityApiMappingsTable;

@@ -20,3 +20,19 @@ export interface CustomFormatTableRow {
 	tags: Tag[];
 	conditions: ConditionRef[];
 }
+
+/** Custom format basic info */
+export interface CustomFormatBasic {
+	id: number;
+	name: string;
+	description: string | null;
+}
+
+/** Custom format test case */
+export interface CustomFormatTest {
+	id: number;
+	title: string;
+	type: string;
+	should_match: boolean;
+	description: string | null;
+}
