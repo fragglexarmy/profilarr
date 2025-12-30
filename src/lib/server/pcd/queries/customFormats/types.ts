@@ -19,6 +19,7 @@ export interface CustomFormatTableRow {
 	description: string | null;
 	tags: Tag[];
 	conditions: ConditionRef[];
+	testCount: number;
 }
 
 /** Custom format basic info */

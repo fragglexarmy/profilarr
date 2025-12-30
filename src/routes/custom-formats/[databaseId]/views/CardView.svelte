@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CustomFormatTableRow } from '$pcd/queries/customFormats';
-	import { Layers } from 'lucide-svelte';
+	import { Layers, FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -32,12 +32,23 @@
 					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 						{format.name}
 					</h3>
-					<div
-						class="flex flex-shrink-0 items-center gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
-						title="{format.conditions.length} condition{format.conditions.length !== 1 ? 's' : ''}"
-					>
-						<Layers size={12} />
-						<span>{format.conditions.length}</span>
+					<div class="flex flex-shrink-0 items-center gap-1.5">
+						<div
+							class="flex items-center gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+							title="{format.conditions.length} condition{format.conditions.length !== 1 ? 's' : ''}"
+						>
+							<Layers size={12} />
+							<span>{format.conditions.length}</span>
+						</div>
+						{#if format.testCount > 0}
+							<div
+								class="flex items-center gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+								title="{format.testCount} test{format.testCount !== 1 ? 's' : ''}"
+							>
+								<FlaskConical size={12} />
+								<span>{format.testCount}</span>
+							</div>
+						{/if}
 					</div>
 				</div>
 				{#if format.tags.length > 0}

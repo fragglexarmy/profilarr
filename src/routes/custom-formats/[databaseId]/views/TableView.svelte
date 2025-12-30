@@ -2,7 +2,7 @@
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { CustomFormatTableRow } from '$pcd/queries/customFormats';
-	import { Tag, FileText, Layers } from 'lucide-svelte';
+	import { Tag, FileText, Layers, FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -98,6 +98,19 @@
 						return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${colorClass}">${escapeHtml(c.name)}</span>`;
 					}).join('')}</div>`
 					: `<span class="text-neutral-400 text-xs">None</span>`
+			})
+		},
+		{
+			key: 'testCount',
+			header: 'Tests',
+			headerIcon: FlaskConical,
+			align: 'center',
+			width: 'w-20',
+			sortable: true,
+			cell: (row: CustomFormatTableRow) => ({
+				html: row.testCount > 0
+					? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">${row.testCount}</span>`
+					: `<span class="text-neutral-400 text-xs">-</span>`
 			})
 		}
 	];

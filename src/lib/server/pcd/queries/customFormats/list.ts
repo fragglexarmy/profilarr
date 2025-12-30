@@ -47,6 +47,21 @@ export async function list(cache: PCDCache): Promise<CustomFormatTableRow[]> {
 		.orderBy('name')
 		.execute();
 
+	// 4. Get test counts for all custom formats
+	const testCounts = await db
+		.selectFrom('custom_format_tests')
+		.select(['custom_format_id'])
+		.select((eb) => eb.fn.count('id').as('count'))
+		.where('custom_format_id', 'in', formatIds)
+		.groupBy('custom_format_id')
+		.execute();
+
+	// Build test count map
+	const testCountMap = new Map<number, number>();
+	for (const tc of testCounts) {
+		testCountMap.set(tc.custom_format_id, Number(tc.count));
+	}
+
 	// Build tags map
 	const tagsMap = new Map<number, Tag[]>();
 	for (const tag of allTags) {
@@ -80,6 +95,7 @@ export async function list(cache: PCDCache): Promise<CustomFormatTableRow[]> {
 		name: format.name,
 		description: format.description,
 		tags: tagsMap.get(format.id) || [],
-		conditions: conditionsMap.get(format.id) || []
+		conditions: conditionsMap.get(format.id) || [],
+		testCount: testCountMap.get(format.id) || 0
 	}));
 }
