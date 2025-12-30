@@ -383,3 +383,15 @@ CREATE INDEX idx_upgrade_configs_arr_instance ON upgrade_configs(arr_instance_id
 -- Arr sync indexes (Migration: 015_create_arr_sync_tables.ts)
 CREATE INDEX idx_arr_sync_quality_profiles_instance ON arr_sync_quality_profiles(instance_id);
 CREATE INDEX idx_arr_sync_delay_profiles_instance ON arr_sync_delay_profiles(instance_id);
+
+-- ==============================================================================
+-- TABLE: regex101_cache
+-- Purpose: Cache regex101 API responses to avoid redundant fetches
+-- Migration: 017_create_regex101_cache.ts
+-- ==============================================================================
+
+CREATE TABLE regex101_cache (
+    regex101_id TEXT PRIMARY KEY,           -- Versioned ID (e.g., "ABC123/1")
+    response TEXT NOT NULL,                 -- Full JSON response with test results
+    fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

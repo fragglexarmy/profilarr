@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { logger } from '$logger/logger';
+import { regex101CacheQueries } from '$db/queries/regex101Cache.ts';
 
 export interface Regex101UnitTest {
 	description: string;
@@ -89,6 +90,16 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		throw error(400, 'Missing regex101 ID');
 	}
 
+	// Check cache first
+	const cached = regex101CacheQueries.get(id);
+	if (cached) {
+		await logger.debug('regex101 cache hit', {
+			source: 'Regex101API',
+			meta: { id }
+		});
+		return json(JSON.parse(cached.response));
+	}
+
 	// Handle ID with optional version (e.g., "ABC123" or "ABC123/1")
 	const [regexId, version] = id.split('/');
 
@@ -135,6 +146,9 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 			flavor: data.flavor || 'pcre2',
 			unitTests: testedUnitTests
 		};
+
+		// Cache the result
+		regex101CacheQueries.set(id, JSON.stringify(result));
 
 		return json(result);
 	} catch (err) {

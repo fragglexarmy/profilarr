@@ -18,6 +18,7 @@ import { migration as migration013 } from './migrations/013_add_upgrade_dry_run.
 import { migration as migration014 } from './migrations/014_create_ai_settings.ts';
 import { migration as migration015 } from './migrations/015_create_arr_sync_tables.ts';
 import { migration as migration016 } from './migrations/016_add_should_sync_flags.ts';
+import { migration as migration017 } from './migrations/017_create_regex101_cache.ts';
 
 export interface Migration {
 	version: number;
@@ -251,7 +252,8 @@ export function loadMigrations(): Migration[] {
 		migration013,
 		migration014,
 		migration015,
-		migration016
+		migration016,
+		migration017
 	];
 
 	// Sort by version number
