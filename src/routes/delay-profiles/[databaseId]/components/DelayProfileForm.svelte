@@ -7,25 +7,52 @@
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2, Loader2 } from 'lucide-svelte';
 	import type { PreferredProtocol } from '$pcd/queries/delayProfiles';
+	import {
+		current,
+		isDirty,
+		initEdit,
+		initCreate,
+		update
+	} from '$lib/client/stores/dirty';
+
+	// Form data shape
+	interface DelayProfileFormData {
+		name: string;
+		tags: string[];
+		preferredProtocol: PreferredProtocol;
+		usenetDelay: number;
+		torrentDelay: number;
+		bypassIfHighestQuality: boolean;
+		bypassIfAboveCfScore: boolean;
+		minimumCfScore: number;
+	}
 
 	// Props
 	export let mode: 'create' | 'edit';
 	export let databaseName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
-
-	// Form data
-	export let name: string = '';
-	export let tags: string[] = [];
-	export let preferredProtocol: PreferredProtocol = 'prefer_usenet';
-	export let usenetDelay: number = 0;
-	export let torrentDelay: number = 0;
-	export let bypassIfHighestQuality: boolean = false;
-	export let bypassIfAboveCfScore: boolean = false;
-	export let minimumCfScore: number = 0;
+	export let initialData: DelayProfileFormData;
 
 	// Event handlers
 	export let onCancel: () => void;
+
+	const defaults: DelayProfileFormData = {
+		name: '',
+		tags: [],
+		preferredProtocol: 'prefer_usenet',
+		usenetDelay: 0,
+		torrentDelay: 0,
+		bypassIfHighestQuality: false,
+		bypassIfAboveCfScore: false,
+		minimumCfScore: 0
+	};
+
+	if (mode === 'create') {
+		initCreate(initialData ?? defaults);
+	} else {
+		initEdit(initialData);
+	}
 
 	// Loading states
 	let saving = false;
@@ -52,8 +79,8 @@
 	$: submitButtonText = mode === 'create' ? 'Create Profile' : 'Save Changes';
 
 	// Computed states based on protocol
-	$: showUsenetDelay = preferredProtocol !== 'only_torrent';
-	$: showTorrentDelay = preferredProtocol !== 'only_usenet';
+	$: showUsenetDelay = $current.preferredProtocol !== 'only_torrent';
+	$: showTorrentDelay = $current.preferredProtocol !== 'only_usenet';
 
 	const protocolOptions: { value: PreferredProtocol; label: string; description: string }[] = [
 		{ value: 'prefer_usenet', label: 'Prefer Usenet', description: 'Try Usenet first, fall back to Torrent' },
@@ -62,7 +89,7 @@
 		{ value: 'only_torrent', label: 'Only Torrent', description: 'Never use Usenet' }
 	];
 
-	$: isValid = name.trim() !== '' && tags.length > 0;
+	$: isValid = $current.name.trim() !== '' && $current.tags.length > 0;
 
 	async function handleSaveClick() {
 		if (canWriteToBase) {
@@ -121,6 +148,9 @@
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
 				} else if (result.type === 'redirect') {
 					alertStore.add('success', mode === 'create' ? 'Delay profile created!' : 'Delay profile updated!');
+					// Mark as clean so navigation guard doesn't trigger
+					// Don't call clear() - component is still mounted and needs valid data
+					initEdit($current as DelayProfileFormData);
 				}
 				await update();
 				saving = false;
@@ -128,13 +158,13 @@
 		}}
 	>
 		<!-- Hidden fields for form data -->
-		<input type="hidden" name="tags" value={JSON.stringify(tags)} />
-		<input type="hidden" name="preferredProtocol" value={preferredProtocol} />
-		<input type="hidden" name="usenetDelay" value={usenetDelay} />
-		<input type="hidden" name="torrentDelay" value={torrentDelay} />
-		<input type="hidden" name="bypassIfHighestQuality" value={bypassIfHighestQuality} />
-		<input type="hidden" name="bypassIfAboveCfScore" value={bypassIfAboveCfScore} />
-		<input type="hidden" name="minimumCfScore" value={minimumCfScore} />
+		<input type="hidden" name="tags" value={JSON.stringify($current.tags)} />
+		<input type="hidden" name="preferredProtocol" value={$current.preferredProtocol} />
+		<input type="hidden" name="usenetDelay" value={$current.usenetDelay} />
+		<input type="hidden" name="torrentDelay" value={$current.torrentDelay} />
+		<input type="hidden" name="bypassIfHighestQuality" value={$current.bypassIfHighestQuality} />
+		<input type="hidden" name="bypassIfAboveCfScore" value={$current.bypassIfAboveCfScore} />
+		<input type="hidden" name="minimumCfScore" value={$current.minimumCfScore} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 
 		<!-- Basic Info Section -->
@@ -153,7 +183,8 @@
 						type="text"
 						id="name"
 						name="name"
-						bind:value={name}
+						value={$current.name}
+						oninput={(e) => update('name', e.currentTarget.value)}
 						placeholder="e.g., Standard Delay"
 						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 					/>
@@ -168,7 +199,11 @@
 						Delay profiles apply to items with matching tags
 					</p>
 					<div class="mt-2">
-						<TagInput bind:tags placeholder="Add tags..." />
+						<TagInput
+							tags={$current.tags}
+							onchange={(newTags) => update('tags', newTags)}
+							placeholder="Add tags..."
+						/>
 					</div>
 				</div>
 			</div>
@@ -184,15 +219,15 @@
 				{#each protocolOptions as option}
 					<button
 						type="button"
-						on:click={() => (preferredProtocol = option.value)}
-						class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {preferredProtocol === option.value
+						onclick={() => update('preferredProtocol', option.value)}
+						class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {$current.preferredProtocol === option.value
 							? 'border-accent-500 bg-accent-50 dark:border-accent-400 dark:bg-accent-950'
 							: 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'}"
 					>
-						<div class="flex h-5 w-5 items-center justify-center rounded-full border-2 {preferredProtocol === option.value
+						<div class="flex h-5 w-5 items-center justify-center rounded-full border-2 {$current.preferredProtocol === option.value
 							? 'border-accent-500 bg-accent-500 dark:border-accent-400 dark:bg-accent-400'
 							: 'border-neutral-300 dark:border-neutral-600'}">
-							{#if preferredProtocol === option.value}
+							{#if $current.preferredProtocol === option.value}
 								<Check size={12} class="text-white" />
 							{/if}
 						</div>
@@ -224,7 +259,8 @@
 							<NumberInput
 								name="usenet-delay"
 								id="usenet-delay"
-								bind:value={usenetDelay}
+								value={$current.usenetDelay}
+								onchange={(v) => update('usenetDelay', v)}
 								min={0}
 								font="mono"
 							/>
@@ -241,7 +277,8 @@
 							<NumberInput
 								name="torrent-delay"
 								id="torrent-delay"
-								bind:value={torrentDelay}
+								value={$current.torrentDelay}
+								onchange={(v) => update('torrentDelay', v)}
 								min={0}
 								font="mono"
 							/>
@@ -265,7 +302,8 @@
 				<label class="flex cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600">
 					<input
 						type="checkbox"
-						bind:checked={bypassIfHighestQuality}
+						checked={$current.bypassIfHighestQuality}
+						onchange={(e) => update('bypassIfHighestQuality', e.currentTarget.checked)}
 						class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-600 dark:bg-neutral-700"
 					/>
 					<div>
@@ -279,7 +317,8 @@
 					<label class="flex cursor-pointer items-center gap-3">
 						<input
 							type="checkbox"
-							bind:checked={bypassIfAboveCfScore}
+							checked={$current.bypassIfAboveCfScore}
+							onchange={(e) => update('bypassIfAboveCfScore', e.currentTarget.checked)}
 							class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-600 dark:bg-neutral-700"
 						/>
 						<div>
@@ -288,7 +327,7 @@
 						</div>
 					</label>
 
-					{#if bypassIfAboveCfScore}
+					{#if $current.bypassIfAboveCfScore}
 						<div class="mt-3 pl-7">
 							<label for="min-cf-score" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 								Minimum Score
@@ -297,7 +336,8 @@
 								<NumberInput
 									name="min-cf-score"
 									id="min-cf-score"
-									bind:value={minimumCfScore}
+									value={$current.minimumCfScore}
+									onchange={(v) => update('minimumCfScore', v)}
 									font="mono"
 								/>
 							</div>
@@ -314,7 +354,7 @@
 				{#if mode === 'edit'}
 					<button
 						type="button"
-						on:click={handleDeleteClick}
+						onclick={handleDeleteClick}
 						class="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900"
 					>
 						<Trash2 size={14} />
@@ -327,15 +367,15 @@
 			<div class="flex gap-3">
 				<button
 					type="button"
-					on:click={onCancel}
+					onclick={onCancel}
 					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
 				>
 					Cancel
 				</button>
 				<button
 					type="button"
-					disabled={saving || !isValid}
-					on:click={handleSaveClick}
+					disabled={saving || !isValid || !$isDirty}
+					onclick={handleSaveClick}
 					class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
 				>
 					{#if saving}

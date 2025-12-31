@@ -11,18 +11,24 @@
 	export let required: boolean = false;
 	export let disabled: boolean = false;
 	export let font: 'mono' | 'sans' | undefined = undefined;
+	export let onchange: ((value: number) => void) | undefined = undefined;
 
 	$: fontClass = font === 'mono' ? 'font-mono' : font === 'sans' ? 'font-sans' : '';
+
+	function updateValue(newValue: number) {
+		value = newValue;
+		onchange?.(newValue);
+	}
 
 	// Increment/decrement handlers
 	function increment() {
 		if (max !== undefined && value >= max) return;
-		value += step;
+		updateValue(value + step);
 	}
 
 	function decrement() {
 		if (min !== undefined && value <= min) return;
-		value -= step;
+		updateValue(value - step);
 	}
 
 	// Validate on input
@@ -42,7 +48,7 @@
 			newValue = max;
 		}
 
-		value = newValue;
+		updateValue(newValue);
 	}
 </script>
 

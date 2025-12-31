@@ -3,19 +3,25 @@
 
 	export let tags: string[] = [];
 	export let placeholder = 'Type and press Enter to add tags';
+	export let onchange: ((tags: string[]) => void) | undefined = undefined;
 
 	let inputValue = '';
+
+	function updateTags(newTags: string[]) {
+		tags = newTags;
+		onchange?.(newTags);
+	}
 
 	function addTag() {
 		const trimmed = inputValue.trim();
 		if (trimmed && !tags.includes(trimmed)) {
-			tags = [...tags, trimmed];
+			updateTags([...tags, trimmed]);
 			inputValue = '';
 		}
 	}
 
 	function removeTag(index: number) {
-		tags = tags.filter((_, i) => i !== index);
+		updateTags(tags.filter((_, i) => i !== index));
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
