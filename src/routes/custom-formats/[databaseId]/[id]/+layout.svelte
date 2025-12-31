@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import { page } from '$app/stores';
-	import { FileText, FlaskConical } from 'lucide-svelte';
+	import { FileText, Filter, FlaskConical } from 'lucide-svelte';
 
 	$: databaseId = $page.params.databaseId;
 	$: formatId = $page.params.id;
@@ -13,6 +13,12 @@
 			href: `/custom-formats/${databaseId}/${formatId}/general`,
 			active: currentPath.includes('/general'),
 			icon: FileText
+		},
+		{
+			label: 'Conditions',
+			href: `/custom-formats/${databaseId}/${formatId}/conditions`,
+			active: currentPath.includes('/conditions'),
+			icon: Filter
 		},
 		{
 			label: 'Testing',
