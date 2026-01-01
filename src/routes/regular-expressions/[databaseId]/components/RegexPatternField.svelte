@@ -6,6 +6,18 @@
 	// Props
 	export let pattern: string = '';
 	export let regex101Id: string = '';
+	export let onPatternChange: ((value: string) => void) | undefined = undefined;
+	export let onRegex101IdChange: ((value: string) => void) | undefined = undefined;
+
+	function handlePatternChange(value: string) {
+		pattern = value;
+		onPatternChange?.(value);
+	}
+
+	function handleRegex101IdChange(value: string) {
+		regex101Id = value;
+		onRegex101IdChange?.(value);
+	}
 
 	// Internal state
 	let unitTests: Regex101UnitTest[] = [];
@@ -70,7 +82,8 @@
 		<textarea
 			id="pattern"
 			name="pattern"
-			bind:value={pattern}
+			value={pattern}
+			oninput={(e) => handlePatternChange(e.currentTarget.value)}
 			rows="3"
 			placeholder="e.g., \b(SPARKS)\b"
 			class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
@@ -90,7 +103,8 @@
 				type="text"
 				id="regex101Id"
 				name="regex101Id"
-				bind:value={regex101Id}
+				value={regex101Id}
+				oninput={(e) => handleRegex101IdChange(e.currentTarget.value)}
 				placeholder="e.g., GMV8jd/1"
 				class="block flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>

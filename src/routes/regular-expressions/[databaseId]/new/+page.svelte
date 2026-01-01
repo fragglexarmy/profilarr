@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import RegularExpressionForm from '../components/RegularExpressionForm.svelte';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	// Form state - initialize from preset data
-	let name = data.preset.name;
-	let tags: string[] = data.preset.tags;
-	let pattern = data.preset.pattern;
-	let description = data.preset.description;
-	let regex101Id = data.preset.regex101Id;
+	// Initial data from preset or defaults
+	const initialData = {
+		name: data.preset.name,
+		tags: data.preset.tags,
+		pattern: data.preset.pattern,
+		description: data.preset.description,
+		regex101Id: data.preset.regex101Id
+	};
 
 	function handleCancel() {
 		goto(`/regular-expressions/${data.currentDatabase.id}`);
@@ -25,10 +28,8 @@
 	mode="create"
 	databaseName={data.currentDatabase.name}
 	canWriteToBase={data.canWriteToBase}
-	bind:name
-	bind:tags
-	bind:pattern
-	bind:description
-	bind:regex101Id
+	{initialData}
 	onCancel={handleCancel}
 />
+
+<DirtyModal />
