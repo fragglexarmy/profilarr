@@ -121,5 +121,54 @@ export const actions: Actions = {
 		}
 
 		throw redirect(303, `/custom-formats/${databaseId}/${id}/general`);
+	},
+
+	delete: async ({ request, params }) => {
+		const { databaseId, id } = params;
+
+		if (!databaseId || !id) {
+			return fail(400, { error: 'Missing parameters' });
+		}
+
+		const currentDatabaseId = parseInt(databaseId, 10);
+		const formatId = parseInt(id, 10);
+
+		if (isNaN(currentDatabaseId) || isNaN(formatId)) {
+			return fail(400, { error: 'Invalid parameters' });
+		}
+
+		const cache = pcdManager.getCache(currentDatabaseId);
+		if (!cache) {
+			return fail(500, { error: 'Database cache not available' });
+		}
+
+		// Get current format for value guards
+		const current = await customFormatQueries.general(cache, formatId);
+		if (!current) {
+			return fail(404, { error: 'Custom format not found' });
+		}
+
+		const formData = await request.formData();
+		const layer = (formData.get('layer') as OperationLayer) || 'user';
+
+		// Check layer permission
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer without personal access token' });
+		}
+
+		// Delete the custom format
+		const result = await customFormatQueries.remove({
+			databaseId: currentDatabaseId,
+			cache,
+			layer,
+			formatId,
+			formatName: current.name
+		});
+
+		if (!result.success) {
+			return fail(500, { error: result.error || 'Failed to delete custom format' });
+		}
+
+		throw redirect(303, `/custom-formats/${databaseId}`);
 	}
 };

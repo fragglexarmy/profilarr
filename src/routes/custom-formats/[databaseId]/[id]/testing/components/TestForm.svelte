@@ -5,22 +5,46 @@
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
-	import { Save, Trash2, Loader2, Check, X } from 'lucide-svelte';
+	import { Trash2, Loader2, Check, X } from 'lucide-svelte';
+	import {
+		current,
+		isDirty,
+		initEdit,
+		initCreate,
+		update
+	} from '$lib/client/stores/dirty';
+
+	// Form data shape
+	interface TestFormData {
+		title: string;
+		type: 'movie' | 'series';
+		shouldMatch: boolean;
+		description: string;
+	}
 
 	// Props
 	export let mode: 'create' | 'edit';
 	export let formatName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
-
-	// Form data
-	export let title: string = '';
-	export let type: 'movie' | 'series' = 'movie';
-	export let shouldMatch: boolean = true;
-	export let description: string = '';
+	export let initialData: TestFormData;
 
 	// Event handlers
 	export let onCancel: () => void;
+
+	// Initialize dirty tracking
+	const defaults: TestFormData = {
+		title: '',
+		type: 'movie',
+		shouldMatch: true,
+		description: ''
+	};
+
+	if (mode === 'create') {
+		initCreate(initialData ?? defaults);
+	} else {
+		initEdit(initialData);
+	}
 
 	// Loading states
 	let saving = false;
@@ -37,6 +61,12 @@
 	// Form reference
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+
+	// Reactive getters for current values
+	$: title = ($current.title ?? '') as string;
+	$: type = ($current.type ?? 'movie') as 'movie' | 'series';
+	$: shouldMatch = ($current.shouldMatch ?? true) as boolean;
+	$: description = ($current.description ?? '') as string;
 
 	// Display text based on mode
 	$: pageTitle = mode === 'create' ? 'New Test Case' : 'Edit Test Case';
@@ -108,13 +138,15 @@
 		action={actionUrl}
 		use:enhance={() => {
 			saving = true;
-			return async ({ result, update }) => {
+			return async ({ result, update: formUpdate }) => {
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
 				} else if (result.type === 'redirect') {
 					alertStore.add('success', mode === 'create' ? 'Test case created!' : 'Test case updated!');
+					// Mark as clean so navigation guard doesn't trigger
+					initEdit($current as TestFormData);
 				}
-				await update();
+				await formUpdate();
 				saving = false;
 			};
 		}}
@@ -124,6 +156,7 @@
 		<input type="hidden" name="shouldMatch" value={shouldMatch ? '1' : '0'} />
 		<input type="hidden" name="formatName" value={formatName} />
 		<input type="hidden" name="layer" value={selectedLayer} />
+		<input type="hidden" name="description" value={description} />
 
 		<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
 			<div class="space-y-6 p-4">
@@ -136,7 +169,8 @@
 						type="text"
 						id="title"
 						name="title"
-						bind:value={title}
+						value={title}
+						oninput={(e) => update('title', e.currentTarget.value)}
 						placeholder="e.g., Movie.Name.2024.1080p.BluRay.x264-GROUP"
 						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 					/>
@@ -151,7 +185,7 @@
 						{#each typeOptions as option}
 							<button
 								type="button"
-								on:click={() => (type = option.value)}
+								onclick={() => update('type', option.value)}
 								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 							>
 								<IconCheckbox
@@ -181,7 +215,7 @@
 						{#each matchOptions as option}
 							<button
 								type="button"
-								on:click={() => (shouldMatch = option.value)}
+								onclick={() => update('shouldMatch', option.value)}
 								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 							>
 								<IconCheckbox
@@ -207,7 +241,8 @@
 				<MarkdownInput
 					label="Description"
 					placeholder="Why this test exists or what edge case it covers"
-					bind:value={description}
+					value={description}
+					onchange={(v) => update('description', v)}
 					minRows={2}
 				/>
 			</div>
@@ -218,7 +253,7 @@
 					{#if mode === 'edit'}
 						<button
 							type="button"
-							on:click={handleDeleteClick}
+							onclick={handleDeleteClick}
 							disabled={deleting}
 							class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:bg-neutral-800 dark:text-red-300 dark:hover:bg-red-900"
 						>
@@ -234,7 +269,7 @@
 				<div class="flex gap-2">
 					<button
 						type="button"
-						on:click={onCancel}
+						onclick={onCancel}
 						class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 					>
 						<X size={14} />
@@ -242,8 +277,8 @@
 					</button>
 					<button
 						type="button"
-						on:click={handleSaveClick}
-						disabled={saving || !isValid}
+						onclick={handleSaveClick}
+						disabled={saving || !isValid || (mode === 'edit' && !$isDirty)}
 						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
 					>
 						{#if saving}
@@ -268,13 +303,13 @@
 			class="hidden"
 			use:enhance={() => {
 				deleting = true;
-				return async ({ result, update }) => {
+				return async ({ result, update: formUpdate }) => {
 					if (result.type === 'failure' && result.data) {
 						alertStore.add('error', (result.data as { error?: string }).error || 'Failed to delete');
 					} else if (result.type === 'redirect') {
 						alertStore.add('success', 'Test case deleted');
 					}
-					await update();
+					await formUpdate();
 					deleting = false;
 				};
 			}}

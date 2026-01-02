@@ -2,14 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import TestForm from '../components/TestForm.svelte';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
-
-	let title = '';
-	let type: 'movie' | 'series' = 'movie';
-	let shouldMatch = true;
-	let description = '';
 
 	function handleCancel() {
 		goto(`/custom-formats/${$page.params.databaseId}/${$page.params.id}/testing`);
@@ -24,9 +20,13 @@
 	mode="create"
 	formatName={data.format.name}
 	canWriteToBase={data.canWriteToBase}
-	bind:title
-	bind:type
-	bind:shouldMatch
-	bind:description
+	initialData={{
+		title: '',
+		type: 'movie',
+		shouldMatch: true,
+		description: ''
+	}}
 	onCancel={handleCancel}
 />
+
+<DirtyModal />
