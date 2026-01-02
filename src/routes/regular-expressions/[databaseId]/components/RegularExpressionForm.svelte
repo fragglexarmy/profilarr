@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
+	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import RegexPatternField from './RegexPatternField.svelte';
 	import { alertStore } from '$alerts/store';
@@ -182,21 +183,16 @@
 
 				<!-- Description -->
 				<div>
-					<label for="description" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-						Description
-					</label>
-					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						Supports markdown formatting
-					</p>
-					<textarea
+					<MarkdownInput
 						id="description"
 						name="description"
+						label="Description"
+						description="Describe what this pattern matches"
 						value={$current.description}
-						oninput={(e) => update('description', e.currentTarget.value)}
-						rows="3"
+						onchange={(v) => update('description', v)}
+						rows={3}
 						placeholder="What does this pattern match?"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-					></textarea>
+					/>
 				</div>
 			</div>
 		</div>
