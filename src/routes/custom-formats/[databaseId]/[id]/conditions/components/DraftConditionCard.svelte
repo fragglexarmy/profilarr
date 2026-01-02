@@ -16,7 +16,11 @@
 	} from '$lib/shared/conditionTypes';
 	import type { ConditionData } from '$pcd/queries/customFormats/index';
 
-	const dispatch = createEventDispatcher<{ confirm: void; discard: void }>();
+	const dispatch = createEventDispatcher<{
+		confirm: ConditionData;
+		discard: void;
+		change: ConditionData;
+	}>();
 
 	export let condition: ConditionData;
 	export let arrType: ArrType = 'all';
@@ -24,6 +28,11 @@
 	// Available patterns and languages from database (passed in)
 	export let availablePatterns: { id: number; name: string; pattern: string }[] = [];
 	export let availableLanguages: { id: number; name: string }[] = [];
+
+	// Helper to emit changes - creates new object to maintain immutability
+	function emitChange(updates: Partial<ConditionData>) {
+		dispatch('change', { ...condition, ...updates });
+	}
 
 	// Filter condition types based on arrType
 	$: filteredConditionTypes = CONDITION_TYPES.filter(
@@ -69,9 +78,9 @@
 		if (selected.length > 0) {
 			const patternId = parseInt(selected[0].value);
 			const pattern = availablePatterns.find((p) => p.id === patternId);
-			condition.patterns = pattern ? [{ id: pattern.id, pattern: pattern.pattern }] : [];
+			emitChange({ patterns: pattern ? [{ id: pattern.id, pattern: pattern.pattern }] : [] });
 		} else {
-			condition.patterns = [];
+			emitChange({ patterns: [] });
 		}
 	}
 
@@ -102,24 +111,24 @@
 	function handleSelectChange(value: string) {
 		switch (condition.type) {
 			case 'source':
-				condition.sources = value ? [value] : [];
+				emitChange({ sources: value ? [value] : [] });
 				break;
 			case 'resolution':
-				condition.resolutions = value ? [value] : [];
+				emitChange({ resolutions: value ? [value] : [] });
 				break;
 			case 'quality_modifier':
-				condition.qualityModifiers = value ? [value] : [];
+				emitChange({ qualityModifiers: value ? [value] : [] });
 				break;
 			case 'release_type':
-				condition.releaseTypes = value ? [value] : [];
+				emitChange({ releaseTypes: value ? [value] : [] });
 				break;
 			case 'indexer_flag':
-				condition.indexerFlags = value ? [value] : [];
+				emitChange({ indexerFlags: value ? [value] : [] });
 				break;
 			case 'language':
 				const langId = parseInt(value);
 				const lang = availableLanguages.find((l) => l.id === langId);
-				condition.languages = lang ? [{ id: lang.id, name: lang.name, except: false }] : [];
+				emitChange({ languages: lang ? [{ id: lang.id, name: lang.name, except: false }] : [] });
 				break;
 		}
 	}
@@ -145,25 +154,27 @@
 		if (selected.length > 0) {
 			const langId = parseInt(selected[0].value);
 			const lang = availableLanguages.find((l) => l.id === langId);
-			condition.languages = lang ? [{ id: lang.id, name: lang.name, except: false }] : [];
+			emitChange({ languages: lang ? [{ id: lang.id, name: lang.name, except: false }] : [] });
 		} else {
-			condition.languages = [];
+			emitChange({ languages: [] });
 		}
 	}
 
 	// Handle type change - reset values
 	function handleTypeChange(newType: string) {
-		condition.type = newType;
-		// Reset all value fields
-		condition.patterns = undefined;
-		condition.languages = undefined;
-		condition.sources = undefined;
-		condition.resolutions = undefined;
-		condition.qualityModifiers = undefined;
-		condition.releaseTypes = undefined;
-		condition.indexerFlags = undefined;
-		condition.size = undefined;
-		condition.years = undefined;
+		emitChange({
+			type: newType,
+			// Reset all value fields
+			patterns: undefined,
+			languages: undefined,
+			sources: undefined,
+			resolutions: undefined,
+			qualityModifiers: undefined,
+			releaseTypes: undefined,
+			indexerFlags: undefined,
+			size: undefined,
+			years: undefined
+		});
 	}
 
 	// Type options for Select
@@ -175,26 +186,50 @@
 
 	function handleMinSizeChange(event: Event) {
 		const value = parseFloat((event.target as HTMLInputElement).value);
-		if (!condition.size) condition.size = { minBytes: null, maxBytes: null };
-		condition.size.minBytes = isNaN(value) ? null : Math.round(value * 1024 * 1024 * 1024);
+		const currentSize = condition.size ?? { minBytes: null, maxBytes: null };
+		emitChange({
+			size: {
+				...currentSize,
+				minBytes: isNaN(value) ? null : Math.round(value * 1024 * 1024 * 1024)
+			}
+		});
 	}
 
 	function handleMaxSizeChange(event: Event) {
 		const value = parseFloat((event.target as HTMLInputElement).value);
-		if (!condition.size) condition.size = { minBytes: null, maxBytes: null };
-		condition.size.maxBytes = isNaN(value) ? null : Math.round(value * 1024 * 1024 * 1024);
+		const currentSize = condition.size ?? { minBytes: null, maxBytes: null };
+		emitChange({
+			size: {
+				...currentSize,
+				maxBytes: isNaN(value) ? null : Math.round(value * 1024 * 1024 * 1024)
+			}
+		});
 	}
 
 	function handleMinYearChange(event: Event) {
 		const value = parseInt((event.target as HTMLInputElement).value);
-		if (!condition.years) condition.years = { minYear: null, maxYear: null };
-		condition.years.minYear = isNaN(value) ? null : value;
+		const currentYears = condition.years ?? { minYear: null, maxYear: null };
+		emitChange({
+			years: {
+				...currentYears,
+				minYear: isNaN(value) ? null : value
+			}
+		});
 	}
 
 	function handleMaxYearChange(event: Event) {
 		const value = parseInt((event.target as HTMLInputElement).value);
-		if (!condition.years) condition.years = { minYear: null, maxYear: null };
-		condition.years.maxYear = isNaN(value) ? null : value;
+		const currentYears = condition.years ?? { minYear: null, maxYear: null };
+		emitChange({
+			years: {
+				...currentYears,
+				maxYear: isNaN(value) ? null : value
+			}
+		});
+	}
+
+	function handleNameChange(event: Event) {
+		emitChange({ name: (event.target as HTMLInputElement).value });
 	}
 
 	const inputClass =
@@ -208,7 +243,8 @@
 	<div class="w-48 shrink-0">
 		<input
 			type="text"
-			bind:value={condition.name}
+			value={condition.name}
+			on:input={handleNameChange}
 			placeholder="Condition name"
 			class={inputClass}
 		/>
@@ -302,7 +338,7 @@
 			icon={X}
 			checked={condition.negate}
 			color="red"
-			on:click={() => (condition.negate = !condition.negate)}
+			on:click={() => emitChange({ negate: !condition.negate })}
 		/>
 		<span class="text-xs text-neutral-500 dark:text-neutral-400">Negate</span>
 	</div>
@@ -313,7 +349,7 @@
 			icon={Check}
 			checked={condition.required}
 			color="green"
-			on:click={() => (condition.required = !condition.required)}
+			on:click={() => emitChange({ required: !condition.required })}
 		/>
 		<span class="text-xs text-neutral-500 dark:text-neutral-400">Required</span>
 	</div>
@@ -321,7 +357,7 @@
 	<!-- Confirm -->
 	<button
 		type="button"
-		on:click={() => dispatch('confirm')}
+		on:click={() => dispatch('confirm', condition)}
 		class="shrink-0 cursor-pointer p-1 text-neutral-400 transition-colors hover:text-emerald-500 dark:text-neutral-500 dark:hover:text-emerald-400"
 		title="Confirm condition"
 	>

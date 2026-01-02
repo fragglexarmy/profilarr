@@ -17,14 +17,6 @@
 
 	export let data: PageData;
 
-	// Form data shape
-	interface GeneralFormData {
-		name: string;
-		tags: string[];
-		description: string;
-		includeInRename: boolean;
-	}
-
 	// Build initial data from server
 	$: initialData = {
 		name: data.format.name,
@@ -46,8 +38,14 @@
 	let showSaveTargetModal = false;
 	let mainFormElement: HTMLFormElement;
 
+	// Reactive getters for current values
+	$: name = ($current.name ?? '') as string;
+	$: tags = ($current.tags ?? []) as string[];
+	$: description = ($current.description ?? '') as string;
+	$: includeInRename = ($current.includeInRename ?? false) as boolean;
+
 	// Validation
-	$: isValid = ($current as GeneralFormData).name?.trim() !== '';
+	$: isValid = name.trim() !== '';
 
 	async function handleSaveClick() {
 		if (data.canWriteToBase) {
@@ -83,7 +81,7 @@
 			} else if (result.type === 'redirect') {
 				alertStore.add('success', 'Custom format updated!');
 				// Mark as clean so navigation guard doesn't trigger
-				initEdit($current as GeneralFormData);
+				initEdit(initialData);
 			}
 			await formUpdate();
 			saving = false;
@@ -91,9 +89,9 @@
 	}}
 >
 	<!-- Hidden fields for form data -->
-	<input type="hidden" name="tags" value={JSON.stringify(($current as GeneralFormData).tags)} />
+	<input type="hidden" name="tags" value={JSON.stringify(tags)} />
 	<input type="hidden" name="layer" value={selectedLayer} />
-	<input type="hidden" name="includeInRename" value={($current as GeneralFormData).includeInRename} />
+	<input type="hidden" name="includeInRename" value={includeInRename} />
 
 	<div class="mt-6 space-y-6">
 		<!-- Name -->
@@ -108,7 +106,7 @@
 				type="text"
 				id="name"
 				name="name"
-				value={($current as GeneralFormData).name}
+				value={name}
 				oninput={(e) => update('name', e.currentTarget.value)}
 				placeholder="Enter custom format name"
 				class="mt-2 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
@@ -121,7 +119,7 @@
 			name="description"
 			label="Description"
 			description="Add any notes or details about this custom format's purpose and configuration."
-			value={($current as GeneralFormData).description}
+			value={description}
 			onchange={(v) => update('description', v)}
 		/>
 
@@ -132,7 +130,7 @@
 				Add tags to organize and categorize this custom format.
 			</p>
 			<TagInput
-				tags={($current as GeneralFormData).tags}
+				{tags}
 				onchange={(newTags) => update('tags', newTags)}
 			/>
 		</div>
@@ -148,11 +146,11 @@
 			<div class="flex items-center gap-2">
 				<IconCheckbox
 					icon={Check}
-					checked={($current as GeneralFormData).includeInRename}
-					on:click={() => update('includeInRename', !($current as GeneralFormData).includeInRename)}
+					checked={includeInRename}
+					on:click={() => update('includeInRename', !includeInRename)}
 				/>
 				<span class="text-sm text-neutral-700 dark:text-neutral-300">
-					{($current as GeneralFormData).includeInRename ? 'Enabled' : 'Disabled'}
+					{includeInRename ? 'Enabled' : 'Disabled'}
 				</span>
 			</div>
 		</div>
