@@ -15,7 +15,7 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 	// 1. Get all regular expressions
 	const expressions = await db
 		.selectFrom('regular_expressions')
-		.select(['id', 'name', 'pattern', 'regex101_id', 'description'])
+		.select(['id', 'name', 'pattern', 'regex101_id', 'description', 'created_at', 'updated_at'])
 		.orderBy('name')
 		.execute();
 
@@ -58,6 +58,8 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 		pattern: expression.pattern,
 		regex101_id: expression.regex101_id,
 		description: expression.description,
-		tags: tagsMap.get(expression.id) || []
+		tags: tagsMap.get(expression.id) || [],
+		created_at: expression.created_at,
+		updated_at: expression.updated_at
 	}));
 }

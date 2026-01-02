@@ -23,7 +23,9 @@ export async function list(cache: PCDCache): Promise<DelayProfileTableRow[]> {
 			'torrent_delay',
 			'bypass_if_highest_quality',
 			'bypass_if_above_custom_format_score',
-			'minimum_custom_format_score'
+			'minimum_custom_format_score',
+			'created_at',
+			'updated_at'
 		])
 		.orderBy('name')
 		.execute();
@@ -70,6 +72,8 @@ export async function list(cache: PCDCache): Promise<DelayProfileTableRow[]> {
 		bypass_if_highest_quality: profile.bypass_if_highest_quality === 1,
 		bypass_if_above_custom_format_score: profile.bypass_if_above_custom_format_score === 1,
 		minimum_custom_format_score: profile.minimum_custom_format_score,
-		tags: tagsMap.get(profile.id) || []
+		tags: tagsMap.get(profile.id) || [],
+		created_at: profile.created_at,
+		updated_at: profile.updated_at
 	}));
 }

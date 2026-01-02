@@ -2,12 +2,24 @@
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { RegularExpressionTableRow } from '$pcd/queries/regularExpressions';
-	import { Tag, Code, FileText, Link } from 'lucide-svelte';
+	import { Tag, Code, FileText, Link, Calendar } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let expressions: RegularExpressionTableRow[];
+
+	function formatDate(dateString: string): string {
+		// SQLite stores timestamps without timezone info, treat as UTC
+		const date = new Date(dateString + 'Z');
+		return date.toLocaleString(undefined, {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
 
 	function handleRowClick(row: RegularExpressionTableRow) {
 		const databaseId = $page.params.databaseId;
@@ -91,6 +103,28 @@
 				html: row.regex101_id
 					? `<a href="https://regex101.com/r/${escapeHtml(row.regex101_id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-mono text-xs text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 hover:underline">${escapeHtml(row.regex101_id)}<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>`
 					: `<span class="text-neutral-400">-</span>`
+			})
+		},
+		{
+			key: 'updated_at',
+			header: 'Updated',
+			headerIcon: Calendar,
+			align: 'left',
+			width: 'w-44',
+			sortable: true,
+			cell: (row: RegularExpressionTableRow) => ({
+				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.updated_at)}</span>`
+			})
+		},
+		{
+			key: 'created_at',
+			header: 'Created',
+			headerIcon: Calendar,
+			align: 'left',
+			width: 'w-44',
+			sortable: true,
+			cell: (row: RegularExpressionTableRow) => ({
+				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.created_at)}</span>`
 			})
 		}
 	];

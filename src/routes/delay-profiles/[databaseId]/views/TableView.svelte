@@ -2,11 +2,23 @@
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { DelayProfileTableRow } from '$pcd/queries/delayProfiles';
-	import { Tag, Clock, Zap, Shield } from 'lucide-svelte';
+	import { Tag, Clock, Zap, Shield, Calendar } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let profiles: DelayProfileTableRow[];
+
+	function formatDate(dateString: string): string {
+		// SQLite stores timestamps without timezone info, treat as UTC
+		const date = new Date(dateString + 'Z');
+		return date.toLocaleString(undefined, {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
 
 	function handleRowClick(row: DelayProfileTableRow) {
 		const databaseId = $page.params.databaseId;
@@ -66,7 +78,7 @@
 			header: 'Protocol',
 			headerIcon: Zap,
 			align: 'left',
-			width: 'w-40',
+			width: 'w-44',
 			cell: (row: DelayProfileTableRow) => ({
 				html: `<span class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">${formatProtocol(row.preferred_protocol)}</span>`
 			})
@@ -113,6 +125,28 @@
 					`
 				};
 			}
+		},
+		{
+			key: 'updated_at',
+			header: 'Updated',
+			headerIcon: Calendar,
+			align: 'left',
+			width: 'w-44',
+			sortable: true,
+			cell: (row: DelayProfileTableRow) => ({
+				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.updated_at)}</span>`
+			})
+		},
+		{
+			key: 'created_at',
+			header: 'Created',
+			headerIcon: Calendar,
+			align: 'left',
+			width: 'w-44',
+			sortable: true,
+			cell: (row: DelayProfileTableRow) => ({
+				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.created_at)}</span>`
+			})
 		}
 	];
 </script>

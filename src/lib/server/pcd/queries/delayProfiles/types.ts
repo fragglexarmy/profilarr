@@ -18,4 +18,6 @@ export interface DelayProfileTableRow {
 	bypass_if_above_custom_format_score: boolean;
 	minimum_custom_format_score: number | null;
 	tags: Tag[];
+	created_at: string;
+	updated_at: string;
 }
