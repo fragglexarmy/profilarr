@@ -2,11 +2,7 @@
  * Delay profile syncer
  * Syncs delay profiles from PCD to arr instances
  *
- * TODO: Handle ordering for multiple profiles
- * - Delay profiles have an `order` field (lower = higher priority)
- * - Currently we just create in selection order
- * - May need to use PUT /api/v3/delayprofile/reorder/{id} endpoint
- * - Consider: should PCD store order, or derive from selection order?
+ * Profile ordering is derived from selection order (first selected = highest priority)
  */
 
 import { BaseSyncer } from './base.ts';
@@ -207,8 +203,9 @@ export class DelayProfileSyncer extends BaseSyncer {
 			tagMap.set(tag.label.toLowerCase(), tag.id);
 		}
 
-		// Create new profiles
-		for (const profile of arrData) {
+		// Create new profiles with explicit ordering (lower order = higher priority)
+		for (let i = 0; i < arrData.length; i++) {
+			const profile = arrData[i];
 			// Resolve tag names to IDs, creating missing tags
 			const tagIds: number[] = [];
 
@@ -243,6 +240,7 @@ export class DelayProfileSyncer extends BaseSyncer {
 				bypassIfHighestQuality: profile.bypassIfHighestQuality,
 				bypassIfAboveCustomFormatScore: profile.bypassIfAboveCustomFormatScore,
 				minimumCustomFormatScore: profile.minimumCustomFormatScore,
+				order: i + 1, // Selection order determines priority (1 = highest)
 				tags: tagIds
 			};
 

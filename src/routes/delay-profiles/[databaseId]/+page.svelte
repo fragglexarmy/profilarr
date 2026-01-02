@@ -4,14 +4,17 @@
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ViewToggle from '$ui/actions/ViewToggle.svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import { goto } from '$app/navigation';
-	import { Plus } from 'lucide-svelte';
+	import { Info, Plus } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+
+	let showInfoModal = false;
 
 	// Initialize data page store
 	const { search, view, filtered, setItems } = createDataPageStore(data.delayProfiles, {
@@ -42,6 +45,7 @@
 	<ActionsBar>
 		<SearchAction searchStore={search} placeholder="Search delay profiles..." />
 		<ViewToggle bind:value={$view} />
+		<ActionButton icon={Info} on:click={() => (showInfoModal = true)} />
 		<ActionButton icon={Plus} on:click={() => goto(`/delay-profiles/${data.currentDatabase.id}/new`)} />
 	</ActionsBar>
 
@@ -70,3 +74,26 @@
 		{/if}
 	</div>
 </div>
+
+<InfoModal bind:open={showInfoModal} header="How Delay Profile Sync Works">
+	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Replaces Existing Profiles</div>
+			<p class="mt-1">
+				When syncing, all existing delay profiles on the arr instance are deleted and replaced with the ones you've selected. The default profile (which cannot be deleted) is preserved.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Selection Order = Priority</div>
+			<p class="mt-1">
+				The order you select profiles determines their priority. The first profile in your selection list gets the highest priority (order 1), the second gets order 2, and so on.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Tag-Based Matching</div>
+			<p class="mt-1">
+				Delay profiles use tags to apply to specific series/movies. When multiple profiles match (via tags), the one with the lowest order number takes precedence.
+			</p>
+		</div>
+	</div>
+</InfoModal>
