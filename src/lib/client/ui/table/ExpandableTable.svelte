@@ -10,8 +10,7 @@
 	export let defaultSort: SortState | null = null;
 	export let flushExpanded: boolean = false;
 	export let flushBottom: boolean = false;
-
-	let expandedRows: Set<string | number> = new Set();
+	export let expandedRows: Set<string | number> = new Set();
 	let sortState: SortState | null = defaultSort;
 
 	function toggleRow(id: string | number) {
