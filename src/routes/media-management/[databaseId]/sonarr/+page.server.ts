@@ -96,11 +96,6 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update media settings' });
 		}
 
-		await logger.info('Sonarr media settings updated', {
-			source: 'MediaManagement',
-			meta: { databaseId: currentDatabaseId, layer, propersRepacks, enableMediaInfo }
-		});
-
 		return { success: true };
 	},
 
@@ -201,19 +196,6 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update naming settings' });
 		}
 
-		await logger.info('Sonarr naming settings updated', {
-			source: 'MediaManagement',
-			meta: {
-				databaseId: currentDatabaseId,
-				layer,
-				rename,
-				replaceIllegalCharacters,
-				colonReplacement: effectiveColonReplacement,
-				customColonReplacement: effectiveColonReplacement === 'custom' ? customColonReplacement : null,
-				multiEpisodeStyle
-			}
-		});
-
 		return { success: true };
 	},
 
@@ -283,11 +265,6 @@ export const actions: Actions = {
 			});
 			return fail(500, { error: result.error || 'Failed to update quality definitions' });
 		}
-
-		await logger.info('Sonarr quality definitions updated', {
-			source: 'MediaManagement',
-			meta: { databaseId: currentDatabaseId, layer, definitionsCount: definitions.length }
-		});
 
 		return { success: true };
 	}

@@ -331,7 +331,7 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		// This avoids waiting for the file watcher's debounce delay
 		await compile(instance.local_path, instance.id);
 
-		await logger.info('Cache recompiled after write', {
+		await logger.debug('Cache recompiled after write', {
 			source: 'PCDWriter',
 			meta: { databaseId }
 		});

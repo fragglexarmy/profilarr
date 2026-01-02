@@ -96,11 +96,6 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update media settings' });
 		}
 
-		await logger.info('Radarr media settings updated', {
-			source: 'MediaManagement',
-			meta: { databaseId: currentDatabaseId, layer, propersRepacks, enableMediaInfo }
-		});
-
 		return { success: true };
 	},
 
@@ -181,17 +176,6 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update naming settings' });
 		}
 
-		await logger.info('Radarr naming settings updated', {
-			source: 'MediaManagement',
-			meta: {
-				databaseId: currentDatabaseId,
-				layer,
-				rename,
-				replaceIllegalCharacters,
-				colonReplacement: effectiveColonReplacement
-			}
-		});
-
 		return { success: true };
 	},
 
@@ -261,11 +245,6 @@ export const actions: Actions = {
 			});
 			return fail(500, { error: result.error || 'Failed to update quality definitions' });
 		}
-
-		await logger.info('Radarr quality definitions updated', {
-			source: 'MediaManagement',
-			meta: { databaseId: currentDatabaseId, layer, definitionsCount: definitions.length }
-		});
 
 		return { success: true };
 	}
