@@ -1,7 +1,9 @@
-import { error } from '@sveltejs/kit';
-import type { ServerLoad } from '@sveltejs/kit';
+import { error, redirect, fail } from '@sveltejs/kit';
+import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
+import { canWriteToBase } from '$pcd/writer.ts';
 import * as customFormatQueries from '$pcd/queries/customFormats/index.ts';
+import type { OperationLayer } from '$pcd/writer.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -23,6 +25,12 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(400, 'Invalid format ID');
 	}
 
+	// Get current database
+	const currentDatabase = pcdManager.getById(currentDatabaseId);
+	if (!currentDatabase) {
+		throw error(404, 'Database not found');
+	}
+
 	// Get the cache for the database
 	const cache = pcdManager.getCache(currentDatabaseId);
 	if (!cache) {
@@ -36,6 +44,82 @@ export const load: ServerLoad = async ({ params }) => {
 	}
 
 	return {
-		format
+		currentDatabase,
+		format,
+		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
+};
+
+export const actions: Actions = {
+	update: async ({ request, params }) => {
+		const { databaseId, id } = params;
+
+		if (!databaseId || !id) {
+			return fail(400, { error: 'Missing parameters' });
+		}
+
+		const currentDatabaseId = parseInt(databaseId, 10);
+		const formatId = parseInt(id, 10);
+
+		if (isNaN(currentDatabaseId) || isNaN(formatId)) {
+			return fail(400, { error: 'Invalid parameters' });
+		}
+
+		const cache = pcdManager.getCache(currentDatabaseId);
+		if (!cache) {
+			return fail(500, { error: 'Database cache not available' });
+		}
+
+		// Get current format for value guards
+		const current = await customFormatQueries.general(cache, formatId);
+		if (!current) {
+			return fail(404, { error: 'Custom format not found' });
+		}
+
+		const formData = await request.formData();
+
+		// Parse form data
+		const name = formData.get('name') as string;
+		const description = (formData.get('description') as string) || '';
+		const tagsJson = formData.get('tags') as string;
+		const includeInRename = formData.get('includeInRename') === 'true';
+		const layer = (formData.get('layer') as OperationLayer) || 'user';
+
+		// Validate
+		if (!name?.trim()) {
+			return fail(400, { error: 'Name is required' });
+		}
+
+		let tags: string[] = [];
+		try {
+			tags = JSON.parse(tagsJson || '[]');
+		} catch {
+			return fail(400, { error: 'Invalid tags format' });
+		}
+
+		// Check layer permission
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer without personal access token' });
+		}
+
+		// Update the custom format
+		const result = await customFormatQueries.updateGeneral({
+			databaseId: currentDatabaseId,
+			cache,
+			layer,
+			current,
+			input: {
+				name: name.trim(),
+				description: description.trim(),
+				includeInRename,
+				tags
+			}
+		});
+
+		if (!result.success) {
+			return fail(500, { error: result.error || 'Failed to update custom format' });
+		}
+
+		throw redirect(303, `/custom-formats/${databaseId}/${id}/general`);
+	}
 };

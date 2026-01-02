@@ -10,6 +10,7 @@ export type { DeleteTestOptions } from './testDelete.ts';
 export type { ConditionData } from './conditions.ts';
 export type { ConditionListItem } from './listConditions.ts';
 export type { ConditionResult, EvaluationResult, ParsedInfo } from './evaluator.ts';
+export type { UpdateGeneralInput, UpdateGeneralOptions } from './updateGeneral.ts';
 
 // Export query functions (reads)
 export { list } from './list.ts';
@@ -23,3 +24,4 @@ export { evaluateCustomFormat, getParsedInfo } from './evaluator.ts';
 export { createTest } from './testCreate.ts';
 export { updateTest } from './testUpdate.ts';
 export { deleteTest } from './testDelete.ts';
+export { updateGeneral } from './updateGeneral.ts';
