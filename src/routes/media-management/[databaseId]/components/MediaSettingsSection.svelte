@@ -117,9 +117,9 @@
 				<div class="space-y-6 p-4">
 					<!-- Propers and Repacks -->
 					<div>
-						<label class="mb-3 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<p class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
 							Propers and Repacks
-						</label>
+						</p>
 						<div class="space-y-2">
 							{#each PROPERS_REPACKS_OPTIONS as option}
 								<button
