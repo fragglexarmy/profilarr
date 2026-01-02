@@ -5,6 +5,7 @@
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
 import type { RegularExpressionTableRow } from './types.ts';
+import { logger } from '$logger/logger.ts';
 
 export interface UpdateRegularExpressionInput {
 	name: string;
@@ -96,6 +97,33 @@ export async function update(options: UpdateRegularExpressionOptions) {
 
 		queries.push(linkTag);
 	}
+
+	// Log what's being changed (before the write)
+	const changes: Record<string, { from: unknown; to: unknown }> = {};
+
+	if (current.name !== input.name) {
+		changes.name = { from: current.name, to: input.name };
+	}
+	if (current.pattern !== input.pattern) {
+		changes.pattern = { from: current.pattern, to: input.pattern };
+	}
+	if (current.description !== input.description) {
+		changes.description = { from: current.description, to: input.description };
+	}
+	if (current.regex101_id !== input.regex101Id) {
+		changes.regex101Id = { from: current.regex101_id, to: input.regex101Id };
+	}
+	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
+		changes.tags = { from: currentTagNames, to: input.tags };
+	}
+
+	await logger.info(`Save regular expression "${input.name}"`, {
+		source: 'RegularExpression',
+		meta: {
+			id: current.id,
+			changes
+		}
+	});
 
 	// Write the operation with metadata
 	// Include previousName if this is a rename

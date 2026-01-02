@@ -4,6 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import * as regularExpressionQueries from '$pcd/queries/regularExpressions/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
+import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = ({ params, url }) => {
 	const { databaseId } = params;
@@ -79,6 +80,15 @@ export const actions: Actions = {
 		const regex101Id = (formData.get('regex101Id') as string) || null;
 		const layerFromForm = formData.get('layer');
 		const layer = (layerFromForm as OperationLayer) || 'user';
+
+		await logger.debug('Create action received', {
+			source: 'RegularExpressionCreate',
+			meta: {
+				regexName: name,
+				layerFromForm,
+				layerUsed: layer
+			}
+		});
 
 		// Validate
 		if (!name?.trim()) {
