@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Check } from 'lucide-svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
+	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import UnsavedChangesModal from '$ui/modal/UnsavedChangesModal.svelte';
@@ -40,12 +41,10 @@
 		bind:value={name}
 	/>
 
-	<FormInput
+	<MarkdownInput
 		label="Description"
-		description="Add any notes or details about this custom format's purpose and configuration. Use markdown to format your description."
-		placeholder=""
+		description="Add any notes or details about this custom format's purpose and configuration."
 		bind:value={description}
-		textarea={true}
 	/>
 
 	<div class="space-y-2">
