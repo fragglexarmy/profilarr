@@ -19,8 +19,8 @@ export async function logUpgradeRun(log: UpgradeJobLog): Promise<void> {
 
 	const summary = `[${statusEmoji}] ${log.instanceName}: ${log.filter.name} - ${log.selection.actualCount}/${log.selection.requestedCount} items searched (${duration}ms)`;
 
-	// Log info with key metrics
-	await logger.info(summary, {
+	// Log debug with key metrics
+	await logger.debug(summary, {
 		source: SOURCE,
 		meta: {
 			instanceId: log.instanceId,
@@ -32,12 +32,6 @@ export async function logUpgradeRun(log: UpgradeJobLog): Promise<void> {
 			durationMs: duration
 		}
 	});
-
-	// Log debug with full structured data
-	await logger.debug('Upgrade job details', {
-		source: SOURCE,
-		meta: log
-	});
 }
 
 /**
@@ -48,7 +42,7 @@ export async function logUpgradeSkipped(
 	instanceName: string,
 	reason: string
 ): Promise<void> {
-	await logger.info(`Skipped ${instanceName}: ${reason}`, {
+	await logger.debug(`Skipped ${instanceName}: ${reason}`, {
 		source: SOURCE,
 		meta: { instanceId, reason }
 	});
