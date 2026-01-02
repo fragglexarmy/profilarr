@@ -301,138 +301,139 @@
 			<input type="hidden" name="layer" value={selectedLayer} />
 			<input type="hidden" name="definitions" value={definitionsForSubmit} />
 
-			<div class="space-y-4">
-				<ExpandableTable
-					{columns}
-					data={groupedDefinitions}
-					getRowId={(group) => group.resolution}
-					emptyMessage="No quality definitions"
-					flushExpanded
-					bind:expandedRows
-				>
-					<svelte:fragment slot="cell" let:row let:column>
-						{#if column.key === 'label'}
-							{row.label}
-						{:else if column.key === 'count'}
-							<span
-								class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
-							>
-								{row.definitions.length}
-							</span>
-						{/if}
-					</svelte:fragment>
+			<ExpandableTable
+				{columns}
+				data={groupedDefinitions}
+				getRowId={(group) => group.resolution}
+				emptyMessage="No quality definitions"
+				flushExpanded
+				flushBottom
+				bind:expandedRows
+			>
+				<svelte:fragment slot="cell" let:row let:column>
+					{#if column.key === 'label'}
+						{row.label}
+					{:else if column.key === 'count'}
+						<span
+							class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+						>
+							{row.definitions.length}
+						</span>
+					{/if}
+				</svelte:fragment>
 
-					<svelte:fragment slot="expanded" let:row>
-						<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
-							{#each row.definitions as def (def.quality_id)}
-								{@const markers = markersMap[def.quality_id] || createMarkers(def)}
-								<div class="flex items-center gap-3 bg-white pb-8 pt-5 pl-8 pr-4 dark:bg-neutral-900">
-									<!-- Quality Name -->
-									<div
-										class="w-32 shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100"
-									>
-										{def.quality_name}
-									</div>
-
-									<!-- Range Scale -->
-									<div class="min-w-0 flex-1 pl-2 pr-16 pt-4">
-										<RangeScale
-											orientation="horizontal"
-											direction="start"
-											min={0}
-											max={baseScaleMax}
-											step={1}
-											minSeparation={5}
-											unit={selectedUnit.short}
-											unlimitedValue={baseScaleMax}
-											displayTransform={toDisplayUnit}
-											bind:markers={markersMap[def.quality_id]}
-											on:change={() => syncToDefinition(def.quality_id)}
-										/>
-									</div>
-
-									<!-- Number Inputs -->
-									<div class="w-24 shrink-0">
-										<div
-											class="mb-1 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400"
-										>
-											Min <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
-										</div>
-										<NumberInput
-											id="min-{def.quality_id}"
-											name="min-{def.quality_id}"
-											bind:value={markers[0].value}
-											min={0}
-											max={markers[1].value}
-											step={1}
-											on:input={() => syncToDefinition(def.quality_id)}
-										/>
-									</div>
-
-									<div class="w-24 shrink-0">
-										<div
-											class="mb-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400"
-										>
-											Pref <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
-										</div>
-										<NumberInput
-											id="preferred-{def.quality_id}"
-											name="preferred-{def.quality_id}"
-											bind:value={markers[1].value}
-											min={markers[0].value}
-											max={markers[2].value}
-											step={1}
-											on:input={() => syncToDefinition(def.quality_id)}
-										/>
-									</div>
-
-									<div class="w-24 shrink-0">
-										<div
-											class="mb-1 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400"
-										>
-											Max <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
-										</div>
-										<NumberInput
-											id="max-{def.quality_id}"
-											name="max-{def.quality_id}"
-											bind:value={markers[2].value}
-											min={markers[1].value}
-											step={1}
-											on:input={() => syncToDefinition(def.quality_id)}
-										/>
-									</div>
+				<svelte:fragment slot="expanded" let:row>
+					<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
+						{#each row.definitions as def (def.quality_id)}
+							{@const markers = markersMap[def.quality_id] || createMarkers(def)}
+							<div class="flex items-center gap-3 bg-white pb-8 pt-5 pl-8 pr-4 dark:bg-neutral-900">
+								<!-- Quality Name -->
+								<div
+									class="w-32 shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100"
+								>
+									{def.quality_name}
 								</div>
-							{/each}
-						</div>
-					</svelte:fragment>
-				</ExpandableTable>
 
-				<!-- Actions -->
-				<div class="flex justify-end gap-2">
-					<button
-						type="button"
-						on:click={cancelEditing}
-						disabled={isSaving}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-					>
-						<X size={14} />
-						Cancel
-					</button>
-					<button
-						type="button"
-						on:click={handleSaveClick}
-						disabled={isSaving || !hasChanges}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-					>
-						{#if isSaving}
-							<Loader2 size={14} class="animate-spin" />
-							Saving...
-						{:else}
-							<Check size={14} />
-							Save
-						{/if}
-					</button>
-				</div>
+								<!-- Range Scale -->
+								<div class="min-w-0 flex-1 pl-2 pr-16 pt-4">
+									<RangeScale
+										orientation="horizontal"
+										direction="start"
+										min={0}
+										max={baseScaleMax}
+										step={1}
+										minSeparation={5}
+										unit={selectedUnit.short}
+										unlimitedValue={baseScaleMax}
+										displayTransform={toDisplayUnit}
+										bind:markers={markersMap[def.quality_id]}
+										on:change={() => syncToDefinition(def.quality_id)}
+									/>
+								</div>
+
+								<!-- Number Inputs -->
+								<div class="w-24 shrink-0">
+									<div
+										class="mb-1 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400"
+									>
+										Min <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+									</div>
+									<NumberInput
+										id="min-{def.quality_id}"
+										name="min-{def.quality_id}"
+										bind:value={markers[0].value}
+										min={0}
+										max={markers[1].value}
+										step={1}
+										on:input={() => syncToDefinition(def.quality_id)}
+									/>
+								</div>
+
+								<div class="w-24 shrink-0">
+									<div
+										class="mb-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400"
+									>
+										Pref <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+									</div>
+									<NumberInput
+										id="preferred-{def.quality_id}"
+										name="preferred-{def.quality_id}"
+										bind:value={markers[1].value}
+										min={markers[0].value}
+										max={markers[2].value}
+										step={1}
+										on:input={() => syncToDefinition(def.quality_id)}
+									/>
+								</div>
+
+								<div class="w-24 shrink-0">
+									<div
+										class="mb-1 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400"
+									>
+										Max <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+									</div>
+									<NumberInput
+										id="max-{def.quality_id}"
+										name="max-{def.quality_id}"
+										bind:value={markers[2].value}
+										min={markers[1].value}
+										step={1}
+										on:input={() => syncToDefinition(def.quality_id)}
+									/>
+								</div>
+							</div>
+						{/each}
+					</div>
+				</svelte:fragment>
+			</ExpandableTable>
+
+			<!-- Actions -->
+			<div
+				class="flex justify-end gap-2 rounded-b-lg border border-t-0 border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-800/50"
+			>
+				<button
+					type="button"
+					on:click={cancelEditing}
+					disabled={isSaving}
+					class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				>
+					<X size={14} />
+					Cancel
+				</button>
+				<button
+					type="button"
+					on:click={handleSaveClick}
+					disabled={isSaving || !hasChanges}
+					class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+				>
+					{#if isSaving}
+						<Loader2 size={14} class="animate-spin" />
+						Saving...
+					{:else}
+						<Check size={14} />
+						Save
+					{/if}
+				</button>
 			</div>
 		</form>
 	{:else}

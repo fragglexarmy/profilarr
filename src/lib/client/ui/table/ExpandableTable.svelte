@@ -9,6 +9,7 @@
 	export let emptyMessage: string = 'No data available';
 	export let defaultSort: SortState | null = null;
 	export let flushExpanded: boolean = false;
+	export let flushBottom: boolean = false;
 
 	let expandedRows: Set<string | number> = new Set();
 	let sortState: SortState | null = defaultSort;
@@ -100,7 +101,7 @@
 	}
 </script>
 
-<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 {flushBottom ? 'rounded-b-none border-b-0' : ''}">
 	<table class="w-full">
 		<thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800">
 			<tr>

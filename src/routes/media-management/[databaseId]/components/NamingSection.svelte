@@ -158,7 +158,7 @@
 			<input type="hidden" name="layer" value={selectedLayer} />
 
 			<div
-				class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+				class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
 			>
 				<div class="space-y-6 p-4">
 					<!-- Rename Episodes -->
@@ -396,7 +396,7 @@
 			<input type="hidden" name="layer" value={selectedLayer} />
 
 			<div
-				class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+				class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
 			>
 				<div class="space-y-6 p-4">
 					<!-- Rename Movies -->
