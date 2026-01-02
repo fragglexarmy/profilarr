@@ -301,9 +301,30 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		// Write the file
 		await Deno.writeTextFile(filepath, content);
 
-		await logger.info(`Wrote operation to ${layer} layer`, {
+		// Build descriptive message
+		const opType = metadata?.operation ?? 'write';
+		const entity = metadata?.entity?.replace(/_/g, ' ') ?? 'operation';
+		const entityName = metadata?.name ?? '';
+		const layerDir = layer === 'base' ? 'ops' : 'user_ops';
+		const message = `${opType.charAt(0).toUpperCase() + opType.slice(1)} ${entity} "${entityName}" in layer "${layerDir}"`;
+
+		await logger.info(message, {
 			source: 'PCDWriter',
-			meta: { databaseId, filepath, layer, description }
+			meta: {
+				database: {
+					id: databaseId,
+					name: instance.name,
+					layer
+				},
+				filename,
+				operation: metadata ? {
+					type: metadata.operation,
+					entity: metadata.entity,
+					name: metadata.name,
+					...(metadata.previousName && { previousName: metadata.previousName })
+				} : null,
+				queries: sqlStatements
+			}
 		});
 
 		// Recompile the cache immediately so the new operation is available

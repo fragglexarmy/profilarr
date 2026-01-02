@@ -5,6 +5,7 @@
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
 import type { PreferredProtocol, DelayProfileTableRow } from './types.ts';
+import { logger } from '$logger/logger.ts';
 
 export interface UpdateDelayProfileInput {
 	name: string;
@@ -112,6 +113,42 @@ export async function update(options: UpdateDelayProfileOptions) {
 
 		queries.push(linkTag);
 	}
+
+	// Log what's being changed (before the write)
+	const changes: Record<string, { from: unknown; to: unknown }> = {};
+
+	if (current.name !== input.name) {
+		changes.name = { from: current.name, to: input.name };
+	}
+	if (current.preferred_protocol !== input.preferredProtocol) {
+		changes.preferredProtocol = { from: current.preferred_protocol, to: input.preferredProtocol };
+	}
+	if (current.usenet_delay !== usenetDelay) {
+		changes.usenetDelay = { from: current.usenet_delay, to: usenetDelay };
+	}
+	if (current.torrent_delay !== torrentDelay) {
+		changes.torrentDelay = { from: current.torrent_delay, to: torrentDelay };
+	}
+	if (current.bypass_if_highest_quality !== input.bypassIfHighestQuality) {
+		changes.bypassIfHighestQuality = { from: current.bypass_if_highest_quality, to: input.bypassIfHighestQuality };
+	}
+	if (current.bypass_if_above_custom_format_score !== input.bypassIfAboveCfScore) {
+		changes.bypassIfAboveCfScore = { from: current.bypass_if_above_custom_format_score, to: input.bypassIfAboveCfScore };
+	}
+	if (current.minimum_custom_format_score !== minimumCfScore) {
+		changes.minimumCfScore = { from: current.minimum_custom_format_score, to: minimumCfScore };
+	}
+	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
+		changes.tags = { from: currentTagNames, to: input.tags };
+	}
+
+	await logger.info(`Save delay profile "${input.name}"`, {
+		source: 'DelayProfile',
+		meta: {
+			id: current.id,
+			changes
+		}
+	});
 
 	// Write the operation with metadata
 	// Include previousName if this is a rename
