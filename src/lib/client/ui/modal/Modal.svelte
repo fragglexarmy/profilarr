@@ -9,6 +9,15 @@
 	export let confirmText = 'Confirm';
 	export let cancelText = 'Cancel';
 	export let confirmDanger = false; // If true, confirm button is styled as danger (red)
+	export let size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
+
+	const sizeClasses = {
+		sm: 'max-w-sm',
+		md: 'max-w-md',
+		lg: 'max-w-2xl',
+		xl: 'max-w-4xl',
+		'2xl': 'max-w-6xl'
+	};
 
 	const dispatch = createEventDispatcher();
 
@@ -53,7 +62,7 @@
 	>
 		<!-- Modal -->
 		<div
-			class="relative w-full max-w-md rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
+			class="relative w-full {sizeClasses[size]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
 		>
 			<!-- Header -->
 			<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">

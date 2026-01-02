@@ -1947,6 +1947,7 @@
     "dependencies": [
       "jsr:@soapbox/kysely-deno-sqlite@^2.2.0",
       "jsr:@std/assert@1",
+      "npm:highlight.js@^11.11.1",
       "npm:marked@^15.0.6",
       "npm:simple-icons@^15.17.0"
     ],
@@ -1965,6 +1966,7 @@
         "npm:eslint-plugin-svelte@^3.12.4",
         "npm:eslint@^9.36.0",
         "npm:globals@^16.4.0",
+        "npm:highlight.js@^11.11.1",
         "npm:kysely@0.27.6",
         "npm:lucide-svelte@0.546",
         "npm:marked@^15.0.6",

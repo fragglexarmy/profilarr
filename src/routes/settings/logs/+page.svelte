@@ -2,6 +2,9 @@
 	import { Eye, Copy } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
 	import Modal from '$ui/modal/Modal.svelte';
+	import JsonView from '$ui/meta/JsonView.svelte';
+	import Table from '$ui/table/Table.svelte';
+	import type { Column } from '$ui/table/types';
 	import LogsActionsBar from './components/LogsActionsBar.svelte';
 	import { createSearchStore } from '$lib/client/stores/search';
 	import { invalidateAll } from '$app/navigation';
@@ -44,6 +47,38 @@
 		WARN: 'text-yellow-600 dark:text-yellow-400',
 		ERROR: 'text-red-600 dark:text-red-400'
 	};
+
+	// Table columns
+	const columns: Column<LogEntry>[] = [
+		{
+			key: 'timestamp',
+			header: 'Timestamp',
+			sortable: true,
+			sortAccessor: (row) => new Date(row.timestamp).getTime(),
+			cell: (row) => ({
+				html: `<span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">${new Date(row.timestamp).toLocaleString()}</span>`
+			})
+		},
+		{
+			key: 'level',
+			header: 'Level',
+			sortable: true,
+			cell: (row) => ({
+				html: `<span class="font-semibold ${levelColors[row.level] || 'text-neutral-600 dark:text-neutral-400'}">${row.level}</span>`
+			})
+		},
+		{
+			key: 'source',
+			header: 'Source',
+			sortable: true,
+			cell: (row) => row.source || '-'
+		},
+		{
+			key: 'message',
+			header: 'Message',
+			cell: (row) => row.message
+		}
+	];
 
 	// Meta modal state
 	let showMetaModal = false;
@@ -155,98 +190,31 @@
 		{/if}
 	</div>
 
-	<!-- Log Container -->
-	<div
-		class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
-	>
-		<table class="w-full text-sm">
-			<thead class="bg-neutral-50 dark:bg-neutral-800">
-				<tr>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
+	<!-- Log Table -->
+	<Table data={filteredLogs} {columns} emptyMessage="No logs found" hoverable={true} compact={true} initialSort={{ key: 'timestamp', direction: 'asc' }}>
+		<svelte:fragment slot="actions" let:row>
+			<div class="flex items-center justify-end gap-1">
+				<button
+					type="button"
+					on:click={() => copyLog(row)}
+					class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+					title="Copy log entry"
+				>
+					<Copy size={14} />
+				</button>
+				{#if row.meta}
+					<button
+						type="button"
+						on:click={() => viewMeta(row.meta)}
+						class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+						title="View metadata"
 					>
-						Timestamp
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
-					>
-						Level
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
-					>
-						Source
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
-					>
-						Message
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
-					>
-						Actions
-					</th>
-				</tr>
-			</thead>
-			<tbody class="[&_tr:last-child_td]:border-b-0">
-				{#each filteredLogs as log, index (`${log.timestamp}-${log.level}-${log.source}-${log.message}-${index}`)}
-					<tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-						<td
-							class="border-b border-neutral-200 px-4 py-2 font-mono text-xs text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							{new Date(log.timestamp).toLocaleString()}
-						</td>
-						<td
-							class="border-b border-neutral-200 px-4 py-2 font-semibold dark:border-neutral-800 {levelColors[
-								log.level
-							] || 'text-neutral-600 dark:text-neutral-400'}"
-						>
-							{log.level}
-						</td>
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							{log.source || '-'}
-						</td>
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							{log.message}
-						</td>
-						<td class="border-b border-neutral-200 px-4 py-2 text-center dark:border-neutral-800">
-							<div class="flex items-center justify-center gap-1">
-								<button
-									type="button"
-									on:click={() => copyLog(log)}
-									class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-									title="Copy log entry"
-								>
-									<Copy size={14} />
-								</button>
-								{#if log.meta}
-									<button
-										type="button"
-										on:click={() => viewMeta(log.meta)}
-										class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-										title="View metadata"
-									>
-										<Eye size={14} />
-									</button>
-								{/if}
-							</div>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="5" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-							No logs found
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
+						<Eye size={14} />
+					</button>
+				{/if}
+			</div>
+		</svelte:fragment>
+	</Table>
 </div>
 
 <!-- Meta Modal -->
@@ -256,14 +224,14 @@
 	bodyMessage=""
 	confirmText="Close"
 	cancelText="Close"
+	size="2xl"
 	on:confirm={closeMetaModal}
 	on:cancel={closeMetaModal}
 >
-	<pre
+	<div
 		slot="body"
-		class="max-h-[400px] overflow-auto rounded-lg bg-neutral-50 p-4 font-mono text-xs whitespace-pre-wrap text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">{JSON.stringify(
-			selectedMeta,
-			null,
-			2
-		)}</pre>
+		class="max-h-[70vh] overflow-auto rounded-lg bg-neutral-50 p-4 font-mono text-sm dark:bg-neutral-800"
+	>
+		<JsonView data={selectedMeta} />
+	</div>
 </Modal>

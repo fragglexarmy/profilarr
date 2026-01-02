@@ -105,7 +105,8 @@
 		return sortDirection === 'desc' ? sorted.reverse() : sorted;
 	}
 
-	$: sortedData = sortData(data);
+	$: sortedData = sortKey ? sortData(data) : data;
+	$: sortKey, sortDirection, sortedData = sortData(data);
 </script>
 
 <div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
