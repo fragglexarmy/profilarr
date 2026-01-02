@@ -4,14 +4,12 @@
 
 import type { PCDCache } from '../../cache.ts';
 import type { QualityProfileScoring } from '../../types.ts';
-import { logger } from '$logger/logger.ts';
 
 /**
  * Get quality profile scoring data
  * Returns all custom formats with their scores per arr type
  */
 export async function scoring(cache: PCDCache, databaseId: number, profileId: number): Promise<QualityProfileScoring> {
-  await logger.debug('scoring query called', { source: 'scoring', meta: { databaseId, profileId } });
   const db = cache.kb;
 
   // 1. Get profile settings
@@ -98,8 +96,6 @@ export async function scoring(cache: PCDCache, databaseId: number, profileId: nu
     upgrade_until_score: profile.upgrade_until_score,
     upgrade_score_increment: profile.upgrade_score_increment
   };
-
-  await logger.debug('scoring query completed', { source: 'scoring', meta: { customFormatCount: customFormatScoring.length } });
 
   return result;
 }
