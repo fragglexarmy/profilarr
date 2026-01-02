@@ -3,6 +3,7 @@
 	import { tick } from 'svelte';
 	import { alertStore } from '$alerts/store';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { Save, Trash2, Loader2, Check, X } from 'lucide-svelte';
 
@@ -203,19 +204,12 @@
 				</div>
 
 				<!-- Description -->
-				<div>
-					<label for="description" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-						Description
-					</label>
-					<textarea
-						id="description"
-						name="description"
-						bind:value={description}
-						rows="2"
-						placeholder="Why this test exists or what edge case it covers"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-					></textarea>
-				</div>
+				<MarkdownInput
+					label="Description"
+					placeholder="Why this test exists or what edge case it covers"
+					bind:value={description}
+					minRows={2}
+				/>
 			</div>
 
 			<!-- Actions -->

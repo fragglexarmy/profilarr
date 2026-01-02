@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FormInput from '$ui/form/FormInput.svelte';
+	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import UnsavedChangesModal from '$ui/modal/UnsavedChangesModal.svelte';
 	import { useUnsavedChanges } from '$lib/client/utils/unsavedChanges.svelte';
@@ -33,12 +34,10 @@
 		bind:value={name}
 	/>
 
-	<FormInput
+	<MarkdownInput
 		label="Description"
-		description="Add any notes or details about this profile's purpose and configuration. Use markdown to format your description."
-		placeholder=""
+		description="Add any notes or details about this profile's purpose and configuration."
 		bind:value={description}
-		textarea={true}
 	/>
 
 	<div class="space-y-2">
