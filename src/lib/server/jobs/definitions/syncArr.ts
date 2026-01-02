@@ -23,14 +23,9 @@ export const syncArrJob: JobDefinition = {
 				};
 			}
 
-			// Log individual results
+			// Log errors only
 			for (const sync of result.syncs) {
-				if (sync.success) {
-					await logger.info(`Synced ${sync.section} to ${sync.instanceName}`, {
-						source: 'SyncArrJob',
-						meta: { instanceId: sync.instanceId, section: sync.section }
-					});
-				} else {
+				if (!sync.success) {
 					await logger.error(`Failed to sync ${sync.section} to ${sync.instanceName}`, {
 						source: 'SyncArrJob',
 						meta: { instanceId: sync.instanceId, section: sync.section, error: sync.error }

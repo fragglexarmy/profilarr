@@ -20,10 +20,6 @@ export class NotificationManager {
 			const services = notificationServicesQueries.getAllEnabled();
 
 			if (services.length === 0) {
-				await logger.debug('No enabled notification services found', {
-					source: 'NotificationManager',
-					meta: { type: notification.type }
-				});
 				return;
 			}
 
@@ -38,10 +34,6 @@ export class NotificationManager {
 			});
 
 			if (relevantServices.length === 0) {
-				await logger.debug('No services configured for this notification type', {
-					source: 'NotificationManager',
-					meta: { type: notification.type }
-				});
 				return;
 			}
 

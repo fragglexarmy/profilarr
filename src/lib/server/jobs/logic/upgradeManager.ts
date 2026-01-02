@@ -136,7 +136,7 @@ export async function runUpgradeManager(): Promise<UpgradeManagerResult> {
 		};
 	}
 
-	await logger.info(`Found ${dueConfigs.length} upgrade config(s) to process`, {
+	await logger.debug(`Found ${dueConfigs.length} upgrade config(s) to process`, {
 		source: 'UpgradeManager',
 		meta: {
 			configIds: dueConfigs.map((c) => c.arrInstanceId)

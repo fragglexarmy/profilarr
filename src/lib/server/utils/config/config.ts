@@ -6,6 +6,8 @@ class Config {
 	private basePath: string;
 	public readonly timezone: string;
 	public readonly parserUrl: string;
+	public readonly port: number;
+	public readonly host: string;
 
 	constructor() {
 		// Default base path logic:
@@ -30,6 +32,18 @@ class Config {
 		const parserHost = Deno.env.get('PARSER_HOST') || 'localhost';
 		const parserPort = Deno.env.get('PARSER_PORT') || '5000';
 		this.parserUrl = `http://${parserHost}:${parserPort}`;
+
+		// Server bind configuration
+		this.port = parseInt(Deno.env.get('PORT') || '6868', 10);
+		this.host = Deno.env.get('HOST') || '0.0.0.0';
+	}
+
+	/**
+	 * Get the server URL for display
+	 */
+	get serverUrl(): string {
+		const displayHost = this.host === '0.0.0.0' ? 'localhost' : this.host;
+		return `http://${displayHost}:${this.port}`;
 	}
 
 	/**

@@ -56,7 +56,7 @@ class DatabaseManager {
 				.catch(() => false);
 
 			if (!dbExists) {
-				await logger.warn('Database file does not exist, creating new database', {
+				await logger.debug('Creating new database', {
 					source: 'DatabaseManager',
 					meta: { path: config.paths.database }
 				});
@@ -76,9 +76,9 @@ class DatabaseManager {
 
 			this.initialized = true;
 
-			await logger.info('Database initialized successfully', {
+			await logger.debug('Database initialized', {
 				source: 'DatabaseManager',
-				meta: { path: config.paths.database, dbExists }
+				meta: { path: config.paths.database }
 			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
@@ -196,14 +196,6 @@ class DatabaseManager {
 	 */
 	close(): void {
 		if (this.db) {
-			// Log with stack trace to see what's calling close()
-			logger.info('Closing database connection', {
-				source: 'DatabaseManager',
-				meta: {
-					path: config.paths.database,
-					stack: new Error().stack
-				}
-			});
 			this.db.close();
 			this.db = null;
 			this.initialized = false;

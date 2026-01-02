@@ -13,23 +13,12 @@ export const syncDatabasesJob: JobDefinition = {
 
 	handler: async (): Promise<JobResult> => {
 		try {
-			await logger.info('Starting database sync job', {
-				source: 'SyncDatabasesJob'
-			});
-
 			// Run sync
 			const result = await syncDatabases();
 
-			// Log results for each database
+			// Log errors only
 			for (const db of result.databases) {
-				if (db.success) {
-					if (db.updatesPulled > 0) {
-						await logger.info(`Synced database: ${db.name}`, {
-							source: 'SyncDatabasesJob',
-							meta: { databaseId: db.id, updatesPulled: db.updatesPulled }
-						});
-					}
-				} else {
+				if (!db.success) {
 					await logger.error(`Failed to sync database: ${db.name}`, {
 						source: 'SyncDatabasesJob',
 						meta: { databaseId: db.id, error: db.error }

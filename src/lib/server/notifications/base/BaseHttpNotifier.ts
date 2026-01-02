@@ -68,9 +68,9 @@ export abstract class BaseHttpNotifier implements Notifier {
 					throw new Error(`HTTP ${response.status}: ${errorText}`);
 				}
 
-				await logger.info(`Notification sent successfully`, {
+				await logger.debug(`Notification sent`, {
 					source: this.getName(),
-					meta: { type: notification.type, title: notification.title }
+					meta: { type: notification.type }
 				});
 
 				this.lastSentAt = new Date();

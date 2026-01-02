@@ -19,6 +19,8 @@ import { migration as migration014 } from './migrations/014_create_ai_settings.t
 import { migration as migration015 } from './migrations/015_create_arr_sync_tables.ts';
 import { migration as migration016 } from './migrations/016_add_should_sync_flags.ts';
 import { migration as migration017 } from './migrations/017_create_regex101_cache.ts';
+import { migration as migration018 } from './migrations/018_create_app_info.ts';
+import { migration as migration019 } from './migrations/019_default_log_level_debug.ts';
 
 export interface Migration {
 	version: number;
@@ -83,14 +85,10 @@ class MigrationRunner {
 					migration.version,
 					migration.name
 				);
-
-				await logger.info(`✓ Applied migration ${migration.version}: ${migration.name}`, {
-					source: 'MigrationRunner'
-				});
 			});
 		} catch (error) {
-			await logger.error(`✗ Failed to apply migration ${migration.version}: ${migration.name}`, {
-				source: 'MigrationRunner',
+			await logger.error(`Failed to apply migration ${migration.version}: ${migration.name}`, {
+				source: 'DatabaseMigrations',
 				meta: error
 			});
 			throw error;
@@ -112,14 +110,10 @@ class MigrationRunner {
 
 				// Remove the migration record
 				db.execute(`DELETE FROM ${this.migrationsTable} WHERE version = ?`, migration.version);
-
-				await logger.info(`✓ Rolled back migration ${migration.version}: ${migration.name}`, {
-					source: 'MigrationRunner'
-				});
 			});
 		} catch (error) {
-			await logger.error(`✗ Failed to rollback migration ${migration.version}: ${migration.name}`, {
-				source: 'MigrationRunner',
+			await logger.error(`Failed to rollback migration ${migration.version}: ${migration.name}`, {
+				source: 'DatabaseMigrations',
 				meta: error
 			});
 			throw error;
@@ -135,19 +129,24 @@ class MigrationRunner {
 		// Sort migrations by version
 		const sortedMigrations = [...migrations].sort((a, b) => a.version - b.version);
 
-		let applied = 0;
+		const applied: Array<{ version: number; name: string }> = [];
 		for (const migration of sortedMigrations) {
 			if (this.isApplied(migration.version)) {
 				continue;
 			}
 
 			await this.applyMigration(migration);
-			applied++;
+			applied.push({ version: migration.version, name: migration.name });
 		}
 
-		if (applied === 0) {
-			await logger.info('✓ Database is up to date', {
-				source: 'MigrationRunner'
+		if (applied.length === 0) {
+			await logger.debug('Database up to date', {
+				source: 'DatabaseMigrations'
+			});
+		} else {
+			await logger.info(`Applied ${applied.length} migration(s)`, {
+				source: 'DatabaseMigrations',
+				meta: { migrations: applied }
 			});
 		}
 	}
@@ -160,8 +159,8 @@ class MigrationRunner {
 
 		const currentVersion = this.getCurrentVersion();
 		if (currentVersion <= targetVersion) {
-			await logger.info('✓ Already at target version or below', {
-				source: 'MigrationRunner'
+			await logger.debug('Already at target version or below', {
+				source: 'DatabaseMigrations'
 			});
 			return;
 		}
@@ -171,19 +170,22 @@ class MigrationRunner {
 			.filter((m) => m.version > targetVersion && m.version <= currentVersion)
 			.sort((a, b) => b.version - a.version);
 
-		let rolledBack = 0;
+		const rolledBack: Array<{ version: number; name: string }> = [];
 		for (const migration of sortedMigrations) {
 			if (!this.isApplied(migration.version)) {
 				continue;
 			}
 
 			await this.rollbackMigration(migration);
-			rolledBack++;
+			rolledBack.push({ version: migration.version, name: migration.name });
 		}
 
-		await logger.info(`✓ Rolled back ${rolledBack} migration(s)`, {
-			source: 'MigrationRunner'
-		});
+		if (rolledBack.length > 0) {
+			await logger.info(`Rolled back ${rolledBack.length} migration(s)`, {
+				source: 'DatabaseMigrations',
+				meta: { migrations: rolledBack }
+			});
+		}
 	}
 
 	/**
@@ -219,11 +221,8 @@ class MigrationRunner {
 	 * Fresh migration (reset and reapply all)
 	 */
 	async fresh(migrations: Migration[]): Promise<void> {
-		await logger.warn('⚠ Resetting database...', { source: 'MigrationRunner' });
+		await logger.warn('Resetting database', { source: 'DatabaseMigrations' });
 		await this.reset(migrations);
-		await logger.info('↻ Reapplying all migrations...', {
-			source: 'MigrationRunner'
-		});
 		await this.up(migrations);
 	}
 }
@@ -253,7 +252,9 @@ export function loadMigrations(): Migration[] {
 		migration014,
 		migration015,
 		migration016,
-		migration017
+		migration017,
+		migration018,
+		migration019
 	];
 
 	// Sort by version number

@@ -27,11 +27,6 @@ export const createBackupJob: JobDefinition = {
 			const sourceDir = config.paths.data;
 			const backupsDir = config.paths.backups;
 
-			await logger.info('Creating backup', {
-				source: 'CreateBackupJob',
-				meta: { sourceDir, backupsDir }
-			});
-
 			// Run backup creation
 			const result = await createBackup(sourceDir, backupsDir);
 
@@ -48,11 +43,6 @@ export const createBackupJob: JobDefinition = {
 
 			// Calculate size in MB for display
 			const sizeInMB = ((result.sizeBytes ?? 0) / (1024 * 1024)).toFixed(2);
-
-			await logger.info(`Backup created successfully: ${result.filename} (${sizeInMB} MB)`, {
-				source: 'CreateBackupJob',
-				meta: { filename: result.filename, sizeBytes: result.sizeBytes }
-			});
 
 			return {
 				success: true,

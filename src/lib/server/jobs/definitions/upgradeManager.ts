@@ -16,10 +16,6 @@ export const upgradeManagerJob: JobDefinition = {
 
 	handler: async (): Promise<JobResult> => {
 		try {
-			await logger.info('Starting upgrade manager job', {
-				source: 'UpgradeManagerJob'
-			});
-
 			const result = await runUpgradeManager();
 
 			// Build output message
@@ -32,18 +28,9 @@ export const upgradeManagerJob: JobDefinition = {
 
 			const message = `Processed ${result.totalProcessed} config(s): ${result.successCount} successful, ${result.failureCount} failed, ${result.skippedCount} skipped`;
 
-			// Log individual results
+			// Log failures only
 			for (const instance of result.instances) {
-				if (instance.success) {
-					await logger.info(`Upgrade completed for "${instance.instanceName}"`, {
-						source: 'UpgradeManagerJob',
-						meta: {
-							instanceId: instance.instanceId,
-							filterName: instance.filterName,
-							itemsSearched: instance.itemsSearched
-						}
-					});
-				} else {
+				if (!instance.success && instance.error) {
 					await logger.warn(`Upgrade skipped/failed for "${instance.instanceName}": ${instance.error}`, {
 						source: 'UpgradeManagerJob',
 						meta: {

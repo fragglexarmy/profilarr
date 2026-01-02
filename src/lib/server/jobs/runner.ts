@@ -58,7 +58,7 @@ export async function runJob(job: Job): Promise<boolean> {
 		return false;
 	}
 
-	await logger.info(`Starting job: ${job.name}`, {
+	await logger.debug(`Starting job: ${job.name}`, {
 		source: 'JobRunner',
 		meta: { jobId: job.id }
 	});

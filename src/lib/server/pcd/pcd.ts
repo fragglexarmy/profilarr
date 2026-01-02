@@ -80,8 +80,19 @@ class PCDManager {
 			// Compile cache and start watching (only if enabled)
 			if (instance.enabled) {
 				try {
-					await compile(localPath, id);
+					const stats = await compile(localPath, id);
 					await startWatch(localPath, id);
+
+					await logger.debug(`Cache compiled for "${options.name}"`, {
+						source: 'PCDManager',
+						meta: {
+							databaseId: id,
+							schema: stats.schema,
+							base: stats.base,
+							tweaks: stats.tweaks,
+							user: stats.user
+						}
+					});
 				} catch (error) {
 					// Log error but don't fail the link operation
 					await logger.error('Failed to compile PCD cache after linking', {

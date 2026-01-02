@@ -19,7 +19,7 @@ class JobScheduler {
 			return;
 		}
 
-		await logger.info('Starting job scheduler', { source: 'JobScheduler' });
+		await logger.info('Job scheduler ready', { source: 'JobScheduler' });
 
 		// Check immediately on start
 		await this.checkAndRunJobs();
@@ -33,12 +33,10 @@ class JobScheduler {
 	/**
 	 * Stop the job scheduler
 	 */
-	async stop(): Promise<void> {
+	stop(): void {
 		if (this.intervalId === null) {
 			return;
 		}
-
-		await logger.info('Stopping job scheduler', { source: 'JobScheduler' });
 
 		clearInterval(this.intervalId);
 		this.intervalId = null;
@@ -63,7 +61,7 @@ class JobScheduler {
 				return;
 			}
 
-			await logger.info(`Found ${dueJobs.length} job(s) to run`, {
+			await logger.debug(`Found ${dueJobs.length} job(s) to run`, {
 				source: 'JobScheduler',
 				meta: { jobNames: dueJobs.map((j) => j.name) }
 			});
@@ -105,7 +103,7 @@ class JobScheduler {
 			return false;
 		}
 
-		await logger.info(`Manually triggering job: ${jobName}`, { source: 'JobScheduler' });
+		await logger.debug(`Manually triggering job: ${jobName}`, { source: 'JobScheduler' });
 
 		try {
 			return await runJob(job);

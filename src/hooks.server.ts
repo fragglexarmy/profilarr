@@ -1,6 +1,7 @@
 import { config } from '$config';
-import { logStartup } from '$logger/startup.ts';
+import { printBanner, getServerInfo } from '$logger/startup.ts';
 import { logSettings } from '$logger/settings.ts';
+import { logger } from '$logger/logger.ts';
 import { db } from '$db/db.ts';
 import { runMigrations } from '$db/migrations.ts';
 import { initializeJobs } from '$jobs/init.ts';
@@ -9,9 +10,6 @@ import { pcdManager } from '$pcd/pcd.ts';
 
 // Initialize configuration on server startup
 await config.init();
-
-// Log startup banner
-await logStartup();
 
 // Initialize database
 await db.initialize();
@@ -28,3 +26,12 @@ await pcdManager.initialize();
 // Initialize and start job system
 await initializeJobs();
 await jobScheduler.start();
+
+// Log server ready
+await logger.info('Server ready', {
+	source: 'Startup',
+	meta: getServerInfo()
+});
+
+// Print startup banner with URL
+printBanner();

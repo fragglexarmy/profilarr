@@ -26,29 +26,27 @@ function registerAllJobs(): void {
 /**
  * Sync registered jobs with database
  * Creates DB records for any new jobs
+ * Returns list of newly created job names
  */
-async function syncJobsWithDatabase(): Promise<void> {
+function syncJobsWithDatabase(): string[] {
 	const registeredJobs = jobRegistry.getAll();
+	const created: string[] = [];
 
 	for (const jobDef of registeredJobs) {
-		// Check if job exists in database
 		const existing = jobsQueries.getByName(jobDef.name);
 
 		if (!existing) {
-			// Create new job record
-			const id = jobsQueries.create({
+			jobsQueries.create({
 				name: jobDef.name,
 				description: jobDef.description,
 				schedule: jobDef.schedule,
 				enabled: true
 			});
-
-			await logger.info(`Created job in database: ${jobDef.name}`, {
-				source: 'JobSystem',
-				meta: { jobId: id }
-			});
+			created.push(jobDef.name);
 		}
 	}
+
+	return created;
 }
 
 /**
@@ -57,16 +55,23 @@ async function syncJobsWithDatabase(): Promise<void> {
  * 2. Sync with database
  */
 export async function initializeJobs(): Promise<void> {
-	await logger.info('Initializing job system', { source: 'JobSystem' });
+	await logger.debug('Initializing job system', { source: 'JobSystem' });
 
 	// Register all jobs
 	registerAllJobs();
 
 	// Sync with database
-	await syncJobsWithDatabase();
+	const created = syncJobsWithDatabase();
 
-	await logger.info('Job system initialized', {
+	const meta: { jobCount: number; created?: string[] } = {
+		jobCount: jobRegistry.getAll().length
+	};
+	if (created.length > 0) {
+		meta.created = created;
+	}
+
+	await logger.info('Job system ready', {
 		source: 'JobSystem',
-		meta: { jobCount: jobRegistry.getAll().length }
+		meta
 	});
 }

@@ -27,16 +27,6 @@ export const cleanupLogsJob: JobDefinition = {
 			const retentionDays = settings.retention_days;
 			const logsDir = config.paths.logs;
 
-			// Calculate cutoff date for logging
-			const cutoffDate = new Date();
-			cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-			const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
-
-			await logger.info(`Cleaning up logs older than ${retentionDays} days`, {
-				source: 'CleanupLogsJob',
-				meta: { cutoffDate: cutoffDateStr }
-			});
-
 			// Run cleanup
 			const result = await cleanupLogs(logsDir, retentionDays);
 

@@ -30,11 +30,6 @@ export const cleanupBackupsJob: JobDefinition = {
 			const cutoffDate = new Date();
 			cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-			await logger.info(`Cleaning up backups older than ${retentionDays} days`, {
-				source: 'CleanupBackupsJob',
-				meta: { cutoffDate: cutoffDate.toISOString() }
-			});
-
 			// Read all files in backups directory
 			let deletedCount = 0;
 			let errorCount = 0;
@@ -58,11 +53,6 @@ export const cleanupBackupsJob: JobDefinition = {
 						if (stat.mtime && stat.mtime < cutoffDate) {
 							await Deno.remove(filePath);
 							deletedCount++;
-
-							await logger.info(`Deleted old backup: ${entry.name}`, {
-								source: 'CleanupBackupsJob',
-								meta: { file: entry.name, modifiedAt: stat.mtime.toISOString() }
-							});
 						}
 					} catch (error) {
 						errorCount++;
