@@ -25,8 +25,9 @@
 	export let arrType: 'radarr' | 'sonarr';
 	export let canWriteToBase: boolean = false;
 
-	// Edit mode state
-	let isEditing = false;
+	// Edit mode state (exported for parent dirty tracking)
+	export let isEditing = false;
+	export let hasChanges = false;
 	let isSaving = false;
 
 	// Layer selection
@@ -60,6 +61,41 @@
 	let formMovieFormat: string = '';
 	let formMovieFolderFormat: string = '';
 
+	// Original values for dirty tracking
+	let originalRename: boolean = false;
+	let originalReplaceIllegalCharacters: boolean = false;
+	let originalColonReplacement: ColonReplacementFormat = 'delete';
+	let originalCustomColonReplacement: string = '';
+	let originalStandardEpisodeFormat: string = '';
+	let originalDailyEpisodeFormat: string = '';
+	let originalAnimeEpisodeFormat: string = '';
+	let originalSeriesFolderFormat: string = '';
+	let originalSeasonFolderFormat: string = '';
+	let originalMultiEpisodeStyle: MultiEpisodeStyle = 'extend';
+	let originalRadarrColonReplacement: RadarrColonReplacementFormat = 'delete';
+	let originalMovieFormat: string = '';
+	let originalMovieFolderFormat: string = '';
+
+	// Dirty tracking
+	$: hasChanges = naming
+		? isSonarrNaming(naming)
+			? formRename !== originalRename ||
+				formReplaceIllegalCharacters !== originalReplaceIllegalCharacters ||
+				formColonReplacement !== originalColonReplacement ||
+				formCustomColonReplacement !== originalCustomColonReplacement ||
+				formStandardEpisodeFormat !== originalStandardEpisodeFormat ||
+				formDailyEpisodeFormat !== originalDailyEpisodeFormat ||
+				formAnimeEpisodeFormat !== originalAnimeEpisodeFormat ||
+				formSeriesFolderFormat !== originalSeriesFolderFormat ||
+				formSeasonFolderFormat !== originalSeasonFolderFormat ||
+				formMultiEpisodeStyle !== originalMultiEpisodeStyle
+			: formRename !== originalRename ||
+				formReplaceIllegalCharacters !== originalReplaceIllegalCharacters ||
+				formRadarrColonReplacement !== originalRadarrColonReplacement ||
+				formMovieFormat !== originalMovieFormat ||
+				formMovieFolderFormat !== originalMovieFolderFormat
+		: false;
+
 	// Reset form to current settings
 	function resetForm() {
 		if (naming && isSonarrNaming(naming)) {
@@ -84,6 +120,25 @@
 
 	function startEditing() {
 		resetForm();
+		// Save original values for dirty tracking
+		if (naming && isSonarrNaming(naming)) {
+			originalRename = naming.rename;
+			originalReplaceIllegalCharacters = naming.replace_illegal_characters;
+			originalColonReplacement = naming.colon_replacement_format;
+			originalCustomColonReplacement = naming.custom_colon_replacement_format ?? '';
+			originalStandardEpisodeFormat = naming.standard_episode_format;
+			originalDailyEpisodeFormat = naming.daily_episode_format;
+			originalAnimeEpisodeFormat = naming.anime_episode_format;
+			originalSeriesFolderFormat = naming.series_folder_format;
+			originalSeasonFolderFormat = naming.season_folder_format;
+			originalMultiEpisodeStyle = naming.multi_episode_style;
+		} else if (naming && isRadarrNaming(naming)) {
+			originalRename = naming.rename;
+			originalReplaceIllegalCharacters = naming.replace_illegal_characters;
+			originalRadarrColonReplacement = naming.colon_replacement_format;
+			originalMovieFormat = naming.movie_format;
+			originalMovieFolderFormat = naming.movie_folder_format;
+		}
 		isEditing = true;
 	}
 
@@ -359,8 +414,8 @@
 					<button
 						type="button"
 						on:click={handleSaveClick}
-						disabled={isSaving}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+						disabled={isSaving || !hasChanges}
+						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
 					>
 						{#if isSaving}
 							<Loader2 size={14} class="animate-spin" />
@@ -512,8 +567,8 @@
 					<button
 						type="button"
 						on:click={handleSaveClick}
-						disabled={isSaving}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+						disabled={isSaving || !hasChanges}
+						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
 					>
 						{#if isSaving}
 							<Loader2 size={14} class="animate-spin" />

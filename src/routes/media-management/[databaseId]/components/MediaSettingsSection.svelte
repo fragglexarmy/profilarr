@@ -16,8 +16,9 @@
 	export let arrType: 'radarr' | 'sonarr';
 	export let canWriteToBase: boolean = false;
 
-	// Edit mode state
-	let isEditing = false;
+	// Edit mode state (exported for parent dirty tracking)
+	export let isEditing = false;
+	export let hasChanges = false;
 	let isSaving = false;
 
 	// Layer selection
@@ -29,6 +30,15 @@
 	let formPropersRepacks: PropersRepacks = settings?.propers_repacks ?? 'doNotPrefer';
 	let formEnableMediaInfo: boolean = settings?.enable_media_info ?? true;
 
+	// Original values for dirty tracking
+	let originalPropersRepacks: PropersRepacks = 'doNotPrefer';
+	let originalEnableMediaInfo: boolean = true;
+
+	// Dirty tracking
+	$: hasChanges =
+		formPropersRepacks !== originalPropersRepacks ||
+		formEnableMediaInfo !== originalEnableMediaInfo;
+
 	// Reset form to current settings
 	function resetForm() {
 		formPropersRepacks = settings?.propers_repacks ?? 'doNotPrefer';
@@ -37,6 +47,9 @@
 
 	function startEditing() {
 		resetForm();
+		// Save original values for dirty tracking
+		originalPropersRepacks = settings?.propers_repacks ?? 'doNotPrefer';
+		originalEnableMediaInfo = settings?.enable_media_info ?? true;
 		isEditing = true;
 	}
 
@@ -187,8 +200,8 @@
 					<button
 						type="button"
 						on:click={handleSaveClick}
-						disabled={isSaving}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+						disabled={isSaving || !hasChanges}
+						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
 					>
 						{#if isSaving}
 							<Loader2 size={14} class="animate-spin" />

@@ -23,8 +23,9 @@
 	export let arrType: 'radarr' | 'sonarr';
 	export let canWriteToBase: boolean = false;
 
-	// Edit mode state
-	let isEditing = false;
+	// Edit mode state (exported for parent dirty tracking)
+	export let isEditing = false;
+	export let hasChanges = false;
 	let isSaving = false;
 
 	// Shared expanded state between read-only and edit mode tables
@@ -365,7 +366,7 @@
 										min={0}
 										max={markers[1].value}
 										step={1}
-										on:input={() => syncToDefinition(def.quality_id)}
+										onchange={() => syncToDefinition(def.quality_id)}
 									/>
 								</div>
 
@@ -382,7 +383,7 @@
 										min={markers[0].value}
 										max={markers[2].value}
 										step={1}
-										on:input={() => syncToDefinition(def.quality_id)}
+										onchange={() => syncToDefinition(def.quality_id)}
 									/>
 								</div>
 
@@ -398,7 +399,7 @@
 										bind:value={markers[2].value}
 										min={markers[1].value}
 										step={1}
-										on:input={() => syncToDefinition(def.quality_id)}
+										onchange={() => syncToDefinition(def.quality_id)}
 									/>
 								</div>
 							</div>
