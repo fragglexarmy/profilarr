@@ -122,7 +122,7 @@ class PCDManager {
 		const { name, repository_url } = instance;
 
 		// Invalidate cache first
-		await invalidate(id);
+		invalidate(id);
 
 		// Delete from database
 		databaseInstancesQueries.delete(id);
@@ -280,43 +280,69 @@ class PCDManager {
 	 * Should be called on application startup
 	 */
 	async initialize(): Promise<void> {
-		await logger.info('Initializing PCD caches', { source: 'PCDManager' });
+		const startTime = performance.now();
+
+		await logger.debug('Initialize caches', { source: 'PCDManager' });
 
 		const instances = databaseInstancesQueries.getAll();
 		const enabledInstances = instances.filter((instance) => instance.enabled);
 
-		await logger.info(`Found ${enabledInstances.length} enabled databases to compile`, {
-			source: 'PCDManager',
-			meta: {
-				total: instances.length,
-				enabled: enabledInstances.length
-			}
-		});
+		// Collect results for aggregate logging
+		const results: Array<{
+			name: string;
+			schema: number;
+			base: number;
+			tweaks: number;
+			user: number;
+			error?: string;
+		}> = [];
 
 		// Compile and watch all enabled instances
 		for (const instance of enabledInstances) {
 			try {
-				await logger.info(`Compiling cache for database: ${instance.name}`, {
-					source: 'PCDManager',
-					meta: { databaseId: instance.id }
-				});
-
-				await compile(instance.local_path, instance.id);
+				const stats = await compile(instance.local_path, instance.id);
 				await startWatch(instance.local_path, instance.id);
 
-				await logger.info(`Successfully compiled cache for: ${instance.name}`, {
-					source: 'PCDManager',
-					meta: { databaseId: instance.id }
+				results.push({
+					name: instance.name,
+					schema: stats.schema,
+					base: stats.base,
+					tweaks: stats.tweaks,
+					user: stats.user
 				});
 			} catch (error) {
-				await logger.error(`Failed to compile cache for: ${instance.name}`, {
+				results.push({
+					name: instance.name,
+					schema: 0,
+					base: 0,
+					tweaks: 0,
+					user: 0,
+					error: String(error)
+				});
+
+				await logger.error(`Cache failed "${instance.name}"`, {
 					source: 'PCDManager',
 					meta: { error: String(error), databaseId: instance.id }
 				});
 			}
 		}
 
-		await logger.info('PCD cache initialization complete', { source: 'PCDManager' });
+		const timing = Math.round(performance.now() - startTime);
+		const successful = results.filter((r) => !r.error);
+
+		await logger.info('Caches ready', {
+			source: 'PCDManager',
+			meta: {
+				databases: successful.map((r) => ({
+					name: r.name,
+					schema: r.schema,
+					base: r.base,
+					tweaks: r.tweaks,
+					user: r.user
+				})),
+				timing: `${timing}ms`
+			}
+		});
 	}
 
 	/**

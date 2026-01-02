@@ -7,8 +7,19 @@ import { Kysely } from 'kysely';
 import { DenoSqlite3Dialect } from '@soapbox/kysely-deno-sqlite';
 import { logger } from '$logger/logger.ts';
 import { loadAllOperations, validateOperations } from './ops.ts';
-import { disableDatabaseInstance } from '$db/queries/databaseInstances.ts';
+import { disableDatabaseInstance, databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import type { PCDDatabase } from './schema.ts';
+
+/**
+ * Stats returned from cache build
+ */
+export interface CacheBuildStats {
+	schema: number;
+	base: number;
+	tweaks: number;
+	user: number;
+	timing: number;
+}
 
 /**
  * PCDCache - Manages an in-memory compiled database for a single PCD
@@ -27,14 +38,12 @@ export class PCDCache {
 
 	/**
 	 * Build the cache by executing all operations in layer order
+	 * Returns stats about what was loaded
 	 */
-	async build(): Promise<void> {
-		try {
-			await logger.info('Building PCD cache', {
-				source: 'PCDCache',
-				meta: { path: this.pcdPath, databaseInstanceId: this.databaseInstanceId }
-			});
+	async build(): Promise<CacheBuildStats> {
+		const startTime = performance.now();
 
+		try {
 			// 1. Create in-memory database
 			this.db = new Database(':memory:');
 
@@ -55,14 +64,14 @@ export class PCDCache {
 			const operations = await loadAllOperations(this.pcdPath);
 			validateOperations(operations);
 
-			await logger.info(`Loaded ${operations.length} operations`, {
-				source: 'PCDCache',
-				meta: {
-					schema: operations.filter((o) => o.layer === 'schema').length,
-					base: operations.filter((o) => o.layer === 'base').length,
-					tweaks: operations.filter((o) => o.layer === 'tweaks').length
-				}
-			});
+			// Count ops per layer
+			const stats: CacheBuildStats = {
+				schema: operations.filter((o) => o.layer === 'schema').length,
+				base: operations.filter((o) => o.layer === 'base').length,
+				tweaks: operations.filter((o) => o.layer === 'tweaks').length,
+				user: operations.filter((o) => o.layer === 'user').length,
+				timing: 0
+			};
 
 			// 4. Execute operations in order
 			for (const operation of operations) {
@@ -76,11 +85,9 @@ export class PCDCache {
 			}
 
 			this.built = true;
+			stats.timing = Math.round(performance.now() - startTime);
 
-			await logger.info('PCD cache built successfully', {
-				source: 'PCDCache',
-				meta: { databaseInstanceId: this.databaseInstanceId }
-			});
+			return stats;
 		} catch (error) {
 			await logger.error('Failed to build PCD cache', {
 				source: 'PCDCache',
@@ -235,8 +242,9 @@ const DEBOUNCE_DELAY = 500;
 
 /**
  * Compile a PCD into an in-memory cache
+ * Returns build stats for logging
  */
-export async function compile(pcdPath: string, databaseInstanceId: number): Promise<void> {
+export async function compile(pcdPath: string, databaseInstanceId: number): Promise<CacheBuildStats> {
 	// Stop any existing watchers
 	stopWatch(databaseInstanceId);
 
@@ -248,10 +256,12 @@ export async function compile(pcdPath: string, databaseInstanceId: number): Prom
 
 	// Create and build new cache
 	const cache = new PCDCache(pcdPath, databaseInstanceId);
-	await cache.build();
+	const stats = await cache.build();
 
 	// Store in registry
 	caches.set(databaseInstanceId, cache);
+
+	return stats;
 }
 
 /**
@@ -264,7 +274,7 @@ export function getCache(databaseInstanceId: number): PCDCache | undefined {
 /**
  * Invalidate a cache (close and remove from registry)
  */
-export async function invalidate(databaseInstanceId: number): Promise<void> {
+export function invalidate(databaseInstanceId: number): void {
 	const cache = caches.get(databaseInstanceId);
 	if (cache) {
 		cache.close();
@@ -273,20 +283,15 @@ export async function invalidate(databaseInstanceId: number): Promise<void> {
 
 	// Stop file watcher and debounce timers
 	stopWatch(databaseInstanceId);
-
-	await logger.info('Cache invalidated', {
-		source: 'PCDCache',
-		meta: { databaseInstanceId }
-	});
 }
 
 /**
  * Invalidate all caches
  */
-export async function invalidateAll(): Promise<void> {
+export function invalidateAll(): void {
 	const ids = Array.from(caches.keys());
 	for (const id of ids) {
-		await invalidate(id);
+		invalidate(id);
 	}
 }
 
@@ -351,11 +356,6 @@ export async function startWatch(pcdPath: string, databaseInstanceId: number): P
 		});
 		return;
 	}
-
-	await logger.info(`Starting file watch on ${pathsToWatch.length} directories`, {
-		source: 'PCDCache',
-		meta: { paths: pathsToWatch, databaseInstanceId }
-	});
 
 	const watcher = Deno.watchFs(pathsToWatch);
 	watchers.set(databaseInstanceId, watcher);
@@ -437,15 +437,25 @@ function scheduleRebuild(pcdPath: string, databaseInstanceId: number): void {
 
 	// Schedule new rebuild
 	const timer = setTimeout(async () => {
-		await logger.info('Rebuilding cache due to file changes', {
-			source: 'PCDCache',
-			meta: { databaseInstanceId, pcdPath }
-		});
-
 		try {
-			await compile(pcdPath, databaseInstanceId);
+			const stats = await compile(pcdPath, databaseInstanceId);
 			// Restart watch after rebuild (compile clears watchers)
 			await startWatch(pcdPath, databaseInstanceId);
+
+			// Get database name for logging
+			const instance = databaseInstancesQueries.getById(databaseInstanceId);
+			const name = instance?.name ?? `ID:${databaseInstanceId}`;
+
+			await logger.debug(`Rebuild cache "${name}"`, {
+				source: 'PCDCache',
+				meta: {
+					schema: stats.schema,
+					base: stats.base,
+					tweaks: stats.tweaks,
+					user: stats.user,
+					timing: `${stats.timing}ms`
+				}
+			});
 		} catch (error) {
 			await logger.error('Failed to rebuild cache', {
 				source: 'PCDCache',
