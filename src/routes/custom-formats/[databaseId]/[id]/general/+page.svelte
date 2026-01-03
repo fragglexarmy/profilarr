@@ -20,7 +20,6 @@
 <div class="mt-6">
 	<GeneralForm
 		mode="edit"
-		databaseName={data.currentDatabase.name}
 		canWriteToBase={data.canWriteToBase}
 		actionUrl="?/update"
 		{initialData}

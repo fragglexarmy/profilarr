@@ -25,7 +25,6 @@
 
 	// Props
 	export let mode: 'create' | 'edit';
-	export let databaseName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
 	export let initialData: GeneralFormData;

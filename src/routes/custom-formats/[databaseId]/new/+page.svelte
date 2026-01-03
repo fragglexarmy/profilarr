@@ -26,7 +26,6 @@
 <div class="p-8">
 	<GeneralForm
 		mode="create"
-		databaseName={data.currentDatabase.name}
 		canWriteToBase={data.canWriteToBase}
 		{initialData}
 		onCancel={handleCancel}
