@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { X, Check, ArrowUp, Info, Eye, EyeOff } from 'lucide-svelte';
 	import IconCheckbox from '$lib/client/ui/form/IconCheckbox.svelte';
-	import UnsavedChangesModal from '$ui/modal/UnsavedChangesModal.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
-	import { useUnsavedChanges } from '$lib/client/utils/unsavedChanges.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
-
-	const unsavedChanges = useUnsavedChanges();
 
 	let showInfoModal = false;
 	let showLegacyQualities = true;
@@ -31,14 +27,6 @@
 	let editingGroupIndex: number | null = null;
 	let editingGroupName: string = '';
 	let groupingMode: boolean = false; // For mobile toggle
-
-	// Mark as dirty when mainBucket or legacyBucket changes
-	$: if (
-		JSON.stringify(mainBucket) !== JSON.stringify(data.qualities.orderedItems) ||
-		JSON.stringify(legacyBucket) !== JSON.stringify(data.qualities.availableQualities)
-	) {
-		unsavedChanges.markDirty();
-	}
 
 	function handleQualityDragStart(item: OrderedItem, index: number) {
 		draggedQualityFromMain = { item, index };
@@ -306,8 +294,6 @@
 <svelte:head>
 	<title>Qualities - Profilarr</title>
 </svelte:head>
-
-<UnsavedChangesModal />
 
 <div class="mt-6 space-y-6">
 	<ActionsBar>

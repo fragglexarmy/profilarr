@@ -3,6 +3,7 @@
 	import { tick } from 'svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import RegexPatternField from './RegexPatternField.svelte';
 	import { alertStore } from '$alerts/store';
@@ -57,6 +58,7 @@
 
 	// Modal states
 	let showSaveTargetModal = false;
+	let showDeleteConfirmModal = false;
 	let showDeleteTargetModal = false;
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
@@ -91,7 +93,12 @@
 		mainFormElement?.requestSubmit();
 	}
 
-	async function handleDeleteClick() {
+	function handleDeleteClick() {
+		showDeleteConfirmModal = true;
+	}
+
+	async function handleDeleteConfirm() {
+		showDeleteConfirmModal = false;
 		if (canWriteToBase) {
 			showDeleteTargetModal = true;
 		} else {
@@ -278,6 +285,20 @@
 		</form>
 	{/if}
 </div>
+
+<!-- Delete Confirmation Modal -->
+{#if mode === 'edit'}
+	<Modal
+		open={showDeleteConfirmModal}
+		header="Delete Regular Expression"
+		bodyMessage={`Are you sure you want to delete "${$current.name}"? This action cannot be undone.`}
+		confirmText="Delete"
+		cancelText="Cancel"
+		confirmDanger={true}
+		on:confirm={handleDeleteConfirm}
+		on:cancel={() => (showDeleteConfirmModal = false)}
+	/>
+{/if}
 
 <!-- Save Target Modal -->
 {#if canWriteToBase}

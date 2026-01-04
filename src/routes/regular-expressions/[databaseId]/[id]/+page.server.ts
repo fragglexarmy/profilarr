@@ -87,6 +87,17 @@ export const actions: Actions = {
 			return fail(400, { error: 'Pattern is required' });
 		}
 
+		// Check for duplicate name if renaming
+		if (name.trim().toLowerCase() !== current.name.toLowerCase()) {
+			const existingExpressions = await regularExpressionQueries.list(cache);
+			const duplicate = existingExpressions.find(
+				e => e.id !== regexId && e.name.toLowerCase() === name.trim().toLowerCase()
+			);
+			if (duplicate) {
+				return fail(400, { error: `A regular expression named "${name.trim()}" already exists` });
+			}
+		}
+
 		let tags: string[] = [];
 		try {
 			tags = JSON.parse(tagsJson || '[]');

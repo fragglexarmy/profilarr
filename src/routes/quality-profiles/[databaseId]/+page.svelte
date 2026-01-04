@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { Plus } from 'lucide-svelte';
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ViewToggle from '$ui/actions/ViewToggle.svelte';
 	import TableView from './views/TableView.svelte';
@@ -38,6 +41,10 @@
 	<!-- Actions Bar -->
 	<ActionsBar>
 		<SearchAction searchStore={search} placeholder="Search quality profiles..." />
+		<ActionButton
+			icon={Plus}
+			on:click={() => goto(`/quality-profiles/${data.currentDatabase.id}/new`)}
+		/>
 		<ViewToggle bind:value={$view} />
 	</ActionsBar>
 

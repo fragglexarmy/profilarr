@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import { Check, Save, Loader2, Trash2 } from 'lucide-svelte';
+	import { Save, Loader2, Trash2 } from 'lucide-svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
@@ -21,7 +20,6 @@
 		name: string;
 		tags: string[];
 		description: string;
-		includeInRename: boolean;
 	}
 
 	// Props
@@ -36,8 +34,7 @@
 	const defaults: GeneralFormData = {
 		name: '',
 		tags: [],
-		description: '',
-		includeInRename: false
+		description: ''
 	};
 
 	if (mode === 'create') {
@@ -62,18 +59,17 @@
 	let deleteFormElement: HTMLFormElement;
 
 	// Display text based on mode
-	$: title = mode === 'create' ? 'New Custom Format' : 'General';
+	$: title = mode === 'create' ? 'New Quality Profile' : 'General';
 	$: description_ =
 		mode === 'create'
-			? `After saving, you'll be able to add conditions and tests.`
-			: `Update custom format settings`;
+			? `After saving, you'll be able to configure qualities, scoring, and languages.`
+			: `Update quality profile settings`;
 	$: submitButtonText = mode === 'create' ? 'Create' : 'Save Changes';
 
 	// Reactive getters for current values
 	$: name = ($current.name ?? '') as string;
 	$: tags = ($current.tags ?? []) as string[];
 	$: description = ($current.description ?? '') as string;
-	$: includeInRename = ($current.includeInRename ?? false) as boolean;
 
 	// Validation
 	$: isValid = name.trim() !== '';
@@ -139,7 +135,7 @@
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
 				} else if (result.type === 'redirect') {
-					alertStore.add('success', mode === 'create' ? 'Custom format created!' : 'Custom format updated!');
+					alertStore.add('success', mode === 'create' ? 'Quality profile created!' : 'Quality profile updated!');
 					// Mark as clean so navigation guard doesn't trigger
 					initEdit($current as GeneralFormData);
 				}
@@ -151,7 +147,6 @@
 		<!-- Hidden fields for form data -->
 		<input type="hidden" name="tags" value={JSON.stringify(tags)} />
 		<input type="hidden" name="layer" value={selectedLayer} />
-		<input type="hidden" name="includeInRename" value={includeInRename} />
 
 		<div class="space-y-6">
 			<!-- Name -->
@@ -160,7 +155,7 @@
 					Name <span class="text-red-500">*</span>
 				</label>
 				<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-					The name of this custom format
+					The name of this quality profile
 				</p>
 				<input
 					type="text"
@@ -168,7 +163,7 @@
 					name="name"
 					value={name}
 					oninput={(e) => update('name', e.currentTarget.value)}
-					placeholder="Enter custom format name"
+					placeholder="Enter quality profile name"
 					class="mt-2 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 				/>
 			</div>
@@ -178,7 +173,7 @@
 				id="description"
 				name="description"
 				label="Description"
-				description="Add any notes or details about this custom format's purpose and configuration."
+				description="Add any notes or details about this profile's purpose and configuration."
 				value={description}
 				onchange={(v) => update('description', v)}
 			/>
@@ -187,32 +182,12 @@
 			<div class="space-y-2">
 				<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">Tags</div>
 				<p class="text-xs text-neutral-600 dark:text-neutral-400">
-					Add tags to organize and categorize this custom format.
+					Add tags to organize and categorize this quality profile.
 				</p>
 				<TagInput
 					{tags}
 					onchange={(newTags) => update('tags', newTags)}
 				/>
-			</div>
-
-			<!-- Include In Rename -->
-			<div class="space-y-2">
-				<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-					Include In Rename
-				</div>
-				<p class="text-xs text-neutral-600 dark:text-neutral-400">
-					When enabled, this custom format's name will be included in the renamed filename.
-				</p>
-				<div class="flex items-center gap-2">
-					<IconCheckbox
-						icon={Check}
-						checked={includeInRename}
-						on:click={() => update('includeInRename', !includeInRename)}
-					/>
-					<span class="text-sm text-neutral-700 dark:text-neutral-300">
-						{includeInRename ? 'Enabled' : 'Disabled'}
-					</span>
-				</div>
 			</div>
 
 			<!-- Actions -->
@@ -280,7 +255,7 @@
 					if (result.type === 'failure' && result.data) {
 						alertStore.add('error', (result.data as { error?: string }).error || 'Failed to delete');
 					} else if (result.type === 'redirect') {
-						alertStore.add('success', 'Custom format deleted');
+						alertStore.add('success', 'Quality profile deleted');
 					}
 					await formUpdate();
 					deleting = false;
@@ -296,7 +271,7 @@
 {#if mode === 'edit'}
 	<Modal
 		open={showDeleteConfirmModal}
-		header="Delete Custom Format"
+		header="Delete Quality Profile"
 		bodyMessage={`Are you sure you want to delete "${name}"? This action cannot be undone.`}
 		confirmText="Delete"
 		cancelText="Cancel"

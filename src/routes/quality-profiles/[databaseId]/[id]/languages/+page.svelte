@@ -1,13 +1,10 @@
 <script lang="ts">
 	import { ChevronDown, Info } from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
-	import UnsavedChangesModal from '$ui/modal/UnsavedChangesModal.svelte';
-	import { useUnsavedChanges } from '$lib/client/utils/unsavedChanges.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	const unsavedChanges = useUnsavedChanges();
 	let showInfoModal = false;
 
 	const typeOptions: Array<{ value: 'simple' | 'must' | 'only' | 'not'; label: string }> = [
@@ -32,14 +29,6 @@
 
 	$: isValidLanguage = searchQuery === '' || selectedLanguageId !== null;
 	$: showValidationError = searchQuery !== '' && !isValidLanguage;
-
-	// Mark as dirty when language settings change
-	$: if (
-		selectedType !== (data.languages[0]?.type || 'simple') ||
-		selectedLanguageId !== (data.languages[0]?.id || null)
-	) {
-		unsavedChanges.markDirty();
-	}
 
 	function selectType(type: 'must' | 'only' | 'not' | 'simple') {
 		selectedType = type;
@@ -84,8 +73,6 @@
 <svelte:head>
 	<title>Languages - Profilarr</title>
 </svelte:head>
-
-<UnsavedChangesModal />
 
 <div class="mt-6 space-y-3">
 	<div class="flex items-start justify-between">

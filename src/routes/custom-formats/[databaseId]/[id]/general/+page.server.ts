@@ -90,6 +90,17 @@ export const actions: Actions = {
 			return fail(400, { error: 'Name is required' });
 		}
 
+		// Check for duplicate name if renaming
+		if (name.trim().toLowerCase() !== current.name.toLowerCase()) {
+			const existingFormats = await customFormatQueries.list(cache);
+			const duplicate = existingFormats.find(
+				f => f.id !== formatId && f.name.toLowerCase() === name.trim().toLowerCase()
+			);
+			if (duplicate) {
+				return fail(400, { error: `A custom format named "${name.trim()}" already exists` });
+			}
+		}
+
 		let tags: string[] = [];
 		try {
 			tags = JSON.parse(tagsJson || '[]');

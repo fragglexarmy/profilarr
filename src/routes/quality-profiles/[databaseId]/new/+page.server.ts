@@ -2,11 +2,10 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
-import * as regularExpressionQueries from '$pcd/queries/regularExpressions/index.ts';
+import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import { logger } from '$logger/logger.ts';
 
-export const load: ServerLoad = ({ params, url }) => {
+export const load: ServerLoad = ({ params }) => {
 	const { databaseId } = params;
 
 	if (!databaseId) {
@@ -23,32 +22,9 @@ export const load: ServerLoad = ({ params, url }) => {
 		throw error(404, 'Database not found');
 	}
 
-	// Get preset from query params
-	const preset = url.searchParams.get('preset');
-
-	// Define preset data
-	let presetData = {
-		name: '',
-		tags: [] as string[],
-		pattern: '',
-		description: '',
-		regex101Id: ''
-	};
-
-	if (preset === 'release-group') {
-		presetData = {
-			name: '',
-			tags: ['Release Group'],
-			pattern: '(?<=^|[\\s.-])<group>\\b',
-			description: 'Matches "<group>" when preceded by whitespace, a hyphen or dot',
-			regex101Id: ''
-		};
-	}
-
 	return {
 		currentDatabase,
-		canWriteToBase: canWriteToBase(currentDatabaseId),
-		preset: presetData
+		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };
 
@@ -74,38 +50,20 @@ export const actions: Actions = {
 
 		// Parse form data
 		const name = formData.get('name') as string;
-		const tagsJson = formData.get('tags') as string;
-		const pattern = formData.get('pattern') as string;
 		const description = (formData.get('description') as string) || null;
-		const regex101Id = (formData.get('regex101Id') as string) || null;
-		const layerFromForm = formData.get('layer');
-		const layer = (layerFromForm as OperationLayer) || 'user';
-
-		await logger.debug('Create action received', {
-			source: 'RegularExpressionCreate',
-			meta: {
-				regexName: name,
-				layerFromForm,
-				layerUsed: layer
-			}
-		});
+		const tagsJson = formData.get('tags') as string;
+		const layer = (formData.get('layer') as OperationLayer) || 'user';
 
 		// Validate
 		if (!name?.trim()) {
 			return fail(400, { error: 'Name is required' });
 		}
 
-		if (!pattern?.trim()) {
-			return fail(400, { error: 'Pattern is required' });
-		}
-
 		// Check for duplicate name
-		const existingExpressions = await regularExpressionQueries.list(cache);
-		const duplicate = existingExpressions.find(
-			e => e.name.toLowerCase() === name.trim().toLowerCase()
-		);
+		const existingProfiles = await qualityProfileQueries.list(cache);
+		const duplicate = existingProfiles.find(p => p.name.toLowerCase() === name.trim().toLowerCase());
 		if (duplicate) {
-			return fail(400, { error: `A regular expression named "${name.trim()}" already exists` });
+			return fail(400, { error: `A quality profile named "${name.trim()}" already exists` });
 		}
 
 		let tags: string[] = [];
@@ -120,24 +78,39 @@ export const actions: Actions = {
 			return fail(403, { error: 'Cannot write to base layer without personal access token' });
 		}
 
-		// Create the regular expression
-		const result = await regularExpressionQueries.create({
+		// Create the quality profile
+		const result = await qualityProfileQueries.create({
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
 			input: {
 				name: name.trim(),
-				pattern: pattern.trim(),
-				tags,
 				description: description?.trim() || null,
-				regex101Id: regex101Id?.trim() || null
+				tags
 			}
 		});
 
 		if (!result.success) {
-			return fail(500, { error: result.error || 'Failed to create regular expression' });
+			return fail(500, { error: result.error || 'Failed to create quality profile' });
 		}
 
-		throw redirect(303, `/regular-expressions/${databaseId}`);
+		// Get fresh cache after create (compile creates a new cache instance)
+		const freshCache = pcdManager.getCache(currentDatabaseId);
+		if (!freshCache) {
+			// Fallback to list page if cache isn't ready
+			throw redirect(303, `/quality-profiles/${databaseId}`);
+		}
+
+		// Get the new profile ID by looking it up by name
+		const profiles = await qualityProfileQueries.list(freshCache);
+		const newProfile = profiles.find(p => p.name === name.trim());
+
+		if (newProfile) {
+			// Redirect to scoring page so user can configure custom format scores
+			throw redirect(303, `/quality-profiles/${databaseId}/${newProfile.id}/scoring`);
+		}
+
+		// Fallback to list page if we can't find the new profile
+		throw redirect(303, `/quality-profiles/${databaseId}`);
 	}
 };

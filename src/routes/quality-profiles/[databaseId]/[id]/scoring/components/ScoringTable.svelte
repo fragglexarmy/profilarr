@@ -1,13 +1,38 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { Check } from 'lucide-svelte';
 
 	export let formats: any[];
 	export let arrTypes: string[];
-	export let state: any;
+	export let customFormatScores: Record<number, Record<string, number | null>>;
+	export let customFormatEnabled: Record<number, Record<string, boolean>>;
 	export let getArrTypeColor: (arrType: string) => string;
 	export let title: string | null = null;
+
+	const dispatch = createEventDispatcher<{
+		scoreChange: { formatId: number; arrType: string; score: number | null };
+		enabledChange: { formatId: number; arrType: string; enabled: boolean };
+	}>();
+
+	function handleScoreChange(formatId: number, arrType: string, score: number | null) {
+		dispatch('scoreChange', { formatId, arrType, score });
+	}
+
+	function handleToggleEnabled(formatId: number, arrType: string) {
+		const isEnabled = customFormatEnabled[formatId]?.[arrType] ?? false;
+		if (isEnabled) {
+			// Disabling - set score to null
+			dispatch('scoreChange', { formatId, arrType, score: null });
+		} else {
+			// Enabling - set score to 0 if it was null
+			if (customFormatScores[formatId]?.[arrType] === null) {
+				dispatch('scoreChange', { formatId, arrType, score: 0 });
+			}
+		}
+		dispatch('enabledChange', { formatId, arrType, enabled: !isEnabled });
+	}
 </script>
 
 {#if title}
@@ -54,7 +79,7 @@
 			{:else}
 				{#each formats as format}
 					{@const rowDisabled = arrTypes.every(
-						(arrType) => !state.customFormatEnabled[format.id]?.[arrType]
+						(arrType) => !customFormatEnabled[format.id]?.[arrType]
 					)}
 					<tr
 						class="transition-colors {rowDisabled
@@ -72,29 +97,20 @@
 							<td class="px-6 py-4">
 								<div class="flex items-center justify-center gap-2">
 									<IconCheckbox
-										checked={state.customFormatEnabled[format.id]?.[arrType] ?? false}
+										checked={customFormatEnabled[format.id]?.[arrType] ?? false}
 										icon={Check}
 										color={getArrTypeColor(arrType)}
 										shape="circle"
-										on:click={() => {
-											const isEnabled = state.customFormatEnabled[format.id]?.[arrType] ?? false;
-											if (isEnabled) {
-												state.customFormatScores[format.id][arrType] = null;
-											} else {
-												if (state.customFormatScores[format.id]?.[arrType] === null) {
-													state.customFormatScores[format.id][arrType] = 0;
-												}
-											}
-											state.customFormatEnabled[format.id][arrType] = !isEnabled;
-										}}
+										on:click={() => handleToggleEnabled(format.id, arrType)}
 									/>
-									{#if state.customFormatScores[format.id]}
+									{#if customFormatScores[format.id]}
 										<div class="w-48">
 											<NumberInput
 												name="score-{format.id}-{arrType}"
-												bind:value={state.customFormatScores[format.id][arrType]}
+												value={customFormatScores[format.id][arrType] ?? 0}
+												onchange={(newValue) => handleScoreChange(format.id, arrType, newValue)}
 												step={1}
-												disabled={!state.customFormatEnabled[format.id]?.[arrType]}
+												disabled={!customFormatEnabled[format.id]?.[arrType]}
 												font="mono"
 											/>
 										</div>

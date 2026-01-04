@@ -30,3 +30,7 @@ export { general } from './general.ts';
 export { languages } from './languages.ts';
 export { qualities } from './qualities.ts';
 export { scoring } from './scoring.ts';
+export { create } from './create.ts';
+export { updateGeneral } from './updateGeneral.ts';
+export { updateScoring } from './updateScoring.ts';
+export { remove } from './remove.ts';

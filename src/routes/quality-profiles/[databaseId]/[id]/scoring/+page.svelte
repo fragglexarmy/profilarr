@@ -1,10 +1,9 @@
 <script lang="ts">
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import { Info, ArrowUpDown, ArrowUp, ArrowDown, Layers, Check, LayoutGrid, Settings, User, X } from 'lucide-svelte';
+	import { Info, ArrowUpDown, ArrowUp, ArrowDown, Layers, Check, LayoutGrid, Settings, User, X, Save, Loader2 } from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
-	import UnsavedChangesModal from '$ui/modal/UnsavedChangesModal.svelte';
-	import { useUnsavedChanges } from '$lib/client/utils/unsavedChanges.svelte';
+	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -12,29 +11,84 @@
 	import CustomGroupManager from '$ui/dropdown/CustomGroupManager.svelte';
 	import ScoringTable from './components/ScoringTable.svelte';
 	import { createSearchStore } from '$lib/client/stores/search';
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { onMount, tick } from 'svelte';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import {
+		current,
+		isDirty,
+		initEdit,
+		update
+	} from '$lib/client/stores/dirty';
+	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	const unsavedChanges = useUnsavedChanges();
 	const searchStore = createSearchStore({ debounceMs: 200 });
 
 	let showInfoModal = false;
 	let showOptionsInfoModal = false;
 
-	// State variables
-	let minimumScore = 0;
-	let upgradeUntilScore = 0;
-	let upgradeScoreIncrement = 0;
-	let customFormatScores: Record<number, Record<string, number | null>> = {};
-	let customFormatEnabled: Record<number, Record<string, boolean>> = {};
+	// Scoring data shape
+	interface ScoringFormData {
+		minimumScore: number;
+		upgradeUntilScore: number;
+		upgradeScoreIncrement: number;
+		customFormatScores: Record<number, Record<string, number | null>>;
+		customFormatEnabled: Record<number, Record<string, boolean>>;
+	}
 
-	// Track initial values
-	let initialMinimumScore = 0;
-	let initialUpgradeUntilScore = 0;
-	let initialUpgradeScoreIncrement = 0;
+	// Build initial data from server
+	$: initialData = buildInitialData(data.scoring);
+
+	function buildInitialData(scoring: typeof data.scoring): ScoringFormData {
+		if (!scoring) {
+			return {
+				minimumScore: 0,
+				upgradeUntilScore: 0,
+				upgradeScoreIncrement: 1,
+				customFormatScores: {},
+				customFormatEnabled: {}
+			};
+		}
+
+		const scores: Record<number, Record<string, number | null>> = {};
+		const enabled: Record<number, Record<string, boolean>> = {};
+
+		scoring.customFormats.forEach((cf: any) => {
+			scores[cf.id] = { ...cf.scores };
+			enabled[cf.id] = {};
+			scoring.arrTypes.forEach((arrType: string) => {
+				enabled[cf.id][arrType] = cf.scores[arrType] !== null;
+			});
+		});
+
+		return {
+			minimumScore: scoring.minimum_custom_format_score,
+			upgradeUntilScore: scoring.upgrade_until_score,
+			upgradeScoreIncrement: scoring.upgrade_score_increment,
+			customFormatScores: scores,
+			customFormatEnabled: enabled
+		};
+	}
+
+	// Initialize dirty tracking
+	$: initEdit(initialData);
+
+	// Reactive getters for current values
+	$: minimumScore = ($current.minimumScore ?? 0) as number;
+	$: upgradeUntilScore = ($current.upgradeUntilScore ?? 0) as number;
+	$: upgradeScoreIncrement = ($current.upgradeScoreIncrement ?? 1) as number;
+	$: customFormatScores = ($current.customFormatScores ?? {}) as Record<number, Record<string, number | null>>;
+	$: customFormatEnabled = ($current.customFormatEnabled ?? {}) as Record<number, Record<string, boolean>>;
+
+	// Save state
+	let isSaving = false;
+	let saveError: string | null = null;
+	let selectedLayer: 'user' | 'base' = 'user';
+	let showSaveTargetModal = false;
+	let formElement: HTMLFormElement;
 
 	type SortKey = 'name' | 'radarr' | 'sonarr';
 	type SortDirection = 'asc' | 'desc';
@@ -320,7 +374,7 @@
 		return true;
 	}) || [];
 
-	$: sortedCustomFormats = sortFormats(filteredCustomFormats, state, sortState);
+	$: sortedCustomFormats = sortFormats(filteredCustomFormats, customFormatScores, sortState);
 	$: groupedFormats = groupFormats(sortedCustomFormats, selectedGroups);
 
 	// Apply default sort
@@ -331,50 +385,59 @@
 		}
 	}
 
-	// Reactive state - initialize from data
-	$: if (scoring) {
-		minimumScore = scoring.minimum_custom_format_score;
-		upgradeUntilScore = scoring.upgrade_until_score;
-		upgradeScoreIncrement = scoring.upgrade_score_increment;
+	// Build custom format scores array for form submission
+	function buildCustomFormatScoresArray(): Array<{ customFormatId: number; arrType: string; score: number | null }> {
+		const result: Array<{ customFormatId: number; arrType: string; score: number | null }> = [];
+		const initial = initialData.customFormatScores;
 
-		// Save initial values
-		initialMinimumScore = scoring.minimum_custom_format_score;
-		initialUpgradeUntilScore = scoring.upgrade_until_score;
-		initialUpgradeScoreIncrement = scoring.upgrade_score_increment;
+		for (const [cfIdStr, arrTypeScores] of Object.entries(customFormatScores)) {
+			const cfId = Number(cfIdStr);
+			const initialScores = initial[cfId] || {};
 
-		// Initialize scores and enabled state from data
-		const newScores: Record<number, Record<string, number | null>> = {};
-		const newEnabled: Record<number, Record<string, boolean>> = {};
+			for (const [arrType, score] of Object.entries(arrTypeScores)) {
+				// Only include if different from initial
+				if (score !== initialScores[arrType]) {
+					result.push({ customFormatId: cfId, arrType, score });
+				}
+			}
+		}
 
-		scoring.customFormats.forEach((cf: any) => {
-			newScores[cf.id] = { ...cf.scores };
-			newEnabled[cf.id] = {};
-			scoring.arrTypes.forEach((arrType: string) => {
-				newEnabled[cf.id][arrType] = cf.scores[arrType] !== null;
-			});
-		});
-
-		customFormatScores = newScores;
-		customFormatEnabled = newEnabled;
+		return result;
 	}
 
-	// Mark as dirty when values change
-	$: if (
-		minimumScore !== initialMinimumScore ||
-		upgradeUntilScore !== initialUpgradeUntilScore ||
-		upgradeScoreIncrement !== initialUpgradeScoreIncrement
-	) {
-		unsavedChanges.markDirty();
+	// Handlers for score changes from ScoringTable
+	function handleScoreChange(event: CustomEvent<{ formatId: number; arrType: string; score: number | null }>) {
+		const { formatId, arrType, score } = event.detail;
+		const newScores = { ...customFormatScores };
+		if (!newScores[formatId]) newScores[formatId] = {};
+		newScores[formatId][arrType] = score;
+		update('customFormatScores', newScores);
 	}
 
-	// Create state object for convenience
-	$: state = {
-		minimumScore,
-		upgradeUntilScore,
-		upgradeScoreIncrement,
-		customFormatScores,
-		customFormatEnabled
-	};
+	function handleEnabledChange(event: CustomEvent<{ formatId: number; arrType: string; enabled: boolean }>) {
+		const { formatId, arrType, enabled } = event.detail;
+		const newEnabled = { ...customFormatEnabled };
+		if (!newEnabled[formatId]) newEnabled[formatId] = {};
+		newEnabled[formatId][arrType] = enabled;
+		update('customFormatEnabled', newEnabled);
+	}
+
+	async function handleSaveClick() {
+		if (data.canWriteToBase) {
+			showSaveTargetModal = true;
+		} else {
+			selectedLayer = 'user';
+			await tick();
+			formElement?.requestSubmit();
+		}
+	}
+
+	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
+		selectedLayer = event.detail;
+		showSaveTargetModal = false;
+		await tick();
+		formElement?.requestSubmit();
+	}
 
 	function toggleSort(key: SortKey, defaultDirection: SortDirection = 'asc') {
 		if (sortState?.key === key) {
@@ -386,7 +449,7 @@
 		}
 	}
 
-	function sortFormats(formats: any[], state: any, sortState: { key: SortKey; direction: SortDirection } | null) {
+	function sortFormats(formats: any[], scores: Record<number, Record<string, number | null>>, sortState: { key: SortKey; direction: SortDirection } | null) {
 		if (!sortState) return formats;
 
 		const sorted = [...formats].sort((a, b) => {
@@ -401,8 +464,8 @@
 					: bVal.localeCompare(aVal);
 			} else {
 				// Sort by score (radarr or sonarr)
-				aVal = state.customFormatScores[a.id]?.[sortState.key] ?? null;
-				bVal = state.customFormatScores[b.id]?.[sortState.key] ?? null;
+				aVal = scores[a.id]?.[sortState.key] ?? null;
+				bVal = scores[b.id]?.[sortState.key] ?? null;
 
 				// Handle nulls - always put them at the end
 				if (aVal === null && bVal === null) return 0;
@@ -460,10 +523,65 @@
 	<title>Scoring - Profilarr</title>
 </svelte:head>
 
-<UnsavedChangesModal />
-
 {#if scoring}
-<div class="mt-6 space-y-6" on:change={() => unsavedChanges.markDirty()}>
+<!-- Save Bar -->
+{#if $isDirty}
+	<div class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95">
+		<div class="flex items-center gap-3">
+			<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
+			{#if saveError}
+				<span class="text-sm text-red-600 dark:text-red-400">{saveError}</span>
+			{/if}
+		</div>
+
+		<button
+			type="button"
+			disabled={isSaving}
+			on:click={handleSaveClick}
+			class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+		>
+			{#if isSaving}
+				<Loader2 size={14} class="animate-spin" />
+				Saving...
+			{:else}
+				<Save size={14} />
+				Save
+			{/if}
+		</button>
+	</div>
+
+	<!-- Hidden form for submission -->
+	<form
+		bind:this={formElement}
+		method="POST"
+		action="?/update"
+		class="hidden"
+		use:enhance={() => {
+			isSaving = true;
+			saveError = null;
+			return async ({ result, update: formUpdate }) => {
+				isSaving = false;
+				if (result.type === 'success') {
+					alertStore.add('success', 'Scoring saved!');
+					// Mark as clean so navigation guard doesn't trigger
+					initEdit(initialData);
+					await formUpdate();
+				} else if (result.type === 'failure') {
+					saveError = (result.data as { error?: string })?.error || 'Failed to save';
+					alertStore.add('error', saveError);
+				}
+			};
+		}}
+	>
+		<input type="hidden" name="minimumScore" value={minimumScore} />
+		<input type="hidden" name="upgradeUntilScore" value={upgradeUntilScore} />
+		<input type="hidden" name="upgradeScoreIncrement" value={upgradeScoreIncrement} />
+		<input type="hidden" name="customFormatScores" value={JSON.stringify(buildCustomFormatScoresArray())} />
+		<input type="hidden" name="layer" value={selectedLayer} />
+	</form>
+{/if}
+
+<div class="mt-6 space-y-6">
 	<!-- Profile-level Score Settings -->
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 		<div class="space-y-2">
@@ -476,7 +594,7 @@
 			<p class="text-xs text-neutral-600 dark:text-neutral-400">
 				Minimum custom format score required to download
 			</p>
-			<NumberInput name="minimumScore" bind:value={minimumScore} step={1} font="mono" />
+			<NumberInput name="minimumScore" value={minimumScore} onchange={(v) => update('minimumScore', v)} step={1} font="mono" />
 		</div>
 
 		<div class="space-y-2">
@@ -491,7 +609,8 @@
 			</p>
 			<NumberInput
 				name="upgradeUntilScore"
-				bind:value={upgradeUntilScore}
+				value={upgradeUntilScore}
+				onchange={(v) => update('upgradeUntilScore', v)}
 				step={1}
 				font="mono"
 			/>
@@ -509,7 +628,8 @@
 			</p>
 			<NumberInput
 				name="upgradeScoreIncrement"
-				bind:value={upgradeScoreIncrement}
+				value={upgradeScoreIncrement}
+				onchange={(v) => update('upgradeScoreIncrement', v)}
 				step={1}
 				font="mono"
 			/>
@@ -800,9 +920,12 @@
 						<ScoringTable
 							formats={group.formats}
 							arrTypes={scoring.arrTypes}
-							{state}
+							{customFormatScores}
+							{customFormatEnabled}
 							{getArrTypeColor}
 							title={group.name}
+							on:scoreChange={handleScoreChange}
+							on:enabledChange={handleEnabledChange}
 						/>
 					</div>
 				{/if}
@@ -911,3 +1034,13 @@
 		</div>
 	</div>
 </InfoModal>
+
+<!-- Save Target Modal -->
+{#if data.canWriteToBase}
+	<SaveTargetModal
+		open={showSaveTargetModal}
+		mode="save"
+		on:select={handleLayerSelect}
+		on:cancel={() => (showSaveTargetModal = false)}
+	/>
+{/if}

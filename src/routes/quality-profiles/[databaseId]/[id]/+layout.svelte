@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import { page } from '$app/stores';
 	import { FileText, Gauge, Layers, Earth } from 'lucide-svelte';
 
@@ -44,3 +45,5 @@
 	<Tabs {tabs} {backButton} />
 	<slot />
 </div>
+
+<DirtyModal />

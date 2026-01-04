@@ -1,7 +1,9 @@
-import { error } from '@sveltejs/kit';
-import type { ServerLoad } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
+import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
+import { canWriteToBase } from '$pcd/writer.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
+import type { OperationLayer } from '$pcd/writer.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -32,6 +34,91 @@ export const load: ServerLoad = async ({ params }) => {
 	const scoringData = await qualityProfileQueries.scoring(cache, currentDatabaseId, profileId);
 
 	return {
-		scoring: scoringData
+		scoring: scoringData,
+		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
+};
+
+export const actions: Actions = {
+	update: async ({ request, params }) => {
+		const { databaseId, id } = params;
+
+		if (!databaseId || !id) {
+			return fail(400, { error: 'Missing required parameters' });
+		}
+
+		const currentDatabaseId = parseInt(databaseId, 10);
+		if (isNaN(currentDatabaseId)) {
+			return fail(400, { error: 'Invalid database ID' });
+		}
+
+		const profileId = parseInt(id, 10);
+		if (isNaN(profileId)) {
+			return fail(400, { error: 'Invalid profile ID' });
+		}
+
+		const cache = pcdManager.getCache(currentDatabaseId);
+		if (!cache) {
+			return fail(500, { error: 'Database cache not available' });
+		}
+
+		const formData = await request.formData();
+
+		// Parse form data
+		const minimumScore = parseInt(formData.get('minimumScore') as string, 10) || 0;
+		const upgradeUntilScore = parseInt(formData.get('upgradeUntilScore') as string, 10) || 0;
+		const upgradeScoreIncrement = parseInt(formData.get('upgradeScoreIncrement') as string, 10) || 1;
+		const layer = (formData.get('layer') as OperationLayer) || 'user';
+		const customFormatScoresJson = formData.get('customFormatScores') as string;
+
+		// Validate upgrade score increment
+		if (upgradeScoreIncrement < 1) {
+			return fail(400, { error: 'Upgrade score increment must be at least 1' });
+		}
+
+		// Check layer permission
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer without personal access token' });
+		}
+
+		// Parse custom format scores
+		let customFormatScores: Array<{ customFormatId: number; arrType: string; score: number | null }> = [];
+		try {
+			customFormatScores = JSON.parse(customFormatScoresJson || '[]');
+		} catch {
+			return fail(400, { error: 'Invalid custom format scores format' });
+		}
+
+		// Get profile name for metadata
+		const profile = await cache.kb
+			.selectFrom('quality_profiles')
+			.select('name')
+			.where('id', '=', profileId)
+			.executeTakeFirst();
+
+		if (!profile) {
+			return fail(404, { error: 'Quality profile not found' });
+		}
+
+		// Update the scoring
+		const result = await qualityProfileQueries.updateScoring({
+			databaseId: currentDatabaseId,
+			cache,
+			layer,
+			profileId,
+			profileName: profile.name,
+			input: {
+				minimumScore,
+				upgradeUntilScore,
+				upgradeScoreIncrement,
+				customFormatScores
+			}
+		});
+
+		if (!result.success) {
+			return fail(500, { error: result.error || 'Failed to update scoring' });
+		}
+
+		return { success: true };
+	}
 };
