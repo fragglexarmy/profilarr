@@ -1,7 +1,9 @@
-import { error } from '@sveltejs/kit';
-import type { ServerLoad } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
+import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
+import { canWriteToBase } from '$pcd/writer.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
+import type { OperationLayer } from '$pcd/writer.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -32,6 +34,95 @@ export const load: ServerLoad = async ({ params }) => {
 	const qualitiesData = await qualityProfileQueries.qualities(cache, currentDatabaseId, profileId);
 
 	return {
-		qualities: qualitiesData
+		qualities: qualitiesData,
+		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
+};
+
+export const actions: Actions = {
+	update: async ({ request, params }) => {
+		const { databaseId, id } = params;
+
+		if (!databaseId || !id) {
+			return fail(400, { error: 'Missing required parameters' });
+		}
+
+		const currentDatabaseId = parseInt(databaseId, 10);
+		if (isNaN(currentDatabaseId)) {
+			return fail(400, { error: 'Invalid database ID' });
+		}
+
+		const profileId = parseInt(id, 10);
+		if (isNaN(profileId)) {
+			return fail(400, { error: 'Invalid profile ID' });
+		}
+
+		const cache = pcdManager.getCache(currentDatabaseId);
+		if (!cache) {
+			return fail(500, { error: 'Database cache not available' });
+		}
+
+		const formData = await request.formData();
+
+		// Parse form data
+		const layer = (formData.get('layer') as OperationLayer) || 'user';
+		const orderedItemsJson = formData.get('orderedItems') as string;
+
+		// Check layer permission
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer without personal access token' });
+		}
+
+		// Parse ordered items
+		let orderedItems: Array<{
+			id: number;
+			type: 'quality' | 'group';
+			referenceId: number;
+			name: string;
+			position: number;
+			enabled: boolean;
+			upgradeUntil: boolean;
+			members?: Array<{ id: number; name: string }>;
+		}> = [];
+		try {
+			orderedItems = JSON.parse(orderedItemsJson || '[]');
+		} catch {
+			return fail(400, { error: 'Invalid ordered items format' });
+		}
+
+		// Validate: only one item can have upgradeUntil set to true
+		const upgradeUntilCount = orderedItems.filter(item => item.upgradeUntil).length;
+		if (upgradeUntilCount > 1) {
+			return fail(400, { error: 'Only one quality can be marked as "upgrade until"' });
+		}
+
+		// Get profile name for metadata
+		const profile = await cache.kb
+			.selectFrom('quality_profiles')
+			.select('name')
+			.where('id', '=', profileId)
+			.executeTakeFirst();
+
+		if (!profile) {
+			return fail(404, { error: 'Quality profile not found' });
+		}
+
+		// Update the qualities
+		const result = await qualityProfileQueries.updateQualities({
+			databaseId: currentDatabaseId,
+			cache,
+			layer,
+			profileId,
+			profileName: profile.name,
+			input: {
+				orderedItems
+			}
+		});
+
+		if (!result.success) {
+			return fail(500, { error: result.error || 'Failed to update qualities' });
+		}
+
+		return { success: true };
+	}
 };

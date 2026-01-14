@@ -1,11 +1,19 @@
 <script lang="ts">
-	import { ChevronDown, Info } from 'lucide-svelte';
+	import { ChevronDown, Info, Save } from 'lucide-svelte';
+	import { enhance } from '$app/forms';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
-	import type { PageData } from './$types';
+	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
+	import { initEdit, current, isDirty, update } from '$lib/client/stores/dirty';
+	import type { PageData, ActionData } from './$types';
+	import type { OperationLayer } from '$pcd/writer';
 
 	export let data: PageData;
+	export let form: ActionData;
 
 	let showInfoModal = false;
+	let showSaveModal = false;
+	let isSaving = false;
+	let formElement: HTMLFormElement;
 
 	const typeOptions: Array<{ value: 'simple' | 'must' | 'only' | 'not'; label: string }> = [
 		{ value: 'simple', label: 'Preferred' },
@@ -14,9 +22,20 @@
 		{ value: 'not', label: 'Does Not Include' }
 	];
 
-	// Initialize with existing language or defaults
-	let selectedType: 'must' | 'only' | 'not' | 'simple' = data.languages[0]?.type || 'simple';
-	let selectedLanguageId: number | null = data.languages[0]?.id || null;
+	// Build initial data from server
+	$: initialData = {
+		type: data.languages[0]?.type || 'simple',
+		languageId: data.languages[0]?.id || null
+	};
+
+	// Initialize dirty tracking
+	$: initEdit(initialData);
+
+	// Reactive getters for current values
+	$: selectedType = ($current.type ?? 'simple') as 'must' | 'only' | 'not' | 'simple';
+	$: selectedLanguageId = ($current.languageId ?? null) as number | null;
+
+	// Search query tracks the display name
 	let searchQuery = data.languages[0]?.name || '';
 	let showTypeDropdown = false;
 	let showLanguageDropdown = false;
@@ -31,12 +50,12 @@
 	$: showValidationError = searchQuery !== '' && !isValidLanguage;
 
 	function selectType(type: 'must' | 'only' | 'not' | 'simple') {
-		selectedType = type;
+		update('type', type);
 		showTypeDropdown = false;
 	}
 
 	function selectLanguage(language: { id: number; name: string }) {
-		selectedLanguageId = language.id;
+		update('languageId', language.id);
 		searchQuery = language.name;
 		showLanguageDropdown = false;
 	}
@@ -50,9 +69,9 @@
 			l => l.name.toLowerCase() === searchQuery.toLowerCase()
 		);
 		if (!exactMatch) {
-			selectedLanguageId = null;
+			update('languageId', null);
 		} else {
-			selectedLanguageId = exactMatch.id;
+			update('languageId', exactMatch.id);
 		}
 	}
 
@@ -68,11 +87,46 @@
 			}
 		}, 200);
 	}
+
+	function handleSaveClick() {
+		if (data.canWriteToBase) {
+			showSaveModal = true;
+		} else {
+			submitForm('user');
+		}
+	}
+
+	function submitForm(layer: OperationLayer) {
+		showSaveModal = false;
+		const layerInput = formElement.querySelector('input[name="layer"]') as HTMLInputElement;
+		if (layerInput) layerInput.value = layer;
+		formElement.requestSubmit();
+	}
 </script>
 
 <svelte:head>
 	<title>Languages - Profilarr</title>
 </svelte:head>
+
+<form
+	bind:this={formElement}
+	method="POST"
+	action="?/update"
+	use:enhance={() => {
+		isSaving = true;
+		return async ({ update: formUpdate }) => {
+			await formUpdate();
+			isSaving = false;
+			if (form?.success) {
+				initEdit(initialData);
+			}
+		};
+	}}
+>
+	<input type="hidden" name="layer" value="user" />
+	<input type="hidden" name="languageId" value={selectedLanguageId ?? ''} />
+	<input type="hidden" name="type" value={selectedType} />
+</form>
 
 <div class="mt-6 space-y-3">
 	<div class="flex items-start justify-between">
@@ -84,14 +138,27 @@
 				Configure the language preference for this profile
 			</p>
 		</div>
-		<button
-			type="button"
-			on:click={() => showInfoModal = true}
-			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<Info size={14} />
-			Info
-		</button>
+		<div class="flex items-center gap-2">
+			{#if $isDirty}
+				<button
+					type="button"
+					on:click={handleSaveClick}
+					disabled={isSaving || showValidationError}
+					class="flex items-center gap-1.5 rounded-lg border border-accent-500 bg-accent-500 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+				>
+					<Save size={14} />
+					{isSaving ? 'Saving...' : 'Save'}
+				</button>
+			{/if}
+			<button
+				type="button"
+				on:click={() => showInfoModal = true}
+				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+			>
+				<Info size={14} />
+				Info
+			</button>
+		</div>
 	</div>
 
 	<div class="flex gap-2">
@@ -187,3 +254,8 @@
 		</div>
 	</div>
 </InfoModal>
+
+<SaveTargetModal
+	bind:open={showSaveModal}
+	onSelect={submitForm}
+/>

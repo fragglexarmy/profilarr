@@ -2,7 +2,7 @@
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import { page } from '$app/stores';
-	import { FileText, Gauge, Layers, Earth } from 'lucide-svelte';
+	import { FileText, Scale, Layers, Earth } from 'lucide-svelte';
 
 	$: databaseId = $page.params.databaseId;
 	$: profileId = $page.params.id;
@@ -19,7 +19,7 @@
 			label: 'Scoring',
 			href: `/quality-profiles/${databaseId}/${profileId}/scoring`,
 			active: currentPath.includes('/scoring'),
-			icon: Gauge
+			icon: Scale
 		},
 		{
 			label: 'Qualities',

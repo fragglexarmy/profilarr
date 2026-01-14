@@ -1,10 +1,20 @@
 <script lang="ts">
-	import { X, Check, ArrowUp, Info, Eye, EyeOff } from 'lucide-svelte';
+	import { tick } from 'svelte';
+	import { X, Check, ArrowUp, Info, Eye, EyeOff, Save, Loader2 } from 'lucide-svelte';
 	import IconCheckbox from '$lib/client/ui/form/IconCheckbox.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import {
+		current,
+		isDirty,
+		initEdit,
+		update
+	} from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -15,9 +25,37 @@
 	type OrderedItem = PageData['qualities']['orderedItems'][number];
 	type QualityMember = PageData['qualities']['availableQualities'][number];
 
-	let mainBucket: OrderedItem[] = structuredClone(data.qualities.orderedItems);
-	let legacyBucket: QualityMember[] = structuredClone(data.qualities.availableQualities);
+	// Form data shape
+	interface QualitiesFormData {
+		orderedItems: OrderedItem[];
+		availableQualities: QualityMember[];
+	}
 
+	// Build initial data from server
+	$: initialData = buildInitialData(data.qualities);
+
+	function buildInitialData(qualities: typeof data.qualities): QualitiesFormData {
+		return {
+			orderedItems: structuredClone(qualities.orderedItems),
+			availableQualities: structuredClone(qualities.availableQualities)
+		};
+	}
+
+	// Initialize dirty tracking
+	$: initEdit(initialData);
+
+	// Reactive getters for current values
+	$: mainBucket = ($current.orderedItems ?? []) as OrderedItem[];
+	$: legacyBucket = ($current.availableQualities ?? []) as QualityMember[];
+
+	// Save state
+	let isSaving = false;
+	let saveError: string | null = null;
+	let selectedLayer: 'user' | 'base' = 'user';
+	let showSaveTargetModal = false;
+	let formElement: HTMLFormElement;
+
+	// Drag state (local, not tracked for dirty)
 	let draggedFromLegacy: QualityMember | null = null;
 	let draggedQualityFromMain: { item: OrderedItem; index: number } | null = null;
 	let lastTargetIndex: number | null = null;
@@ -26,7 +64,17 @@
 	let willAddToGroup: boolean = false;
 	let editingGroupIndex: number | null = null;
 	let editingGroupName: string = '';
-	let groupingMode: boolean = false; // For mobile toggle
+	let groupingMode: boolean = false;
+
+	// Helper to update mainBucket in the store
+	function updateMainBucket(newBucket: OrderedItem[]) {
+		update('orderedItems', newBucket);
+	}
+
+	// Helper to update legacyBucket in the store
+	function updateLegacyBucket(newBucket: QualityMember[]) {
+		update('availableQualities', newBucket);
+	}
 
 	function handleQualityDragStart(item: OrderedItem, index: number) {
 		draggedQualityFromMain = { item, index };
@@ -47,30 +95,22 @@
 
 		hoverTargetIndex = targetIndex;
 
-		// Grouping mode (Ctrl/Cmd held or mobile toggle enabled)
 		if (isGroupingMode && draggedItem.type === 'quality') {
-			// Check if we're hovering over a quality with a quality (create group)
 			if (targetItem.type === 'quality') {
 				willCreateGroup = true;
 				willAddToGroup = false;
-			}
-			// Check if we're hovering over a group with a quality (add to group)
-			else if (targetItem.type === 'group') {
+			} else if (targetItem.type === 'group') {
 				willCreateGroup = false;
 				willAddToGroup = true;
 			} else {
 				willCreateGroup = false;
 				willAddToGroup = false;
 			}
-		}
-		// Reordering mode (default)
-		else {
+		} else {
 			willCreateGroup = false;
 			willAddToGroup = false;
 
-			// Only reorder if we've moved to a different item
 			if (lastTargetIndex === targetIndex) return;
-
 			lastTargetIndex = targetIndex;
 
 			const newBucket = [...mainBucket];
@@ -78,13 +118,12 @@
 			const [movedItem] = newBucket.splice(sourceIndex, 1);
 			newBucket.splice(targetIndex, 0, movedItem);
 
-			// Recalculate positions
 			newBucket.forEach((item, index) => {
 				item.position = index;
 			});
 
-			mainBucket = newBucket;
-			draggedQualityFromMain.index = targetIndex; // Update the dragged index
+			updateMainBucket(newBucket);
+			draggedQualityFromMain.index = targetIndex;
 		}
 	}
 
@@ -107,14 +146,12 @@
 		const sourceIndex = draggedQualityFromMain.index;
 		const isGroupingMode = e.ctrlKey || e.metaKey || groupingMode;
 
-		// Grouping actions (only if Ctrl/Cmd held or grouping mode enabled)
 		if (isGroupingMode && draggedItem.type === 'quality') {
-			// Create a new group from two qualities
 			if (targetItem.type === 'quality') {
 				const newGroup: OrderedItem = {
 					id: -1,
 					type: 'group',
-					referenceId: -1, // Will be assigned on save
+					referenceId: -1,
 					name: `${draggedItem.name} + ${targetItem.name}`,
 					position: targetIndex,
 					enabled: draggedItem.enabled && targetItem.enabled,
@@ -126,42 +163,34 @@
 				};
 
 				const newBucket = [...mainBucket];
-				// Remove both items
 				const indicesToRemove = [sourceIndex, targetIndex].sort((a, b) => b - a);
 				indicesToRemove.forEach(idx => newBucket.splice(idx, 1));
-				// Insert the new group at the target position
 				const insertPos = Math.min(sourceIndex, targetIndex);
 				newBucket.splice(insertPos, 0, newGroup);
 
-				// Recalculate positions
 				newBucket.forEach((item, index) => {
 					item.position = index;
 				});
-				mainBucket = newBucket;
-			}
-			// Add quality to existing group
-			else if (targetItem.type === 'group') {
+				updateMainBucket(newBucket);
+			} else if (targetItem.type === 'group') {
 				const newBucket = [...mainBucket];
-				const targetGroup = newBucket[targetIndex];
+				const targetGroup = { ...newBucket[targetIndex] };
 
-				// Add the quality to the group's members
 				if (!targetGroup.members) targetGroup.members = [];
-				targetGroup.members.push({
+				targetGroup.members = [...targetGroup.members, {
 					id: draggedItem.referenceId,
 					name: draggedItem.name
-				});
+				}];
 
-				// Remove the dragged quality
+				newBucket[targetIndex] = targetGroup;
 				newBucket.splice(sourceIndex, 1);
 
-				// Recalculate positions
 				newBucket.forEach((item, index) => {
 					item.position = index;
 				});
-				mainBucket = newBucket;
+				updateMainBucket(newBucket);
 			}
 		}
-		// Reordering was already handled in dragover, just need to clean up
 
 		resetDragState();
 	}
@@ -183,8 +212,9 @@
 
 	function saveGroupName() {
 		if (editingGroupIndex !== null && editingGroupName.trim()) {
-			mainBucket[editingGroupIndex].name = editingGroupName.trim();
-			mainBucket = [...mainBucket]; // Trigger reactivity
+			const newBucket = [...mainBucket];
+			newBucket[editingGroupIndex] = { ...newBucket[editingGroupIndex], name: editingGroupName.trim() };
+			updateMainBucket(newBucket);
 		}
 		editingGroupIndex = null;
 		editingGroupName = '';
@@ -196,28 +226,28 @@
 	}
 
 	function toggleEnabled(index: number) {
-		// Block disabling if the item has upgradeUntil set
 		if (mainBucket[index].enabled && mainBucket[index].upgradeUntil) {
 			alertStore.add('warning', 'Cannot disable an item that is set as "Upgrade Until". Please remove the "Upgrade Until" flag first.');
 			return;
 		}
 
-		mainBucket[index].enabled = !mainBucket[index].enabled;
-		mainBucket = [...mainBucket]; // Trigger reactivity
+		const newBucket = [...mainBucket];
+		newBucket[index] = { ...newBucket[index], enabled: !newBucket[index].enabled };
+		updateMainBucket(newBucket);
 	}
 
 	function toggleUpgradeUntil(index: number) {
-		// Check if the item is enabled, if not enable it and alert
-		if (!mainBucket[index].enabled) {
-			mainBucket[index].enabled = true;
+		const newBucket = [...mainBucket];
+
+		if (!newBucket[index].enabled) {
+			newBucket[index] = { ...newBucket[index], enabled: true };
 			alertStore.add('info', 'Item was automatically enabled because "Upgrade Until" requires it to be enabled.');
 		}
 
-		// Set this one and unset all others
-		mainBucket.forEach((item, i) => {
-			item.upgradeUntil = i === index;
+		newBucket.forEach((item, i) => {
+			newBucket[i] = { ...item, upgradeUntil: i === index };
 		});
-		mainBucket = [...mainBucket]; // Trigger reactivity
+		updateMainBucket(newBucket);
 	}
 
 	function handleDragStart(item: QualityMember) {
@@ -232,10 +262,9 @@
 		e.preventDefault();
 		if (!draggedFromLegacy) return;
 
-		// Remove from legacy bucket
-		legacyBucket = legacyBucket.filter(q => q.id !== draggedFromLegacy!.id);
+		const newLegacyBucket = legacyBucket.filter(q => q.id !== draggedFromLegacy!.id);
+		updateLegacyBucket(newLegacyBucket);
 
-		// Add to main bucket at the end
 		const newItem: OrderedItem = {
 			id: -1,
 			type: 'quality',
@@ -247,11 +276,10 @@
 		};
 
 		const newBucket = [...mainBucket, newItem];
-		// Recalculate positions
 		newBucket.forEach((item, index) => {
 			item.position = index;
 		});
-		mainBucket = newBucket;
+		updateMainBucket(newBucket);
 
 		draggedFromLegacy = null;
 	}
@@ -263,37 +291,103 @@
 	function collapseGroup(group: OrderedItem) {
 		if (group.type !== 'group' || !group.members) return;
 
-		// Find the index of the group
-		const groupIndex = mainBucket.findIndex(item => item.id === group.id);
+		const groupIndex = mainBucket.findIndex(item => item.id === group.id && item.type === 'group' && item.name === group.name);
 		if (groupIndex === -1) return;
 
-		// Create individual quality items from group members
 		const newQualities: OrderedItem[] = group.members.map((member, index) => ({
-			id: -1, // Temporary ID
+			id: -1,
 			type: 'quality' as const,
 			referenceId: member.id,
 			name: member.name,
 			position: groupIndex + index,
 			enabled: group.enabled,
-			upgradeUntil: index === 0 ? group.upgradeUntil : false // Only first gets upgradeUntil
+			upgradeUntil: index === 0 ? group.upgradeUntil : false
 		}));
 
-		// Remove the group and insert individual qualities
 		const newBucket = [...mainBucket];
 		newBucket.splice(groupIndex, 1, ...newQualities);
 
-		// Recalculate positions
 		newBucket.forEach((item, index) => {
 			item.position = index;
 		});
 
-		mainBucket = newBucket;
+		updateMainBucket(newBucket);
+	}
+
+	async function handleSaveClick() {
+		if (data.canWriteToBase) {
+			showSaveTargetModal = true;
+		} else {
+			selectedLayer = 'user';
+			await tick();
+			formElement?.requestSubmit();
+		}
+	}
+
+	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
+		selectedLayer = event.detail;
+		showSaveTargetModal = false;
+		await tick();
+		formElement?.requestSubmit();
 	}
 </script>
 
 <svelte:head>
 	<title>Qualities - Profilarr</title>
 </svelte:head>
+
+<!-- Save Bar -->
+{#if $isDirty}
+	<div class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95">
+		<div class="flex items-center gap-3">
+			<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
+			{#if saveError}
+				<span class="text-sm text-red-600 dark:text-red-400">{saveError}</span>
+			{/if}
+		</div>
+
+		<button
+			type="button"
+			disabled={isSaving}
+			on:click={handleSaveClick}
+			class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+		>
+			{#if isSaving}
+				<Loader2 size={14} class="animate-spin" />
+				Saving...
+			{:else}
+				<Save size={14} />
+				Save
+			{/if}
+		</button>
+	</div>
+
+	<!-- Hidden form for submission -->
+	<form
+		bind:this={formElement}
+		method="POST"
+		action="?/update"
+		class="hidden"
+		use:enhance={() => {
+			isSaving = true;
+			saveError = null;
+			return async ({ result, update: formUpdate }) => {
+				isSaving = false;
+				if (result.type === 'success') {
+					alertStore.add('success', 'Qualities saved!');
+					initEdit(initialData);
+					await formUpdate();
+				} else if (result.type === 'failure') {
+					saveError = (result.data as { error?: string })?.error || 'Failed to save';
+					alertStore.add('error', saveError);
+				}
+			};
+		}}
+	>
+		<input type="hidden" name="orderedItems" value={JSON.stringify(mainBucket)} />
+		<input type="hidden" name="layer" value={selectedLayer} />
+	</form>
+{/if}
 
 <div class="mt-6 space-y-6">
 	<ActionsBar>
@@ -323,7 +417,7 @@
 					</div>
 				{:else}
 					<div class="space-y-4">
-						{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.referenceId}` : `group-${item.id}`)}
+						{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.referenceId}-${index}` : `group-${item.name}-${index}`)}
 							<div
 								draggable={true}
 								on:dragstart={() => handleQualityDragStart(item, index)}
@@ -414,7 +508,7 @@
 											</button>
 										{/if}
 										<IconCheckbox
-											bind:checked={item.upgradeUntil}
+											checked={item.upgradeUntil}
 											icon={ArrowUp}
 											color="#07CA07"
 											shape="circle"
@@ -424,7 +518,7 @@
 											}}
 										/>
 										<IconCheckbox
-											bind:checked={item.enabled}
+											checked={item.enabled}
 											icon={Check}
 											color="blue"
 											shape="circle"
@@ -539,3 +633,13 @@
 		</div>
 	</div>
 </InfoModal>
+
+<!-- Save Target Modal -->
+{#if data.canWriteToBase}
+	<SaveTargetModal
+		open={showSaveTargetModal}
+		mode="save"
+		on:select={handleLayerSelect}
+		on:cancel={() => (showSaveTargetModal = false)}
+	/>
+{/if}
