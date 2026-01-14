@@ -13,6 +13,8 @@
 	export let selectedProfileId: number | null;
 	export let cfScoresData: { customFormats: CustomFormatInfo[]; profiles: ProfileCfScores[] };
 	export let calculateScore: (releaseId: number, entityType: 'movie' | 'series') => number | null;
+	export let deleteLayer: 'user' | 'base' = 'user';
+	export let deleteReleaseLayer: 'user' | 'base' = 'user';
 
 	const dispatch = createEventDispatcher<{
 		confirmDelete: { entity: TestEntity; formRef: HTMLFormElement };
@@ -133,6 +135,7 @@
 			}}
 		>
 			<input type="hidden" name="entityId" value={row.id} />
+			<input type="hidden" name="layer" value={deleteLayer} />
 			<button
 				type="button"
 				on:click={() => {
@@ -157,6 +160,7 @@
 				{selectedProfileId}
 				{cfScoresData}
 				{calculateScore}
+				deleteLayer={deleteReleaseLayer}
 				on:add={(e) => dispatch('addRelease', e.detail)}
 				on:edit={(e) => dispatch('editRelease', e.detail)}
 				on:confirmDelete={(e) => dispatch('confirmDeleteRelease', e.detail)}

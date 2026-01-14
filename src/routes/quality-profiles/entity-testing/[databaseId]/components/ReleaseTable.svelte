@@ -15,6 +15,7 @@
 	export let selectedProfileId: number | null;
 	export let cfScoresData: { customFormats: CustomFormatInfo[]; profiles: ProfileCfScores[] };
 	export let calculateScore: (releaseId: number, entityType: 'movie' | 'series') => number | null;
+	export let deleteLayer: 'user' | 'base' = 'user';
 
 	// Get matching custom formats for a release with their scores
 	function getMatchingFormats(releaseId: number): Array<{ id: number; name: string; score: number }> {
@@ -183,6 +184,7 @@
 						}}
 					>
 						<input type="hidden" name="releaseId" value={release.id} />
+						<input type="hidden" name="layer" value={deleteLayer} />
 						<button
 							type="button"
 							on:click={() => {

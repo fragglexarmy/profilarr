@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
+import { canWriteToBase } from '$pcd/writer.ts';
 import { tmdbSettingsQueries } from '$db/queries/tmdbSettings.ts';
 import * as entityTestQueries from '$pcd/queries/entityTests/index.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
@@ -139,7 +140,8 @@ export const load: ServerLoad = async ({ params }) => {
 		testEntities,
 		qualityProfiles,
 		cfScoresData,
-		evaluations
+		evaluations,
+		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };
 
@@ -163,6 +165,11 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const entitiesJson = formData.get('entities') as string;
+		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
+
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer for this database' });
+		}
 
 		let entities: Array<{
 			type: 'movie' | 'series';
@@ -185,7 +192,7 @@ export const actions: Actions = {
 		const result = await entityTestQueries.create({
 			databaseId: currentDatabaseId,
 			cache,
-			layer: 'user',
+			layer,
 			inputs: entities
 		});
 
@@ -219,15 +226,20 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const entityId = parseInt(formData.get('entityId') as string, 10);
+		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
 
 		if (isNaN(entityId)) {
 			return fail(400, { error: 'Invalid entity ID' });
 		}
 
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer for this database' });
+		}
+
 		const result = await entityTestQueries.remove({
 			databaseId: currentDatabaseId,
 			cache,
-			layer: 'user',
+			layer,
 			entityId
 		});
 
@@ -257,6 +269,11 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const releaseJson = formData.get('release') as string;
+		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
+
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer for this database' });
+		}
 
 		let release: {
 			entityId: number;
@@ -280,7 +297,7 @@ export const actions: Actions = {
 		const result = await entityTestQueries.createRelease({
 			databaseId: currentDatabaseId,
 			cache,
-			layer: 'user',
+			layer,
 			input: release
 		});
 
@@ -310,6 +327,11 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const releaseJson = formData.get('release') as string;
+		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
+
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer for this database' });
+		}
 
 		let release: {
 			id: number;
@@ -337,7 +359,7 @@ export const actions: Actions = {
 		const result = await entityTestQueries.updateRelease({
 			databaseId: currentDatabaseId,
 			cache,
-			layer: 'user',
+			layer,
 			input: release
 		});
 
@@ -367,15 +389,20 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const releaseId = parseInt(formData.get('releaseId') as string, 10);
+		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
 
 		if (isNaN(releaseId)) {
 			return fail(400, { error: 'Invalid release ID' });
 		}
 
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer for this database' });
+		}
+
 		const result = await entityTestQueries.deleteRelease({
 			databaseId: currentDatabaseId,
 			cache,
-			layer: 'user',
+			layer,
 			releaseId
 		});
 

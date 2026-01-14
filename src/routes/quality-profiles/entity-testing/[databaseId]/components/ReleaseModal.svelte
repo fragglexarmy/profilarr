@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { tick } from 'svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import { alertStore } from '$alerts/store';
@@ -16,9 +18,14 @@
 		indexers: string[];
 		flags: string[];
 	} | null = null;
+	export let canWriteToBase: boolean = false;
 
 	let saving = false;
 	let formRef: HTMLFormElement;
+
+	// Layer selection
+	let selectedLayer: 'user' | 'base' = 'user';
+	let showSaveTargetModal = false;
 
 	// Form state
 	let title = '';
@@ -44,7 +51,20 @@
 		}
 	}
 
-	function handleConfirm() {
+	async function handleConfirm() {
+		if (canWriteToBase) {
+			showSaveTargetModal = true;
+		} else {
+			selectedLayer = 'user';
+			await tick();
+			formRef?.requestSubmit();
+		}
+	}
+
+	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
+		selectedLayer = event.detail;
+		showSaveTargetModal = false;
+		await tick();
 		formRef?.requestSubmit();
 	}
 
@@ -153,6 +173,16 @@
 			}}
 		>
 			<input type="hidden" name="release" value={releaseJson} />
+			<input type="hidden" name="layer" value={selectedLayer} />
 		</form>
 	</div>
 </Modal>
+
+{#if canWriteToBase}
+	<SaveTargetModal
+		open={showSaveTargetModal}
+		mode="save"
+		on:select={handleLayerSelect}
+		on:cancel={() => (showSaveTargetModal = false)}
+	/>
+{/if}
