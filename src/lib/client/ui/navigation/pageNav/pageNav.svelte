@@ -21,7 +21,7 @@
 		</Group>
 
 		<Group label={useEmoji ? '⚡ Quality Profiles' : 'Quality Profiles'} href="/quality-profiles" icon={useEmoji ? undefined : Sliders} initialOpen={true} hasItems={true}>
-			<GroupItem label="Entity Testing" href="/quality-profiles/entity-testing" />
+			<GroupItem label="Testing" href="/quality-profiles/entity-testing" />
 		</Group>
 
 		<Group label={useEmoji ? '🎨 Custom Formats' : 'Custom Formats'} href="/custom-formats" icon={useEmoji ? undefined : Palette} initialOpen={false} />
