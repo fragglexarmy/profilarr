@@ -273,6 +273,7 @@
 	<!-- Actions Bar -->
 	<ActionsBar>
 		<SearchAction searchStore={search} placeholder={searchPlaceholder} />
+		<ActionButton icon={Plus} on:click={() => (showAddModal = true)} />
 		<ActionButton icon={Sliders} hasDropdown={true} dropdownPosition="right" square={!selectedProfile}>
 			{#if selectedProfile}
 				<span class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">{selectedProfile.name}</span>
@@ -309,7 +310,6 @@
 			</Dropdown>
 		</ActionButton>
 		<ActionButton icon={Info} on:click={() => (showInfoModal = true)} />
-		<ActionButton icon={Plus} on:click={() => (showAddModal = true)} />
 	</ActionsBar>
 
 	<!-- Entity Testing Content -->
@@ -356,10 +356,27 @@
 <InfoModal bind:open={showInfoModal} header="How Entity Testing Works">
 	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Test Quality Profiles</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Adding Entities</div>
 			<p class="mt-1">
-				Entity testing allows you to test your quality profiles against sample media to see how they
-				would score and match.
+				Add movies or TV series from TMDB to use as test cases. These represent the media you want to simulate release matching for.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Test Releases</div>
+			<p class="mt-1">
+				For each entity, add test releases with realistic release titles (e.g., "Movie.2024.1080p.BluRay.REMUX-GROUP"). You can also specify size, languages, indexers, and flags.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Quality Profile Scoring</div>
+			<p class="mt-1">
+				Select a quality profile from the dropdown to see how each release would score. The score is calculated by matching custom formats and summing their configured point values.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Custom Format Matching</div>
+			<p class="mt-1">
+				Expand a release row to see parsed metadata and which custom formats matched. Each matched format shows its score contribution, helping you understand why a release scored the way it did.
 			</p>
 		</div>
 	</div>

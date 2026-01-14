@@ -93,17 +93,12 @@
 				{/if}
 			</div>
 		{:else if column.key === 'type'}
-			<span
-				class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium {row.type ===
-				'movie'
-					? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-					: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'}"
-			>
+			<span class="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
 				{#if row.type === 'movie'}
-					<Film size={12} />
+					<Film size={12} class="text-amber-500" />
 					Movie
 				{:else}
-					<Tv size={12} />
+					<Tv size={12} class="text-cyan-500" />
 					Series
 				{/if}
 			</span>
