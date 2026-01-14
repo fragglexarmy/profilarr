@@ -3,6 +3,7 @@
 	import BackupSettings from './components/BackupSettings.svelte';
 	import AISettings from './components/AISettings.svelte';
 	import TMDBSettings from './components/TMDBSettings.svelte';
+	import UISettings from './components/UISettings.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -17,6 +18,9 @@
 	</div>
 
 	<div class="space-y-8">
+		<!-- UI Preferences -->
+		<UISettings />
+
 		<!-- Backup Configuration -->
 		<BackupSettings settings={data.backupSettings} />
 

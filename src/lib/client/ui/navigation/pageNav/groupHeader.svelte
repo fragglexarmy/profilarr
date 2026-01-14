@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import type { Component } from 'svelte';
+	import type { IconProps } from 'lucide-svelte';
 
 	interface Props {
 		label: string;
 		href: string;
+		icon?: Component<IconProps>;
 		isOpen: boolean;
 		hasItems: boolean;
 		onToggle: () => void;
 	}
 
-	let { label, href, isOpen, hasItems, onToggle }: Props = $props();
+	let { label, href, icon, isOpen, hasItems, onToggle }: Props = $props();
 
 	const isActive = $derived($page.url.pathname === href || $page.url.pathname.startsWith(href + '/'));
 </script>
@@ -24,6 +27,9 @@
 			? 'bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700'
 			: ''}"
 	>
+		{#if icon}
+			<svelte:component this={icon} class="h-4 w-4" />
+		{/if}
 		{label}
 	</a>
 
