@@ -205,6 +205,33 @@ export interface CustomFormatTestsTable {
 }
 
 // ============================================================================
+// QUALITY PROFILE TESTING
+// ============================================================================
+
+export interface TestEntitiesTable {
+	id: Generated<number>;
+	type: 'movie' | 'series';
+	tmdb_id: number;
+	title: string;
+	year: number | null;
+	poster_path: string | null;
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+export interface TestReleasesTable {
+	id: Generated<number>;
+	test_entity_id: number;
+	title: string;
+	size_bytes: number | null;
+	languages: string; // JSON array
+	indexers: string; // JSON array
+	flags: string; // JSON array
+	created_at: Generated<string>;
+	updated_at: Generated<string>;
+}
+
+// ============================================================================
 // DELAY PROFILES
 // ============================================================================
 
@@ -321,6 +348,8 @@ export interface PCDDatabase {
 	condition_release_types: ConditionReleaseTypesTable;
 	condition_years: ConditionYearsTable;
 	custom_format_tests: CustomFormatTestsTable;
+	test_entities: TestEntitiesTable;
+	test_releases: TestReleasesTable;
 	delay_profiles: DelayProfilesTable;
 	delay_profile_tags: DelayProfileTagsTable;
 	quality_api_mappings: QualityApiMappingsTable;

@@ -1,0 +1,355 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import { tick } from 'svelte';
+	import { Film, Tv, Star, Loader2, Clapperboard, Check, X } from 'lucide-svelte';
+	import Modal from '$ui/modal/Modal.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
+	import Dropdown from '$ui/dropdown/Dropdown.svelte';
+	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
+	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import { createSearchStore } from '$stores/search';
+	import { alertStore } from '$alerts/store';
+
+	export let open = false;
+	export let actionUrl: string = '?/addEntities';
+	export let existingEntities: Array<{ type: 'movie' | 'series'; tmdb_id: number }> = [];
+
+	let saving = false;
+	let formRef: HTMLFormElement;
+
+	type ResultItem = {
+		id: number;
+		type: 'movie' | 'series';
+		title: string;
+		overview: string;
+		posterPath: string | null;
+		releaseDate: string;
+		voteAverage: number;
+	};
+
+	// Build set of existing entity keys for quick lookup
+	$: existingKeys = new Set(existingEntities.map((e) => `${e.type}-${e.tmdb_id}`));
+
+	function isAlreadyAdded(item: ResultItem): boolean {
+		return existingKeys.has(`${item.type}-${item.id}`);
+	}
+
+	const searchStore = createSearchStore();
+
+	let activeQuery = '';
+	let isSearching = false;
+	let results: ResultItem[] = [];
+	let selectedItems: Map<string, ResultItem> = new Map();
+	let selectedKeys: Set<string> = new Set();
+
+	function getItemKey(item: ResultItem): string {
+		return `${item.type}-${item.id}`;
+	}
+
+	function toggleItem(item: ResultItem) {
+		const key = getItemKey(item);
+		if (selectedItems.has(key)) {
+			selectedItems.delete(key);
+			selectedKeys.delete(key);
+		} else {
+			selectedItems.set(key, item);
+			selectedKeys.add(key);
+		}
+		selectedItems = selectedItems;
+		selectedKeys = selectedKeys;
+	}
+
+	function removeItem(item: ResultItem) {
+		const key = getItemKey(item);
+		selectedItems.delete(key);
+		selectedKeys.delete(key);
+		selectedItems = selectedItems;
+		selectedKeys = selectedKeys;
+	}
+
+	// Filter state
+	let moviesSelected = true;
+	let seriesSelected = true;
+
+	function toggleMovies() {
+		if (moviesSelected && !seriesSelected) return;
+		moviesSelected = !moviesSelected;
+	}
+
+	function toggleSeries() {
+		if (seriesSelected && !moviesSelected) return;
+		seriesSelected = !seriesSelected;
+	}
+
+	$: searchType = moviesSelected && seriesSelected ? 'both' : moviesSelected ? 'movie' : 'tv';
+
+	async function handleSubmit(e: CustomEvent<string>) {
+		const query = e.detail;
+		if (!query) return;
+
+		activeQuery = query;
+		searchStore.clear();
+		isSearching = true;
+
+		try {
+			const params = new URLSearchParams({
+				query,
+				type: searchType
+			});
+			const response = await fetch(`/api/tmdb/search?${params}`);
+			const data = await response.json();
+
+			if (data.error) {
+				alertStore.add('error', data.error);
+				results = [];
+			} else {
+				results = data.results;
+			}
+		} catch (err) {
+			alertStore.add('error', err instanceof Error ? err.message : 'Search failed');
+			results = [];
+		} finally {
+			isSearching = false;
+		}
+	}
+
+	function clearSearch() {
+		activeQuery = '';
+		results = [];
+	}
+
+	async function handleConfirm() {
+		if (selectedItems.size === 0) return;
+		await tick();
+		formRef?.requestSubmit();
+	}
+
+	function handleCancel() {
+		open = false;
+		resetState();
+	}
+
+	function resetState() {
+		searchStore.clear();
+		activeQuery = '';
+		results = [];
+		selectedItems = new Map();
+		selectedKeys = new Set();
+	}
+
+	function getYear(dateString: string): string {
+		if (!dateString) return '';
+		return dateString.split('-')[0];
+	}
+
+	function getPosterUrl(path: string | null): string {
+		if (!path) return '';
+		return `https://image.tmdb.org/t/p/w92${path}`;
+	}
+
+	$: entitiesJson = JSON.stringify(
+		Array.from(selectedItems.values()).map((item) => ({
+			type: item.type,
+			tmdbId: item.id,
+			title: item.title,
+			year: item.releaseDate ? parseInt(item.releaseDate.split('-')[0], 10) : null,
+			posterPath: item.posterPath
+		}))
+	);
+</script>
+
+<Modal
+	bind:open
+	header="Add Test Entity"
+	confirmText="Add"
+	size="xl"
+	on:cancel={handleCancel}
+	on:confirm={handleConfirm}
+>
+	<div slot="body" class="space-y-4">
+		<!-- Search Bar -->
+		<ActionsBar>
+			<SearchAction
+				{searchStore}
+				placeholder="Search TMDB... (press Enter)"
+				{activeQuery}
+				on:submit={handleSubmit}
+				on:clearQuery={clearSearch}
+			/>
+			<ActionButton icon={Clapperboard} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition>
+					<Dropdown position={dropdownPosition}>
+						<DropdownItem
+							icon={Film}
+							label="Movies"
+							selected={moviesSelected}
+							on:click={toggleMovies}
+						/>
+						<DropdownItem
+							icon={Tv}
+							label="TV Series"
+							selected={seriesSelected}
+							on:click={toggleSeries}
+						/>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+		</ActionsBar>
+
+		<!-- Results -->
+		{#if isSearching || activeQuery || results.length > 0}
+			<div class="max-h-96 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
+				{#if isSearching}
+					<div class="flex items-center justify-center p-8">
+						<Loader2 size={24} class="animate-spin text-neutral-400" />
+					</div>
+				{:else if results.length === 0}
+					<div class="p-8 text-center text-neutral-500 dark:text-neutral-400">
+						No results found
+					</div>
+				{:else}
+				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
+					{#each results as item}
+						{@const alreadyAdded = isAlreadyAdded(item)}
+						<button
+							type="button"
+							class="flex w-full gap-3 p-3 text-left transition-colors {alreadyAdded
+								? 'cursor-not-allowed opacity-50'
+								: 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800'}"
+							on:click={() => !alreadyAdded && toggleItem(item)}
+							disabled={alreadyAdded}
+						>
+							<!-- Poster -->
+							<div class="h-24 w-16 flex-shrink-0 overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700">
+								{#if item.posterPath}
+									<img
+										src={getPosterUrl(item.posterPath)}
+										alt={item.title}
+										class="h-full w-full object-cover"
+									/>
+								{:else}
+									<div class="flex h-full w-full items-center justify-center">
+										{#if item.type === 'movie'}
+											<Film size={24} class="text-neutral-400" />
+										{:else}
+											<Tv size={24} class="text-neutral-400" />
+										{/if}
+									</div>
+								{/if}
+							</div>
+
+							<!-- Info -->
+							<div class="flex min-w-0 flex-1 flex-col">
+								<div class="flex items-start justify-between gap-2">
+									<div class="min-w-0">
+										<h4 class="truncate font-medium text-neutral-900 dark:text-neutral-100">
+											{item.title}
+										</h4>
+										<div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+											<span class="flex items-center gap-1">
+												{#if item.type === 'movie'}
+													<Film size={12} />
+													Movie
+												{:else}
+													<Tv size={12} />
+													TV Series
+												{/if}
+											</span>
+											{#if getYear(item.releaseDate)}
+												<span>•</span>
+												<span>{getYear(item.releaseDate)}</span>
+											{/if}
+										</div>
+									</div>
+									<div class="flex items-center gap-2">
+										{#if item.voteAverage > 0}
+											<Badge variant="accent" size="sm" icon={Star}>
+												{item.voteAverage.toFixed(1)}
+											</Badge>
+										{/if}
+										{#if alreadyAdded}
+											<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+												Added
+											</span>
+										{:else}
+											<IconCheckbox
+												checked={selectedKeys.has(getItemKey(item))}
+												icon={Check}
+											/>
+										{/if}
+									</div>
+								</div>
+								<p class="mt-1 line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400">
+									{item.overview || 'No description available'}
+								</p>
+							</div>
+						</button>
+					{/each}
+				</div>
+			{/if}
+			</div>
+		{/if}
+
+		<!-- Selected Items -->
+		{#if selectedItems.size > 0}
+			<div class="space-y-2">
+				<div class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+					Selected ({selectedItems.size})
+				</div>
+				<div class="flex flex-wrap gap-2">
+					{#each Array.from(selectedItems.values()) as item}
+						<button
+							type="button"
+							on:click={() => removeItem(item)}
+							class="flex items-center gap-1.5 rounded-full bg-accent-100 py-1 pl-2 pr-1.5 text-xs font-medium text-accent-800 hover:bg-accent-200 dark:bg-accent-900 dark:text-accent-200 dark:hover:bg-accent-800"
+						>
+							{#if item.type === 'movie'}
+								<Film size={12} />
+							{:else}
+								<Tv size={12} />
+							{/if}
+							{item.title}
+							<X size={12} />
+						</button>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
+		<form
+			bind:this={formRef}
+			method="POST"
+			action={actionUrl}
+			class="hidden"
+			use:enhance={() => {
+				saving = true;
+				return async ({ result, update }) => {
+					if (result.type === 'failure' && result.data) {
+						alertStore.add('error', (result.data as { error?: string }).error || 'Failed to add entities');
+					} else if (result.type === 'success') {
+						const data = result.data as { added?: number; skipped?: number };
+						const added = data?.added ?? 0;
+						const skipped = data?.skipped ?? 0;
+
+						if (added === 0 && skipped > 0) {
+							alertStore.add('info', `All ${skipped} ${skipped === 1 ? 'entity already exists' : 'entities already exist'}`);
+						} else if (skipped > 0) {
+							alertStore.add('success', `Added ${added} ${added === 1 ? 'entity' : 'entities'}, skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}`);
+						} else {
+							alertStore.add('success', `Added ${added} test ${added === 1 ? 'entity' : 'entities'}`);
+						}
+						open = false;
+						resetState();
+					}
+					await update();
+					saving = false;
+				};
+			}}
+		>
+			<input type="hidden" name="entities" value={entitiesJson} />
+		</form>
+	</div>
+</Modal>

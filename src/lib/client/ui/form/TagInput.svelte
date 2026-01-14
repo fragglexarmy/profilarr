@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
+	import Badge from '$ui/badge/Badge.svelte';
 
 	export let tags: string[] = [];
 	export let placeholder = 'Type and press Enter to add tags';
@@ -36,22 +37,20 @@
 </script>
 
 <div
-	class="flex min-h-[2.5rem] flex-wrap gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-2 transition-colors focus-within:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:focus-within:border-neutral-500"
 >
 	{#each tags as tag, index (tag)}
-		<div
-			class="flex items-center gap-1 rounded bg-accent-100 px-2 py-1 text-sm text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
-		>
-			<span>{tag}</span>
+		<span class="inline-flex items-center gap-1">
+			<Badge variant="accent" size="md">{tag}</Badge>
 			<button
 				type="button"
 				on:click={() => removeTag(index)}
-				class="hover:text-accent-900 dark:hover:text-accent-100"
+				class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
 				aria-label="Remove tag"
 			>
 				<X size={14} />
 			</button>
-		</div>
+		</span>
 	{/each}
 
 	<input

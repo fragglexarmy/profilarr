@@ -16,7 +16,9 @@
 			<GroupItem label="Arrs" href="/arr" />
 		</Group>
 
-		<Group label="⚡ Quality Profiles" href="/quality-profiles" initialOpen={false} />
+		<Group label="⚡ Quality Profiles" href="/quality-profiles" initialOpen={true} hasItems={true}>
+			<GroupItem label="Entity Testing" href="/quality-profiles/entity-testing" />
+		</Group>
 
 		<Group label="🎨 Custom Formats" href="/custom-formats" initialOpen={false} />
 

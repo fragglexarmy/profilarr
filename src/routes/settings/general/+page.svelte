@@ -2,6 +2,7 @@
 	import LoggingSettings from './components/LoggingSettings.svelte';
 	import BackupSettings from './components/BackupSettings.svelte';
 	import AISettings from './components/AISettings.svelte';
+	import TMDBSettings from './components/TMDBSettings.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -24,5 +25,8 @@
 
 		<!-- AI Configuration -->
 		<AISettings settings={data.aiSettings} />
+
+		<!-- TMDB Configuration -->
+		<TMDBSettings settings={data.tmdbSettings} />
 	</div>
 </div>

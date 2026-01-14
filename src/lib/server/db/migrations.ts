@@ -21,6 +21,8 @@ import { migration as migration016 } from './migrations/016_add_should_sync_flag
 import { migration as migration017 } from './migrations/017_create_regex101_cache.ts';
 import { migration as migration018 } from './migrations/018_create_app_info.ts';
 import { migration as migration019 } from './migrations/019_default_log_level_debug.ts';
+import { migration as migration020 } from './migrations/020_create_tmdb_settings.ts';
+import { migration as migration021 } from './migrations/021_create_parsed_release_cache.ts';
 
 export interface Migration {
 	version: number;
@@ -254,7 +256,9 @@ export function loadMigrations(): Migration[] {
 		migration016,
 		migration017,
 		migration018,
-		migration019
+		migration019,
+		migration020,
+		migration021
 	];
 
 	// Sort by version number

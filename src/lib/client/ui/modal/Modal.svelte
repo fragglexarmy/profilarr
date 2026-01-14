@@ -10,6 +10,7 @@
 	export let cancelText = 'Cancel';
 	export let confirmDanger = false; // If true, confirm button is styled as danger (red)
 	export let size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
+	export let height: 'auto' | 'md' | 'lg' | 'xl' | 'full' = 'auto';
 
 	const sizeClasses = {
 		sm: 'max-w-sm',
@@ -17,6 +18,14 @@
 		lg: 'max-w-2xl',
 		xl: 'max-w-4xl',
 		'2xl': 'max-w-6xl'
+	};
+
+	const heightClasses = {
+		auto: '',
+		md: 'h-[50vh]',
+		lg: 'h-[70vh]',
+		xl: 'h-[85vh]',
+		full: 'h-[95vh]'
 	};
 
 	const dispatch = createEventDispatcher();
@@ -62,15 +71,15 @@
 	>
 		<!-- Modal -->
 		<div
-			class="relative w-full {sizeClasses[size]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
+			class="relative flex w-full flex-col {sizeClasses[size]} {heightClasses[height]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
 		>
 			<!-- Header -->
-			<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
+			<div class="flex-shrink-0 border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
 				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{header}</h2>
 			</div>
 
 			<!-- Body -->
-			<div class="px-6 py-4">
+			<div class="flex-1 overflow-auto px-6 py-4">
 				<slot name="body">
 					<p class="text-sm text-neutral-600 dark:text-neutral-400">{bodyMessage}</p>
 				</slot>
@@ -78,7 +87,7 @@
 
 			<!-- Footer -->
 			<div
-				class="flex justify-between border-t border-neutral-200 px-6 py-4 dark:border-neutral-800"
+				class="flex flex-shrink-0 justify-between border-t border-neutral-200 px-6 py-4 dark:border-neutral-800"
 			>
 				<button
 					type="button"

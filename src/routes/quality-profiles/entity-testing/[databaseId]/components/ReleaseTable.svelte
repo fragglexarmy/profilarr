@@ -1,0 +1,287 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import { Plus, Trash2, Pencil, HardDrive, Tag, Users, Bookmark, Earth, Layers } from 'lucide-svelte';
+	import { createEventDispatcher } from 'svelte';
+	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
+	import { alertStore } from '$lib/client/alerts/store';
+	import type { Column } from '$ui/table/types';
+	import type { TestRelease, ReleaseEvaluation, ProfileCfScores, CustomFormatInfo } from './types';
+
+	export let entityId: number;
+	export let entityType: 'movie' | 'series';
+	export let releases: TestRelease[];
+	export let evaluations: Record<number, ReleaseEvaluation>;
+	export let selectedProfileId: number | null;
+	export let cfScoresData: { customFormats: CustomFormatInfo[]; profiles: ProfileCfScores[] };
+	export let calculateScore: (releaseId: number, entityType: 'movie' | 'series') => number | null;
+
+	// Get matching custom formats for a release with their scores
+	function getMatchingFormats(releaseId: number): Array<{ id: number; name: string; score: number }> {
+		const evaluation = evaluations[releaseId];
+		if (!evaluation || !evaluation.cfMatches || !selectedProfileId) return [];
+
+		const profileScores = cfScoresData.profiles.find((p) => p.profileId === selectedProfileId);
+		if (!profileScores) return [];
+
+		const arrType = entityType === 'movie' ? 'radarr' : 'sonarr';
+		const matches: Array<{ id: number; name: string; score: number }> = [];
+
+		for (const [cfIdStr, matched] of Object.entries(evaluation.cfMatches)) {
+			if (!matched) continue;
+
+			const cfId = parseInt(cfIdStr, 10);
+			const cf = cfScoresData.customFormats.find((f) => f.id === cfId);
+			const cfScore = profileScores.scores[cfId];
+
+			if (cf && cfScore) {
+				const score = cfScore[arrType];
+				if (score !== null && score !== 0) {
+					matches.push({ id: cfId, name: cf.name, score });
+				}
+			}
+		}
+
+		// Sort by absolute score (highest impact first)
+		return matches.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+	}
+
+	const dispatch = createEventDispatcher<{
+		add: { entityId: number };
+		edit: { entityId: number; release: TestRelease };
+		confirmDelete: { release: TestRelease; formRef: HTMLFormElement };
+	}>();
+
+	// Reactive columns - recalculates when calculateScore changes (profile switch)
+	$: columns = [
+		{
+			key: 'title',
+			header: 'Release Title',
+			sortable: true
+		},
+		{
+			key: 'size_bytes',
+			header: 'Size',
+			width: 'w-24',
+			align: 'right',
+			sortable: true
+		},
+		{
+			key: 'indexers',
+			header: 'Indexers',
+			width: 'w-32'
+		},
+		{
+			key: 'languages',
+			header: 'Languages',
+			width: 'w-32'
+		},
+		{
+			key: 'score',
+			header: 'Score',
+			width: 'w-20',
+			align: 'right',
+			sortable: true,
+			sortAccessor: (row) => calculateScore(row.id, entityType) ?? -Infinity
+		}
+	] as Column<TestRelease>[];
+
+	function getRowId(row: TestRelease): number {
+		return row.id;
+	}
+
+	function formatSize(bytes: number | null): string {
+		if (bytes === null) return '—';
+		const gb = bytes / (1024 * 1024 * 1024);
+		if (gb >= 1) return `${gb.toFixed(1)} GB`;
+		const mb = bytes / (1024 * 1024);
+		return `${mb.toFixed(0)} MB`;
+	}
+</script>
+
+<div class="space-y-3">
+	{#if releases.length > 0}
+		{#key selectedProfileId}
+			<ExpandableTable
+				{columns}
+				data={releases}
+				{getRowId}
+				compact={true}
+				flushExpanded={true}
+				emptyMessage="No releases"
+				chevronPosition="right"
+				defaultSort={{ key: 'score', direction: 'desc' }}
+			>
+			<svelte:fragment slot="cell" let:row={release} let:column>
+				{#if column.key === 'title'}
+					<span class="font-mono text-[11px]">
+						{release.title}
+					</span>
+				{:else if column.key === 'size_bytes'}
+					<span class="font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
+						{formatSize(release.size_bytes)}
+					</span>
+				{:else if column.key === 'indexers'}
+					{#if release.indexers.length > 0}
+						<div class="flex flex-wrap gap-1">
+							{#each release.indexers as indexer}
+								<Badge variant="neutral" size="sm">{indexer}</Badge>
+							{/each}
+						</div>
+					{:else}
+						<span class="text-neutral-400">—</span>
+					{/if}
+				{:else if column.key === 'languages'}
+					{#if release.languages.length > 0}
+						<div class="flex flex-wrap gap-1">
+							{#each release.languages as lang}
+								<Badge variant="neutral" size="sm">{lang}</Badge>
+							{/each}
+						</div>
+					{:else}
+						<span class="text-neutral-400">—</span>
+					{/if}
+				{:else if column.key === 'score'}
+					{@const score = calculateScore(release.id, entityType)}
+					{#if score !== null}
+						<span class="font-mono text-sm font-medium {score > 0 ? 'text-emerald-600 dark:text-emerald-400' : score < 0 ? 'text-red-600 dark:text-red-400' : 'text-neutral-500'}">
+							{score > 0 ? '+' : ''}{score.toLocaleString()}
+						</span>
+					{:else}
+						<span class="text-neutral-400">—</span>
+					{/if}
+				{/if}
+			</svelte:fragment>
+
+			<svelte:fragment slot="actions" let:row={release}>
+				{@const releaseFormId = `delete-release-form-${release.id}`}
+				<div class="flex items-center gap-1">
+					<button
+						type="button"
+						on:click={() => dispatch('edit', { entityId, release })}
+						class="rounded p-1 text-neutral-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+						title="Edit release"
+					>
+						<Pencil size={14} />
+					</button>
+					<form
+						id={releaseFormId}
+						method="POST"
+						action="?/deleteRelease"
+						use:enhance={() => {
+							return async ({ result, update }) => {
+								if (result.type === 'failure' && result.data) {
+									alertStore.add(
+										'error',
+										(result.data as { error?: string }).error || 'Failed to delete release'
+									);
+								} else if (result.type === 'success') {
+									alertStore.add('success', `Deleted release`);
+								}
+								await update();
+							};
+						}}
+					>
+						<input type="hidden" name="releaseId" value={release.id} />
+						<button
+							type="button"
+							on:click={() => {
+								const form = document.getElementById(releaseFormId) as HTMLFormElement;
+								dispatch('confirmDelete', { release, formRef: form });
+							}}
+							class="rounded p-1 text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+							title="Delete release"
+						>
+							<Trash2 size={14} />
+						</button>
+					</form>
+				</div>
+			</svelte:fragment>
+
+			<svelte:fragment slot="expanded" let:row={release}>
+				{@const evaluation = evaluations[release.id]}
+				{@const matchingFormats = getMatchingFormats(release.id)}
+				<div class="px-4 py-4">
+					<div class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-xs">
+						<!-- Parsed Info Row -->
+						{#if evaluation?.parsed}
+							<div class="text-neutral-500 dark:text-neutral-400 font-medium pt-0.5">Parsed</div>
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+									<HardDrive size={12} class="text-blue-500" />
+									<span class="text-neutral-500 dark:text-neutral-400">Source</span>
+									<span class="font-medium text-neutral-800 dark:text-neutral-100">{evaluation.parsed.source}</span>
+								</span>
+								<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+									<Layers size={12} class="text-indigo-500" />
+									<span class="text-neutral-500 dark:text-neutral-400">Resolution</span>
+									<span class="font-medium text-neutral-800 dark:text-neutral-100">{evaluation.parsed.resolution}</span>
+								</span>
+								{#if evaluation.parsed.modifier !== 'None'}
+									<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+										<Tag size={12} class="text-amber-500" />
+										<span class="text-neutral-500 dark:text-neutral-400">Modifier</span>
+										<span class="font-medium text-neutral-800 dark:text-neutral-100">{evaluation.parsed.modifier}</span>
+									</span>
+								{/if}
+								{#if evaluation.parsed.releaseGroup}
+									<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+										<Users size={12} class="text-teal-500" />
+										<span class="text-neutral-500 dark:text-neutral-400">Group</span>
+										<span class="font-medium text-neutral-800 dark:text-neutral-100">{evaluation.parsed.releaseGroup}</span>
+									</span>
+								{/if}
+								{#if evaluation.parsed.edition}
+									<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+										<Bookmark size={12} class="text-orange-500" />
+										<span class="text-neutral-500 dark:text-neutral-400">Edition</span>
+										<span class="font-medium text-neutral-800 dark:text-neutral-100">{evaluation.parsed.edition}</span>
+									</span>
+								{/if}
+								{#if evaluation.parsed.languages.length > 0}
+									<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+										<Earth size={12} class="text-emerald-500" />
+										<span class="text-neutral-500 dark:text-neutral-400">Languages</span>
+										<span class="font-medium text-neutral-800 dark:text-neutral-100">{evaluation.parsed.languages.join(', ')}</span>
+									</span>
+								{/if}
+							</div>
+						{/if}
+
+						<!-- Custom Formats Row -->
+						<div class="text-neutral-500 dark:text-neutral-400 font-medium pt-0.5">Formats</div>
+						<div>
+							{#if !selectedProfileId}
+								<span class="text-neutral-400 italic">Select a quality profile to see scores.</span>
+							{:else if matchingFormats.length === 0}
+								<span class="text-neutral-400 italic">No custom formats matched with non-zero scores.</span>
+							{:else}
+								<div class="flex flex-wrap gap-2">
+									{#each matchingFormats as cf}
+										<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
+											<span class="text-neutral-500 dark:text-neutral-400">{cf.name}</span>
+											<span class="font-mono font-medium {cf.score > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">{cf.score > 0 ? '+' : ''}{cf.score.toLocaleString()}</span>
+										</span>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
+				</div>
+			</svelte:fragment>
+		</ExpandableTable>
+		{/key}
+	{/if}
+
+	<!-- Clickable add row -->
+	<button
+		type="button"
+		on:click={() => dispatch('add', { entityId })}
+		class="w-full rounded-lg border-2 border-dashed border-neutral-200 py-3 text-sm text-neutral-400 transition-colors hover:border-accent-300 hover:bg-accent-50/50 hover:text-accent-600 dark:border-neutral-700 dark:hover:border-accent-600 dark:hover:bg-accent-900/10 dark:hover:text-accent-400"
+	>
+		<span class="inline-flex items-center gap-1">
+			<Plus size={14} />
+			Add test release
+		</span>
+	</button>
+</div>

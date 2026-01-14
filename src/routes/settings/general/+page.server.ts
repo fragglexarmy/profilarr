@@ -3,6 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { logSettingsQueries } from '$db/queries/logSettings.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { aiSettingsQueries } from '$db/queries/aiSettings.ts';
+import { tmdbSettingsQueries } from '$db/queries/tmdbSettings.ts';
 import { logSettings } from '$logger/settings.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -10,6 +11,7 @@ export const load = () => {
 	const logSetting = logSettingsQueries.get();
 	const backupSetting = backupSettingsQueries.get();
 	const aiSetting = aiSettingsQueries.get();
+	const tmdbSetting = tmdbSettingsQueries.get();
 
 	if (!logSetting) {
 		throw new Error('Log settings not found in database');
@@ -21,6 +23,10 @@ export const load = () => {
 
 	if (!aiSetting) {
 		throw new Error('AI settings not found in database');
+	}
+
+	if (!tmdbSetting) {
+		throw new Error('TMDB settings not found in database');
 	}
 
 	return {
@@ -43,6 +49,9 @@ export const load = () => {
 			api_url: aiSetting.api_url,
 			api_key: aiSetting.api_key,
 			model: aiSetting.model
+		},
+		tmdbSettings: {
+			api_key: tmdbSetting.api_key
 		}
 	};
 };
@@ -207,6 +216,31 @@ export const actions: Actions = {
 				model
 				// Note: Don't log apiKey for security
 			}
+		});
+
+		return { success: true };
+	},
+
+	updateTMDB: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+
+		// Parse form data
+		const apiKey = formData.get('api_key') as string;
+
+		// Update settings
+		const updated = tmdbSettingsQueries.update({
+			apiKey: apiKey || ''
+		});
+
+		if (!updated) {
+			await logger.error('Failed to update TMDB settings', {
+				source: 'settings/general'
+			});
+			return fail(500, { error: 'Failed to update settings' });
+		}
+
+		await logger.info('TMDB settings updated', {
+			source: 'settings/general'
 		});
 
 		return { success: true };

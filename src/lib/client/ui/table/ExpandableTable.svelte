@@ -11,6 +11,7 @@
 	export let flushExpanded: boolean = false;
 	export let flushBottom: boolean = false;
 	export let expandedRows: Set<string | number> = new Set();
+	export let chevronPosition: 'left' | 'right' = 'left';
 	let sortState: SortState | null = defaultSort;
 
 	function toggleRow(id: string | number) {
@@ -104,8 +105,10 @@
 	<table class="w-full">
 		<thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800">
 			<tr>
-				<!-- Expand column -->
-				<th class="{compact ? 'px-2 py-2' : 'px-3 py-3'} w-8"></th>
+				<!-- Expand column (left) -->
+				{#if chevronPosition === 'left'}
+					<th class="{compact ? 'px-2 py-2' : 'px-3 py-3'} w-8"></th>
+				{/if}
 				{#each columns as column}
 					<th
 						class="{compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 {getAlignClass(column.align)} {column.width || ''}"
@@ -133,9 +136,13 @@
 					</th>
 				{/each}
 				{#if $$slots.actions}
-					<th class="{compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 text-right">
+					<th class="{compact ? 'px-4 py-2' : 'px-6 py-3'} w-20 text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 text-right">
 						Actions
 					</th>
+				{/if}
+				<!-- Expand column (right) -->
+				{#if chevronPosition === 'right'}
+					<th class="{compact ? 'px-2 py-2' : 'px-3 py-3'} w-8"></th>
 				{/if}
 			</tr>
 		</thead>
@@ -158,14 +165,16 @@
 						class="cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
 						on:click={() => toggleRow(rowId)}
 					>
-						<!-- Expand Icon -->
-						<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400">
-							{#if expandedRows.has(rowId)}
-								<ChevronUp size={16} />
-							{:else}
-								<ChevronDown size={16} />
-							{/if}
-						</td>
+						<!-- Expand Icon (left) -->
+						{#if chevronPosition === 'left'}
+							<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400">
+								{#if expandedRows.has(rowId)}
+									<ChevronUp size={16} />
+								{:else}
+									<ChevronDown size={16} />
+								{/if}
+							</td>
+						{/if}
 
 						{#each columns as column}
 							<td
@@ -179,6 +188,17 @@
 						{#if $$slots.actions}
 							<td class="{compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-right" on:click|stopPropagation>
 								<slot name="actions" {row} />
+							</td>
+						{/if}
+
+						<!-- Expand Icon (right) -->
+						{#if chevronPosition === 'right'}
+							<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400 text-right">
+								{#if expandedRows.has(rowId)}
+									<ChevronUp size={16} class="inline-block" />
+								{:else}
+									<ChevronDown size={16} class="inline-block" />
+								{/if}
 							</td>
 						{/if}
 					</tr>

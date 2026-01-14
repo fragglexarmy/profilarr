@@ -1,5 +1,9 @@
 using Parser.Core;
 
+// Bump this version when parser logic changes (regex patterns, parsing behavior, etc.)
+// This invalidates the parse result cache in Profilarr
+const string ParserVersion = "1.0.0";
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 
@@ -93,7 +97,47 @@ app.MapPost("/parse", (ParseRequest request) =>
     }
 });
 
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", version = ParserVersion }));
+
+app.MapPost("/match", (MatchRequest request) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Text))
+    {
+        return Results.BadRequest(new { error = "Text is required" });
+    }
+
+    if (request.Patterns == null || request.Patterns.Count == 0)
+    {
+        return Results.BadRequest(new { error = "At least one pattern is required" });
+    }
+
+    var results = new Dictionary<string, bool>();
+
+    foreach (var pattern in request.Patterns)
+    {
+        try
+        {
+            var regex = new System.Text.RegularExpressions.Regex(
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
+                TimeSpan.FromMilliseconds(100) // Timeout to prevent ReDoS
+            );
+            results[pattern] = regex.IsMatch(request.Text);
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+        {
+            // Pattern took too long, treat as no match
+            results[pattern] = false;
+        }
+        catch (System.ArgumentException)
+        {
+            // Invalid regex pattern
+            results[pattern] = false;
+        }
+    }
+
+    return Results.Ok(new MatchResponse { Results = results });
+});
 
 app.Run();
 
@@ -139,4 +183,11 @@ public record EpisodeResponse
     public bool IsMiniSeries { get; init; }
     public bool Special { get; init; }
     public string ReleaseType { get; init; } = "Unknown";
+}
+
+public record MatchRequest(string Text, List<string> Patterns);
+
+public record MatchResponse
+{
+    public Dictionary<string, bool> Results { get; init; } = new();
 }

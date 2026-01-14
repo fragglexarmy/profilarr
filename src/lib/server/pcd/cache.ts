@@ -45,7 +45,8 @@ export class PCDCache {
 
 		try {
 			// 1. Create in-memory database
-			this.db = new Database(':memory:');
+			// Enable int64 mode to properly handle large integers (e.g., file sizes in bytes)
+			this.db = new Database(':memory:', { int64: true });
 
 			// Enable foreign keys
 			this.db.exec('PRAGMA foreign_keys = ON');

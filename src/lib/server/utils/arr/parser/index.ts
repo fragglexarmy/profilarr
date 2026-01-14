@@ -1,7 +1,17 @@
 /**
  * Release Title Parser
- * Client for the C# parser microservice
+ * Client for the C# parser microservice with caching support
  */
 
 export * from './types.ts';
-export { parse, parseQuality, isParserHealthy } from './client.ts';
+export {
+	parse,
+	parseQuality,
+	isParserHealthy,
+	getParserVersion,
+	clearParserVersionCache,
+	parseWithCache,
+	parseWithCacheBatch,
+	cleanupOldCacheEntries,
+	matchPatterns
+} from './client.ts';

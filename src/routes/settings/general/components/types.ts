@@ -24,3 +24,7 @@ export interface AISettings {
 	api_key: string;
 	model: string;
 }
+
+export interface TMDBSettings {
+	api_key: string;
+}
