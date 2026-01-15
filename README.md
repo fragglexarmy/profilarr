@@ -1,7 +1,7 @@
-<table>
+<table border="0" cellspacing="0" cellpadding="0">
   <tr>
-    <td><img src="src/lib/client/assets/logo-512.png" alt="Profilarr" width="128" height="128"></td>
-    <td>
+    <td width="160" valign="top"><img src="src/lib/client/assets/logo-512.png" alt="Profilarr" width="128" height="128"></td>
+    <td valign="top">
       <h1>Profilarr</h1>
       <p>
         <a href="https://github.com/Dictionarry-Hub/profilarr/releases"><img src="https://img.shields.io/github/v/release/Dictionarry-Hub/profilarr?color=blue" alt="GitHub release"></a>
