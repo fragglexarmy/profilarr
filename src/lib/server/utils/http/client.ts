@@ -75,8 +75,9 @@ export class BaseHttpClient {
 
 					clearTimeout(timeoutId);
 
-					// Parse response
-					const data = await response.json();
+					// Parse response - handle empty body (common for DELETE)
+					const text = await response.text();
+					const data = text ? JSON.parse(text) : null;
 
 					// Check for HTTP errors
 					if (!response.ok) {
