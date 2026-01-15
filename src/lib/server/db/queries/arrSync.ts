@@ -1,7 +1,7 @@
 import { db } from '../db.ts';
 
 // Types
-export type SyncTrigger = 'none' | 'manual' | 'on_pull' | 'on_change' | 'schedule';
+export type SyncTrigger = 'manual' | 'on_pull' | 'on_change' | 'schedule';
 
 export interface ProfileSelection {
 	databaseId: number;
@@ -75,7 +75,7 @@ export const arrSyncQueries = {
 				profileId: row.profile_id
 			})),
 			config: {
-				trigger: (configRow?.trigger as SyncTrigger) ?? 'none',
+				trigger: (configRow?.trigger as SyncTrigger) ?? 'manual',
 				cron: configRow?.cron ?? null
 			}
 		};
@@ -133,7 +133,7 @@ export const arrSyncQueries = {
 				profileId: row.profile_id
 			})),
 			config: {
-				trigger: (configRow?.trigger as SyncTrigger) ?? 'none',
+				trigger: (configRow?.trigger as SyncTrigger) ?? 'manual',
 				cron: configRow?.cron ?? null
 			}
 		};
@@ -184,7 +184,7 @@ export const arrSyncQueries = {
 			namingDatabaseId: row?.naming_database_id ?? null,
 			qualityDefinitionsDatabaseId: row?.quality_definitions_database_id ?? null,
 			mediaSettingsDatabaseId: row?.media_settings_database_id ?? null,
-			trigger: (row?.trigger as SyncTrigger) ?? 'none',
+			trigger: (row?.trigger as SyncTrigger) ?? 'manual',
 			cron: row?.cron ?? null
 		};
 	},

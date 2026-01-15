@@ -76,7 +76,7 @@ export const actions: Actions = {
 
 		try {
 			const selections: ProfileSelection[] = JSON.parse(selectionsJson || '[]');
-			const effectiveTrigger = trigger || 'none';
+			const effectiveTrigger = trigger || 'manual';
 			const effectiveCron = cron || null;
 			arrSyncQueries.saveQualityProfilesSync(id, selections, {
 				trigger: effectiveTrigger,
@@ -113,7 +113,7 @@ export const actions: Actions = {
 
 		try {
 			const selections: ProfileSelection[] = JSON.parse(selectionsJson || '[]');
-			const effectiveTrigger = trigger || 'none';
+			const effectiveTrigger = trigger || 'manual';
 			const effectiveCron = cron || null;
 			arrSyncQueries.saveDelayProfilesSync(id, selections, {
 				trigger: effectiveTrigger,
@@ -151,7 +151,7 @@ export const actions: Actions = {
 		const cron = formData.get('cron') as string | null;
 
 		try {
-			const effectiveTrigger = trigger || 'none';
+			const effectiveTrigger = trigger || 'manual';
 			const effectiveCron = cron || null;
 			arrSyncQueries.saveMediaManagementSync(id, {
 				namingDatabaseId: namingDatabaseId ? parseInt(namingDatabaseId, 10) : null,

@@ -13,11 +13,17 @@
 
 	export let databases: DatabaseWithProfiles[];
 	export let state: Record<number, Record<number, boolean>> = {};
-	export let syncTrigger: 'none' | 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'none';
+	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
 
 	let saving = false;
 	let syncing = false;
+
+	// Track saved state for dirty detection
+	let savedState = JSON.stringify({ state, syncTrigger, cronExpression });
+	$: currentState = JSON.stringify({ state, syncTrigger, cronExpression });
+	export let isDirty = false;
+	$: isDirty = currentState !== savedState;
 
 	// Initialize state for all databases/profiles
 	$: {
@@ -60,6 +66,8 @@
 
 			if (response.ok) {
 				alertStore.add('success', 'Delay profiles sync config saved');
+				// Update saved state to current
+				savedState = JSON.stringify({ state, syncTrigger, cronExpression });
 			} else {
 				alertStore.add('error', 'Failed to save delay profiles sync config');
 			}
@@ -139,5 +147,5 @@
 		{/if}
 	</div>
 
-	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} on:save={handleSave} on:sync={handleSync} />
+	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} {isDirty} on:save={handleSave} on:sync={handleSync} />
 </div>

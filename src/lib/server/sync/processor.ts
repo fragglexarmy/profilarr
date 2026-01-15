@@ -240,22 +240,19 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 	const mmConfig = arrSyncQueries.getMediaManagementSync(instanceId);
 
 	// Sync quality profiles if configured
-	if (qpConfig.config.trigger !== 'none' && qpConfig.selections.length > 0) {
+	if (qpConfig.selections.length > 0) {
 		const syncer = new QualityProfileSyncer(client, instanceId, instance.name, instance.type as SyncArrType);
 		result.qualityProfiles = await syncer.sync();
 	}
 
 	// Sync delay profiles if configured
-	if (dpConfig.config.trigger !== 'none' && dpConfig.selections.length > 0) {
+	if (dpConfig.selections.length > 0) {
 		const syncer = new DelayProfileSyncer(client, instanceId, instance.name);
 		result.delayProfiles = await syncer.sync();
 	}
 
 	// Sync media management if configured
-	if (
-		mmConfig.trigger !== 'none' &&
-		(mmConfig.namingDatabaseId || mmConfig.qualityDefinitionsDatabaseId || mmConfig.mediaSettingsDatabaseId)
-	) {
+	if (mmConfig.namingDatabaseId || mmConfig.qualityDefinitionsDatabaseId || mmConfig.mediaSettingsDatabaseId) {
 		const syncer = new MediaManagementSyncer(client, instanceId, instance.name, instance.type as ArrType);
 		result.mediaManagement = await syncer.sync();
 	}

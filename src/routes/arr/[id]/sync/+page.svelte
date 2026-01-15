@@ -2,10 +2,12 @@
 	import type { PageData } from './$types';
 	import { Info } from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import QualityProfiles from './components/QualityProfiles.svelte';
 	import DelayProfiles from './components/DelayProfiles.svelte';
 	import MediaManagement from './components/MediaManagement.svelte';
 	import type { SyncTrigger } from '$db/queries/arrSync.ts';
+	import { initEdit, initCreate } from '$lib/client/stores/dirty';
 
 	export let data: PageData;
 
@@ -40,6 +42,19 @@
 	};
 	let mediaManagementTrigger: SyncTrigger = data.syncData.mediaManagement.trigger;
 	let mediaManagementCron: string = data.syncData.mediaManagement.cron || '0 * * * *';
+
+	// Track dirty state from each component
+	let qualityProfilesDirty = false;
+	let delayProfilesDirty = false;
+	let mediaManagementDirty = false;
+
+	// Sync combined dirty state to global dirty store for DirtyModal
+	$: anyDirty = qualityProfilesDirty || delayProfilesDirty || mediaManagementDirty;
+	$: if (anyDirty) {
+		initCreate({});
+	} else {
+		initEdit({});
+	}
 </script>
 
 <svelte:head>
@@ -72,18 +87,21 @@
 		bind:state={qualityProfileState}
 		bind:syncTrigger={qualityProfileTrigger}
 		bind:cronExpression={qualityProfileCron}
+		bind:isDirty={qualityProfilesDirty}
 	/>
 	<DelayProfiles
 		databases={data.databases}
 		bind:state={delayProfileState}
 		bind:syncTrigger={delayProfileTrigger}
 		bind:cronExpression={delayProfileCron}
+		bind:isDirty={delayProfilesDirty}
 	/>
 	<MediaManagement
 		databases={data.databases}
 		bind:state={mediaManagementState}
 		bind:syncTrigger={mediaManagementTrigger}
 		bind:cronExpression={mediaManagementCron}
+		bind:isDirty={mediaManagementDirty}
 	/>
 </div>
 
@@ -153,3 +171,5 @@
 		</div>
 	</div>
 </InfoModal>
+
+<DirtyModal />
