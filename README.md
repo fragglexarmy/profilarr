@@ -1,21 +1,22 @@
-<table border="0" cellspacing="0" cellpadding="0">
-  <tr>
-    <td width="160" valign="top"><img src="src/lib/client/assets/logo-512.png" alt="Profilarr" width="128" height="128"></td>
-    <td valign="top">
-      <h1>Profilarr</h1>
-      <p>
-        <a href="https://github.com/Dictionarry-Hub/profilarr/releases"><img src="https://img.shields.io/github/v/release/Dictionarry-Hub/profilarr?color=blue" alt="GitHub release"></a>
-        <a href="https://hub.docker.com/r/santiagosayshey/profilarr"><img src="https://img.shields.io/docker/pulls/santiagosayshey/profilarr?color=blue" alt="Docker Pulls"></a>
-        <a href="https://github.com/Dictionarry-Hub/profilarr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Dictionarry-Hub/profilarr?color=blue" alt="License"></a>
-        <a href="https://dictionarry.dev/"><img src="https://img.shields.io/badge/Website-dictionarry.dev-blue" alt="Website"></a>
-        <a href="https://discord.com/invite/Y9TYP6jeYZ"><img src="https://img.shields.io/discord/1202375791556431892?color=blue&logo=discord&logoColor=white" alt="Discord"></a>
-        <a href="https://www.buymeacoffee.com/santiagosayshey"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-blue?logo=buy-me-a-coffee" alt="Buy Me A Coffee"></a>
-        <a href="https://github.com/sponsors/Dictionarry-Hub"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support-blue?logo=github-sponsors" alt="GitHub Sponsors"></a>
-      </p>
-      <p>Manage quality profiles, custom formats, and release profiles across your Radarr and Sonarr instances. Define your profiles once with a Git-backed configuration database, then sync them to any number of \*arr instances.</p>
-    </td>
-  </tr>
-</table>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="src/lib/client/assets/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="src/lib/client/assets/banner-light.svg">
+  <img alt="Profilarr" src="src/lib/client/assets/banner-light.svg">
+</picture>
+
+<br>
+
+<p>
+  <a href="https://github.com/Dictionarry-Hub/profilarr/releases"><img src="https://img.shields.io/github/v/release/Dictionarry-Hub/profilarr?color=blue" alt="GitHub release"></a>
+  <a href="https://hub.docker.com/r/santiagosayshey/profilarr"><img src="https://img.shields.io/docker/pulls/santiagosayshey/profilarr?color=blue" alt="Docker Pulls"></a>
+  <a href="https://github.com/Dictionarry-Hub/profilarr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Dictionarry-Hub/profilarr?color=blue" alt="License"></a>
+  <a href="https://dictionarry.dev/"><img src="https://img.shields.io/badge/Website-dictionarry.dev-blue" alt="Website"></a>
+  <a href="https://discord.com/invite/Y9TYP6jeYZ"><img src="https://img.shields.io/discord/1202375791556431892?color=blue&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://www.buymeacoffee.com/santiagosayshey"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-blue?logo=buy-me-a-coffee" alt="Buy Me A Coffee"></a>
+  <a href="https://github.com/sponsors/Dictionarry-Hub"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support-blue?logo=github-sponsors" alt="GitHub Sponsors"></a>
+</p>
+
+<p>Manage quality profiles, custom formats, and release profiles across your Radarr and Sonarr instances. Define your profiles once with a Git-backed configuration database, then sync them to any number of *arr instances.</p>
 
 ## Features
 
