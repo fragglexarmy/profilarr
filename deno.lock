@@ -26,10 +26,13 @@
     "npm:@tailwindcss/forms@~0.5.10": "0.5.10_tailwindcss@4.1.16",
     "npm:@tailwindcss/vite@^4.1.13": "4.1.16_vite@7.1.12__@types+node@22.19.0__picomatch@4.0.3_@types+node@22.19.0",
     "npm:@types/node@22": "22.19.0",
+    "npm:croner@^8.1.2": "8.1.2",
     "npm:eslint-config-prettier@^10.1.8": "10.1.8_eslint@9.39.1",
     "npm:eslint-plugin-svelte@^3.12.4": "3.13.0_eslint@9.39.1_svelte@5.43.3__acorn@8.15.0_postcss@8.5.6",
     "npm:eslint@^9.36.0": "9.39.1",
     "npm:globals@^16.4.0": "16.5.0",
+    "npm:highlight.js@^11.11.1": "11.11.1",
+    "npm:kysely@0.27.6": "0.27.6",
     "npm:kysely@~0.27.2": "0.27.6",
     "npm:lucide-svelte@0.546": "0.546.0_svelte@5.43.3__acorn@8.15.0",
     "npm:marked@^15.0.6": "15.0.12",
@@ -65,7 +68,7 @@
     "@soapbox/kysely-deno-sqlite@2.2.0": {
       "integrity": "668ec94600bc4b4d7bd618dd7ca65d4ef30ee61c46ffcb379b6f45203c08517a",
       "dependencies": [
-        "npm:kysely"
+        "npm:kysely@~0.27.2"
       ]
     },
     "@std/assert@0.217.0": {
@@ -1032,6 +1035,9 @@
     "cookie@0.6.0": {
       "integrity": "sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw=="
     },
+    "croner@8.1.2": {
+      "integrity": "sha512-ypfPFcAXHuAZRCzo3vJL6ltENzniTjwe/qsLleH1V2/7SRDjgvRQyrLmumFTLmjFax4IuSxfGXEn79fozXcJog=="
+    },
     "cross-spawn@7.0.6": {
       "integrity": "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==",
       "dependencies": [
@@ -1347,6 +1353,9 @@
     "has-flag@4.0.0": {
       "integrity": "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="
     },
+    "highlight.js@11.11.1": {
+      "integrity": "sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w=="
+    },
     "ignore@5.3.2": {
       "integrity": "sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g=="
     },
@@ -1418,9 +1427,6 @@
     },
     "kysely@0.27.6": {
       "integrity": "sha512-FIyV/64EkKhJmjgC0g2hygpBv5RNWVPyNCqSAD7eTCv6eFWNIi4PN1UvdSJGicN/o35bnevgis4Y0UDC0qi8jQ=="
-    },
-    "kysely@0.28.8": {
-      "integrity": "sha512-QUOgl5ZrS9IRuhq5FvOKFSsD/3+IA6MLE81/bOOTRA/YQpKDza2sFdN5g6JCB9BOpqMJDGefLCQ9F12hRS13TA=="
     },
     "levn@0.4.1": {
       "integrity": "sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==",
@@ -1947,6 +1953,7 @@
     "dependencies": [
       "jsr:@soapbox/kysely-deno-sqlite@^2.2.0",
       "jsr:@std/assert@1",
+      "npm:croner@^8.1.2",
       "npm:highlight.js@^11.11.1",
       "npm:marked@^15.0.6",
       "npm:simple-icons@^15.17.0"

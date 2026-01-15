@@ -4,36 +4,38 @@ import { logger } from '$logger/logger.ts';
 import { notify } from '$notifications/builder.ts';
 import { NotificationTypes } from '$notifications/types.ts';
 import type { Job, JobResult } from './types.ts';
+import { Cron } from 'croner';
 
 /**
  * Parse schedule string and calculate next run time
- * @param schedule Schedule string (e.g., "daily", "hourly", "every 5 minutes")
+ * Supports cron expressions and legacy formats
+ * @param schedule Schedule string (cron expression or legacy format)
  * @returns ISO timestamp for next run
  */
 function calculateNextRun(schedule: string): string {
 	const now = new Date();
 
-	// Parse schedule
+	// Handle legacy formats for backwards compatibility
 	if (schedule === 'daily') {
-		// Run at midnight next day
 		const next = new Date(now);
 		next.setDate(next.getDate() + 1);
 		next.setHours(0, 0, 0, 0);
 		return next.toISOString();
 	} else if (schedule === 'hourly') {
-		// Run at start of next hour
 		const next = new Date(now);
 		next.setHours(next.getHours() + 1, 0, 0, 0);
 		return next.toISOString();
-	} else if (schedule.startsWith('*/')) {
-		// Parse "*/N minutes" format
-		const match = schedule.match(/^\*\/(\d+)\s+minutes?$/);
-		if (match) {
-			const minutes = parseInt(match[1], 10);
-			const next = new Date(now);
-			next.setMinutes(next.getMinutes() + minutes, 0, 0);
-			return next.toISOString();
+	}
+
+	// Try to parse as cron expression
+	try {
+		const cron = new Cron(schedule);
+		const nextRun = cron.nextRun();
+		if (nextRun) {
+			return nextRun.toISOString();
 		}
+	} catch {
+		// Invalid cron expression, fall through to default
 	}
 
 	// Default: run in 1 hour if we can't parse

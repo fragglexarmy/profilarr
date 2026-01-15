@@ -11,6 +11,7 @@ export interface ProfileSelection {
 export interface SyncConfig {
 	trigger: SyncTrigger;
 	cron: string | null;
+	nextRunAt?: string | null;
 }
 
 export interface QualityProfilesSyncData {
@@ -29,6 +30,7 @@ export interface MediaManagementSyncData {
 	mediaSettingsDatabaseId: number | null;
 	trigger: SyncTrigger;
 	cron: string | null;
+	nextRunAt?: string | null;
 }
 
 // Row types
@@ -99,14 +101,16 @@ export const arrSyncQueries = {
 
 		// Upsert config
 		db.execute(
-			`INSERT INTO arr_sync_quality_profiles_config (instance_id, trigger, cron)
-			 VALUES (?, ?, ?)
-			 ON CONFLICT(instance_id) DO UPDATE SET trigger = ?, cron = ?`,
+			`INSERT INTO arr_sync_quality_profiles_config (instance_id, trigger, cron, next_run_at)
+			 VALUES (?, ?, ?, ?)
+			 ON CONFLICT(instance_id) DO UPDATE SET trigger = ?, cron = ?, next_run_at = ?`,
 			instanceId,
 			config.trigger,
 			config.cron,
+			config.nextRunAt ?? null,
 			config.trigger,
-			config.cron
+			config.cron,
+			config.nextRunAt ?? null
 		);
 	},
 
@@ -155,14 +159,16 @@ export const arrSyncQueries = {
 
 		// Upsert config
 		db.execute(
-			`INSERT INTO arr_sync_delay_profiles_config (instance_id, trigger, cron)
-			 VALUES (?, ?, ?)
-			 ON CONFLICT(instance_id) DO UPDATE SET trigger = ?, cron = ?`,
+			`INSERT INTO arr_sync_delay_profiles_config (instance_id, trigger, cron, next_run_at)
+			 VALUES (?, ?, ?, ?)
+			 ON CONFLICT(instance_id) DO UPDATE SET trigger = ?, cron = ?, next_run_at = ?`,
 			instanceId,
 			config.trigger,
 			config.cron,
+			config.nextRunAt ?? null,
 			config.trigger,
-			config.cron
+			config.cron,
+			config.nextRunAt ?? null
 		);
 	},
 
@@ -186,25 +192,28 @@ export const arrSyncQueries = {
 	saveMediaManagementSync(instanceId: number, data: MediaManagementSyncData): void {
 		db.execute(
 			`INSERT INTO arr_sync_media_management
-			 (instance_id, naming_database_id, quality_definitions_database_id, media_settings_database_id, trigger, cron)
-			 VALUES (?, ?, ?, ?, ?, ?)
+			 (instance_id, naming_database_id, quality_definitions_database_id, media_settings_database_id, trigger, cron, next_run_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(instance_id) DO UPDATE SET
 			 naming_database_id = ?,
 			 quality_definitions_database_id = ?,
 			 media_settings_database_id = ?,
 			 trigger = ?,
-			 cron = ?`,
+			 cron = ?,
+			 next_run_at = ?`,
 			instanceId,
 			data.namingDatabaseId,
 			data.qualityDefinitionsDatabaseId,
 			data.mediaSettingsDatabaseId,
 			data.trigger,
 			data.cron,
+			data.nextRunAt ?? null,
 			data.namingDatabaseId,
 			data.qualityDefinitionsDatabaseId,
 			data.mediaSettingsDatabaseId,
 			data.trigger,
-			data.cron
+			data.cron,
+			data.nextRunAt ?? null
 		);
 	},
 
@@ -339,5 +348,63 @@ export const arrSyncQueries = {
 			delayProfiles: dp.map((r) => r.instance_id),
 			mediaManagement: mm.map((r) => r.instance_id)
 		};
+	},
+
+	/**
+	 * Get all scheduled configs that haven't been marked for sync yet
+	 */
+	getScheduledConfigs(): {
+		qualityProfiles: { instanceId: number; cron: string | null; nextRunAt: string | null }[];
+		delayProfiles: { instanceId: number; cron: string | null; nextRunAt: string | null }[];
+		mediaManagement: { instanceId: number; cron: string | null; nextRunAt: string | null }[];
+	} {
+		const qp = db.query<{ instance_id: number; cron: string | null; next_run_at: string | null }>(
+			"SELECT instance_id, cron, next_run_at FROM arr_sync_quality_profiles_config WHERE trigger = 'schedule' AND should_sync = 0"
+		);
+		const dp = db.query<{ instance_id: number; cron: string | null; next_run_at: string | null }>(
+			"SELECT instance_id, cron, next_run_at FROM arr_sync_delay_profiles_config WHERE trigger = 'schedule' AND should_sync = 0"
+		);
+		const mm = db.query<{ instance_id: number; cron: string | null; next_run_at: string | null }>(
+			"SELECT instance_id, cron, next_run_at FROM arr_sync_media_management WHERE trigger = 'schedule' AND should_sync = 0"
+		);
+
+		return {
+			qualityProfiles: qp.map((r) => ({ instanceId: r.instance_id, cron: r.cron, nextRunAt: r.next_run_at })),
+			delayProfiles: dp.map((r) => ({ instanceId: r.instance_id, cron: r.cron, nextRunAt: r.next_run_at })),
+			mediaManagement: mm.map((r) => ({ instanceId: r.instance_id, cron: r.cron, nextRunAt: r.next_run_at }))
+		};
+	},
+
+	/**
+	 * Update next_run_at for a quality profiles config
+	 */
+	setQualityProfilesNextRunAt(instanceId: number, nextRunAt: string | null): void {
+		db.execute(
+			'UPDATE arr_sync_quality_profiles_config SET next_run_at = ? WHERE instance_id = ?',
+			nextRunAt,
+			instanceId
+		);
+	},
+
+	/**
+	 * Update next_run_at for a delay profiles config
+	 */
+	setDelayProfilesNextRunAt(instanceId: number, nextRunAt: string | null): void {
+		db.execute(
+			'UPDATE arr_sync_delay_profiles_config SET next_run_at = ? WHERE instance_id = ?',
+			nextRunAt,
+			instanceId
+		);
+	},
+
+	/**
+	 * Update next_run_at for a media management config
+	 */
+	setMediaManagementNextRunAt(instanceId: number, nextRunAt: string | null): void {
+		db.execute(
+			'UPDATE arr_sync_media_management SET next_run_at = ? WHERE instance_id = ?',
+			nextRunAt,
+			instanceId
+		);
 	}
 };

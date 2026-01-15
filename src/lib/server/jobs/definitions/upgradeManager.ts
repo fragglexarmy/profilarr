@@ -12,7 +12,7 @@ import type { JobDefinition, JobResult } from '../types.ts';
 export const upgradeManagerJob: JobDefinition = {
 	name: 'upgrade_manager',
 	description: 'Process library upgrades for arr instances',
-	schedule: '*/30 minutes',
+	schedule: '*/30 * * * *', // Every 30 minutes
 
 	handler: async (): Promise<JobResult> => {
 		try {

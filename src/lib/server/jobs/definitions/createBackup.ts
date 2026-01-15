@@ -11,7 +11,7 @@ import type { JobDefinition, JobResult } from '../types.ts';
 export const createBackupJob: JobDefinition = {
 	name: 'create_backup',
 	description: 'Create compressed backup of data directory',
-	schedule: 'daily',
+	schedule: '0 0 * * *', // Daily at midnight
 
 	handler: async (): Promise<JobResult> => {
 		try {

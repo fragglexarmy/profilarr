@@ -89,31 +89,39 @@
 					name="schedule"
 					bind:value={schedule}
 					required
-					placeholder="e.g., daily, hourly, */5 minutes"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
+					placeholder="* * * * *"
+					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 				/>
-				<div class="mt-2 space-y-1">
-					<p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Examples:</p>
-					<ul
-						class="list-inside list-disc space-y-1 text-sm text-neutral-600 dark:text-neutral-400"
-					>
-						<li>
-							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">daily</code> - Runs
-							once per day
-						</li>
-						<li>
-							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">hourly</code> - Runs
-							every hour
-						</li>
-						<li>
-							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">*/5 minutes</code
-							> - Runs every 5 minutes
-						</li>
-						<li>
-							<code class="rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800">weekly</code> - Runs
-							once per week
-						</li>
-					</ul>
+				<div class="mt-2 space-y-2">
+					<p class="text-sm text-neutral-600 dark:text-neutral-400">
+						Cron expression: <code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">minute hour day month weekday</code>
+					</p>
+					<div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-600 dark:text-neutral-400">
+						<div class="flex items-center gap-2">
+							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">* * * * *</code>
+							<span>Every minute</span>
+						</div>
+						<div class="flex items-center gap-2">
+							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">*/5 * * * *</code>
+							<span>Every 5 minutes</span>
+						</div>
+						<div class="flex items-center gap-2">
+							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 * * * *</code>
+							<span>Every hour</span>
+						</div>
+						<div class="flex items-center gap-2">
+							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 0 * * *</code>
+							<span>Daily at midnight</span>
+						</div>
+						<div class="flex items-center gap-2">
+							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 6 * * 1</code>
+							<span>Mondays at 6am</span>
+						</div>
+						<div class="flex items-center gap-2">
+							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 0 1 * *</code>
+							<span>First of month</span>
+						</div>
+					</div>
 				</div>
 			</div>
 

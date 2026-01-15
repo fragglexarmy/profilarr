@@ -9,7 +9,7 @@ import type { JobDefinition, JobResult } from '../types.ts';
 export const syncDatabasesJob: JobDefinition = {
 	name: 'sync_databases',
 	description: 'Auto-sync PCD databases with remote repositories',
-	schedule: '*/5 minutes',
+	schedule: '*/5 * * * *', // Every 5 minutes
 
 	handler: async (): Promise<JobResult> => {
 		try {

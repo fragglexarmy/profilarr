@@ -11,7 +11,7 @@ import type { JobDefinition, JobResult } from '../types.ts';
 export const cleanupLogsJob: JobDefinition = {
 	name: 'cleanup_logs',
 	description: 'Delete log files according to retention policy',
-	schedule: 'daily',
+	schedule: '0 0 * * *', // Daily at midnight
 
 	handler: async (): Promise<JobResult> => {
 		try {
