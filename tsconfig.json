@@ -11,6 +11,7 @@
 		"strict": true,
 		"moduleResolution": "bundler",
 		"lib": ["ES2022", "DOM"],
+		"types": ["deno"],
 		"allowImportingTsExtensions": true,
 		"noEmit": true
 	}

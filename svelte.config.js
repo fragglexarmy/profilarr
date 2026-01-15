@@ -12,6 +12,7 @@ const config = {
 		}),
 		outDir: 'dist/.svelte-kit',
 		alias: {
+			$api: './src/lib/api',
 			$config: './src/lib/server/utils/config/config.ts',
 			$logger: './src/lib/server/utils/logger',
 			$shared: './src/lib/shared',

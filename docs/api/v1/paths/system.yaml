@@ -1,0 +1,35 @@
+health:
+  get:
+    operationId: getHealth
+    summary: Health check
+    description: |
+      Returns the health status of the application and its components.
+
+      Status values:
+      - `healthy`: All components functioning normally
+      - `degraded`: Core functionality works but some components have issues
+      - `unhealthy`: Core functionality is broken
+    tags:
+      - System
+    responses:
+      '200':
+        description: Health check response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/health.yaml#/HealthResponse'
+
+openapi:
+  get:
+    operationId: getOpenApiSpec
+    summary: OpenAPI specification
+    description: Returns the OpenAPI specification for this API
+    tags:
+      - System
+    responses:
+      '200':
+        description: OpenAPI specification
+        content:
+          application/json:
+            schema:
+              type: object

@@ -1,0 +1,156 @@
+DatabaseHealth:
+  type: object
+  required:
+    - status
+    - responseTimeMs
+  properties:
+    status:
+      $ref: './common.yaml#/ComponentStatus'
+    responseTimeMs:
+      type: number
+      description: Database query response time in milliseconds
+    message:
+      type: string
+      description: Error message if unhealthy
+
+DatabasesHealth:
+  type: object
+  required:
+    - status
+    - total
+    - enabled
+    - cached
+    - disabled
+  properties:
+    status:
+      $ref: './common.yaml#/ComponentStatus'
+    total:
+      type: integer
+      description: Total number of PCD databases configured
+    enabled:
+      type: integer
+      description: Number of enabled databases
+    cached:
+      type: integer
+      description: Number of databases with compiled cache
+    disabled:
+      type: integer
+      description: Number of disabled databases (compilation errors)
+    message:
+      type: string
+      description: Additional status information
+
+JobsHealth:
+  type: object
+  required:
+    - status
+  properties:
+    status:
+      $ref: './common.yaml#/ComponentStatus'
+    lastRun:
+      type: object
+      additionalProperties:
+        type: string
+        format: date-time
+        nullable: true
+      description: Last run time for each job
+    message:
+      type: string
+      description: Additional status information
+
+BackupsHealth:
+  type: object
+  required:
+    - status
+    - enabled
+  properties:
+    status:
+      $ref: './common.yaml#/ComponentStatus'
+    enabled:
+      type: boolean
+      description: Whether backups are enabled
+    lastBackup:
+      type: string
+      format: date-time
+      nullable: true
+      description: Timestamp of last backup
+    count:
+      type: integer
+      description: Number of backup files
+    totalSizeBytes:
+      type: integer
+      description: Total size of all backups in bytes
+    retentionDays:
+      type: integer
+      description: Configured retention period in days
+    message:
+      type: string
+      description: Additional status information
+
+LogsHealth:
+  type: object
+  required:
+    - status
+  properties:
+    status:
+      $ref: './common.yaml#/ComponentStatus'
+    totalSizeBytes:
+      type: integer
+      description: Total size of log files in bytes
+    fileCount:
+      type: integer
+      description: Number of log files
+    oldestLog:
+      type: string
+      format: date
+      nullable: true
+      description: Date of oldest log file
+    newestLog:
+      type: string
+      format: date
+      nullable: true
+      description: Date of newest log file
+    message:
+      type: string
+      description: Additional status information
+
+HealthResponse:
+  type: object
+  required:
+    - status
+    - timestamp
+    - version
+    - uptime
+    - components
+  properties:
+    status:
+      $ref: './common.yaml#/HealthStatus'
+    timestamp:
+      type: string
+      format: date-time
+      description: Current server time
+    version:
+      type: string
+      description: Application version
+    uptime:
+      type: integer
+      description: Server uptime in seconds
+    components:
+      type: object
+      required:
+        - database
+        - databases
+        - jobs
+        - backups
+        - logs
+      properties:
+        database:
+          $ref: '#/DatabaseHealth'
+        databases:
+          $ref: '#/DatabasesHealth'
+        jobs:
+          $ref: '#/JobsHealth'
+        backups:
+          $ref: '#/BackupsHealth'
+        logs:
+          $ref: '#/LogsHealth'
