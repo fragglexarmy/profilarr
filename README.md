@@ -1,12 +1,16 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="src/lib/client/assets/banner-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="src/lib/client/assets/banner-light.svg">
-  <img alt="Profilarr" src="src/lib/client/assets/banner-light.svg">
-</picture>
+<br>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="src/lib/client/assets/banner-light.svg">
+    <source media="(prefers-color-scheme: light)" srcset="src/lib/client/assets/banner-dark.svg">
+    <img alt="Profilarr" src="src/lib/client/assets/banner-dark.svg" width="500">
+  </picture>
+</p>
 
 <br>
 
-<p>
+<p align="center">
   <a href="https://github.com/Dictionarry-Hub/profilarr/releases"><img src="https://img.shields.io/github/v/release/Dictionarry-Hub/profilarr?color=blue" alt="GitHub release"></a>
   <a href="https://hub.docker.com/r/santiagosayshey/profilarr"><img src="https://img.shields.io/docker/pulls/santiagosayshey/profilarr?color=blue" alt="Docker Pulls"></a>
   <a href="https://github.com/Dictionarry-Hub/profilarr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Dictionarry-Hub/profilarr?color=blue" alt="License"></a>
@@ -17,6 +21,11 @@
 </p>
 
 <p>Manage quality profiles, custom formats, and release profiles across your Radarr and Sonarr instances. Define your profiles once with a Git-backed configuration database, then sync them to any number of *arr instances.</p>
+
+> [!WARNING]
+> V2 is under heavy development and is _NOT_ ready for production use. Use
+> [Profilarr V1](https://github.com/Dictionarry-Hub/profilarr/tree/main) until
+> V2 is ready.
 
 ## Features
 
