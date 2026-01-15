@@ -2,16 +2,18 @@
  * Sync processor
  * Processes pending syncs by creating syncer instances and running them
  *
- * TODO: Trigger markForSync() from events:
+ * Triggers:
  * - on_pull: Call arrSyncQueries.markForSync('on_pull') after database git pull completes
  * - on_change: Call arrSyncQueries.markForSync('on_change') after PCD files change
- * - schedule: Evaluate cron expressions and set should_sync when schedule matches
+ * - schedule: Cron expressions evaluated by evaluateScheduledSyncs() before processing
  */
 
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { calculateNextRun } from './cron.ts';
 import { createArrClient } from '$arr/factory.ts';
 import type { ArrType } from '$arr/types.ts';
+import type { SyncArrType } from './mappings.ts';
 import { logger } from '$logger/logger.ts';
 import { QualityProfileSyncer } from './qualityProfiles.ts';
 import { DelayProfileSyncer } from './delayProfiles.ts';
@@ -30,10 +32,86 @@ export interface ProcessSyncsResult {
 }
 
 /**
+ * Check if a scheduled config should trigger based on next_run_at
+ * Returns true if:
+ * - nextRunAt is null (first run / bootstrap)
+ * - current time >= nextRunAt
+ */
+function shouldTrigger(nextRunAt: string | null): boolean {
+	// Bootstrap case: no next_run_at set yet, trigger immediately
+	if (!nextRunAt) return true;
+	const now = new Date();
+	const nextRun = new Date(nextRunAt);
+	return now >= nextRun;
+}
+
+/**
+ * Evaluate scheduled sync configs and mark matching ones for sync
+ */
+async function evaluateScheduledSyncs(): Promise<void> {
+	const scheduled = arrSyncQueries.getScheduledConfigs();
+
+	const totalScheduled =
+		scheduled.qualityProfiles.length +
+		scheduled.delayProfiles.length +
+		scheduled.mediaManagement.length;
+
+	if (totalScheduled === 0) return;
+
+	await logger.debug(`Evaluating ${totalScheduled} scheduled config(s)`, {
+		source: 'SyncProcessor',
+		meta: {
+			qualityProfiles: scheduled.qualityProfiles,
+			delayProfiles: scheduled.delayProfiles,
+			mediaManagement: scheduled.mediaManagement
+		}
+	});
+
+	let marked = 0;
+
+	for (const config of scheduled.qualityProfiles) {
+		if (shouldTrigger(config.nextRunAt)) {
+			arrSyncQueries.setQualityProfilesShouldSync(config.instanceId, true);
+			// Calculate and store next run time
+			const nextRun = calculateNextRun(config.cron);
+			arrSyncQueries.setQualityProfilesNextRunAt(config.instanceId, nextRun);
+			marked++;
+		}
+	}
+
+	for (const config of scheduled.delayProfiles) {
+		if (shouldTrigger(config.nextRunAt)) {
+			arrSyncQueries.setDelayProfilesShouldSync(config.instanceId, true);
+			const nextRun = calculateNextRun(config.cron);
+			arrSyncQueries.setDelayProfilesNextRunAt(config.instanceId, nextRun);
+			marked++;
+		}
+	}
+
+	for (const config of scheduled.mediaManagement) {
+		if (shouldTrigger(config.nextRunAt)) {
+			arrSyncQueries.setMediaManagementShouldSync(config.instanceId, true);
+			const nextRun = calculateNextRun(config.cron);
+			arrSyncQueries.setMediaManagementNextRunAt(config.instanceId, nextRun);
+			marked++;
+		}
+	}
+
+	if (marked > 0) {
+		await logger.debug(`Marked ${marked} config(s) for sync based on schedule`, {
+			source: 'SyncProcessor'
+		});
+	}
+}
+
+/**
  * Process all pending syncs
  * Called by the sync job and can be called manually
  */
 export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
+	// Evaluate scheduled configs and mark them for sync if cron matches
+	await evaluateScheduledSyncs();
+
 	const pending = arrSyncQueries.getPendingSyncs();
 	const results: ProcessSyncsResult['results'] = [];
 
@@ -88,7 +166,7 @@ export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
 
 			// Process quality profiles if pending
 			if (pending.qualityProfiles.includes(instanceId)) {
-				const syncer = new QualityProfileSyncer(client, instanceId, instance.name);
+				const syncer = new QualityProfileSyncer(client, instanceId, instance.name, instance.type as SyncArrType);
 				instanceResult.qualityProfiles = await syncer.sync();
 				totalSynced += instanceResult.qualityProfiles.itemsSynced;
 
@@ -163,7 +241,7 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 
 	// Sync quality profiles if configured
 	if (qpConfig.config.trigger !== 'none' && qpConfig.selections.length > 0) {
-		const syncer = new QualityProfileSyncer(client, instanceId, instance.name);
+		const syncer = new QualityProfileSyncer(client, instanceId, instance.name, instance.type as SyncArrType);
 		result.qualityProfiles = await syncer.sync();
 	}
 

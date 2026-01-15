@@ -327,6 +327,83 @@ export interface ArrQualityDefinition {
 }
 
 // =============================================================================
+// Custom Format Types
+// =============================================================================
+
+/**
+ * Custom format specification field
+ */
+export interface ArrSpecificationField {
+	name: string;
+	value: unknown;
+}
+
+/**
+ * Custom format specification (condition)
+ */
+export interface ArrCustomFormatSpecification {
+	name: string;
+	implementation: string;
+	negate: boolean;
+	required: boolean;
+	fields: ArrSpecificationField[];
+}
+
+/**
+ * Custom format from /api/v3/customformat
+ */
+export interface ArrCustomFormat {
+	id?: number;
+	name: string;
+	includeCustomFormatWhenRenaming?: boolean;
+	specifications: ArrCustomFormatSpecification[];
+}
+
+// =============================================================================
+// Quality Profile Types (for create/update)
+// =============================================================================
+
+/**
+ * Quality item within a quality profile
+ */
+export interface ArrQualityProfileItem {
+	quality?: {
+		id: number;
+		name: string;
+		source?: string;
+		resolution?: number;
+	};
+	items: ArrQualityProfileItem[];
+	allowed: boolean;
+	id?: number;
+	name?: string;
+}
+
+/**
+ * Language setting for quality profile
+ */
+export interface ArrLanguage {
+	id: number;
+	name: string;
+}
+
+/**
+ * Quality profile for create/update operations
+ */
+export interface ArrQualityProfilePayload {
+	id?: number;
+	name: string;
+	items: ArrQualityProfileItem[];
+	language: ArrLanguage;
+	upgradeAllowed: boolean;
+	cutoff: number;
+	minFormatScore: number;
+	cutoffFormatScore: number;
+	minUpgradeFormatScore: number;
+	formatItems: QualityProfileFormatItem[];
+}
+
+// =============================================================================
 // System Types
 // =============================================================================
 

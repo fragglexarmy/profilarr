@@ -6,6 +6,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { logger } from '$logger/logger.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
+import { calculateNextRun } from '$lib/server/sync/cron.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -75,9 +76,12 @@ export const actions: Actions = {
 
 		try {
 			const selections: ProfileSelection[] = JSON.parse(selectionsJson || '[]');
+			const effectiveTrigger = trigger || 'none';
+			const effectiveCron = cron || null;
 			arrSyncQueries.saveQualityProfilesSync(id, selections, {
-				trigger: trigger || 'none',
-				cron: cron || null
+				trigger: effectiveTrigger,
+				cron: effectiveCron,
+				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null
 			});
 
 			await logger.info(`Quality profiles sync config saved for "${instance?.name}"`, {
@@ -109,9 +113,12 @@ export const actions: Actions = {
 
 		try {
 			const selections: ProfileSelection[] = JSON.parse(selectionsJson || '[]');
+			const effectiveTrigger = trigger || 'none';
+			const effectiveCron = cron || null;
 			arrSyncQueries.saveDelayProfilesSync(id, selections, {
-				trigger: trigger || 'none',
-				cron: cron || null
+				trigger: effectiveTrigger,
+				cron: effectiveCron,
+				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null
 			});
 
 			await logger.info(`Delay profiles sync config saved for "${instance?.name}"`, {
@@ -144,12 +151,15 @@ export const actions: Actions = {
 		const cron = formData.get('cron') as string | null;
 
 		try {
+			const effectiveTrigger = trigger || 'none';
+			const effectiveCron = cron || null;
 			arrSyncQueries.saveMediaManagementSync(id, {
 				namingDatabaseId: namingDatabaseId ? parseInt(namingDatabaseId, 10) : null,
 				qualityDefinitionsDatabaseId: qualityDefinitionsDatabaseId ? parseInt(qualityDefinitionsDatabaseId, 10) : null,
 				mediaSettingsDatabaseId: mediaSettingsDatabaseId ? parseInt(mediaSettingsDatabaseId, 10) : null,
-				trigger: trigger || 'none',
-				cron: cron || null
+				trigger: effectiveTrigger,
+				cron: effectiveCron,
+				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null
 			});
 
 			await logger.info(`Media management sync config saved for "${instance?.name}"`, {
@@ -216,7 +226,7 @@ export const actions: Actions = {
 			const { createArrClient } = await import('$arr/factory.ts');
 			const { QualityProfileSyncer } = await import('$lib/server/sync/qualityProfiles.ts');
 			const client = createArrClient(instance.type as 'radarr' | 'sonarr' | 'lidarr' | 'chaptarr', instance.url, instance.api_key);
-			const syncer = new QualityProfileSyncer(client, id, instance.name);
+			const syncer = new QualityProfileSyncer(client, id, instance.name, instance.type as 'radarr' | 'sonarr');
 			const result = await syncer.sync();
 
 			await logger.info(`Manual quality profiles sync completed for "${instance.name}"`, {

@@ -1,5 +1,15 @@
 import { BaseHttpClient } from '../http/client.ts';
-import type { ArrSystemStatus, ArrDelayProfile, ArrTag, ArrMediaManagementConfig, ArrNamingConfig, ArrQualityDefinition } from './types.ts';
+import type {
+	ArrSystemStatus,
+	ArrDelayProfile,
+	ArrTag,
+	ArrMediaManagementConfig,
+	ArrNamingConfig,
+	ArrQualityDefinition,
+	ArrCustomFormat,
+	ArrQualityProfilePayload,
+	RadarrQualityProfile
+} from './types.ts';
 import { logger } from '$logger/logger.ts';
 
 /**
@@ -57,36 +67,36 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Get all delay profiles
 	 */
-	async getDelayProfiles(): Promise<ArrDelayProfile[]> {
+	getDelayProfiles(): Promise<ArrDelayProfile[]> {
 		return this.get<ArrDelayProfile[]>(`/api/${this.apiVersion}/delayprofile`);
 	}
 
 	/**
 	 * Get a delay profile by ID
 	 */
-	async getDelayProfile(id: number): Promise<ArrDelayProfile> {
+	getDelayProfile(id: number): Promise<ArrDelayProfile> {
 		return this.get<ArrDelayProfile>(`/api/${this.apiVersion}/delayprofile/${id}`);
 	}
 
 	/**
 	 * Create a new delay profile
 	 */
-	async createDelayProfile(profile: Omit<ArrDelayProfile, 'id' | 'order'>): Promise<ArrDelayProfile> {
+	createDelayProfile(profile: Omit<ArrDelayProfile, 'id' | 'order'>): Promise<ArrDelayProfile> {
 		return this.post<ArrDelayProfile>(`/api/${this.apiVersion}/delayprofile`, profile);
 	}
 
 	/**
 	 * Update an existing delay profile
 	 */
-	async updateDelayProfile(id: number, profile: ArrDelayProfile): Promise<ArrDelayProfile> {
+	updateDelayProfile(id: number, profile: ArrDelayProfile): Promise<ArrDelayProfile> {
 		return this.put<ArrDelayProfile>(`/api/${this.apiVersion}/delayprofile/${id}`, profile);
 	}
 
 	/**
 	 * Delete a delay profile
 	 */
-	async deleteDelayProfile(id: number): Promise<void> {
-		await this.delete(`/api/${this.apiVersion}/delayprofile/${id}`);
+	deleteDelayProfile(id: number): Promise<void> {
+		return this.delete(`/api/${this.apiVersion}/delayprofile/${id}`);
 	}
 
 	// =========================================================================
@@ -96,14 +106,14 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Get all tags
 	 */
-	async getTags(): Promise<ArrTag[]> {
+	getTags(): Promise<ArrTag[]> {
 		return this.get<ArrTag[]>(`/api/${this.apiVersion}/tag`);
 	}
 
 	/**
 	 * Create a new tag
 	 */
-	async createTag(label: string): Promise<ArrTag> {
+	createTag(label: string): Promise<ArrTag> {
 		return this.post<ArrTag>(`/api/${this.apiVersion}/tag`, { label });
 	}
 
@@ -114,7 +124,7 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Get media management config
 	 */
-	async getMediaManagementConfig(): Promise<ArrMediaManagementConfig> {
+	getMediaManagementConfig(): Promise<ArrMediaManagementConfig> {
 		return this.get<ArrMediaManagementConfig>(`/api/${this.apiVersion}/config/mediamanagement`);
 	}
 
@@ -122,7 +132,7 @@ export class BaseArrClient extends BaseHttpClient {
 	 * Update media management config
 	 * Note: Must PUT to /{id} endpoint
 	 */
-	async updateMediaManagementConfig(config: ArrMediaManagementConfig): Promise<ArrMediaManagementConfig> {
+	updateMediaManagementConfig(config: ArrMediaManagementConfig): Promise<ArrMediaManagementConfig> {
 		return this.put<ArrMediaManagementConfig>(
 			`/api/${this.apiVersion}/config/mediamanagement/${config.id}`,
 			config
@@ -136,7 +146,7 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Get naming config
 	 */
-	async getNamingConfig(): Promise<ArrNamingConfig> {
+	getNamingConfig(): Promise<ArrNamingConfig> {
 		return this.get<ArrNamingConfig>(`/api/${this.apiVersion}/config/naming`);
 	}
 
@@ -144,7 +154,7 @@ export class BaseArrClient extends BaseHttpClient {
 	 * Update naming config
 	 * Note: Must PUT to /{id} endpoint
 	 */
-	async updateNamingConfig(config: ArrNamingConfig): Promise<ArrNamingConfig> {
+	updateNamingConfig(config: ArrNamingConfig): Promise<ArrNamingConfig> {
 		return this.put<ArrNamingConfig>(
 			`/api/${this.apiVersion}/config/naming/${config.id}`,
 			config
@@ -158,7 +168,7 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Get all quality definitions
 	 */
-	async getQualityDefinitions(): Promise<ArrQualityDefinition[]> {
+	getQualityDefinitions(): Promise<ArrQualityDefinition[]> {
 		return this.get<ArrQualityDefinition[]>(`/api/${this.apiVersion}/qualitydefinition`);
 	}
 
@@ -166,10 +176,88 @@ export class BaseArrClient extends BaseHttpClient {
 	 * Update all quality definitions
 	 * Note: PUT to /update endpoint with full array
 	 */
-	async updateQualityDefinitions(definitions: ArrQualityDefinition[]): Promise<ArrQualityDefinition[]> {
+	updateQualityDefinitions(definitions: ArrQualityDefinition[]): Promise<ArrQualityDefinition[]> {
 		return this.put<ArrQualityDefinition[]>(
 			`/api/${this.apiVersion}/qualitydefinition/update`,
 			definitions
 		);
+	}
+
+	// =========================================================================
+	// Custom Formats
+	// =========================================================================
+
+	/**
+	 * Get all custom formats
+	 */
+	getCustomFormats(): Promise<ArrCustomFormat[]> {
+		return this.get<ArrCustomFormat[]>(`/api/${this.apiVersion}/customformat`);
+	}
+
+	/**
+	 * Get a custom format by ID
+	 */
+	getCustomFormat(id: number): Promise<ArrCustomFormat> {
+		return this.get<ArrCustomFormat>(`/api/${this.apiVersion}/customformat/${id}`);
+	}
+
+	/**
+	 * Create a new custom format
+	 */
+	createCustomFormat(format: Omit<ArrCustomFormat, 'id'>): Promise<ArrCustomFormat> {
+		return this.post<ArrCustomFormat>(`/api/${this.apiVersion}/customformat`, format);
+	}
+
+	/**
+	 * Update an existing custom format
+	 */
+	updateCustomFormat(id: number, format: ArrCustomFormat): Promise<ArrCustomFormat> {
+		return this.put<ArrCustomFormat>(`/api/${this.apiVersion}/customformat/${id}`, format);
+	}
+
+	/**
+	 * Delete a custom format
+	 */
+	deleteCustomFormat(id: number): Promise<void> {
+		return this.delete(`/api/${this.apiVersion}/customformat/${id}`);
+	}
+
+	// =========================================================================
+	// Quality Profiles
+	// =========================================================================
+
+	/**
+	 * Get all quality profiles
+	 */
+	getQualityProfiles(): Promise<RadarrQualityProfile[]> {
+		return this.get<RadarrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
+	}
+
+	/**
+	 * Get a quality profile by ID
+	 */
+	getQualityProfile(id: number): Promise<RadarrQualityProfile> {
+		return this.get<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`);
+	}
+
+	/**
+	 * Create a new quality profile
+	 */
+	createQualityProfile(profile: ArrQualityProfilePayload): Promise<RadarrQualityProfile> {
+		return this.post<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile`, profile);
+	}
+
+	/**
+	 * Update an existing quality profile
+	 */
+	updateQualityProfile(id: number, profile: ArrQualityProfilePayload): Promise<RadarrQualityProfile> {
+		return this.put<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`, profile);
+	}
+
+	/**
+	 * Delete a quality profile
+	 */
+	deleteQualityProfile(id: number): Promise<void> {
+		return this.delete(`/api/${this.apiVersion}/qualityprofile/${id}`);
 	}
 }
