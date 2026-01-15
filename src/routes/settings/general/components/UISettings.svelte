@@ -32,12 +32,12 @@
 					<IconCheckbox
 						icon={Check}
 						checked={useEmojis}
-						onclick={toggle}
+						on:click={toggle}
 					/>
 					<button
 						type="button"
 						class="flex-1 text-left"
-						onclick={toggle}
+						on:click={toggle}
 					>
 						<span class="text-sm font-medium text-neutral-900 dark:text-neutral-50">
 							Use Emojis

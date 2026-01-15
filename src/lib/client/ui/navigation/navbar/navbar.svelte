@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AccentPicker from './accentPicker.svelte';
 	import ThemeToggle from './themeToggle.svelte';
-	import logo from '$assets/logo-firefox-circular-arrow.png';
+	import logo from '$assets/logo-512.png';
 
 	export let collapsed: boolean = false;
 </script>
