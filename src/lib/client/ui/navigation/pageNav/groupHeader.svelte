@@ -28,7 +28,8 @@
 			: ''}"
 	>
 		{#if icon}
-			<svelte:component this={icon} class="h-4 w-4" />
+			{@const Icon = icon}
+			<Icon class="h-4 w-4" />
 		{/if}
 		{label}
 	</a>
