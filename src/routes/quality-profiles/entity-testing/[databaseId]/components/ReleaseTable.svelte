@@ -17,6 +17,9 @@
 	export let calculateScore: (releaseId: number, entityType: 'movie' | 'series') => number | null;
 	export let deleteLayer: 'user' | 'base' = 'user';
 
+	// Track expanded rows outside {#key} block so state persists across profile changes
+	let expandedRows: Set<string | number> = new Set();
+
 	// Get matching custom formats for a release with their scores
 	function getMatchingFormats(releaseId: number): Array<{ id: number; name: string; score: number }> {
 		const evaluation = evaluations[releaseId];
@@ -103,7 +106,7 @@
 <div class="space-y-3">
 	{#if releases.length > 0}
 		{#key selectedProfileId}
-			<ExpandableTable
+		<ExpandableTable
 				{columns}
 				data={releases}
 				{getRowId}
@@ -112,6 +115,7 @@
 				emptyMessage="No releases"
 				chevronPosition="right"
 				defaultSort={{ key: 'score', direction: 'desc' }}
+				bind:expandedRows
 			>
 			<svelte:fragment slot="cell" let:row={release} let:column>
 				{#if column.key === 'title'}
