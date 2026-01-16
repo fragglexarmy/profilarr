@@ -440,6 +440,8 @@
 									</div>
 								</div>
 							</div>
+						{:else}
+							<p class="text-xs text-neutral-500 dark:text-neutral-400 italic">This item might not be in your library. Select manually below.</p>
 						{/if}
 
 						<!-- All Items -->
