@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Check, ExternalLink, CircleAlert } from 'lucide-svelte';
+	import Score from '$ui/arr/Score.svelte';
+	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
 	import type { RadarrLibraryItem } from '$utils/arr/types.ts';
 	import type { Column } from '$ui/table/types';
 
@@ -52,9 +54,7 @@
 		</code>
 	{:else if column.key === 'customFormatScore'}
 		<div class="text-right">
-			<span class="font-mono font-medium {row.cutoffMet ? 'text-green-600 dark:text-green-400' : 'text-neutral-900 dark:text-neutral-100'}">
-				{row.customFormatScore.toLocaleString()}
-			</span>
+			<Score score={row.customFormatScore} showSign={false} colored={false} />
 			<span class="text-xs text-neutral-500 dark:text-neutral-400">
 				/ {row.cutoffScore.toLocaleString()}
 			</span>
@@ -111,14 +111,8 @@
 		{#if row.scoreBreakdown.length > 0}
 			<div class="flex flex-wrap items-center gap-2">
 				{#each [...row.scoreBreakdown].sort((a, b) => b.score - a.score) as item}
-					<div class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs {item.score > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : item.score < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'}">
-						<span class="font-medium">{item.name}</span>
-						<span class="font-mono">{item.score >= 0 ? '+' : ''}{item.score.toLocaleString()}</span>
-					</div>
+					<CustomFormatBadge name={item.name} score={item.score} />
 				{/each}
-				<span class="text-xs text-neutral-500 dark:text-neutral-400">
-					= <span class="font-mono font-medium">{row.customFormatScore.toLocaleString()}</span>
-				</span>
 			</div>
 		{:else}
 			<div class="text-xs text-neutral-500 dark:text-neutral-400">No custom formats matched</div>

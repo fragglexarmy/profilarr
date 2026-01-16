@@ -5,6 +5,8 @@
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import Score from '$ui/arr/Score.svelte';
+	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { Column } from '$ui/table/types';
 	import type { TestRelease, ProfileCfScores, CustomFormatInfo } from './types';
@@ -151,14 +153,7 @@
 						<span class="text-neutral-400">—</span>
 					{/if}
 				{:else if column.key === 'score'}
-					{@const score = calculateScore(release.id, entityType)}
-					{#if score !== null}
-						<span class="font-mono text-sm font-medium {score > 0 ? 'text-emerald-600 dark:text-emerald-400' : score < 0 ? 'text-red-600 dark:text-red-400' : 'text-neutral-500'}">
-							{score > 0 ? '+' : ''}{score.toLocaleString()}
-						</span>
-					{:else}
-						<span class="text-neutral-400">—</span>
-					{/if}
+					<Score score={calculateScore(release.id, entityType)} />
 				{/if}
 			</svelte:fragment>
 
@@ -266,10 +261,7 @@
 							{:else}
 								<div class="flex flex-wrap gap-2">
 									{#each matchingFormats as cf}
-										<span class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
-											<span class="text-neutral-500 dark:text-neutral-400">{cf.name}</span>
-											<span class="font-mono font-medium {cf.score > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">{cf.score > 0 ? '+' : ''}{cf.score.toLocaleString()}</span>
-										</span>
+										<CustomFormatBadge name={cf.name} score={cf.score} />
 									{/each}
 								</div>
 							{/if}
