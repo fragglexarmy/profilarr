@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { Database, Plus, Lock, Code, Trash2, Pencil, ExternalLink, ChevronRight } from 'lucide-svelte';
+	import { Database, Plus, Lock, Code, Trash2, Pencil, ExternalLink, ChevronRight, Info } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import EmptyState from '$ui/state/EmptyState.svelte';
 	import Table from '$ui/table/Table.svelte';
+	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import { createSearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
 	import type { Column } from '$ui/table/types';
@@ -12,8 +19,15 @@
 
 	export let data: PageData;
 
+	// Search store
+	const searchStore = createSearchStore();
+
+	// Filter databases based on search
+	$: filteredDatabases = searchStore.filterItems(data.databases, ['name', 'repository_url']);
+
 	// Modal state
 	let showUnlinkModal = false;
+	let showInfoModal = false;
 	let selectedDatabase: DatabaseInstance | null = null;
 	let unlinkFormElement: HTMLFormElement;
 
@@ -85,25 +99,15 @@
 	/>
 {:else}
 	<div class="space-y-6 p-8">
-		<!-- Header -->
-		<div class="flex items-center justify-between">
-			<div>
-				<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Databases</h1>
-				<p class="mt-1 text-neutral-600 dark:text-neutral-400">
-					Manage your linked Profilarr Compliant Databases
-				</p>
-			</div>
-			<a
-				href="/databases/new"
-				class="inline-flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
-			>
-				<Plus size={16} />
-				Link Database
-			</a>
-		</div>
+		<!-- Actions Bar -->
+		<ActionsBar>
+			<SearchAction {searchStore} placeholder="Search databases..." />
+			<ActionButton icon={Plus} title="Link Database" on:click={() => goto('/databases/new')} />
+			<ActionButton icon={Info} title="Info" on:click={() => (showInfoModal = true)} />
+		</ActionsBar>
 
 		<!-- Database Table -->
-		<Table {columns} data={data.databases} hoverable={true}>
+		<Table {columns} data={filteredDatabases} hoverable={true}>
 			<svelte:fragment slot="cell" let:row let:column>
 				<div on:click={() => handleRowClick(row)} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)} class="cursor-pointer">
 					{#if column.key === 'name'}
@@ -124,78 +128,37 @@
 									{row.name}
 								</div>
 								{#if row.is_private}
-									<span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-										<Lock size={10} />
-										Private
-									</span>
+									<Badge variant="warning" icon={Lock} mono>Private</Badge>
 								{/if}
 								{#if row.personal_access_token}
-									<span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-										<Code size={10} />
-										Dev
-									</span>
+									<Badge variant="success" icon={Code} mono>Dev</Badge>
 								{/if}
 							</div>
 						</div>
 					{:else if column.key === 'repository_url'}
-						<code class="rounded bg-neutral-100 px-2 py-1 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-							{row.repository_url.replace('https://github.com/', '')}
-						</code>
+						<Badge variant="neutral" mono>{row.repository_url.replace('https://github.com/', '')}</Badge>
 					{:else if column.key === 'sync_strategy'}
-						<code class="rounded bg-neutral-100 px-2 py-1 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-							{formatSyncStrategy(row.sync_strategy)}
-						</code>
+						<Badge variant="neutral" mono>{formatSyncStrategy(row.sync_strategy)}</Badge>
 					{:else if column.key === 'last_synced_at'}
-						<code class="rounded bg-neutral-100 px-2 py-1 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-							{formatLastSynced(row.last_synced_at)}
-						</code>
+						<Badge variant="neutral" mono>{formatLastSynced(row.last_synced_at)}</Badge>
 					{/if}
 				</div>
 			</svelte:fragment>
 
 			<svelte:fragment slot="actions" let:row>
-				<div class="flex items-center justify-end gap-2">
-					<!-- GitHub Link Button -->
-					<a
-						href={row.repository_url}
-						target="_blank"
-						rel="noopener noreferrer"
-						on:click={(e) => e.stopPropagation()}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-accent-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
-						title="View on GitHub"
-					>
-						<ExternalLink size={14} />
+				<div class="flex items-center justify-end gap-1">
+					<a href="/databases/{row.id}/edit" on:click={(e) => e.stopPropagation()}>
+						<TableActionButton icon={Pencil} title="Edit database" />
 					</a>
-
-					<!-- Edit Button -->
-					<a
-						href="/databases/{row.id}/edit"
-						on:click={(e) => e.stopPropagation()}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-						title="Edit database"
-					>
-						<Pencil size={14} />
+					<a href={row.repository_url} target="_blank" rel="noopener noreferrer" on:click={(e) => e.stopPropagation()}>
+						<TableActionButton icon={ExternalLink} title="View on GitHub" />
 					</a>
-
-					<!-- Unlink Button -->
-					<button
-						type="button"
-						on:click={(e) => handleUnlinkClick(e, row)}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-red-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:bg-neutral-700"
+					<TableActionButton
+						icon={Trash2}
 						title="Unlink database"
-					>
-						<Trash2 size={14} />
-					</button>
-
-					<!-- View Button -->
-					<button
-						type="button"
-						on:click={() => handleRowClick(row)}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-						title={row.personal_access_token ? "View changes" : "View commits"}
-					>
-						<ChevronRight size={14} />
-					</button>
+						variant="danger"
+						on:click={(e) => handleUnlinkClick(e, row)}
+					/>
 				</div>
 			</svelte:fragment>
 		</Table>
@@ -245,3 +208,44 @@
 >
 	<input type="hidden" name="id" value={selectedDatabase?.id || ''} />
 </form>
+
+<!-- Info Modal -->
+<InfoModal bind:open={showInfoModal} header="Databases">
+	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">What are Databases?</div>
+			<div class="mt-1">
+				Databases are Profilarr Compliant Database (PCD) repositories containing quality profiles,
+				custom formats, and other configurations. Link a database to import and sync configurations
+				to your Arr instances.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Private & Dev Badges</div>
+			<div class="mt-1">
+				<strong>Private</strong> indicates the repository requires authentication.
+				<strong>Dev</strong> means you have a personal access token configured, allowing you to
+				push changes back to the repository.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Sync Strategy</div>
+			<div class="mt-1">
+				Controls how often Profilarr checks for updates from the remote repository. Set to
+				"Manual" to only sync when you explicitly trigger it, or choose an interval for
+				automatic updates.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Unlinking</div>
+			<div class="mt-1">
+				Unlinking a database removes all local data associated with it. Your Arr instances
+				will keep any configurations that were already synced, but you won't be able to
+				sync updates until you re-link the database.
+			</div>
+		</div>
+	</div>
+</InfoModal>

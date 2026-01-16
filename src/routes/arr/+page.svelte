@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { Server, Plus, Trash2, Pencil, Check, X } from 'lucide-svelte';
+	import { Server, Plus, Trash2, Pencil, Check, X, Info, ExternalLink } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import EmptyState from '$ui/state/EmptyState.svelte';
 	import Table from '$ui/table/Table.svelte';
+	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import { createSearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
 	import type { Column } from '$ui/table/types';
@@ -12,8 +19,15 @@
 
 	export let data: PageData;
 
+	// Search store
+	const searchStore = createSearchStore();
+
+	// Filter instances based on search
+	$: filteredInstances = searchStore.filterItems(data.instances, ['name', 'url', 'type']);
+
 	// Modal state
 	let showDeleteModal = false;
+	let showInfoModal = false;
 	let selectedInstance: ArrInstance | null = null;
 	let deleteFormElement: HTMLFormElement;
 
@@ -22,13 +36,11 @@
 		return type.charAt(0).toUpperCase() + type.slice(1);
 	}
 
-	// Get type badge color classes
-	function getTypeBadgeClasses(type: string): string {
-		const colors: Record<string, string> = {
-			radarr: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-			sonarr: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400'
-		};
-		return colors[type] || 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200';
+	// Get badge variant for arr type
+	function getTypeVariant(type: string): 'warning' | 'accent' | 'neutral' {
+		if (type === 'radarr') return 'warning';
+		if (type === 'sonarr') return 'accent';
+		return 'neutral';
 	}
 
 	// Handle row click
@@ -67,38 +79,24 @@
 	/>
 {:else}
 	<div class="space-y-6 p-8">
-		<!-- Header -->
-		<div class="flex items-center justify-between">
-			<div>
-				<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Arr Instances</h1>
-				<p class="mt-1 text-neutral-600 dark:text-neutral-400">
-					Manage your Radarr and Sonarr instances
-				</p>
-			</div>
-			<a
-				href="/arr/new"
-				class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-			>
-				<Plus size={16} />
-				Add Instance
-			</a>
-		</div>
+		<!-- Actions Bar -->
+		<ActionsBar>
+			<SearchAction {searchStore} placeholder="Search instances..." />
+			<ActionButton icon={Plus} title="Add Instance" on:click={() => goto('/arr/new')} />
+			<ActionButton icon={Info} title="Info" on:click={() => (showInfoModal = true)} />
+		</ActionsBar>
 
 		<!-- Instance Table -->
-		<Table {columns} data={data.instances} hoverable={true} onRowClick={handleRowClick}>
+		<Table {columns} data={filteredInstances} hoverable={true} onRowClick={handleRowClick}>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'name'}
 					<div class="font-medium text-neutral-900 dark:text-neutral-50">
 						{row.name}
 					</div>
 				{:else if column.key === 'type'}
-					<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {getTypeBadgeClasses(row.type)}">
-						{formatType(row.type)}
-					</span>
+					<Badge variant={getTypeVariant(row.type)} mono>{formatType(row.type)}</Badge>
 				{:else if column.key === 'url'}
-					<code class="rounded bg-neutral-100 px-2 py-1 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-						{row.url}
-					</code>
+					<Badge variant="neutral" mono>{row.url}</Badge>
 				{:else if column.key === 'enabled'}
 					<div class="flex justify-center">
 						{#if row.enabled}
@@ -115,26 +113,19 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="actions" let:row>
-				<div class="flex items-center justify-end gap-2">
-					<!-- Edit Button -->
-					<a
-						href="/arr/{row.id}/edit"
-						on:click={(e) => e.stopPropagation()}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-						title="Edit instance"
-					>
-						<Pencil size={14} />
+				<div class="flex items-center justify-end gap-1">
+					<a href="/arr/{row.id}/edit" on:click={(e) => e.stopPropagation()}>
+						<TableActionButton icon={Pencil} title="Edit instance" />
 					</a>
-
-					<!-- Delete Button -->
-					<button
-						type="button"
-						on:click={(e) => handleDeleteClick(e, row)}
-						class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-red-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:bg-neutral-700"
+					<a href={row.url} target="_blank" rel="noopener noreferrer" on:click={(e) => e.stopPropagation()}>
+						<TableActionButton icon={ExternalLink} title="Open in {formatType(row.type)}" />
+					</a>
+					<TableActionButton
+						icon={Trash2}
 						title="Delete instance"
-					>
-						<Trash2 size={14} />
-					</button>
+						variant="danger"
+						on:click={(e) => handleDeleteClick(e, row)}
+					/>
 				</div>
 			</svelte:fragment>
 		</Table>
@@ -184,3 +175,41 @@
 >
 	<input type="hidden" name="id" value={selectedInstance?.id || ''} />
 </form>
+
+<!-- Info Modal -->
+<InfoModal bind:open={showInfoModal} header="Arr Instances">
+	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">What are Arr Instances?</div>
+			<div class="mt-1">
+				Arr instances are your Radarr and Sonarr applications. Profilarr connects to these
+				instances to sync quality profiles, custom formats, and other configurations.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Adding an Instance</div>
+			<div class="mt-1">
+				To add an instance, you'll need the URL and API key from your Radarr or Sonarr
+				application. You can find the API key in Settings → General → Security.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Syncing</div>
+			<div class="mt-1">
+				Once connected, you can configure sync settings to push profiles and formats from your
+				linked databases to each instance. Sync can be triggered manually, on a schedule, or
+				automatically when changes are detected.
+			</div>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Enabled/Disabled</div>
+			<div class="mt-1">
+				Disabled instances are excluded from sync operations but remain configured. This is
+				useful for temporarily pausing sync without removing the instance.
+			</div>
+		</div>
+	</div>
+</InfoModal>

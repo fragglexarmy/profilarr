@@ -2,6 +2,7 @@
 	import { Check, ExternalLink, CircleAlert } from 'lucide-svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
 	import type { RadarrLibraryItem } from '$utils/arr/types.ts';
 	import type { Column } from '$ui/table/types';
 
@@ -34,14 +35,13 @@
 		</div>
 	{:else if column.key === 'qualityProfileName'}
 		<div class="relative group inline-flex">
-			<span
-				class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium {row.isProfilarrProfile ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'}"
+			<Badge
+				variant={row.isProfilarrProfile ? 'accent' : 'warning'}
+				icon={row.isProfilarrProfile ? null : CircleAlert}
+				mono
 			>
-				{#if !row.isProfilarrProfile}
-					<CircleAlert size={12} />
-				{/if}
 				{row.qualityProfileName}
-			</span>
+			</Badge>
 			{#if !row.isProfilarrProfile}
 				<div class="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 text-xs text-white bg-neutral-800 dark:bg-neutral-700 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
 					Not managed by Profilarr
@@ -49,9 +49,7 @@
 			{/if}
 		</div>
 	{:else if column.key === 'qualityName'}
-		<code class="rounded bg-neutral-100 px-2 py-1 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-			{row.qualityName ?? 'N/A'}
-		</code>
+		<Badge variant="neutral" mono>{row.qualityName ?? 'N/A'}</Badge>
 	{:else if column.key === 'customFormatScore'}
 		<div class="text-right">
 			<Score score={row.customFormatScore} showSign={false} colored={false} />
@@ -76,13 +74,9 @@
 			{/if}
 		</div>
 	{:else if column.key === 'popularity'}
-		<span class="font-mono text-sm text-neutral-600 dark:text-neutral-400">
-			{row.popularity?.toFixed(1) ?? '-'}
-		</span>
+		<Badge variant="neutral" mono>{row.popularity?.toFixed(1) ?? '-'}</Badge>
 	{:else if column.key === 'dateAdded'}
-		<span class="text-sm text-neutral-600 dark:text-neutral-400">
-			{formatDate(row.dateAdded)}
-		</span>
+		<Badge variant="neutral" mono>{formatDate(row.dateAdded)}</Badge>
 	{:else if column.key === 'actions'}
 		<div class="flex items-center justify-center">
 			{#if row.tmdbId}

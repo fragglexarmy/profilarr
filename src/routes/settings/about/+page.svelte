@@ -98,6 +98,7 @@
 		},
 		{
 			name: 'Seraphys',
+			remark: 'Your sync broke? But the conditions are in order now!',
 			tags: ['Dictionarry Database Lead', 'Sexy God']
 		}
 	];
@@ -315,8 +316,15 @@
 				</div>
 			</div>
 
+			<!-- Greetz -->
+			<div class="mt-6 text-center">
+				<p class="text-sm text-neutral-500 dark:text-neutral-400">
+					<span class="font-medium">Greetz:</span> Ba11in0nABudget, SFusion, some_guy, delavicci
+				</p>
+			</div>
+
 			<!-- Dedication -->
-			<div class="mt-8 text-center">
+			<div class="mt-4 text-center">
 				<p class="text-sm text-neutral-500 italic dark:text-neutral-400">
 					This project is dedicated to Faiza, for helping me find my heart.
 				</p>

@@ -5,6 +5,7 @@
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import { type SearchStore } from '$stores/search';
 
 	type FilterOperator = 'eq' | 'neq';
@@ -24,6 +25,7 @@
 	export let activeFilters: ActiveFilter[];
 	export let uniqueQualities: string[];
 	export let uniqueProfiles: string[];
+	export let instanceName: string = '';
 
 	export let onToggleColumn: (key: string) => void;
 	export let onToggleFilter: (field: FilterField, operator: FilterOperator, value: string | number | boolean, label: string) => void;
@@ -32,6 +34,8 @@
 	export let onEdit: () => void;
 	export let onDelete: () => void;
 	export let onInfo: () => void;
+
+	let showDeleteModal = false;
 </script>
 
 <ActionsBar>
@@ -173,7 +177,7 @@
 			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
 				<button
 					type="button"
-					on:click={onDelete}
+					on:click={() => (showDeleteModal = true)}
 					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
 				>
 					Delete instance
@@ -182,3 +186,17 @@
 		</svelte:fragment>
 	</ActionButton>
 </ActionsBar>
+
+<Modal
+	open={showDeleteModal}
+	header="Delete Instance"
+	bodyMessage={`Are you sure you want to delete "${instanceName}"? This action cannot be undone.`}
+	confirmText="Delete"
+	cancelText="Cancel"
+	confirmDanger={true}
+	on:confirm={() => {
+		showDeleteModal = false;
+		onDelete();
+	}}
+	on:cancel={() => (showDeleteModal = false)}
+/>

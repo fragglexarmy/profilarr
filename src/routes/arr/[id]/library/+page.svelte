@@ -307,6 +307,7 @@
 			{activeFilters}
 			uniqueQualities={loading ? [] : uniqueQualities}
 			uniqueProfiles={loading ? [] : uniqueProfiles}
+			instanceName={data.instance.name}
 			onToggleColumn={toggleColumn}
 			onToggleFilter={toggleFilter}
 			onRefresh={handleRefresh}

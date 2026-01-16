@@ -4,6 +4,7 @@
 	export let variant: 'accent' | 'neutral' | 'success' | 'warning' | 'danger' = 'accent';
 	export let size: 'sm' | 'md' = 'sm';
 	export let icon: ComponentType | null = null;
+	export let mono: boolean = false;
 
 	const variantClasses: Record<typeof variant, string> = {
 		accent: 'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200',
@@ -22,7 +23,7 @@
 </script>
 
 <span
-	class="inline-flex items-center gap-1 rounded font-medium {variantClasses[variant]} {sizeClasses[size]}"
+	class="inline-flex items-center gap-1 rounded font-medium {variantClasses[variant]} {sizeClasses[size]} {mono ? 'font-mono' : ''}"
 >
 	{#if icon}
 		<svelte:component this={icon} size={iconSize} />
