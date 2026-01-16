@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, Columns, Filter, FolderSync, Database } from 'lucide-svelte';
+	import { Check, SlidersHorizontal, TableProperties, RefreshCw, ExternalLink, Pencil, Trash2, Info } from 'lucide-svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -17,12 +17,6 @@
 		label: string;
 	}
 
-	interface DatabaseProfiles {
-		databaseId: number;
-		databaseName: string;
-		profiles: string[];
-	}
-
 	export let searchStore: SearchStore;
 	export let visibleColumns: Set<string>;
 	export let toggleableColumns: readonly string[];
@@ -30,42 +24,24 @@
 	export let activeFilters: ActiveFilter[];
 	export let uniqueQualities: string[];
 	export let uniqueProfiles: string[];
-	export let profilesByDatabase: DatabaseProfiles[];
-	export let filteredCount: number;
 
 	export let onToggleColumn: (key: string) => void;
 	export let onToggleFilter: (field: FilterField, operator: FilterOperator, value: string | number | boolean, label: string) => void;
-	export let onChangeProfile: (databaseName: string, profileName: string) => void;
+	export let onRefresh: () => void;
+	export let onOpen: () => void;
+	export let onEdit: () => void;
+	export let onDelete: () => void;
+	export let onInfo: () => void;
 </script>
 
 <ActionsBar>
 	<SearchAction {searchStore} placeholder="Search movies..." />
-	<ActionButton icon={Columns} hasDropdown={true} dropdownPosition="right">
+	<ActionButton icon={SlidersHorizontal} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
-				<div class="py-1">
-					{#each toggleableColumns as colKey}
-						<button
-							type="button"
-							on:click={() => onToggleColumn(colKey)}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {visibleColumns.has(colKey) ? 'bg-neutral-50 dark:bg-neutral-700' : ''}"
-						>
-							<span class="text-neutral-700 dark:text-neutral-300">{columnLabels[colKey]}</span>
-							<IconCheckbox
-								checked={visibleColumns.has(colKey)}
-								icon={Check}
-								color="blue"
-								shape="circle"
-							/>
-						</button>
-					{/each}
+			<Dropdown position={dropdownPosition} {open} minWidth="16rem">
+				<div class="px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">Filter movies by quality or profile</p>
 				</div>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
-	<ActionButton icon={Filter} hasDropdown={true} dropdownPosition="right">
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="14rem">
 				<div class="max-h-96 overflow-y-auto">
 					<!-- Quality Filter -->
 					<div class="border-b border-neutral-100 dark:border-neutral-700">
@@ -114,38 +90,94 @@
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
-	<ActionButton icon={FolderSync} hasDropdown={true} dropdownPosition="right" square={false}>
-		<span class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">Change Profile</span>
-		<span class="ml-1 text-xs text-neutral-500 dark:text-neutral-400">({filteredCount})</span>
+	<ActionButton icon={TableProperties} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="16rem">
-				<div class="max-h-80 overflow-y-auto py-1">
-					{#if profilesByDatabase.length === 0}
-						<div class="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
-							No databases configured
-						</div>
-					{:else}
-						{#each profilesByDatabase as db}
-							<div class="border-b border-neutral-100 dark:border-neutral-700 last:border-b-0">
-								<div class="px-3 py-2 bg-neutral-50 dark:bg-neutral-900 flex items-center gap-2">
-									<Database size={12} class="text-neutral-400" />
-									<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-										{db.databaseName}
-									</span>
-								</div>
-								{#each db.profiles as profile}
-									<button
-										type="button"
-										on:click={() => onChangeProfile(db.databaseName, profile)}
-										class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
-									>
-										{profile}
-									</button>
-								{/each}
-							</div>
-						{/each}
-					{/if}
+			<Dropdown position={dropdownPosition} {open} minWidth="14rem">
+				<div class="px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">Toggle visible table columns</p>
 				</div>
+				<div class="py-1">
+					{#each toggleableColumns as colKey}
+						<button
+							type="button"
+							on:click={() => onToggleColumn(colKey)}
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {visibleColumns.has(colKey) ? 'bg-neutral-50 dark:bg-neutral-700' : ''}"
+						>
+							<span class="text-neutral-700 dark:text-neutral-300">{columnLabels[colKey]}</span>
+							<IconCheckbox
+								checked={visibleColumns.has(colKey)}
+								icon={Check}
+								color="blue"
+								shape="circle"
+							/>
+						</button>
+					{/each}
+				</div>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+	<ActionButton icon={Info} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+				<button
+					type="button"
+					on:click={onInfo}
+					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+				>
+					About this page
+				</button>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+	<ActionButton icon={RefreshCw} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+				<button
+					type="button"
+					on:click={onRefresh}
+					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+				>
+					Refresh library
+				</button>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+	<ActionButton icon={ExternalLink} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+				<button
+					type="button"
+					on:click={onOpen}
+					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+				>
+					Open in Radarr
+				</button>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+	<ActionButton icon={Pencil} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+				<button
+					type="button"
+					on:click={onEdit}
+					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+				>
+					Edit instance
+				</button>
+			</Dropdown>
+		</svelte:fragment>
+	</ActionButton>
+	<ActionButton icon={Trash2} hasDropdown={true} dropdownPosition="right">
+		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+				<button
+					type="button"
+					on:click={onDelete}
+					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+				>
+					Delete instance
+				</button>
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>

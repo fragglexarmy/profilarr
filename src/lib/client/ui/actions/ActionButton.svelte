@@ -8,6 +8,9 @@
 	export let hasDropdown: boolean = false;
 	export let dropdownPosition: 'left' | 'right' | 'middle' = 'left';
 	export let disabled: boolean = false;
+	export let title: string = '';
+	export let type: 'button' | 'submit' = 'button';
+	export let variant: 'neutral' | 'danger' = 'neutral';
 
 	let isHovered = false;
 	let leaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -26,6 +29,11 @@
 			isHovered = false;
 		}, 100);
 	}
+
+	const variantClasses = {
+		neutral: 'hover:bg-neutral-100 dark:hover:bg-neutral-700',
+		danger: 'hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400'
+	};
 </script>
 
 <div
@@ -35,11 +43,11 @@
 	role="group"
 >
 	<button
+		{type}
+		{title}
 		class="flex items-center justify-center border border-neutral-200 bg-white transition-colors dark:border-neutral-700 dark:bg-neutral-800 {square
 			? 'h-10 w-10'
-			: 'h-10 px-4'} {disabled
-			? 'cursor-not-allowed opacity-50'
-			: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+			: 'h-10 px-4'} {disabled ? 'cursor-not-allowed opacity-50' : variantClasses[variant]}"
 		{disabled}
 		on:click
 	>

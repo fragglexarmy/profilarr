@@ -3,6 +3,7 @@
 	import { AlertTriangle, Film } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
 	import { browser } from '$app/environment';
+	import { goto, invalidateAll } from '$app/navigation';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import type { Column, SortState } from '$ui/table/types';
 	import type { PageData } from './$types';
@@ -10,10 +11,10 @@
 	import { createSearchStore } from '$stores/search';
 	import { libraryCache } from '$stores/libraryCache';
 
-	import LibraryHeader from './components/LibraryHeader.svelte';
 	import LibraryActionBar from './components/LibraryActionBar.svelte';
 	import MovieRow from './components/MovieRow.svelte';
 	import MovieRowSkeleton from './components/MovieRowSkeleton.svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
 
 	export let data: PageData;
 
@@ -75,6 +76,32 @@
 		refreshing = true;
 		libraryCache.invalidate(data.instance.id);
 		await fetchLibrary(true);
+	}
+
+	function handleOpen() {
+		const baseUrl = data.instance.url.replace(/\/$/, '');
+		window.open(baseUrl, '_blank', 'noopener,noreferrer');
+	}
+
+	function handleEdit() {
+		goto(`/arr/${data.instance.id}/edit`);
+	}
+
+	async function handleDelete() {
+		if (!confirm('Are you sure you want to delete this instance?')) return;
+
+		const response = await fetch(`/api/arr/${data.instance.id}`, { method: 'DELETE' });
+		if (response.ok) {
+			goto('/arr');
+		} else {
+			alertStore.add('error', 'Failed to delete instance');
+		}
+	}
+
+	let infoModalOpen = false;
+
+	function handleInfo() {
+		infoModalOpen = true;
 	}
 
 	let currentInstanceId: number | null = null;
@@ -187,11 +214,6 @@
 		});
 	}
 
-	function handleChangeProfile(databaseName: string, profileName: string) {
-		const count = moviesWithFiles.length;
-		alertStore.add('success', `Changing ${count} movies to "${profileName}" from ${databaseName}`);
-	}
-
 	// ==========================================================================
 	// Data & Columns
 	// ==========================================================================
@@ -277,31 +299,22 @@
 			</div>
 		</div>
 	{:else}
-		<LibraryHeader
-			instance={data.instance}
-			{library}
-			{allMoviesWithFiles}
-			{refreshing}
-			{loading}
+		<LibraryActionBar
+			{searchStore}
+			visibleColumns={new Set([...visibleColumns])}
+			toggleableColumns={TOGGLEABLE_COLUMNS}
+			{columnLabels}
+			{activeFilters}
+			uniqueQualities={loading ? [] : uniqueQualities}
+			uniqueProfiles={loading ? [] : uniqueProfiles}
+			onToggleColumn={toggleColumn}
+			onToggleFilter={toggleFilter}
 			onRefresh={handleRefresh}
+			onOpen={handleOpen}
+			onEdit={handleEdit}
+			onDelete={handleDelete}
+			onInfo={handleInfo}
 		/>
-
-		{#if !loading}
-			<LibraryActionBar
-				{searchStore}
-				visibleColumns={new Set([...visibleColumns])}
-				toggleableColumns={TOGGLEABLE_COLUMNS}
-				{columnLabels}
-				{activeFilters}
-				{uniqueQualities}
-				{uniqueProfiles}
-				{profilesByDatabase}
-				filteredCount={moviesWithFiles.length}
-				onToggleColumn={toggleColumn}
-				onToggleFilter={toggleFilter}
-				onChangeProfile={handleChangeProfile}
-			/>
-		{/if}
 
 		{#if allMoviesWithFiles.length === 0 && !loading}
 			<div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
@@ -343,3 +356,9 @@
 		{/if}
 	{/if}
 </div>
+
+<InfoModal bind:open={infoModalOpen} header="Library">
+	<p class="text-sm text-neutral-600 dark:text-neutral-400">
+		Placeholder content. More information coming soon.
+	</p>
+</InfoModal>

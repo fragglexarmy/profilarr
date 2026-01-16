@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft, ChevronRight } from 'lucide-svelte';
 
 	interface Tab {
 		label: string;
@@ -14,8 +14,17 @@
 		href: string;
 	}
 
+	interface Breadcrumb {
+		parent: {
+			label: string;
+			href: string;
+		};
+		current: string;
+	}
+
 	export let tabs: Tab[] = [];
 	export let backButton: BackButton | undefined = undefined;
+	export let breadcrumb: Breadcrumb | undefined = undefined;
 </script>
 
 <div class="border-b border-neutral-200 dark:border-neutral-800">
@@ -40,7 +49,18 @@
 			<slot name="actions" />
 		</div>
 
-		{#if backButton}
+		{#if breadcrumb}
+			<div class="flex items-center gap-2 text-sm">
+				<a
+					href={breadcrumb.parent.href}
+					class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+				>
+					{breadcrumb.parent.label}
+				</a>
+				<ChevronRight size={14} class="text-neutral-400 dark:text-neutral-600" />
+				<span class="font-medium text-neutral-900 dark:text-neutral-50">{breadcrumb.current}</span>
+			</div>
+		{:else if backButton}
 			<a
 				href={backButton.href}
 				class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"

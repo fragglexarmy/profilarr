@@ -5,6 +5,7 @@
 	export let title: string;
 	export let variant: 'neutral' | 'danger' | 'accent' = 'neutral';
 	export let size: 'sm' | 'md' = 'md';
+	export let type: 'button' | 'submit' = 'button';
 
 	const sizeClasses = {
 		sm: 'h-6 w-6',
@@ -27,7 +28,7 @@
 </script>
 
 <button
-	type="button"
+	{type}
 	on:click
 	class="inline-flex items-center justify-center rounded border transition-colors {sizeClasses[size]} {variantClasses[variant]}"
 	{title}
