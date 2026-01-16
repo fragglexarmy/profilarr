@@ -1,7 +1,9 @@
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
-import { readManifest, type Manifest } from '$lib/server/pcd/manifest.ts';
+import { error, fail } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
+import { readManifest, writeManifest, validateManifest, type Manifest } from '$lib/server/pcd/manifest.ts';
+import { readReadme, writeReadme } from '$lib/server/pcd/readme.ts';
 import { parseMarkdown } from '$utils/markdown/markdown.ts';
+import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { database } = await parent();
@@ -20,11 +22,9 @@ export const load: PageServerLoad = async ({ parent }) => {
 		// Manifest might not exist yet
 	}
 
-	try {
-		readmeRaw = await Deno.readTextFile(`${database.local_path}/README.md`);
+	readmeRaw = await readReadme(database.local_path);
+	if (readmeRaw) {
 		readmeHtml = parseMarkdown(readmeRaw);
-	} catch {
-		// README might not exist
 	}
 
 	return {
@@ -32,4 +32,35 @@ export const load: PageServerLoad = async ({ parent }) => {
 		readmeRaw,
 		readmeHtml
 	};
+};
+
+export const actions: Actions = {
+	save: async ({ request, params }) => {
+		const id = parseInt(params.id, 10);
+		const database = databaseInstancesQueries.getById(id);
+
+		if (!database) {
+			return fail(404, { error: 'Database not found' });
+		}
+
+		if (!database.personal_access_token) {
+			return fail(403, { error: 'Personal access token required' });
+		}
+
+		const formData = await request.formData();
+		const manifestJson = formData.get('manifest') as string;
+		const readme = formData.get('readme') as string;
+
+		try {
+			const manifest = JSON.parse(manifestJson);
+			validateManifest(manifest);
+			await writeManifest(database.local_path, manifest);
+			await writeReadme(database.local_path, readme);
+
+			return { success: true };
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			return fail(400, { error: message });
+		}
+	}
 };

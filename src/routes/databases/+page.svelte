@@ -135,10 +135,10 @@
 									{row.name}
 								</div>
 								{#if row.is_private}
-									<Badge variant="warning" icon={Lock} mono>Private</Badge>
+									<Badge variant="neutral" icon={Lock} mono>Private</Badge>
 								{/if}
 								{#if row.personal_access_token}
-									<Badge variant="success" icon={Code} mono>Dev</Badge>
+									<Badge variant="info" icon={Code} mono>Dev</Badge>
 								{/if}
 							</div>
 						</div>

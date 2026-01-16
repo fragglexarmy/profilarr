@@ -3,6 +3,8 @@
  * Handles reading and validating pcd.json files
  */
 
+import { logger } from '$logger/logger.ts';
+
 export interface Manifest {
 	name: string;
 	version: string;
@@ -149,4 +151,17 @@ export async function loadManifest(pcdPath: string): Promise<Manifest> {
 	const manifest = await readManifest(pcdPath);
 	validateManifest(manifest);
 	return manifest;
+}
+
+/**
+ * Write manifest to a PCD repository
+ */
+export async function writeManifest(pcdPath: string, manifest: Manifest): Promise<void> {
+	validateManifest(manifest);
+	const manifestPath = `${pcdPath}/pcd.json`;
+	await Deno.writeTextFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+	await logger.info(`Wrote manifest: ${manifest.name}`, {
+		source: 'PCDManifest',
+		meta: { path: pcdPath, manifest }
+	});
 }

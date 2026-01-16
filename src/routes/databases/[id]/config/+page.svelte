@@ -1,19 +1,42 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { onMount, onDestroy } from 'svelte';
+	import { enhance } from '$app/forms';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import KeyValueList from '$ui/form/KeyValueList.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
+	import {
+		isDirty,
+		initEdit,
+		update as dirtyUpdate,
+		resetFromServer,
+		clear as clearDirty
+	} from '$lib/client/stores/dirty';
 
 	export let data: PageData;
 
 	let manifest = data.manifest;
 	let readme = data.readmeRaw ?? '';
+	let saving = false;
 
-	function update<K extends keyof NonNullable<typeof manifest>>(key: K, value: NonNullable<typeof manifest>[K]) {
+	// Initialize dirty tracking
+	onMount(() => {
+		if (manifest) {
+			initEdit({ manifest, readme });
+		}
+	});
+
+	onDestroy(() => {
+		clearDirty();
+	});
+
+	function updateManifest<K extends keyof NonNullable<typeof manifest>>(key: K, value: NonNullable<typeof manifest>[K]) {
 		if (!manifest) return;
 		manifest = { ...manifest, [key]: value };
+		dirtyUpdate('manifest', manifest);
 	}
 
 	function updateProfilarr(key: 'minimum_version', value: string) {
@@ -22,6 +45,12 @@
 			...manifest,
 			profilarr: { ...manifest.profilarr, [key]: value }
 		};
+		dirtyUpdate('manifest', manifest);
+	}
+
+	function updateReadme(value: string) {
+		readme = value;
+		dirtyUpdate('readme', readme);
 	}
 
 	function parseVersion(v: string): [number, number, number] {
@@ -43,7 +72,26 @@
 	<title>Config - {data.database.name} - Profilarr</title>
 </svelte:head>
 
-<div class="mt-6">
+<form
+	method="POST"
+	action="?/save"
+	use:enhance={() => {
+		saving = true;
+		return async ({ result }) => {
+			saving = false;
+			if (result.type === 'success') {
+				alertStore.add('success', 'Config saved successfully');
+				resetFromServer({ manifest, readme });
+			} else if (result.type === 'failure') {
+				alertStore.add('error', (result.data as { error?: string })?.error || 'Failed to save config');
+			}
+		};
+	}}
+	class="mt-6"
+>
+	<input type="hidden" name="manifest" value={JSON.stringify(manifest)} />
+	<input type="hidden" name="readme" value={readme} />
+
 		{#if manifest}
 			<div class="space-y-5">
 				<!-- Name -->
@@ -58,7 +106,7 @@
 						type="text"
 						id="name"
 						value={manifest.name}
-						oninput={(e) => update('name', (e.target as HTMLInputElement).value)}
+						oninput={(e) => updateManifest('name', (e.target as HTMLInputElement).value)}
 						placeholder="my-database"
 						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
@@ -76,7 +124,7 @@
 						type="text"
 						id="description"
 						value={manifest.description}
-						oninput={(e) => update('description', (e.target as HTMLInputElement).value)}
+						oninput={(e) => updateManifest('description', (e.target as HTMLInputElement).value)}
 						placeholder="My custom Arr configurations"
 						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
@@ -97,7 +145,7 @@
 								value={vMajor}
 								min={1}
 								font="mono"
-								onchange={(v) => update('version', updateVersionPart(manifest.version, 0, v))}
+								onchange={(v) => updateManifest('version', updateVersionPart(manifest.version, 0, v))}
 								onMinBlocked={() => alertStore.add('warning', 'Database version must be at least 1.0.0')}
 							/>
 						</div>
@@ -108,7 +156,7 @@
 								value={vMinor}
 								min={0}
 								font="mono"
-								onchange={(v) => update('version', updateVersionPart(manifest.version, 1, v))}
+								onchange={(v) => updateManifest('version', updateVersionPart(manifest.version, 1, v))}
 							/>
 						</div>
 						<span class="text-lg font-medium text-neutral-400 dark:text-neutral-500">.</span>
@@ -118,7 +166,7 @@
 								value={vPatch}
 								min={0}
 								font="mono"
-								onchange={(v) => update('version', updateVersionPart(manifest.version, 2, v))}
+								onchange={(v) => updateManifest('version', updateVersionPart(manifest.version, 2, v))}
 							/>
 						</div>
 					</div>
@@ -178,7 +226,7 @@
 						<TagInput
 							tags={manifest.arr_types ?? []}
 							placeholder="Add arr type (radarr, sonarr, etc.)"
-							onchange={(tags) => update('arr_types', tags)}
+							onchange={(tags) => updateManifest('arr_types', tags)}
 						/>
 					</div>
 				</div>
@@ -193,7 +241,7 @@
 						<TagInput
 							tags={manifest.tags ?? []}
 							placeholder="Add tags..."
-							onchange={(tags) => update('tags', tags)}
+							onchange={(tags) => updateManifest('tags', tags)}
 						/>
 					</div>
 				</div>
@@ -210,7 +258,7 @@
 						type="text"
 						id="license"
 						value={manifest.license ?? ''}
-						oninput={(e) => update('license', (e.target as HTMLInputElement).value || undefined)}
+						oninput={(e) => updateManifest('license', (e.target as HTMLInputElement).value || undefined)}
 						placeholder="MIT"
 						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
@@ -228,7 +276,7 @@
 						type="url"
 						id="repository"
 						value={manifest.repository ?? ''}
-						oninput={(e) => update('repository', (e.target as HTMLInputElement).value || undefined)}
+						oninput={(e) => updateManifest('repository', (e.target as HTMLInputElement).value || undefined)}
 						placeholder="https://github.com/user/repo"
 						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
@@ -244,7 +292,7 @@
 					valueType="version"
 					versionMinMajor={1}
 					value={manifest.dependencies ?? {}}
-					onchange={(v) => update('dependencies', v)}
+					onchange={(v) => updateManifest('dependencies', v)}
 					lockedFirst={{ key: 'https://github.com/Dictionarry-Hub/schema', value: '1.0.0', minMajor: 1 }}
 					onLockedEditAttempt={() => alertStore.add('warning', 'The schema package URL cannot be changed')}
 					onLockedDeleteAttempt={() => alertStore.add('warning', 'The schema dependency is required and cannot be removed')}
@@ -261,15 +309,28 @@
 					</p>
 					<div class="mt-1">
 						<MarkdownInput
-							bind:value={readme}
+							value={readme}
+							onchange={updateReadme}
 							placeholder="Write your README here..."
 							rows={12}
 							autoResize={false}
 						/>
 					</div>
 				</div>
+				<!-- Save Button -->
+				<div class="sticky bottom-0 -mx-6 border-t border-neutral-200 bg-neutral-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-900">
+					<button
+						type="submit"
+						disabled={!$isDirty || saving}
+						class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-600 dark:hover:bg-accent-500"
+					>
+						{saving ? 'Saving...' : 'Save Changes'}
+					</button>
+				</div>
 			</div>
 		{:else}
 			<p class="text-sm text-neutral-500 dark:text-neutral-400">No manifest found</p>
 		{/if}
-</div>
+</form>
+
+<DirtyModal />
