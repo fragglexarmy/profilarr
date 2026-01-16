@@ -12,6 +12,8 @@
 	export let disabled: boolean = false;
 	export let font: 'mono' | 'sans' | undefined = undefined;
 	export let onchange: ((value: number) => void) | undefined = undefined;
+	export let onMinBlocked: (() => void) | undefined = undefined;
+	export let onMaxBlocked: (() => void) | undefined = undefined;
 
 	$: fontClass = font === 'mono' ? 'font-mono' : font === 'sans' ? 'font-sans' : '';
 
@@ -22,12 +24,18 @@
 
 	// Increment/decrement handlers
 	function increment() {
-		if (max !== undefined && value >= max) return;
+		if (max !== undefined && value >= max) {
+			onMaxBlocked?.();
+			return;
+		}
 		updateValue(value + step);
 	}
 
 	function decrement() {
-		if (min !== undefined && value <= min) return;
+		if (min !== undefined && value <= min) {
+			onMinBlocked?.();
+			return;
+		}
 		updateValue(value - step);
 	}
 
@@ -72,7 +80,7 @@
 		<button
 			type="button"
 			on:click={increment}
-			disabled={disabled || (max !== undefined && value >= max)}
+			disabled={disabled}
 			class="flex h-4 w-6 items-center justify-center rounded-t border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
 		>
 			<ChevronUp size={12} />
@@ -80,7 +88,7 @@
 		<button
 			type="button"
 			on:click={decrement}
-			disabled={disabled || (min !== undefined && value <= min)}
+			disabled={disabled}
 			class="flex h-4 w-6 items-center justify-center rounded-b border border-t-0 border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
 		>
 			<ChevronDown size={12} />

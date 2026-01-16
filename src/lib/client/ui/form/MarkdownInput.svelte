@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Bold, Italic, List, ListOrdered, Link, Code, Eye, Edit3 } from 'lucide-svelte';
+	import { marked } from 'marked';
 	import { onMount } from 'svelte';
 
 	// Props
@@ -140,35 +141,10 @@
 		}
 	}
 
-	// Simple markdown to HTML renderer for preview
+	// Markdown to HTML renderer for preview using marked
 	function renderMarkdown(text: string): string {
 		if (!text) return '<p class="text-neutral-400 dark:text-neutral-500 italic">Nothing to preview</p>';
-
-		let html = text
-			// Escape HTML
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			// Bold
-			.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-			// Italic
-			.replace(/\*(.+?)\*/g, '<em>$1</em>')
-			// Inline code
-			.replace(/`(.+?)`/g, '<code class="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-sm font-mono">$1</code>')
-			// Links
-			.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-accent-600 dark:text-accent-400 underline" target="_blank" rel="noopener">$1</a>')
-			// Escaped newlines (literal \n)
-			.replace(/\\n/g, '\n')
-			// Line breaks
-			.replace(/\n/g, '<br>');
-
-		// Unordered lists
-		html = html.replace(/(?:^|<br>)- (.+?)(?=<br>|$)/g, '<li class="ml-4 list-disc">$1</li>');
-
-		// Ordered lists
-		html = html.replace(/(?:^|<br>)\d+\. (.+?)(?=<br>|$)/g, '<li class="ml-4 list-decimal">$1</li>');
-
-		return html;
+		return marked.parse(text) as string;
 	}
 
 	const toolbarButtons = [
@@ -254,7 +230,7 @@
 		{#if showPreview && markdown}
 			<!-- Preview -->
 			<div
-				class="rounded-b-lg border border-neutral-300 bg-white px-3 py-2 text-sm leading-loose text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+				class="prose prose-sm max-w-none rounded-b-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
 				style="min-height: {minRows * 1.5}rem"
 			>
 				{@html renderMarkdown(value)}
@@ -272,7 +248,7 @@
 				{required}
 				oninput={handleInput}
 				onkeydown={handleKeydown}
-				class="{markdown ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} {autoResize ? 'resize-none overflow-hidden' : ''} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm leading-loose text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+				class="{markdown ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} {autoResize ? 'resize-none overflow-hidden' : ''} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
 			></textarea>
 		{:else}
 			<!-- Single-line input -->
