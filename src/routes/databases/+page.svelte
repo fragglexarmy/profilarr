@@ -23,7 +23,14 @@
 	const searchStore = createSearchStore();
 
 	// Filter databases based on search
-	$: filteredDatabases = searchStore.filterItems(data.databases, ['name', 'repository_url']);
+	$: filteredDatabases = data.databases.filter((db) => {
+		const query = $searchStore.query.toLowerCase();
+		if (!query) return true;
+		return (
+			db.name.toLowerCase().includes(query) ||
+			db.repository_url.toLowerCase().includes(query)
+		);
+	});
 
 	// Modal state
 	let showUnlinkModal = false;

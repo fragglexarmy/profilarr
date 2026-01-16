@@ -23,7 +23,15 @@
 	const searchStore = createSearchStore();
 
 	// Filter instances based on search
-	$: filteredInstances = searchStore.filterItems(data.instances, ['name', 'url', 'type']);
+	$: filteredInstances = data.instances.filter((instance) => {
+		const query = $searchStore.query.toLowerCase();
+		if (!query) return true;
+		return (
+			instance.name.toLowerCase().includes(query) ||
+			instance.url.toLowerCase().includes(query) ||
+			instance.type.toLowerCase().includes(query)
+		);
+	});
 
 	// Modal state
 	let showDeleteModal = false;
