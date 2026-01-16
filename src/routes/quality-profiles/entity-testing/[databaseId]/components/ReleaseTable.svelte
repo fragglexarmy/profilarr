@@ -3,10 +3,14 @@
 	import { Plus, Trash2, Pencil, HardDrive, Tag, Users, Bookmark, Earth, Layers } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
+	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { Column } from '$ui/table/types';
-	import type { TestRelease, ReleaseEvaluation, ProfileCfScores, CustomFormatInfo } from './types';
+	import type { TestRelease, ProfileCfScores, CustomFormatInfo } from './types';
+	import type { components } from '$api/v1.d.ts';
+
+	type ReleaseEvaluation = components['schemas']['ReleaseEvaluation'];
 
 	export let entityId: number;
 	export let entityType: 'movie' | 'series';
@@ -161,14 +165,13 @@
 			<svelte:fragment slot="actions" let:row={release}>
 				{@const releaseFormId = `delete-release-form-${release.id}`}
 				<div class="flex items-center gap-1">
-					<button
-						type="button"
-						on:click={() => dispatch('edit', { entityId, release })}
-						class="rounded p-1 text-neutral-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+					<TableActionButton
+						icon={Pencil}
 						title="Edit release"
-					>
-						<Pencil size={14} />
-					</button>
+						variant="accent"
+						size="sm"
+						on:click={() => dispatch('edit', { entityId, release })}
+					/>
 					<form
 						id={releaseFormId}
 						method="POST"
@@ -189,17 +192,16 @@
 					>
 						<input type="hidden" name="releaseId" value={release.id} />
 						<input type="hidden" name="layer" value={deleteLayer} />
-						<button
-							type="button"
+						<TableActionButton
+							icon={Trash2}
+							title="Delete release"
+							variant="danger"
+							size="sm"
 							on:click={() => {
 								const form = document.getElementById(releaseFormId) as HTMLFormElement;
 								dispatch('confirmDelete', { release, formRef: form });
 							}}
-							class="rounded p-1 text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-							title="Delete release"
-						>
-							<Trash2 size={14} />
-						</button>
+						/>
 					</form>
 				</div>
 			</svelte:fragment>

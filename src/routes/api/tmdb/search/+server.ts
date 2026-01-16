@@ -31,7 +31,8 @@ export const GET: RequestHandler = async ({ url }) => {
 					overview: m.overview,
 					posterPath: m.poster_path,
 					releaseDate: m.release_date,
-					voteAverage: m.vote_average
+					voteAverage: m.vote_average,
+					popularity: m.popularity
 				})),
 				totalPages: result.total_pages,
 				totalResults: result.total_results,
@@ -47,7 +48,8 @@ export const GET: RequestHandler = async ({ url }) => {
 					overview: t.overview,
 					posterPath: t.poster_path,
 					releaseDate: t.first_air_date,
-					voteAverage: t.vote_average
+					voteAverage: t.vote_average,
+					popularity: t.popularity
 				})),
 				totalPages: result.total_pages,
 				totalResults: result.total_results,
@@ -68,7 +70,8 @@ export const GET: RequestHandler = async ({ url }) => {
 					overview: m.overview,
 					posterPath: m.poster_path,
 					releaseDate: m.release_date,
-					voteAverage: m.vote_average
+					voteAverage: m.vote_average,
+					popularity: m.popularity
 				})),
 				...tvShows.results.map((t) => ({
 					id: t.id,
@@ -77,9 +80,10 @@ export const GET: RequestHandler = async ({ url }) => {
 					overview: t.overview,
 					posterPath: t.poster_path,
 					releaseDate: t.first_air_date,
-					voteAverage: t.vote_average
+					voteAverage: t.vote_average,
+					popularity: t.popularity
 				}))
-			].sort((a, b) => b.voteAverage - a.voteAverage);
+			].sort((a, b) => b.popularity - a.popularity);
 
 			return json({
 				results: combined,

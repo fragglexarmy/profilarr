@@ -14,18 +14,58 @@ servers:
 tags:
   - name: System
     description: System health and status endpoints
+  - name: Entity Testing
+    description: Release parsing and custom format evaluation
+  - name: Arr
+    description: Arr instance library and release endpoints
 
 paths:
   /health:
     $ref: './paths/system.yaml#/health'
   /openapi.json:
     $ref: './paths/system.yaml#/openapi'
+  /entity-testing/evaluate:
+    $ref: './paths/entity-testing.yaml#/evaluate'
+  /arr/library:
+    $ref: './paths/arr.yaml#/library'
+  /arr/releases:
+    $ref: './paths/arr.yaml#/releases'
 
 components:
   schemas:
+    # Common
     ComponentStatus:
       $ref: './schemas/common.yaml#/ComponentStatus'
     HealthStatus:
       $ref: './schemas/common.yaml#/HealthStatus'
+    # Health
     HealthResponse:
       $ref: './schemas/health.yaml#/HealthResponse'
+    # Entity Testing
+    MediaType:
+      $ref: './schemas/entity-testing.yaml#/MediaType'
+    ParsedInfo:
+      $ref: './schemas/entity-testing.yaml#/ParsedInfo'
+    ReleaseInput:
+      $ref: './schemas/entity-testing.yaml#/ReleaseInput'
+    ReleaseEvaluation:
+      $ref: './schemas/entity-testing.yaml#/ReleaseEvaluation'
+    EvaluateRequest:
+      $ref: './schemas/entity-testing.yaml#/EvaluateRequest'
+    EvaluateResponse:
+      $ref: './schemas/entity-testing.yaml#/EvaluateResponse'
+    # Arr
+    ArrType:
+      $ref: './schemas/arr.yaml#/ArrType'
+    LibraryMovieItem:
+      $ref: './schemas/arr.yaml#/LibraryMovieItem'
+    LibrarySeriesItem:
+      $ref: './schemas/arr.yaml#/LibrarySeriesItem'
+    LibraryResponse:
+      $ref: './schemas/arr.yaml#/LibraryResponse'
+    GroupedRelease:
+      $ref: './schemas/arr.yaml#/GroupedRelease'
+    ReleasesResponse:
+      $ref: './schemas/arr.yaml#/ReleasesResponse'
+    ErrorResponse:
+      $ref: './schemas/arr.yaml#/ErrorResponse'

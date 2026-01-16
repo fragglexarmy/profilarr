@@ -4,6 +4,7 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import JsonView from '$ui/meta/JsonView.svelte';
 	import Table from '$ui/table/Table.svelte';
+	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import type { Column } from '$ui/table/types';
 	import LogsActionsBar from './components/LogsActionsBar.svelte';
 	import { createSearchStore } from '$lib/client/stores/search';
@@ -194,23 +195,17 @@
 	<Table data={filteredLogs} {columns} emptyMessage="No logs found" hoverable={true} compact={true} initialSort={{ key: 'timestamp', direction: 'asc' }}>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
-				<button
-					type="button"
-					on:click={() => copyLog(row)}
-					class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+				<TableActionButton
+					icon={Copy}
 					title="Copy log entry"
-				>
-					<Copy size={14} />
-				</button>
+					on:click={() => copyLog(row)}
+				/>
 				{#if row.meta}
-					<button
-						type="button"
-						on:click={() => viewMeta(row.meta)}
-						class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+					<TableActionButton
+						icon={Eye}
 						title="View metadata"
-					>
-						<Eye size={14} />
-					</button>
+						on:click={() => viewMeta(row.meta)}
+					/>
 				{/if}
 			</div>
 		</svelte:fragment>

@@ -49,6 +49,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/entity-testing/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate releases against custom formats
+         * @description Parses release titles and evaluates them against all custom formats in the specified database.
+         *
+         *     This endpoint:
+         *     - Parses each release title to extract metadata (resolution, source, languages, etc.)
+         *     - Matches regex patterns using .NET-compatible regex via the parser service
+         *     - Evaluates each release against all custom formats in the database
+         *     - Returns which custom formats match each release
+         *
+         *     Results are cached for performance - repeated requests with the same titles will be faster.
+         */
+        post: operations["evaluateReleases"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/arr/library": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Arr instance library
+         * @description Fetches the movie or series library from an Arr instance.
+         *
+         *     Returns a simplified list suitable for selection/matching.
+         *     - For Radarr: Returns movies with id, title, year, and tmdbId
+         *     - For Sonarr: Returns series with id, title, year, tvdbId, and available seasons
+         */
+        get: operations["getLibrary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/arr/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search for releases
+         * @description Triggers an interactive search on an Arr instance and returns grouped/deduplicated results.
+         *
+         *     For Radarr: Searches for releases for the specified movie.
+         *     For Sonarr: Searches for season pack releases for the specified series and season.
+         *
+         *     Results are grouped by title, combining information from multiple indexers.
+         */
+        get: operations["getReleases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -81,6 +158,112 @@ export interface components {
                 backups: components["schemas"]["BackupsHealth"];
                 logs: components["schemas"]["LogsHealth"];
             };
+        };
+        /**
+         * @description Type of media
+         * @enum {string}
+         */
+        MediaType: "movie" | "series";
+        ParsedInfo: {
+            /** @description Detected source (e.g., bluray, webdl, webrip) */
+            source: string;
+            /** @description Detected resolution (e.g., 1080p, 2160p) */
+            resolution: string;
+            /** @description Quality modifier (e.g., remux, none) */
+            modifier: string;
+            /** @description Detected languages */
+            languages: string[];
+            /** @description Detected release group */
+            releaseGroup?: string | null;
+            /** @description Detected year */
+            year: number;
+            /** @description Detected edition (e.g., Director's Cut) */
+            edition?: string | null;
+            /** @description Release type for series (single_episode, season_pack, etc.) */
+            releaseType?: string | null;
+        };
+        ReleaseInput: {
+            /** @description Release ID */
+            id: number;
+            /** @description Release title to parse and evaluate */
+            title: string;
+            type: components["schemas"]["MediaType"];
+        };
+        ReleaseEvaluation: {
+            /** @description Release ID */
+            releaseId: number;
+            /** @description Release title */
+            title: string;
+            /** @description Parsed release info (null if parsing failed) */
+            parsed?: components["schemas"]["ParsedInfo"];
+            /** @description Map of custom format ID to whether it matches */
+            cfMatches: {
+                [key: string]: boolean;
+            };
+        };
+        EvaluateRequest: {
+            /** @description Database ID to use for custom format evaluation */
+            databaseId: number;
+            /** @description Releases to evaluate */
+            releases: components["schemas"]["ReleaseInput"][];
+        };
+        EvaluateResponse: {
+            /** @description Whether the parser service is available */
+            parserAvailable: boolean;
+            /** @description Evaluation results for each release */
+            evaluations: components["schemas"]["ReleaseEvaluation"][];
+        };
+        /**
+         * @description Type of Arr instance
+         * @enum {string}
+         */
+        ArrType: "radarr" | "sonarr";
+        LibraryMovieItem: {
+            /** @description Radarr movie ID */
+            id: number;
+            /** @description Movie title */
+            title: string;
+            /** @description Release year */
+            year: number;
+            /** @description TMDB ID */
+            tmdbId: number;
+        };
+        LibrarySeriesItem: {
+            /** @description Sonarr series ID */
+            id: number;
+            /** @description Series title */
+            title: string;
+            /** @description First air year */
+            year: number;
+            /** @description TVDB ID */
+            tvdbId: number;
+            /** @description Available season numbers (excludes specials) */
+            seasons: number[];
+        };
+        /** @description Library response varies by instance type */
+        LibraryResponse: components["schemas"]["LibraryRadarrResponse"] | components["schemas"]["LibrarySonarrResponse"];
+        GroupedRelease: {
+            /** @description Release title */
+            title: string;
+            /** @description Release size in bytes */
+            size: number;
+            /** @description Languages detected in the release */
+            languages: string[];
+            /** @description Indexers where this release was found */
+            indexers: string[];
+            /** @description Release flags (e.g., freeleech, internal) */
+            flags: string[];
+        };
+        ReleasesResponse: {
+            type: components["schemas"]["ArrType"];
+            /** @description Total number of raw releases before grouping */
+            rawCount: number;
+            /** @description Grouped and deduplicated releases */
+            releases: components["schemas"]["GroupedRelease"][];
+        };
+        ErrorResponse: {
+            /** @description Error message */
+            error: string;
         };
         DatabaseHealth: {
             status: components["schemas"]["ComponentStatus"];
@@ -148,6 +331,16 @@ export interface components {
             /** @description Additional status information */
             message?: string;
         };
+        LibraryRadarrResponse: {
+            /** @enum {string} */
+            type: "radarr";
+            items: components["schemas"]["LibraryMovieItem"][];
+        };
+        LibrarySonarrResponse: {
+            /** @enum {string} */
+            type: "sonarr";
+            items: components["schemas"]["LibrarySeriesItem"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -193,6 +386,148 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    evaluateReleases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvaluateRequest"];
+            };
+        };
+        responses: {
+            /** @description Evaluation results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluateResponse"];
+                };
+            };
+            /** @description Invalid request (missing databaseId or releases) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Database cache not available */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getLibrary: {
+        parameters: {
+            query: {
+                /** @description Arr instance ID */
+                instanceId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Library items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibraryResponse"];
+                };
+            };
+            /** @description Invalid or missing instanceId */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Instance not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed to fetch library */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getReleases: {
+        parameters: {
+            query: {
+                /** @description Arr instance ID */
+                instanceId: number;
+                /** @description Movie ID (Radarr) or Series ID (Sonarr) */
+                itemId: number;
+                /** @description Season number for Sonarr searches (defaults to 1) */
+                season?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Release search results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleasesResponse"];
+                };
+            };
+            /** @description Invalid or missing parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Instance not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed to fetch releases */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

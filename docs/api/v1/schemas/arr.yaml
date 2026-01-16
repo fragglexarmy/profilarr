@@ -1,0 +1,150 @@
+ArrType:
+  type: string
+  enum:
+    - radarr
+    - sonarr
+  description: Type of Arr instance
+
+# Library endpoint types
+LibraryMovieItem:
+  type: object
+  required:
+    - id
+    - title
+    - year
+    - tmdbId
+  properties:
+    id:
+      type: integer
+      description: Radarr movie ID
+    title:
+      type: string
+      description: Movie title
+    year:
+      type: integer
+      description: Release year
+    tmdbId:
+      type: integer
+      description: TMDB ID
+
+LibrarySeriesItem:
+  type: object
+  required:
+    - id
+    - title
+    - year
+    - tvdbId
+    - seasons
+  properties:
+    id:
+      type: integer
+      description: Sonarr series ID
+    title:
+      type: string
+      description: Series title
+    year:
+      type: integer
+      description: First air year
+    tvdbId:
+      type: integer
+      description: TVDB ID
+    seasons:
+      type: array
+      items:
+        type: integer
+      description: Available season numbers (excludes specials)
+
+LibraryRadarrResponse:
+  type: object
+  required:
+    - type
+    - items
+  properties:
+    type:
+      type: string
+      enum:
+        - radarr
+    items:
+      type: array
+      items:
+        $ref: '#/LibraryMovieItem'
+
+LibrarySonarrResponse:
+  type: object
+  required:
+    - type
+    - items
+  properties:
+    type:
+      type: string
+      enum:
+        - sonarr
+    items:
+      type: array
+      items:
+        $ref: '#/LibrarySeriesItem'
+
+LibraryResponse:
+  oneOf:
+    - $ref: '#/LibraryRadarrResponse'
+    - $ref: '#/LibrarySonarrResponse'
+  description: Library response varies by instance type
+
+# Releases endpoint types
+GroupedRelease:
+  type: object
+  required:
+    - title
+    - size
+    - languages
+    - indexers
+    - flags
+  properties:
+    title:
+      type: string
+      description: Release title
+    size:
+      type: integer
+      description: Release size in bytes
+    languages:
+      type: array
+      items:
+        type: string
+      description: Languages detected in the release
+    indexers:
+      type: array
+      items:
+        type: string
+      description: Indexers where this release was found
+    flags:
+      type: array
+      items:
+        type: string
+      description: Release flags (e.g., freeleech, internal)
+
+ReleasesResponse:
+  type: object
+  required:
+    - type
+    - rawCount
+    - releases
+  properties:
+    type:
+      $ref: '#/ArrType'
+    rawCount:
+      type: integer
+      description: Total number of raw releases before grouping
+    releases:
+      type: array
+      items:
+        $ref: '#/GroupedRelease'
+      description: Grouped and deduplicated releases
+
+ErrorResponse:
+  type: object
+  required:
+    - error
+  properties:
+    error:
+      type: string
+      description: Error message

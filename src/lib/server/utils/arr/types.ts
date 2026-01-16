@@ -157,6 +157,167 @@ export interface RadarrCommand {
 }
 
 // =============================================================================
+// Release Types (Interactive Search)
+// =============================================================================
+
+/**
+ * Release from /api/v3/release (Radarr)
+ * Returned by interactive search endpoint
+ */
+export interface RadarrRelease {
+	guid: string;
+	title: string;
+	size: number;
+	indexer: string;
+	indexerId: number;
+	languages: Array<{ id: number; name: string }>;
+	indexerFlags: string[]; // String array like ["G_Internal", "G_Freeleech"]
+	quality: {
+		quality: {
+			id: number;
+			name: string;
+			source: string;
+			resolution: number;
+			modifier: string;
+		};
+		revision?: {
+			version: number;
+			real: number;
+			isRepack: boolean;
+		};
+	};
+	customFormats: Array<{ id: number; name: string }>;
+	customFormatScore: number;
+	releaseGroup: string | null;
+	seeders: number | null;
+	leechers: number | null;
+	protocol: 'torrent' | 'usenet' | 'unknown';
+	age: number;
+	ageHours: number;
+	ageMinutes: number;
+	approved: boolean;
+	temporarilyRejected: boolean;
+	rejected: boolean;
+	rejections: string[];
+	publishDate: string;
+	downloadUrl: string | null;
+	infoUrl: string | null;
+	magnetUrl: string | null;
+	infoHash: string | null;
+}
+
+// =============================================================================
+// Sonarr Types
+// =============================================================================
+
+/**
+ * Season statistics from /api/v3/series
+ */
+export interface SonarrSeasonStatistics {
+	previousAiring?: string;
+	nextAiring?: string;
+	episodeFileCount: number;
+	episodeCount: number;
+	totalEpisodeCount: number;
+	sizeOnDisk: number;
+	releaseGroups: string[];
+	percentOfEpisodes: number;
+}
+
+/**
+ * Season from /api/v3/series
+ */
+export interface SonarrSeason {
+	seasonNumber: number;
+	monitored: boolean;
+	statistics: SonarrSeasonStatistics;
+}
+
+/**
+ * Series from /api/v3/series
+ */
+export interface SonarrSeries {
+	id: number;
+	title: string;
+	sortTitle?: string;
+	tvdbId?: number;
+	imdbId?: string;
+	overview?: string;
+	path?: string;
+	qualityProfileId: number;
+	seasonFolder?: boolean;
+	monitored: boolean;
+	status?: string;
+	year?: number;
+	seasons: SonarrSeason[];
+	images?: Array<{ coverType: string; url: string; remoteUrl?: string }>;
+	genres?: string[];
+	tags?: number[];
+	added?: string;
+	statistics?: {
+		seasonCount: number;
+		episodeFileCount: number;
+		episodeCount: number;
+		totalEpisodeCount: number;
+		sizeOnDisk: number;
+		percentOfEpisodes: number;
+	};
+}
+
+/**
+ * Release from /api/v3/release (Sonarr)
+ * Returned by interactive search endpoint
+ */
+export interface SonarrRelease {
+	guid: string;
+	title: string;
+	size: number;
+	indexer: string;
+	indexerId: number;
+	languages: Array<{ id: number; name: string }>;
+	indexerFlags: number; // Integer bitmask
+	fullSeason: boolean;
+	seasonNumber: number;
+	seriesTitle: string;
+	episodeNumbers: number[];
+	absoluteEpisodeNumbers: number[];
+	mappedSeasonNumber: number | null;
+	mappedEpisodeNumbers: number[] | null;
+	mappedSeriesId: number | null;
+	quality: {
+		quality: {
+			id: number;
+			name: string;
+			source: string;
+			resolution: number;
+		};
+		revision?: {
+			version: number;
+			real: number;
+			isRepack: boolean;
+		};
+	};
+	customFormats: Array<{ id: number; name: string }>;
+	customFormatScore: number;
+	releaseGroup: string | null;
+	seeders: number | null;
+	leechers: number | null;
+	protocol: 'torrent' | 'usenet' | 'unknown';
+	age: number;
+	ageHours: number;
+	ageMinutes: number;
+	approved: boolean;
+	temporarilyRejected: boolean;
+	rejected: boolean;
+	rejections: string[];
+	publishDate: string;
+	downloadUrl: string | null;
+	infoUrl: string | null;
+	magnetUrl: string | null;
+	infoHash: string | null;
+}
+
+// =============================================================================
 // Library View Types (computed/joined data)
 // =============================================================================
 

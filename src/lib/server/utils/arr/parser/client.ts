@@ -6,6 +6,7 @@
 import { config } from '$config';
 import { logger } from '$logger/logger.ts';
 import { parsedReleaseCacheQueries } from '$db/queries/parsedReleaseCache.ts';
+import { patternMatchCacheQueries } from '$db/queries/patternMatchCache.ts';
 import {
 	QualitySource,
 	QualityModifier,
@@ -355,4 +356,140 @@ export async function matchPatterns(
 		});
 		return null;
 	}
+}
+
+/**
+ * Compute a hash of patterns for cache invalidation
+ * Uses Web Crypto API (built into Deno)
+ */
+async function hashPatterns(patterns: string[]): Promise<string> {
+	const sorted = [...patterns].sort();
+	const data = new TextEncoder().encode(sorted.join('\n'));
+	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+
+/**
+ * Fetch pattern matches from parser service (no caching)
+ */
+async function fetchPatternMatches(
+	texts: string[],
+	patterns: string[]
+): Promise<Map<string, Map<string, boolean>> | null> {
+	try {
+		const res = await fetch(`${config.parserUrl}/match/batch`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ texts, patterns })
+		});
+
+		if (!res.ok) {
+			await logger.warn('Batch pattern match request failed', {
+				source: 'ParserClient',
+				meta: { status: res.status }
+			});
+			return null;
+		}
+
+		const data: { results: Record<string, Record<string, boolean>> } = await res.json();
+
+		const result = new Map<string, Map<string, boolean>>();
+		for (const [text, patternResults] of Object.entries(data.results)) {
+			result.set(text, new Map(Object.entries(patternResults)));
+		}
+		return result;
+	} catch (err) {
+		await logger.warn('Failed to connect to parser for batch pattern matching', {
+			source: 'ParserClient',
+			meta: { error: err instanceof Error ? err.message : 'Unknown error' }
+		});
+		return null;
+	}
+}
+
+/**
+ * Match multiple texts against patterns in a single request with caching
+ * Results are cached keyed by title + patterns hash
+ * Cache automatically invalidates when patterns change
+ *
+ * @param texts - Array of texts to match (e.g., release titles)
+ * @param patterns - Array of regex patterns to test
+ * @returns Map of text -> (pattern -> matched), or null if parser unavailable
+ */
+export async function matchPatternsBatch(
+	texts: string[],
+	patterns: string[]
+): Promise<Map<string, Map<string, boolean>> | null> {
+	if (texts.length === 0 || patterns.length === 0) {
+		return new Map();
+	}
+
+	// Compute hash of patterns for cache key
+	const patternsHash = await hashPatterns(patterns);
+
+	// Check cache for existing results
+	const cachedResults = patternMatchCacheQueries.getBatch(texts, patternsHash);
+	const results = new Map<string, Map<string, boolean>>();
+	const uncachedTexts: string[] = [];
+
+	for (const text of texts) {
+		const cached = cachedResults.get(text);
+		if (cached) {
+			// Parse cached JSON back to Map
+			const parsed = JSON.parse(cached) as Record<string, boolean>;
+			results.set(text, new Map(Object.entries(parsed)));
+		} else {
+			uncachedTexts.push(text);
+		}
+	}
+
+	const cacheHits = texts.length - uncachedTexts.length;
+
+	// If all cached, return immediately
+	if (uncachedTexts.length === 0) {
+		await logger.debug(`Pattern match: ${texts.length} cache hits, 0 computed`, {
+			source: 'PatternMatchCache',
+			meta: { total: texts.length, cacheHits, patternsHash }
+		});
+		return results;
+	}
+
+	// Fetch uncached results from parser
+	const fetchedResults = await fetchPatternMatches(uncachedTexts, patterns);
+	if (!fetchedResults) {
+		// Parser unavailable - return partial results if any
+		if (cacheHits > 0) {
+			await logger.debug(`Pattern match: ${cacheHits} cache hits, parser unavailable for ${uncachedTexts.length}`, {
+				source: 'PatternMatchCache',
+				meta: { total: texts.length, cacheHits, uncached: uncachedTexts.length }
+			});
+			return results;
+		}
+		return null;
+	}
+
+	// Store new results in cache and add to return map
+	const toCache: Array<{ title: string; matchResults: string }> = [];
+	for (const [text, patternMatches] of fetchedResults) {
+		results.set(text, patternMatches);
+		// Convert Map to object for JSON storage
+		const obj: Record<string, boolean> = {};
+		for (const [pattern, matched] of patternMatches) {
+			obj[pattern] = matched;
+		}
+		toCache.push({ title: text, matchResults: JSON.stringify(obj) });
+	}
+
+	// Batch insert into cache
+	if (toCache.length > 0) {
+		patternMatchCacheQueries.setBatch(toCache, patternsHash);
+	}
+
+	await logger.debug(`Pattern match: ${cacheHits} cache hits, ${uncachedTexts.length} computed`, {
+		source: 'PatternMatchCache',
+		meta: { total: texts.length, cacheHits, computed: uncachedTexts.length, patternsHash }
+	});
+
+	return results;
 }

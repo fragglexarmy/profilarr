@@ -75,6 +75,54 @@ The UI lets users:
 - **Settings** — Notifications (Discord/Slack/Email), backups, logging, theming,
   and background job management.
 
+- **Test quality profiles** — Validate how custom formats score against real
+  release titles. Add test entities (movies/series from TMDB), attach release
+  titles, and see which formats match and how they score.
+
+#### Entity Testing
+
+Entity testing lets users validate quality profiles before syncing to Arr
+instances. The workflow:
+
+1. Add test entities (movies or TV series) via TMDB search
+2. Attach release titles to each entity—either manually or by importing from a
+   connected Arr instance
+3. Select a quality profile to see how each release would score
+4. Expand releases to see parsed metadata and which custom formats matched
+
+**Architecture:**
+
+- **Lazy evaluation** — Release parsing and CF evaluation happen on-demand when
+  an entity row is expanded, not on page load. This keeps the page fast even
+  with many entities/releases.
+- **Parser service** — Release titles are parsed by the C# parser microservice
+  to extract metadata (resolution, source, languages, release group, etc.).
+  Pattern matching uses .NET-compatible regex for accuracy with Arr behavior.
+- **Caching** — Both parsed results and pattern match results are cached in
+  SQLite. Cache keys include parser version (for parse cache) or pattern hash
+  (for match cache) to auto-invalidate when things change.
+
+**API Endpoints:**
+
+- `POST /api/v1/entity-testing/evaluate` — Parses releases and evaluates them
+  against all custom formats. Returns which CFs matched each release.
+- `GET /api/v1/arr/library` — Fetches movie/series library from an Arr instance
+  for release import.
+- `GET /api/v1/arr/releases` — Triggers interactive search on an Arr instance
+  and returns grouped/deduplicated releases.
+
+See `docs/todo/1.automatic-entity-release-add.md` for detailed API research and
+the release import implementation plan.
+
+**Key Files:**
+
+- `src/routes/quality-profiles/entity-testing/` — Page and components
+- `src/routes/api/v1/entity-testing/evaluate/+server.ts` — Evaluation endpoint
+- `src/routes/api/v1/arr/library/+server.ts` — Library fetch endpoint
+- `src/routes/api/v1/arr/releases/+server.ts` — Release search endpoint
+- `src/lib/server/pcd/queries/customFormats/evaluator.ts` — CF evaluation logic
+- `src/lib/server/utils/arr/parser/client.ts` — Parser client with caching
+
 #### Routes, Not Modals
 
 Prefer routes over modals. Modals should only be used for things requiring

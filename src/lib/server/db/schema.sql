@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2025-12-29
+-- Last updated: 2026-01-16
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -44,7 +44,7 @@ CREATE TABLE arr_instances (
 -- ==============================================================================
 -- TABLE: log_settings
 -- Purpose: Store configurable logging settings (singleton pattern with id=1)
--- Migration: 003_create_log_settings.ts, 006_simplify_log_settings.ts
+-- Migration: 003_create_log_settings.ts, 006_simplify_log_settings.ts, 019_default_log_level_debug.ts
 -- ==============================================================================
 
 CREATE TABLE log_settings (
@@ -53,8 +53,8 @@ CREATE TABLE log_settings (
     -- Retention
     retention_days INTEGER NOT NULL DEFAULT 30,
 
-    -- Log Level
-    min_level TEXT NOT NULL DEFAULT 'INFO' CHECK (min_level IN ('DEBUG', 'INFO', 'WARN', 'ERROR')),
+    -- Log Level (default changed to DEBUG in migration 019)
+    min_level TEXT NOT NULL DEFAULT 'DEBUG' CHECK (min_level IN ('DEBUG', 'INFO', 'WARN', 'ERROR')),
 
     -- Enable/Disable
     enabled INTEGER NOT NULL DEFAULT 1,
@@ -304,6 +304,7 @@ CREATE TABLE arr_sync_quality_profiles_config (
     trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
     cron TEXT,                                  -- Cron expression for schedule trigger
     should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
 );
 
@@ -332,6 +333,7 @@ CREATE TABLE arr_sync_delay_profiles_config (
     trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
     cron TEXT,                                  -- Cron expression for schedule trigger
     should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
 );
 
@@ -349,6 +351,7 @@ CREATE TABLE arr_sync_media_management (
     trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
     cron TEXT,                                  -- Cron expression for schedule trigger
     should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
 );
 
@@ -395,3 +398,66 @@ CREATE TABLE regex101_cache (
     response TEXT NOT NULL,                 -- Full JSON response with test results
     fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ==============================================================================
+-- TABLE: app_info
+-- Purpose: Store application metadata (singleton pattern with id=1)
+-- Migration: 018_create_app_info.ts
+-- ==============================================================================
+
+CREATE TABLE app_info (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    version TEXT NOT NULL,                  -- Application version (e.g., "2.0.0")
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: tmdb_settings
+-- Purpose: Store TMDB API configuration (singleton pattern with id=1)
+-- Migration: 020_create_tmdb_settings.ts
+-- ==============================================================================
+
+CREATE TABLE tmdb_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+
+    -- TMDB Configuration
+    api_key TEXT NOT NULL DEFAULT '',       -- TMDB API key for authentication
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: parsed_release_cache
+-- Purpose: Cache parsed release titles from parser microservice
+-- Migration: 021_create_parsed_release_cache.ts
+-- ==============================================================================
+
+CREATE TABLE parsed_release_cache (
+    cache_key TEXT PRIMARY KEY,             -- "{title}:{type}" e.g. "Movie.2024.1080p.WEB-DL:movie"
+    parser_version TEXT NOT NULL,           -- Parser version when cached (for invalidation)
+    parsed_result TEXT NOT NULL,            -- Full JSON ParseResult from parser
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_parsed_release_cache_version ON parsed_release_cache(parser_version);
+CREATE INDEX idx_parsed_release_cache_created_at ON parsed_release_cache(created_at);
+
+-- ==============================================================================
+-- TABLE: pattern_match_cache
+-- Purpose: Cache regex pattern match results to avoid redundant computation
+-- Migration: 023_create_pattern_match_cache.ts
+-- ==============================================================================
+
+CREATE TABLE pattern_match_cache (
+    title TEXT NOT NULL,                    -- Release title being matched
+    patterns_hash TEXT NOT NULL,            -- Hash of all patterns (for invalidation)
+    match_results TEXT NOT NULL,            -- JSON object: { pattern: boolean }
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (title, patterns_hash)
+);
+
+CREATE INDEX idx_pattern_match_cache_hash ON pattern_match_cache(patterns_hash);
+CREATE INDEX idx_pattern_match_cache_created_at ON pattern_match_cache(created_at);

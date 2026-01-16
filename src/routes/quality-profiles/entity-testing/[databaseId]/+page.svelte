@@ -12,13 +12,34 @@
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import AddEntityModal from './components/AddEntityModal.svelte';
 	import ReleaseModal from './components/ReleaseModal.svelte';
+	import ImportReleasesModal from './components/ImportReleasesModal.svelte';
 	import EntityTable from './components/EntityTable.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { PageData } from './$types';
 	import type { TestEntity, TestRelease } from './components/types';
+	import type { components } from '$api/v1.d.ts';
+
+	type EvaluateResponse = components['schemas']['EvaluateResponse'];
+	type ReleaseEvaluation = components['schemas']['ReleaseEvaluation'];
+	type MediaType = components['schemas']['MediaType'];
 
 	export let data: PageData;
+
+	// Local state for evaluations (fetched lazily on expand)
+	// Keyed by releaseId for quick lookup
+	let evaluations: Record<number, ReleaseEvaluation> = {};
+	let loadingEntityIds = new Set<number>();
+	let fetchedEntityIds = new Set<number>();
+	let expandedRows = new Set<number>();
+
+	// Reset state when database changes
+	$: if (data.currentDatabase) {
+		evaluations = {};
+		loadingEntityIds = new Set();
+		fetchedEntityIds = new Set();
+		expandedRows = new Set();
+	}
 
 	// Show warning if parser is unavailable
 	onMount(() => {
@@ -50,12 +71,69 @@
 	// Quality profile selection
 	let selectedProfileId: number | null = null;
 
+	// Fetch evaluations for an entity's releases
+	async function fetchEvaluations(entity: TestEntity) {
+		if (fetchedEntityIds.has(entity.id) || loadingEntityIds.has(entity.id)) {
+			return; // Already fetched or in progress
+		}
+
+		if (entity.releases.length === 0) {
+			fetchedEntityIds.add(entity.id);
+			fetchedEntityIds = fetchedEntityIds;
+			return;
+		}
+
+		loadingEntityIds.add(entity.id);
+		loadingEntityIds = loadingEntityIds;
+
+		try {
+			const response = await fetch('/api/v1/entity-testing/evaluate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					databaseId: data.currentDatabase.id,
+					releases: entity.releases.map(r => ({
+						id: r.id,
+						title: r.title,
+						type: entity.type
+					}))
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to fetch evaluations');
+			}
+
+			const result: EvaluateResponse = await response.json();
+
+			// Merge evaluations into local state
+			for (const evaluation of result.evaluations) {
+				evaluations[evaluation.releaseId] = evaluation;
+			}
+			evaluations = evaluations; // Trigger reactivity
+
+			fetchedEntityIds.add(entity.id);
+			fetchedEntityIds = fetchedEntityIds;
+		} catch (err) {
+			console.error('Failed to fetch evaluations:', err);
+			alertStore.add('error', 'Failed to evaluate releases');
+		} finally {
+			loadingEntityIds.delete(entity.id);
+			loadingEntityIds = loadingEntityIds;
+		}
+	}
+
+	// Handle entity expansion
+	function handleExpand(e: CustomEvent<{ entity: TestEntity }>) {
+		fetchEvaluations(e.detail.entity);
+	}
+
 	// Calculate score for a release based on selected profile
 	// Reactive so it updates when selectedProfileId changes
 	$: calculateScore = (releaseId: number, entityType: 'movie' | 'series'): number | null => {
 		if (!selectedProfileId) return null;
 
-		const evaluation = data.evaluations[releaseId];
+		const evaluation = evaluations[releaseId];
 		if (!evaluation || !evaluation.cfMatches) return null;
 
 		const profileScores = data.cfScoresData.profiles.find((p) => p.profileId === selectedProfileId);
@@ -102,6 +180,10 @@
 	let showDeleteReleaseModal = false;
 	let releaseToDelete: TestRelease | null = null;
 	let deleteReleaseFormRef: HTMLFormElement | null = null;
+
+	// Import releases modal state
+	let showImportModal = false;
+	let importEntity: TestEntity | null = null;
 
 	// Layer selection for delete operations
 	let deleteLayer: 'user' | 'base' = 'user';
@@ -260,6 +342,12 @@
 		releaseToDelete = null;
 		deleteReleaseFormRef = null;
 	}
+
+	// Import releases handler
+	function handleImportReleases(e: CustomEvent<{ entity: TestEntity }>) {
+		importEntity = e.detail.entity;
+		showImportModal = true;
+	}
 </script>
 
 <svelte:head>
@@ -338,14 +426,18 @@
 		{:else}
 			<EntityTable
 				entities={typeFilteredEntities}
-				evaluations={data.evaluations}
+				{evaluations}
+				{loadingEntityIds}
 				{selectedProfileId}
 				cfScoresData={data.cfScoresData}
 				{calculateScore}
 				{deleteLayer}
 				deleteReleaseLayer={deleteReleaseLayer}
+				bind:expandedRows
+				on:expand={handleExpand}
 				on:confirmDelete={handleConfirmDelete}
 				on:addRelease={handleAddRelease}
+				on:importReleases={handleImportReleases}
 				on:editRelease={handleEditRelease}
 				on:confirmDeleteRelease={handleConfirmDeleteRelease}
 			/>
@@ -382,7 +474,7 @@
 	</div>
 </InfoModal>
 
-<AddEntityModal bind:open={showAddModal} existingEntities={data.testEntities} canWriteToBase={data.canWriteToBase} />
+<AddEntityModal bind:open={showAddModal} existingEntities={data.testEntities} canWriteToBase={data.canWriteToBase} tmdbConfigured={data.tmdbConfigured} />
 
 <Modal
 	bind:open={showDeleteModal}
@@ -431,3 +523,5 @@
 		on:cancel={handleDeleteReleaseTargetCancel}
 	/>
 {/if}
+
+<ImportReleasesModal bind:open={showImportModal} entity={importEntity} arrInstances={data.arrInstances} canWriteToBase={data.canWriteToBase} />

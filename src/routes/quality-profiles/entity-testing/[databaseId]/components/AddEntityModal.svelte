@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import { Film, Tv, Star, Loader2, Clapperboard, Check, X } from 'lucide-svelte';
+	import { Film, Tv, Star, Loader2, Clapperboard, Check, X, ArrowDownAZ, ArrowUpAZ } from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
@@ -18,6 +18,7 @@
 	export let actionUrl: string = '?/addEntities';
 	export let existingEntities: Array<{ type: 'movie' | 'series'; tmdb_id: number }> = [];
 	export let canWriteToBase: boolean = false;
+	export let tmdbConfigured: boolean = true;
 
 	let saving = false;
 	let formRef: HTMLFormElement;
@@ -34,7 +35,23 @@
 		posterPath: string | null;
 		releaseDate: string;
 		voteAverage: number;
+		popularity: number;
 	};
+
+	// Sort state
+	type SortField = 'popularity' | 'rating' | 'title' | 'year';
+	type SortDirection = 'asc' | 'desc';
+	let sortField: SortField = 'popularity';
+	let sortDirection: SortDirection = 'desc';
+
+	function setSortField(field: SortField) {
+		if (sortField === field) {
+			sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortField = field;
+			sortDirection = field === 'title' ? 'asc' : 'desc';
+		}
+	}
 
 	// Build set of existing entity keys for quick lookup
 	$: existingKeys = new Set(existingEntities.map((e) => `${e.type}-${e.tmdb_id}`));
@@ -91,6 +108,27 @@
 	}
 
 	$: searchType = moviesSelected && seriesSelected ? 'both' : moviesSelected ? 'movie' : 'tv';
+
+	// Sorted results
+	$: sortedResults = (() => {
+		const sorted = [...results];
+		sorted.sort((a, b) => {
+			let cmp = 0;
+			if (sortField === 'popularity') {
+				cmp = a.popularity - b.popularity;
+			} else if (sortField === 'rating') {
+				cmp = a.voteAverage - b.voteAverage;
+			} else if (sortField === 'title') {
+				cmp = a.title.localeCompare(b.title);
+			} else if (sortField === 'year') {
+				const yearA = a.releaseDate ? parseInt(a.releaseDate.split('-')[0], 10) : 0;
+				const yearB = b.releaseDate ? parseInt(b.releaseDate.split('-')[0], 10) : 0;
+				cmp = yearA - yearB;
+			}
+			return sortDirection === 'asc' ? cmp : -cmp;
+		});
+		return sorted;
+	})();
 
 	async function handleSubmit(e: CustomEvent<string>) {
 		const query = e.detail;
@@ -156,6 +194,8 @@
 		results = [];
 		selectedItems = new Map();
 		selectedKeys = new Set();
+		sortField = 'popularity';
+		sortDirection = 'desc';
 	}
 
 	function getYear(dateString: string): string {
@@ -183,11 +223,21 @@
 	bind:open
 	header="Add Test Entity"
 	confirmText="Add"
+	confirmDisabled={!tmdbConfigured}
 	size="xl"
 	on:cancel={handleCancel}
 	on:confirm={handleConfirm}
 >
 	<div slot="body" class="space-y-4">
+		{#if !tmdbConfigured}
+			<div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
+				<p class="text-sm text-neutral-600 dark:text-neutral-300">
+					TMDB API key not configured. Please add your API key in
+					<a href="/settings/general" class="font-medium text-accent-600 hover:underline dark:text-accent-400">Settings</a>
+					to search for movies and TV series.
+				</p>
+			</div>
+		{:else}
 		<!-- Search Bar -->
 		<ActionsBar>
 			<SearchAction
@@ -215,6 +265,32 @@
 					</Dropdown>
 				</svelte:fragment>
 			</ActionButton>
+			<ActionButton icon={sortDirection === 'asc' ? ArrowUpAZ : ArrowDownAZ} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition>
+					<Dropdown position={dropdownPosition}>
+						<DropdownItem
+							label="Popularity"
+							selected={sortField === 'popularity'}
+							on:click={() => setSortField('popularity')}
+						/>
+						<DropdownItem
+							label="Rating"
+							selected={sortField === 'rating'}
+							on:click={() => setSortField('rating')}
+						/>
+						<DropdownItem
+							label="Title"
+							selected={sortField === 'title'}
+							on:click={() => setSortField('title')}
+						/>
+						<DropdownItem
+							label="Year"
+							selected={sortField === 'year'}
+							on:click={() => setSortField('year')}
+						/>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
 		</ActionsBar>
 
 		<!-- Results -->
@@ -230,7 +306,7 @@
 					</div>
 				{:else}
 				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
-					{#each results as item}
+					{#each sortedResults as item}
 						{@const alreadyAdded = isAlreadyAdded(item)}
 						<button
 							type="button"
@@ -370,6 +446,7 @@
 			<input type="hidden" name="entities" value={entitiesJson} />
 			<input type="hidden" name="layer" value={selectedLayer} />
 		</form>
+		{/if}
 	</div>
 </Modal>
 

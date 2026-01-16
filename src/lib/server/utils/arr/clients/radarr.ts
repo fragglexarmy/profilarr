@@ -8,7 +8,8 @@ import type {
 	CustomFormatRef,
 	QualityProfileFormatItem,
 	RadarrTag,
-	RadarrCommand
+	RadarrCommand,
+	RadarrRelease
 } from '../types.ts';
 
 /**
@@ -140,6 +141,15 @@ export class RadarrClient extends BaseArrClient {
 			name: 'MoviesSearch',
 			movieIds
 		});
+	}
+
+	/**
+	 * Get releases for a movie (interactive search)
+	 * Queries all configured indexers and returns available releases
+	 * Note: This can take several seconds as it searches indexers in real-time
+	 */
+	getReleases(movieId: number): Promise<RadarrRelease[]> {
+		return this.get<RadarrRelease[]>(`/api/${this.apiVersion}/release?movieId=${movieId}`);
 	}
 
 	// =========================================================================

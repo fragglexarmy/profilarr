@@ -24,6 +24,7 @@ import { migration as migration019 } from './migrations/019_default_log_level_de
 import { migration as migration020 } from './migrations/020_create_tmdb_settings.ts';
 import { migration as migration021 } from './migrations/021_create_parsed_release_cache.ts';
 import { migration as migration022 } from './migrations/022_add_next_run_at.ts';
+import { migration as migration023 } from './migrations/023_create_pattern_match_cache.ts';
 
 export interface Migration {
 	version: number;
@@ -260,7 +261,8 @@ export function loadMigrations(): Migration[] {
 		migration019,
 		migration020,
 		migration021,
-		migration022
+		migration022,
+		migration023
 	];
 
 	// Sort by version number

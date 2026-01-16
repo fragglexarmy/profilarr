@@ -9,6 +9,7 @@
 	export let confirmText = 'Confirm';
 	export let cancelText = 'Cancel';
 	export let confirmDanger = false; // If true, confirm button is styled as danger (red)
+	export let confirmDisabled = false;
 	export let size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
 	export let height: 'auto' | 'md' | 'lg' | 'xl' | 'full' = 'auto';
 
@@ -100,9 +101,10 @@
 				<button
 					type="button"
 					on:click={handleConfirm}
-					class={confirmDanger
-						? 'flex items-center gap-2 rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
-						: 'flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'}
+					disabled={confirmDisabled}
+					class="{confirmDanger
+						? 'border border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
+						: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled ? 'cursor-not-allowed opacity-50' : ''}"
 				>
 					<Check size={16} />
 					{confirmText}

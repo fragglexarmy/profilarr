@@ -6,30 +6,19 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { pcdManager } from '$pcd/pcd.ts';
-import { parseWithCacheBatch, isParserHealthy } from '$lib/server/utils/arr/parser/index.ts';
-import type { ParseResult, MediaType } from '$lib/server/utils/arr/parser/types.ts';
+import { parseWithCacheBatch, isParserHealthy, matchPatternsBatch } from '$lib/server/utils/arr/parser/index.ts';
 import { getAllConditionsForEvaluation } from '$pcd/queries/customFormats/allConditions.ts';
-import { evaluateCustomFormat, getParsedInfo, type ParsedInfo } from '$pcd/queries/customFormats/evaluator.ts';
+import { evaluateCustomFormat, getParsedInfo, extractAllPatterns } from '$pcd/queries/customFormats/evaluator.ts';
+import type { components } from '$api/v1.d.ts';
 
-export interface ReleaseEvaluation {
-	releaseId: number;
-	title: string;
-	parsed: ParsedInfo | null;
-	/** Map of custom format ID to whether it matches */
-	cfMatches: Record<number, boolean>;
-}
-
-export interface EvaluateResponse {
-	parserAvailable: boolean;
-	evaluations: ReleaseEvaluation[];
-}
+type EvaluateRequest = components['schemas']['EvaluateRequest'];
+type EvaluateResponse = components['schemas']['EvaluateResponse'];
+type ReleaseEvaluation = components['schemas']['ReleaseEvaluation'];
+type MediaType = components['schemas']['MediaType'];
 
 export const POST: RequestHandler = async ({ request }) => {
-	const body = await request.json();
-	const { databaseId, releases } = body as {
-		databaseId: number;
-		releases: Array<{ id: number; title: string; type: MediaType }>;
-	};
+	const body: EvaluateRequest = await request.json();
+	const { databaseId, releases } = body;
 
 	if (!databaseId) {
 		throw error(400, 'Missing databaseId');
@@ -47,7 +36,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			evaluations: releases.map((r) => ({
 				releaseId: r.id,
 				title: r.title,
-				parsed: null,
 				cfMatches: {}
 			}))
 		} satisfies EvaluateResponse);
@@ -66,6 +54,11 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Get all custom formats with conditions
 	const customFormats = await getAllConditionsForEvaluation(cache);
 
+	// Extract all unique patterns and match them against all release titles (with caching)
+	const allPatterns = extractAllPatterns(customFormats);
+	const releaseTitles = releases.map((r) => r.title);
+	const patternMatchResults = await matchPatternsBatch(releaseTitles, allPatterns);
+
 	// Evaluate each release against all custom formats
 	const evaluations: ReleaseEvaluation[] = releases.map((release) => {
 		const cacheKey = `${release.title}:${release.type}`;
@@ -75,10 +68,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			return {
 				releaseId: release.id,
 				title: release.title,
-				parsed: null,
 				cfMatches: {}
 			};
 		}
+
+		// Get pattern matches for this release title
+		const patternMatches = patternMatchResults?.get(release.title);
 
 		// Evaluate against all custom formats
 		const cfMatches: Record<number, boolean> = {};
@@ -89,7 +84,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				continue;
 			}
 
-			const result = evaluateCustomFormat(cf.conditions, parsed, release.title);
+			const result = evaluateCustomFormat(cf.conditions, parsed, release.title, patternMatches);
 			cfMatches[cf.id] = result.matches;
 		}
 

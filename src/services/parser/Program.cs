@@ -139,6 +139,65 @@ app.MapPost("/match", (MatchRequest request) =>
     return Results.Ok(new MatchResponse { Results = results });
 });
 
+app.MapPost("/match/batch", (BatchMatchRequest request) =>
+{
+    if (request.Texts == null || request.Texts.Count == 0)
+    {
+        return Results.BadRequest(new { error = "At least one text is required" });
+    }
+
+    if (request.Patterns == null || request.Patterns.Count == 0)
+    {
+        return Results.BadRequest(new { error = "At least one pattern is required" });
+    }
+
+    // Pre-compile all regexes once
+    var compiledPatterns = new Dictionary<string, System.Text.RegularExpressions.Regex?>();
+    foreach (var pattern in request.Patterns)
+    {
+        try
+        {
+            compiledPatterns[pattern] = new System.Text.RegularExpressions.Regex(
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled,
+                TimeSpan.FromMilliseconds(100)
+            );
+        }
+        catch (System.ArgumentException)
+        {
+            compiledPatterns[pattern] = null; // Invalid pattern
+        }
+    }
+
+    // Process texts in parallel for better performance
+    var results = new System.Collections.Concurrent.ConcurrentDictionary<string, Dictionary<string, bool>>();
+
+    System.Threading.Tasks.Parallel.ForEach(request.Texts, text =>
+    {
+        var textResults = new Dictionary<string, bool>();
+        foreach (var (pattern, regex) in compiledPatterns)
+        {
+            if (regex == null)
+            {
+                textResults[pattern] = false;
+                continue;
+            }
+
+            try
+            {
+                textResults[pattern] = regex.IsMatch(text);
+            }
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+            {
+                textResults[pattern] = false;
+            }
+        }
+        results[text] = textResults;
+    });
+
+    return Results.Ok(new BatchMatchResponse { Results = results.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) });
+});
+
 app.Run();
 
 public record ParseRequest(string Title, string? Type);
@@ -190,4 +249,11 @@ public record MatchRequest(string Text, List<string> Patterns);
 public record MatchResponse
 {
     public Dictionary<string, bool> Results { get; init; } = new();
+}
+
+public record BatchMatchRequest(List<string> Texts, List<string> Patterns);
+
+public record BatchMatchResponse
+{
+    public Dictionary<string, Dictionary<string, bool>> Results { get; init; } = new();
 }

@@ -17,26 +17,8 @@ export interface TestEntity {
 	releases: TestRelease[];
 }
 
-/** Parsed info from parser service */
-export interface ParsedInfo {
-	source: string;
-	resolution: string;
-	modifier: string;
-	languages: string[];
-	releaseGroup: string | null;
-	year: number;
-	edition: string | null;
-	releaseType: string | null;
-}
-
-/** Evaluation result for a single release */
-export interface ReleaseEvaluation {
-	releaseId: number;
-	title: string;
-	parsed: ParsedInfo | null;
-	/** Map of custom format ID to whether it matches */
-	cfMatches: Record<number, boolean>;
-}
+// Note: ParsedInfo, ReleaseEvaluation, and EvaluateResponse types are now
+// generated from OpenAPI spec - see $api/v1.d.ts
 
 /** CF score for a specific arr type */
 export interface CfScore {

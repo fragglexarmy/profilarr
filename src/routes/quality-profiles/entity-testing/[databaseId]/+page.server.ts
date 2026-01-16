@@ -3,14 +3,14 @@ import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import { tmdbSettingsQueries } from '$db/queries/tmdbSettings.ts';
+import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import * as entityTestQueries from '$pcd/queries/entityTests/index.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
-import { isParserHealthy, parseWithCacheBatch, matchPatterns } from '$lib/server/utils/arr/parser/index.ts';
-import { getAllConditionsForEvaluation } from '$pcd/queries/customFormats/allConditions.ts';
-import { evaluateCustomFormat, getParsedInfo, extractAllPatterns } from '$pcd/queries/customFormats/evaluator.ts';
-import type { MediaType } from '$lib/server/utils/arr/parser/types.ts';
+import { isParserHealthy } from '$lib/server/utils/arr/parser/index.ts';
+import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = async ({ params }) => {
+	const loadStart = performance.now();
 	const { databaseId } = params;
 
 	// Validate params exist
@@ -40,97 +40,35 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
+	let t = performance.now();
 	const testEntities = await entityTestQueries.list(cache);
+	await logger.debug(`entityTestQueries.list: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
+
+	t = performance.now();
 	const qualityProfiles = await qualityProfileQueries.select(cache);
+	await logger.debug(`qualityProfileQueries.select: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
+
+	t = performance.now();
 	const cfScoresData = await qualityProfileQueries.allCfScores(cache);
+	await logger.debug(`qualityProfileQueries.allCfScores: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
 
 	// Check if TMDB API key is configured
 	const tmdbSettings = tmdbSettingsQueries.get();
 	const tmdbConfigured = !!tmdbSettings?.api_key;
 
 	// Check parser availability
+	t = performance.now();
 	const parserAvailable = await isParserHealthy();
+	await logger.debug(`isParserHealthy: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
 
-	// Evaluate all releases against all custom formats
-	type ReleaseEvaluation = {
-		releaseId: number;
-		parsed: ReturnType<typeof getParsedInfo> | null;
-		cfMatches: Record<number, boolean>;
-	};
-	const evaluations: Record<number, ReleaseEvaluation> = {};
+	// Get enabled Arr instances for release import
+	const arrInstances = arrInstancesQueries.getEnabled().map((instance) => ({
+		id: instance.id,
+		name: instance.name,
+		type: instance.type as 'radarr' | 'sonarr'
+	}));
 
-	if (parserAvailable && testEntities.length > 0) {
-		// Collect all releases with their entity type
-		const allReleases: Array<{ id: number; title: string; type: MediaType }> = [];
-		for (const entity of testEntities) {
-			for (const release of entity.releases) {
-				allReleases.push({
-					id: release.id,
-					title: release.title,
-					type: entity.type
-				});
-			}
-		}
-
-		if (allReleases.length > 0) {
-			// Parse all releases (uses cache)
-			const parseResults = await parseWithCacheBatch(
-				allReleases.map((r) => ({ title: r.title, type: r.type }))
-			);
-
-			// Get all custom formats with conditions
-			const customFormats = await getAllConditionsForEvaluation(cache);
-
-			// Extract all unique patterns for batch matching
-			const allPatterns = extractAllPatterns(customFormats);
-
-			// Pre-compute pattern matches for each release title using .NET regex
-			const patternMatchesByRelease = new Map<number, Map<string, boolean>>();
-			if (allPatterns.length > 0) {
-				for (const release of allReleases) {
-					const matches = await matchPatterns(release.title, allPatterns);
-					if (matches) {
-						patternMatchesByRelease.set(release.id, matches);
-					}
-				}
-			}
-
-			// Evaluate each release
-			for (const release of allReleases) {
-				const cacheKey = `${release.title}:${release.type}`;
-				const parsed = parseResults.get(cacheKey);
-
-				if (!parsed) {
-					evaluations[release.id] = {
-						releaseId: release.id,
-						parsed: null,
-						cfMatches: {}
-					};
-					continue;
-				}
-
-				// Get pre-computed pattern matches for this release
-				const patternMatches = patternMatchesByRelease.get(release.id);
-
-				// Evaluate against all custom formats
-				const cfMatches: Record<number, boolean> = {};
-				for (const cf of customFormats) {
-					if (cf.conditions.length === 0) {
-						cfMatches[cf.id] = false;
-						continue;
-					}
-					const result = evaluateCustomFormat(cf.conditions, parsed, release.title, patternMatches);
-					cfMatches[cf.id] = result.matches;
-				}
-
-				evaluations[release.id] = {
-					releaseId: release.id,
-					parsed: getParsedInfo(parsed),
-					cfMatches
-				};
-			}
-		}
-	}
+	await logger.debug(`Total load time: ${(performance.now() - loadStart).toFixed(0)}ms`, { source: 'EntityTesting' });
 
 	return {
 		databases,
@@ -140,7 +78,7 @@ export const load: ServerLoad = async ({ params }) => {
 		testEntities,
 		qualityProfiles,
 		cfScoresData,
-		evaluations,
+		arrInstances,
 		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };
@@ -411,5 +349,67 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+
+	importReleases: async ({ request, params }) => {
+		const { databaseId } = params;
+
+		if (!databaseId) {
+			return fail(400, { error: 'Missing database ID' });
+		}
+
+		const currentDatabaseId = parseInt(databaseId, 10);
+		if (isNaN(currentDatabaseId)) {
+			return fail(400, { error: 'Invalid database ID' });
+		}
+
+		const cache = pcdManager.getCache(currentDatabaseId);
+		if (!cache) {
+			return fail(500, { error: 'Database cache not available' });
+		}
+
+		const formData = await request.formData();
+		const releasesJson = formData.get('releases') as string;
+		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
+
+		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Cannot write to base layer for this database' });
+		}
+
+		let releases: Array<{
+			entityId: number;
+			title: string;
+			size_bytes: number | null;
+			languages: string[];
+			indexers: string[];
+			flags: string[];
+		}>;
+
+		try {
+			releases = JSON.parse(releasesJson || '[]');
+		} catch {
+			return fail(400, { error: 'Invalid releases format' });
+		}
+
+		if (releases.length === 0) {
+			return fail(400, { error: 'No releases to import' });
+		}
+
+		const result = await entityTestQueries.createReleases({
+			databaseId: currentDatabaseId,
+			cache,
+			layer,
+			inputs: releases
+		});
+
+		if (!result.success) {
+			return fail(500, { error: result.error || 'Failed to import releases' });
+		}
+
+		return {
+			success: true,
+			added: result.added,
+			skipped: result.skipped
+		};
 	}
 };
