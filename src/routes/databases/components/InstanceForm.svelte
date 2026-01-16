@@ -104,7 +104,7 @@
 						bind:value={name}
 						required
 						placeholder="e.g., Main Database, 4K Profiles"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 						A friendly name to identify this database
@@ -127,7 +127,7 @@
 						required
 						disabled={mode === 'edit'}
 						placeholder="https://github.com/username/database"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:focus:border-neutral-500"
 					/>
 					{#if mode === 'edit'}
 						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
@@ -155,7 +155,7 @@
 							name="branch"
 							bind:value={branch}
 							placeholder="main"
-							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 						/>
 						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 							Branch to checkout on link. Leave empty to use the default branch. You can change this later.
@@ -177,7 +177,7 @@
 						name="personal_access_token"
 						bind:value={personalAccessToken}
 						placeholder="ghp_..."
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 						Required for private repositories to clone and for developers to push back to GitHub.
@@ -207,7 +207,7 @@
 						id="sync_strategy"
 						name="sync_strategy"
 						bind:value={syncStrategy}
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
 					>
 						<option value={0}>Manual (no auto-sync)</option>
 						<option value={5}>Every 5 minutes</option>
@@ -231,7 +231,7 @@
 						name="auto_pull"
 						bind:checked={autoPull}
 						value="1"
-						class="mt-0.5 h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+						class="mt-0.5 h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-0 dark:border-neutral-700 dark:bg-neutral-800"
 					/>
 					<div>
 						<label

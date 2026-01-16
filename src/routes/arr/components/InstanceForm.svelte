@@ -90,7 +90,7 @@
 	$: title = mode === 'create' ? 'Add Arr Instance' : 'Edit Instance';
 	$: description =
 		mode === 'create'
-			? 'Configure a new Radarr, Sonarr, Lidarr, or Chaptarr instance'
+			? 'Configure a new Radarr or Sonarr instance'
 			: `Update the configuration for ${instance?.name || 'this instance'}`;
 	$: submitButtonText = mode === 'create' ? 'Save' : 'Save';
 	$: successMessage =
@@ -144,7 +144,7 @@
 						bind:value={name}
 						required
 						placeholder="e.g., Main Radarr, 4K Sonarr"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
 				</div>
 
@@ -176,13 +176,11 @@
 							bind:value={type}
 							on:change={resetConnectionStatus}
 							required
-							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
 						>
 							<option value="">Select type...</option>
 							<option value="radarr">Radarr</option>
 							<option value="sonarr">Sonarr</option>
-							<option value="lidarr">Lidarr</option>
-							<option value="chaptarr">Chaptarr</option>
 						</select>
 					{/if}
 				</div>
@@ -246,7 +244,7 @@
 						on:input={resetConnectionStatus}
 						required
 						placeholder="http://localhost:7878"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
 				</div>
 
@@ -266,7 +264,7 @@
 						on:input={resetConnectionStatus}
 						required
 						placeholder={mode === 'edit' ? 'Enter API key to test connection' : 'Enter API key'}
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
 					{#if mode === 'edit'}
 						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">

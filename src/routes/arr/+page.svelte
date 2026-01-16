@@ -26,9 +26,7 @@
 	function getTypeBadgeClasses(type: string): string {
 		const colors: Record<string, string> = {
 			radarr: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-			sonarr: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
-			lidarr: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-			chaptarr: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+			sonarr: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400'
 		};
 		return colors[type] || 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200';
 	}
@@ -62,7 +60,7 @@
 	<EmptyState
 		icon={Server}
 		title="No Arr Instances"
-		description="Add a Radarr, Sonarr, Lidarr, or Chaptarr instance to get started."
+		description="Add a Radarr or Sonarr instance to get started."
 		buttonText="Add Instance"
 		buttonHref="/arr/new"
 		buttonIcon={Plus}
@@ -74,7 +72,7 @@
 			<div>
 				<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Arr Instances</h1>
 				<p class="mt-1 text-neutral-600 dark:text-neutral-400">
-					Manage your Radarr, Sonarr, Lidarr, and Chaptarr instances
+					Manage your Radarr and Sonarr instances
 				</p>
 			</div>
 			<a

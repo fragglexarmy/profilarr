@@ -3,7 +3,7 @@ import type { Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { logger } from '$logger/logger.ts';
 
-const VALID_TYPES = ['radarr', 'sonarr', 'lidarr', 'chaptarr'];
+const VALID_TYPES = ['radarr', 'sonarr'];
 
 export const actions = {
 	default: async ({ request }) => {
