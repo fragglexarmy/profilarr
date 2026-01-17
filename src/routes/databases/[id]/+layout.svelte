@@ -7,16 +7,12 @@
 	$: currentPath = $page.url.pathname;
 
 	$: tabs = database ? [
-		...(database.personal_access_token
-			? [
-					{
-						label: 'Changes',
-						href: `/databases/${database.id}/changes`,
-						icon: GitBranch,
-						active: currentPath.endsWith('/changes')
-					}
-				]
-			: []),
+		{
+			label: 'Changes',
+			href: `/databases/${database.id}/changes`,
+			icon: GitBranch,
+			active: currentPath.endsWith('/changes')
+		},
 		{
 			label: 'Commits',
 			href: `/databases/${database.id}/commits`,

@@ -55,3 +55,9 @@ export interface Commit {
 	date: string;
 	files: string[];
 }
+
+export interface IncomingChanges {
+	hasUpdates: boolean;
+	commitsBehind: number;
+	commits: Commit[];
+}

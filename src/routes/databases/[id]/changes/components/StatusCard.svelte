@@ -9,7 +9,8 @@
 		CircleDot,
 		ChevronDown,
 		Check,
-		Database
+		Database,
+		RefreshCw
 	} from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import type { GitStatus, RepoInfo } from '$utils/git/types';
@@ -19,9 +20,11 @@
 	export let repoInfo: RepoInfo | null;
 	export let branches: string[];
 	export let database: DatabaseInstance;
+	export let onSync: (() => Promise<void>) | undefined = undefined;
 
 	let branchDropdownOpen = false;
 	let switching = false;
+	let syncing = false;
 
 	async function handleBranchSwitch(branch: string) {
 		if (branch === status.branch || switching) return;
@@ -50,6 +53,18 @@
 		const target = event.target as HTMLElement;
 		if (!target.closest('.branch-dropdown')) {
 			branchDropdownOpen = false;
+		}
+	}
+
+	async function handleSync() {
+		if (syncing) return;
+
+		syncing = true;
+		try {
+			// Just refresh the data (fetches from remote to check for updates)
+			if (onSync) await onSync();
+		} finally {
+			syncing = false;
 		}
 	}
 </script>
@@ -179,6 +194,16 @@
 				{/if}
 			</div>
 
+			<!-- Sync button -->
+			<button
+				type="button"
+				on:click={handleSync}
+				disabled={syncing}
+				title="Sync now"
+				class="flex items-center justify-center rounded-md border border-neutral-200 bg-white p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
+			>
+				<RefreshCw size={16} class={syncing ? 'animate-spin' : ''} />
+			</button>
 		</div>
 	</div>
 </div>

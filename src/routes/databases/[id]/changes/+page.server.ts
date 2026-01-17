@@ -1,18 +1,16 @@
-import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { Git } from '$utils/git/index.ts';
 import { logger } from '$logger/logger.ts';
 import { compile, startWatch } from '$lib/server/pcd/cache.ts';
+import { pcdManager } from '$pcd/pcd.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { database } = await parent();
 
-	if (!database.personal_access_token) {
-		error(403, 'Changes page requires a personal access token');
-	}
-
-	return {};
+	return {
+		isDeveloper: !!database.personal_access_token
+	};
 };
 
 export const actions: Actions = {
@@ -101,6 +99,37 @@ export const actions: Actions = {
 			return { success: true };
 		} catch (err) {
 			return { success: false, error: err instanceof Error ? err.message : 'Failed to switch branch' };
+		}
+	},
+
+	pull: async ({ params }) => {
+		const id = parseInt(params.id || '', 10);
+		const database = databaseInstancesQueries.getById(id);
+
+		if (!database) {
+			return { success: false, error: 'Database not found' };
+		}
+
+		try {
+			const result = await pcdManager.sync(id);
+
+			if (result.success) {
+				await logger.info('Database synced', {
+					source: 'changes',
+					meta: { databaseId: id, commitsPulled: result.commitsBehind }
+				});
+			}
+
+			return result;
+		} catch (err) {
+			await logger.error('Failed to pull changes', {
+				source: 'changes',
+				meta: { databaseId: id, error: String(err) }
+			});
+			return {
+				success: false,
+				error: err instanceof Error ? err.message : 'Failed to pull'
+			};
 		}
 	}
 };

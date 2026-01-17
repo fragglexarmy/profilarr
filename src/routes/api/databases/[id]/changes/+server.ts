@@ -11,25 +11,27 @@ export const GET: RequestHandler = async ({ params }) => {
 		error(404, 'Database not found');
 	}
 
-	if (!database.personal_access_token) {
-		error(403, 'Changes page requires a personal access token');
-	}
-
 	const git = new Git(database.local_path);
 
-	const [status, uncommittedOps, lastPushed, branches, repoInfo] = await Promise.all([
+	// Fetch data for everyone
+	const [status, incomingChanges, branches, repoInfo] = await Promise.all([
 		git.status(),
-		git.getUncommittedOps(),
-		git.getLastPushed(),
+		git.getIncomingChanges(),
 		git.getBranches(),
 		getRepoInfo(database.repository_url, database.personal_access_token)
 	]);
 
+	// Only fetch outgoing changes for developers
+	let uncommittedOps = null;
+	if (database.personal_access_token) {
+		uncommittedOps = await git.getUncommittedOps();
+	}
+
 	return json({
 		status,
-		uncommittedOps,
-		lastPushed,
+		incomingChanges,
 		branches,
-		repoInfo
+		repoInfo,
+		uncommittedOps
 	});
 };

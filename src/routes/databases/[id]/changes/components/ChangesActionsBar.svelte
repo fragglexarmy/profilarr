@@ -10,15 +10,18 @@
 	export let selectedFiles: string[] = [];
 	export let commitMessage: string;
 	export let aiEnabled: boolean = false;
+	export let hasIncomingChanges: boolean = false;
+	export let adding: boolean = false;
+	export let discarding: boolean = false;
 
 	export let onDiscard: () => void;
 	export let onAdd: () => void;
 
 	let generating = false;
 
-	$: canDiscard = selectedCount > 0;
-	$: canAdd = selectedCount > 0 && commitMessage.trim().length > 0;
-	$: canGenerate = aiEnabled && selectedCount > 0 && !generating;
+	$: canDiscard = selectedCount > 0 && !discarding;
+	$: canAdd = selectedCount > 0 && commitMessage.trim().length > 0 && !hasIncomingChanges && !adding;
+	$: canGenerate = aiEnabled && selectedCount > 0 && !generating && !hasIncomingChanges;
 
 	async function handleGenerate() {
 		if (!canGenerate) return;
@@ -49,13 +52,14 @@
 <ActionsBar className="w-full">
 	<div class="relative flex flex-1">
 		<div
-			class="flex h-10 w-full items-center border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800"
+			class="flex h-10 w-full items-center border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 {hasIncomingChanges ? 'opacity-50' : ''}"
 		>
 			<input
 				type="text"
 				bind:value={commitMessage}
-				placeholder="Commit message..."
-				class="h-full w-full bg-transparent px-3 font-mono text-sm text-neutral-700 placeholder-neutral-400 outline-none dark:text-neutral-300 dark:placeholder-neutral-500"
+				disabled={hasIncomingChanges}
+				placeholder={hasIncomingChanges ? "Pull incoming changes first..." : "Commit message..."}
+				class="h-full w-full bg-transparent px-3 font-mono text-sm text-neutral-700 placeholder-neutral-400 outline-none disabled:cursor-not-allowed dark:text-neutral-300 dark:placeholder-neutral-500"
 			/>
 		</div>
 	</div>
@@ -71,7 +75,9 @@
 			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
 				<Dropdown position={dropdownPosition} {open} minWidth="12rem">
 					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-						{#if generating}
+						{#if hasIncomingChanges}
+							Pull incoming changes first
+						{:else if generating}
 							Generating...
 						{:else if !selectedCount}
 							Select changes first
@@ -85,7 +91,8 @@
 	{/if}
 
 	<ActionButton
-		icon={Upload}
+		icon={adding ? Loader2 : Upload}
+		iconClass={adding ? 'animate-spin' : ''}
 		hasDropdown={true}
 		dropdownPosition="right"
 		on:click={canAdd ? onAdd : undefined}
@@ -93,7 +100,11 @@
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
 			<Dropdown position={dropdownPosition} {open} minWidth="12rem">
 				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-					{#if !selectedCount}
+					{#if adding}
+						Pushing...
+					{:else if hasIncomingChanges}
+						Pull incoming changes first
+					{:else if !selectedCount}
 						Select changes to add
 					{:else if !commitMessage.trim()}
 						Enter a commit message
@@ -106,7 +117,8 @@
 	</ActionButton>
 
 	<ActionButton
-		icon={Trash2}
+		icon={discarding ? Loader2 : Trash2}
+		iconClass={discarding ? 'animate-spin' : ''}
 		hasDropdown={true}
 		dropdownPosition="right"
 		on:click={canDiscard ? onDiscard : undefined}
@@ -114,7 +126,9 @@
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
 			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
 				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-					{#if canDiscard}
+					{#if discarding}
+						Discarding...
+					{:else if selectedCount > 0}
 						Discard {selectedCount} change{selectedCount === 1 ? '' : 's'}
 					{:else}
 						Select changes to discard

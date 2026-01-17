@@ -4,7 +4,7 @@
 
 import { execGit, execGitSafe } from './exec.ts';
 import { fetch } from './repo.ts';
-import type { GitStatus, UpdateInfo, Commit } from './types.ts';
+import type { GitStatus, UpdateInfo, Commit, IncomingChanges } from './types.ts';
 
 /**
  * Get current branch name
@@ -240,4 +240,59 @@ export async function getCommits(repoPath: string, limit: number = 50): Promise<
 	}
 
 	return commits;
+}
+
+/**
+ * Get incoming changes (commits available to pull from remote)
+ */
+export async function getIncomingChanges(repoPath: string): Promise<IncomingChanges> {
+	await fetch(repoPath);
+
+	const branch = await getBranch(repoPath);
+	const remoteBranch = `origin/${branch}`;
+
+	// Count commits behind
+	const countOutput = await execGitSafe(
+		['rev-list', '--count', `HEAD..${remoteBranch}`],
+		repoPath
+	);
+	const commitsBehind = parseInt(countOutput || '0') || 0;
+
+	if (commitsBehind === 0) {
+		return { hasUpdates: false, commitsBehind: 0, commits: [] };
+	}
+
+	// Get commit details for incoming commits
+	const format = '%H|%h|%s|%an|%ae|%cI';
+	const output = await execGit(
+		['log', `--format=${format}`, `HEAD..${remoteBranch}`],
+		repoPath
+	);
+
+	const commits: Commit[] = [];
+
+	for (const line of output.split('\n')) {
+		if (!line.trim()) continue;
+
+		const [hash, shortHash, message, author, authorEmail, date] = line.split('|');
+
+		// Get files changed for this commit
+		const filesOutput = await execGitSafe(
+			['diff-tree', '--no-commit-id', '--name-only', '-r', hash],
+			repoPath
+		);
+		const files = filesOutput ? filesOutput.split('\n').filter((f) => f.trim()) : [];
+
+		commits.push({
+			hash,
+			shortHash,
+			message,
+			author,
+			authorEmail,
+			date,
+			files
+		});
+	}
+
+	return { hasUpdates: true, commitsBehind, commits };
 }
