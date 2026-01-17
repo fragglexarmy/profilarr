@@ -853,33 +853,121 @@ don't interrupt the calling code.
   Queries enabled services from the database, filters by notification type, and
   dispatches to appropriate notifiers. Records all attempts in history.
 - **Builder** (`builder.ts`) — Fluent API for constructing notifications. Chain
-  `.title()`, `.message()`, `.meta()`, and call `.send()`.
-- **Notifiers** (`notifiers/`) — Service-specific implementations. Each extends
-  `BaseHttpNotifier` and formats payloads for their API.
+  `.generic()` for fallback content, `.discord()` for rich embeds, and call
+  `.send()` to dispatch.
+- **Definitions** (`definitions/`) — Pre-built notification factories for common
+  events. Import from `definitions/index.ts` and call with parameters.
+- **Notifiers** (`notifiers/`) — Service-specific implementations. Currently
+  only Discord is implemented in `notifiers/discord/`.
 
 **Usage**
 
+For simple notifications, use the builder directly:
+
 ```typescript
 import { notify } from "$notifications/builder.ts";
-import { NotificationTypes } from "$notifications/types.ts";
 
-await notify(NotificationTypes.PCD_SYNC_SUCCESS)
-  .title("Sync Complete")
-  .message("Synced 5 profiles to Radarr")
-  .meta({ instanceId: 1, profileCount: 5 })
+await notify("pcd.sync_success")
+  .generic("Sync Complete", "Synced 5 profiles to Radarr")
   .send();
 ```
 
+For rich Discord notifications with embeds:
+
+```typescript
+import { notify, createEmbed, Colors } from "$notifications/builder.ts";
+
+await notify("rename.success")
+  .generic("Rename Complete", "Renamed 5 files")
+  .discord((d) =>
+    d.embed(
+      createEmbed()
+        .title("Rename Complete")
+        .description("All files renamed successfully")
+        .field("Files", "5/5", true)
+        .field("Mode", "Live", true)
+        .color(Colors.SUCCESS)
+        .timestamp()
+    )
+  )
+  .send();
+```
+
+For complex notifications, create a definition in `definitions/`:
+
+```typescript
+// definitions/myFeature.ts
+import { notify, createEmbed, Colors } from "../builder.ts";
+
+interface MyNotificationParams {
+  log: MyJobLog;
+  config: { username?: string };
+}
+
+export const myFeature = ({ log, config }: MyNotificationParams) =>
+  notify(`myfeature.${log.status}`)
+    .generic("Feature Complete", `Processed ${log.count} items`)
+    .discord((d) =>
+      d.embed(
+        createEmbed()
+          .title("Feature Complete")
+          .field("Processed", String(log.count), true)
+          .color(log.status === "success" ? Colors.SUCCESS : Colors.ERROR)
+          .timestamp()
+      )
+    );
+
+// Usage:
+import { notifications } from "$notifications/definitions/index.ts";
+await notifications.myFeature({ log, config }).send();
+```
+
+**Discord Embed Builder**
+
+The embed builder (`notifiers/discord/embed.ts`) provides a fluent API:
+
+```typescript
+createEmbed()
+  .author("Profilarr", iconUrl)
+  .title("Title")
+  .description("Description text")
+  .field("Name", "Value", true) // inline field
+  .fieldIf(condition, "Name", "Value") // conditional field
+  .color(Colors.SUCCESS)
+  .timestamp()
+  .footer("Profilarr")
+  .build();
+```
+
+Available colors: `Colors.SUCCESS`, `Colors.ERROR`, `Colors.WARNING`,
+`Colors.INFO`, `Colors.PREVIEW`.
+
+Instance icons: `Icons.RADARR`, `Icons.SONARR`, `Icons.LIDARR`, `Icons.READARR`.
+
+The Discord notifier automatically handles:
+
+- Splitting large notifications across multiple messages (1 embed per message)
+- Rate limiting between messages (1 second delay)
+- Fallback to generic content when no Discord-specific payload is provided
+
 **Notification Types**
 
-`types.ts` defines type constants for categorizing notifications:
+Types are defined in two places:
+
+- `src/lib/server/notifications/types.ts` — Backend constants
+- `src/lib/shared/notificationTypes.ts` — Shared definitions with labels and
+  descriptions for the settings UI
+
+Current types:
 
 - `job.<name>.success` / `job.<name>.failed` — Job completion status
 - `pcd.linked` / `pcd.unlinked` — Database connection changes
 - `pcd.sync_success` / `pcd.sync_failed` — Sync results
 - `upgrade.success` / `upgrade.partial` / `upgrade.failed` — Upgrade results
+- `rename.success` / `rename.partial` / `rename.failed` — Rename results
 
-Users configure which types each service receives in the settings UI.
+When adding a new notification type, add it to both files. Users configure which
+types each service receives in the settings UI.
 
 **Planned Services**
 
@@ -896,10 +984,13 @@ Currently only Discord is implemented. Planned additions:
 
 To add a new notification service:
 
-1. Create a config interface in `types.ts`
-2. Create a notifier class in `notifiers/` extending `BaseHttpNotifier`
-3. Implement `getName()`, `getWebhookUrl()`, and `formatPayload()`
-4. Add the case to `NotificationManager.createNotifier()`
+1. Create a config interface in `types.ts` (e.g., `SlackConfig`)
+2. Add the service type to `NotificationServiceType` union
+3. Create a notifier directory in `notifiers/` (e.g., `notifiers/slack/`)
+4. Implement a notifier class with a `notify(notification: Notification)` method
+5. Add the case to `NotificationManager.createNotifier()`
+6. Create frontend configuration component in
+   `src/routes/settings/notifications/components/`
 
 #### Arr Clients
 

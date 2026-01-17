@@ -461,3 +461,35 @@ CREATE TABLE pattern_match_cache (
 
 CREATE INDEX idx_pattern_match_cache_hash ON pattern_match_cache(patterns_hash);
 CREATE INDEX idx_pattern_match_cache_created_at ON pattern_match_cache(created_at);
+
+-- ==============================================================================
+-- TABLE: arr_rename_settings
+-- Purpose: Store rename configuration per arr instance for bulk file/folder renaming
+-- Migration: 024_create_arr_rename_settings.ts
+-- ==============================================================================
+
+CREATE TABLE arr_rename_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Relationship (one config per arr instance)
+    arr_instance_id INTEGER NOT NULL UNIQUE,
+
+    -- Settings
+    dry_run INTEGER NOT NULL DEFAULT 1,         -- 1=preview only, 0=make changes
+    rename_folders INTEGER NOT NULL DEFAULT 0,  -- 1=rename folders too, 0=files only
+    ignore_tag TEXT,                            -- Tag name to skip (items with tag won't be renamed)
+
+    -- Job scheduling
+    enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch for scheduled job
+    schedule INTEGER NOT NULL DEFAULT 1440,     -- Run interval in minutes (default 24 hours)
+    last_run_at DATETIME,                       -- When rename job last ran
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (arr_instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- Arr rename settings indexes (Migration: 024_create_arr_rename_settings.ts)
+CREATE INDEX idx_arr_rename_settings_arr_instance ON arr_rename_settings(arr_instance_id);

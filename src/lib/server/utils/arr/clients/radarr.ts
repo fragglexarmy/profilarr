@@ -8,8 +8,9 @@ import type {
 	CustomFormatRef,
 	QualityProfileFormatItem,
 	RadarrTag,
-	RadarrCommand,
-	RadarrRelease
+	ArrCommand,
+	RadarrRelease,
+	RenamePreviewItem
 } from '../types.ts';
 
 /**
@@ -136,8 +137,8 @@ export class RadarrClient extends BaseArrClient {
 	 * Trigger a search for specific movies
 	 * Uses the MoviesSearch command endpoint
 	 */
-	searchMovies(movieIds: number[]): Promise<RadarrCommand> {
-		return this.post<RadarrCommand>(`/api/${this.apiVersion}/command`, {
+	searchMovies(movieIds: number[]): Promise<ArrCommand> {
+		return this.post<ArrCommand>(`/api/${this.apiVersion}/command`, {
 			name: 'MoviesSearch',
 			movieIds
 		});
@@ -193,5 +194,51 @@ export class RadarrClient extends BaseArrClient {
 	 */
 	updateMovie(movie: RadarrMovie): Promise<RadarrMovie> {
 		return this.put<RadarrMovie>(`/api/${this.apiVersion}/movie/${movie.id}`, movie);
+	}
+
+	// =========================================================================
+	// Rename Methods
+	// =========================================================================
+
+	/**
+	 * Get rename preview for a movie
+	 * Shows what files would be renamed without making changes
+	 */
+	getRenamePreview(movieId: number): Promise<RenamePreviewItem[]> {
+		return this.get<RenamePreviewItem[]>(`/api/${this.apiVersion}/rename?movieId=${movieId}`);
+	}
+
+	/**
+	 * Trigger rename for movies
+	 * Renames all files that need renaming for the given movie IDs
+	 */
+	renameMovies(movieIds: number[]): Promise<ArrCommand> {
+		return this.post<ArrCommand>(`/api/${this.apiVersion}/command`, {
+			name: 'RenameMovie',
+			movieIds
+		});
+	}
+
+	/**
+	 * Refresh movies (update metadata from sources)
+	 * Required after folder rename to update paths
+	 */
+	refreshMovies(movieIds: number[]): Promise<ArrCommand> {
+		return this.post<ArrCommand>(`/api/${this.apiVersion}/command`, {
+			name: 'RefreshMovie',
+			movieIds
+		});
+	}
+
+	/**
+	 * Rename movie folders using the movie editor endpoint
+	 * Bulk updates movie root folder paths
+	 */
+	renameMovieFolders(movieIds: number[], rootFolderPath: string): Promise<void> {
+		return this.put<void>(`/api/${this.apiVersion}/movie/editor`, {
+			movieIds,
+			rootFolderPath,
+			moveFiles: true
+		});
 	}
 }

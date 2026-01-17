@@ -112,7 +112,9 @@ export const actions: Actions = {
 			}
 
 			// Send test notification directly (bypass enabled_types filter)
-			const { DiscordNotifier } = await import('$notifications/notifiers/DiscordNotifier.ts');
+			const { DiscordNotifier } = await import('$notifications/notifiers/discord/index.ts');
+			const { notifications } = await import('$notifications/definitions/index.ts');
+
 			const config = JSON.parse(service.config);
 
 			let notifier;
@@ -122,16 +124,9 @@ export const actions: Actions = {
 				return fail(400, { error: 'Unknown service type' });
 			}
 
-			await notifier.notify({
-				type: 'test',
-				title: 'Test Notification',
-				message: 'This is a test notification from Profilarr. If you received this, your notification service is working correctly!',
-				metadata: {
-					serviceId: id,
-					serviceName: service.name,
-					timestamp: new Date().toISOString()
-				}
-			});
+			const notification = notifications.test({ config }).build();
+
+			await notifier.notify(notification);
 
 			return { success: true };
 		} catch (err) {

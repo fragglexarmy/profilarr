@@ -140,8 +140,9 @@ export interface RadarrTag {
 
 /**
  * Command response from /api/v3/command
+ * Shared between Radarr and Sonarr
  */
-export interface RadarrCommand {
+export interface ArrCommand {
 	id: number;
 	name: string;
 	commandName: string;
@@ -152,8 +153,30 @@ export interface RadarrCommand {
 	message?: string;
 	body?: {
 		movieIds?: number[];
+		seriesIds?: number[];
 		sendUpdatesToClient?: boolean;
 	};
+}
+
+/** @deprecated Use ArrCommand instead */
+export type RadarrCommand = ArrCommand;
+
+/**
+ * Rename preview item from /api/v3/rename
+ * Shows what would be renamed before executing
+ */
+export interface RenamePreviewItem {
+	// Radarr fields
+	movieId?: number;
+	movieFileId?: number;
+	// Sonarr fields
+	seriesId?: number;
+	seasonNumber?: number;
+	episodeNumbers?: number[];
+	episodeFileId?: number;
+	// Shared fields
+	existingPath: string;
+	newPath: string;
 }
 
 // =============================================================================

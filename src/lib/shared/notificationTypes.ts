@@ -104,6 +104,26 @@ export const notificationTypes: NotificationType[] = [
 		label: 'Upgrade Failed',
 		category: 'Upgrades',
 		description: 'Notification when all upgrade searches fail'
+	},
+
+	// Renames
+	{
+		id: 'rename.success',
+		label: 'Rename Completed (Success)',
+		category: 'Renames',
+		description: 'Notification when all file renames complete successfully'
+	},
+	{
+		id: 'rename.partial',
+		label: 'Rename Completed (Partial)',
+		category: 'Renames',
+		description: 'Notification when some file renames succeed and some fail'
+	},
+	{
+		id: 'rename.failed',
+		label: 'Rename Failed',
+		category: 'Renames',
+		description: 'Notification when all file renames fail'
 	}
 ];
 

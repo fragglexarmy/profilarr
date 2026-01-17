@@ -2,4 +2,4 @@
  * Export all notification service implementations
  */
 
-export { DiscordNotifier } from './DiscordNotifier.ts';
+export { DiscordNotifier } from './discord/DiscordNotifier.ts';

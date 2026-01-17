@@ -1,5 +1,5 @@
 import { BaseArrClient } from '../base.ts';
-import type { SonarrSeries, SonarrRelease } from '../types.ts';
+import type { SonarrSeries, SonarrRelease, ArrCommand, RenamePreviewItem } from '../types.ts';
 
 /**
  * Sonarr API client
@@ -51,5 +51,51 @@ export class SonarrClient extends BaseArrClient {
 	async getSeasonPackReleases(seriesId: number, seasonNumber: number): Promise<SonarrRelease[]> {
 		const releases = await this.getReleases(seriesId, seasonNumber);
 		return releases.filter((r) => r.fullSeason);
+	}
+
+	// =========================================================================
+	// Rename Methods
+	// =========================================================================
+
+	/**
+	 * Get rename preview for a series
+	 * Shows what files would be renamed without making changes
+	 */
+	getRenamePreview(seriesId: number): Promise<RenamePreviewItem[]> {
+		return this.get<RenamePreviewItem[]>(`/api/${this.apiVersion}/rename?seriesId=${seriesId}`);
+	}
+
+	/**
+	 * Trigger rename for series
+	 * Renames all files that need renaming for the given series IDs
+	 */
+	renameSeries(seriesIds: number[]): Promise<ArrCommand> {
+		return this.post<ArrCommand>(`/api/${this.apiVersion}/command`, {
+			name: 'RenameSeries',
+			seriesIds
+		});
+	}
+
+	/**
+	 * Refresh series (update metadata from sources)
+	 * Required after folder rename to update paths
+	 */
+	refreshSeries(seriesIds: number[]): Promise<ArrCommand> {
+		return this.post<ArrCommand>(`/api/${this.apiVersion}/command`, {
+			name: 'RefreshSeries',
+			seriesIds
+		});
+	}
+
+	/**
+	 * Rename series folders using the series editor endpoint
+	 * Bulk updates series root folder paths
+	 */
+	renameSeriesFolders(seriesIds: number[], rootFolderPath: string): Promise<void> {
+		return this.put<void>(`/api/${this.apiVersion}/series/editor`, {
+			seriesIds,
+			rootFolderPath,
+			moveFiles: true
+		});
 	}
 }

@@ -8,8 +8,6 @@ import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 import { loadManifest, type Manifest } from './manifest.ts';
 import { getPCDPath } from './paths.ts';
 import { processDependencies, syncDependencies } from './deps.ts';
-import { notify } from '$notifications/builder.ts';
-import { NotificationTypes } from '$notifications/types.ts';
 import { compile, invalidate, startWatch, getCache } from './cache.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -102,12 +100,6 @@ class PCDManager {
 				}
 			}
 
-			await notify(NotificationTypes.PCD_LINKED)
-				.title('Database Linked')
-				.message(`Database "${options.name}" has been linked successfully`)
-				.meta({ databaseId: id, databaseName: options.name, repositoryUrl: options.repositoryUrl })
-				.send();
-
 			return instance;
 		} catch (error) {
 			// Cleanup on failure - remove cloned directory
@@ -129,9 +121,6 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		// Store name and URL for notification
-		const { name, repository_url } = instance;
-
 		// Invalidate cache first
 		invalidate(id);
 
@@ -145,12 +134,6 @@ class PCDManager {
 			// Log but don't throw - database entry is already deleted
 			console.error(`Failed to remove PCD directory ${instance.local_path}:`, error);
 		}
-
-		await notify(NotificationTypes.PCD_UNLINKED)
-			.title('Database Unlinked')
-			.message(`Database "${name}" has been removed`)
-			.meta({ databaseId: id, databaseName: name, repositoryUrl: repository_url })
-			.send();
 	}
 
 	/**

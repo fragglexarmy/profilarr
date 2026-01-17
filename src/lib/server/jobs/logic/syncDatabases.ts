@@ -4,8 +4,6 @@
  */
 
 import { pcdManager } from '$pcd/pcd.ts';
-import { notify } from '$notifications/builder.ts';
-import { NotificationTypes } from '$notifications/types.ts';
 import { logger } from '$logger/logger.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 
@@ -86,11 +84,6 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 						source: LOG_SOURCE,
 						meta: { commitsPulled: syncResult.commitsBehind }
 					});
-					await notify(NotificationTypes.PCD_SYNC_SUCCESS)
-						.title('Database Synced Successfully')
-						.message(`Database "${db.name}" has been updated (${syncResult.commitsBehind} commit${syncResult.commitsBehind === 1 ? '' : 's'} pulled)`)
-						.meta({ databaseId: db.id, databaseName: db.name, commitsPulled: syncResult.commitsBehind })
-						.send();
 
 					statuses.push({
 						id: db.id,
@@ -100,12 +93,6 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 					});
 					successCount++;
 				} else {
-					await notify(NotificationTypes.PCD_SYNC_FAILED)
-						.title('Database Sync Failed')
-						.message(`Failed to sync database "${db.name}": ${syncResult.error}`)
-						.meta({ databaseId: db.id, databaseName: db.name, error: syncResult.error })
-						.send();
-
 					statuses.push({
 						id: db.id,
 						name: db.name,
@@ -119,11 +106,6 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 				await logger.debug(`Auto-pull disabled for "${db.name}", notifying only`, {
 					source: LOG_SOURCE
 				});
-				await notify(NotificationTypes.PCD_UPDATES_AVAILABLE)
-					.title('Database Updates Available')
-					.message(`Updates are available for database "${db.name}" (${updateInfo.commitsBehind} commit${updateInfo.commitsBehind === 1 ? '' : 's'} behind)`)
-					.meta({ databaseId: db.id, databaseName: db.name, commitsBehind: updateInfo.commitsBehind })
-					.send();
 
 				databaseInstancesQueries.updateSyncedAt(db.id);
 				statuses.push({

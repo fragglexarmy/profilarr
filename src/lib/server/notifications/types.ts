@@ -20,17 +20,38 @@ export const NotificationTypes = {
 	// Upgrades
 	UPGRADE_SUCCESS: 'upgrade.success',
 	UPGRADE_PARTIAL: 'upgrade.partial',
-	UPGRADE_FAILED: 'upgrade.failed'
+	UPGRADE_FAILED: 'upgrade.failed',
+
+	// Renames
+	RENAME_SUCCESS: 'rename.success',
+	RENAME_PARTIAL: 'rename.partial',
+	RENAME_FAILED: 'rename.failed'
 } as const;
+
+/**
+ * Generic notification content (works for all services)
+ */
+export interface GenericNotification {
+	title: string;
+	message: string;
+}
+
+/**
+ * Discord-specific notification content
+ */
+export interface DiscordNotification {
+	embeds: unknown[];
+}
 
 /**
  * Notification payload sent to services
  */
 export interface Notification {
 	type: string;
-	title: string;
-	message: string;
-	metadata?: Record<string, unknown>;
+	/** Generic content - used by services without specific payload */
+	generic?: GenericNotification;
+	/** Discord-specific content - used if present, otherwise falls back to generic */
+	discord?: DiscordNotification;
 }
 
 /**

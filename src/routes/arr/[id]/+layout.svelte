@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import { page } from '$app/stores';
-	import { Library, RefreshCw, ArrowUpCircle, ScrollText } from 'lucide-svelte';
+	import { Library, RefreshCw, ArrowUpCircle, FileEdit, ScrollText } from 'lucide-svelte';
 	import type { LayoutData } from './$types';
 
 	export let data: LayoutData;
@@ -27,6 +27,12 @@
 			href: `/arr/${instanceId}/upgrades`,
 			active: currentPath.includes('/upgrades'),
 			icon: ArrowUpCircle
+		},
+		{
+			label: 'Renames',
+			href: `/arr/${instanceId}/rename`,
+			active: currentPath.includes('/rename'),
+			icon: FileEdit
 		},
 		{
 			label: 'Logs',

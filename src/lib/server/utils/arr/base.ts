@@ -8,7 +8,8 @@ import type {
 	ArrQualityDefinition,
 	ArrCustomFormat,
 	ArrQualityProfilePayload,
-	RadarrQualityProfile
+	RadarrQualityProfile,
+	ArrCommand
 } from './types.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -259,5 +260,50 @@ export class BaseArrClient extends BaseHttpClient {
 	 */
 	deleteQualityProfile(id: number): Promise<void> {
 		return this.delete(`/api/${this.apiVersion}/qualityprofile/${id}`);
+	}
+
+	// =========================================================================
+	// Command Methods
+	// =========================================================================
+
+	/**
+	 * Get command status by ID
+	 * Used to poll async operations like rename, refresh, etc.
+	 */
+	getCommand(commandId: number): Promise<ArrCommand> {
+		return this.get<ArrCommand>(`/api/${this.apiVersion}/command/${commandId}`);
+	}
+
+	/**
+	 * Wait for a command to complete
+	 * Polls every 5 seconds until status is 'completed' or 'failed'
+	 * @param commandId - The command ID to wait for
+	 * @param timeoutMs - Maximum wait time in milliseconds (default: 10 minutes)
+	 * @returns The final command status
+	 * @throws Error if command fails or times out
+	 */
+	async waitForCommand(commandId: number, timeoutMs: number = 600000): Promise<ArrCommand> {
+		const pollInterval = 100; // 100ms
+		const startTime = Date.now();
+
+		while (true) {
+			const command = await this.getCommand(commandId);
+
+			if (command.status === 'completed') {
+				return command;
+			}
+
+			if (command.status === 'failed') {
+				throw new Error(`Command ${commandId} failed: ${command.message || 'Unknown error'}`);
+			}
+
+			// Check timeout
+			if (Date.now() - startTime >= timeoutMs) {
+				throw new Error(`Command ${commandId} timed out after ${timeoutMs / 1000} seconds`);
+			}
+
+			// Wait before next poll
+			await new Promise((resolve) => setTimeout(resolve, pollInterval));
+		}
 	}
 }

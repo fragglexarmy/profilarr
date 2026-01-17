@@ -3,7 +3,7 @@ import { notificationServicesQueries } from '$db/queries/notificationServices.ts
 import { notificationHistoryQueries } from '$db/queries/notificationHistory.ts';
 import type { Notifier } from './base/Notifier.ts';
 import type { Notification, DiscordConfig } from './types.ts';
-import { DiscordNotifier } from './notifiers/DiscordNotifier.ts';
+import { DiscordNotifier } from './notifiers/discord/DiscordNotifier.ts';
 
 /**
  * Central notification manager
@@ -96,9 +96,8 @@ export class NotificationManager {
 				notificationHistoryQueries.create({
 					serviceId,
 					notificationType: notification.type,
-					title: notification.title,
-					message: notification.message,
-					metadata: notification.metadata,
+					title: notification.generic?.title ?? 'Notification',
+					message: notification.generic?.message ?? '',
 					status: success ? 'success' : 'failed',
 					error: errorMessage
 				});

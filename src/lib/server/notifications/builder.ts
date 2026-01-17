@@ -5,6 +5,44 @@
 
 import { notificationManager } from './NotificationManager.ts';
 import type { Notification } from './types.ts';
+import { EmbedBuilder, type DiscordEmbed } from './notifiers/discord/embed.ts';
+
+// Re-export Discord embed utilities for convenience
+export {
+	EmbedBuilder,
+	createEmbed,
+	Colors,
+	Icons,
+	getInstanceIcon,
+	type DiscordEmbed,
+	type EmbedField,
+	type EmbedAuthor,
+	type EmbedFooter
+} from './notifiers/discord/embed.ts';
+
+/**
+ * Discord-specific builder for adding embeds
+ */
+class DiscordBuilder {
+	private embeds: DiscordEmbed[] = [];
+
+	/**
+	 * Add an embed
+	 * Accepts an EmbedBuilder instance or a raw DiscordEmbed object
+	 */
+	embed(embed: EmbedBuilder | DiscordEmbed): this {
+		const built = embed instanceof EmbedBuilder ? embed.build() : embed;
+		this.embeds.push(built);
+		return this;
+	}
+
+	/**
+	 * Get the built embeds array
+	 */
+	build(): DiscordEmbed[] {
+		return this.embeds;
+	}
+}
 
 /**
  * Builder class for constructing notifications
@@ -13,51 +51,50 @@ class NotificationBuilder {
 	private data: Notification;
 
 	constructor(type: string) {
-		this.data = {
-			type,
-			title: '',
-			message: ''
-		};
+		this.data = { type };
 	}
 
 	/**
-	 * Set the notification title
+	 * Set generic notification content (works for all services)
+	 * Services without specific payload will use this
 	 */
-	title(t: string): this {
-		this.data.title = t;
+	generic(title: string, message: string): this {
+		this.data.generic = { title, message };
 		return this;
 	}
 
 	/**
-	 * Set the notification message
+	 * Set Discord-specific content
+	 * Discord will use this if present, otherwise falls back to generic
+	 *
+	 * @example
+	 * .discord(d => d
+	 *   .embed(createEmbed().title('Success').color(Colors.SUCCESS))
+	 *   .embed(createEmbed().title('Details').field('Count', '5'))
+	 * )
 	 */
-	message(m: string): this {
-		this.data.message = m;
+	discord(builder: (d: DiscordBuilder) => DiscordBuilder): this {
+		const discordBuilder = new DiscordBuilder();
+		builder(discordBuilder);
+		this.data.discord = { embeds: discordBuilder.build() };
 		return this;
 	}
 
 	/**
-	 * Build message from multiple lines
-	 * Automatically filters out null/undefined/empty values
-	 */
-	lines(messageLines: (string | null | undefined | false)[]): this {
-		this.data.message = messageLines.filter(Boolean).join('\n').trim();
-		return this;
-	}
-
-	/**
-	 * Set metadata
-	 */
-	meta(metadata: Record<string, unknown>): this {
-		this.data.metadata = metadata;
-		return this;
-	}
-
-	/**
-	 * Send the notification
+	 * Send the notification via the notification manager
+	 * Routes to all enabled services that have this notification type enabled
 	 */
 	async send(): Promise<void> {
 		await notificationManager.notify(this.data);
+	}
+
+	/**
+	 * Build and return the raw notification object
+	 * Use this when you need to send directly to a specific notifier
+	 * (e.g., test notifications that bypass the notification manager)
+	 */
+	build(): Notification {
+		return this.data;
 	}
 }
 
@@ -65,23 +102,25 @@ class NotificationBuilder {
  * Create a new notification builder
  *
  * @example
- * // Simple notification
+ * // Generic notification (works for all services)
  * await notify('pcd.linked')
- *   .title('Database Linked')
- *   .message('Database "MyDB" has been linked successfully')
- *   .meta({ databaseId: 1 })
+ *   .generic('Database Linked', 'Database "MyDB" has been linked successfully')
  *   .send();
  *
  * @example
- * // Multi-line notification
- * await notify('upgrade.success')
- *   .title('Upgrade Completed')
- *   .lines([
- *     'Filter: 50 matched → 30 after cooldown',
- *     'Selection: 10/10 items',
- *     hasItems ? `Items: ${items.join(', ')}` : null
- *   ])
- *   .meta({ instanceId: 1 })
+ * // Discord with rich embeds, generic fallback for others
+ * await notify('rename.success')
+ *   .generic('Rename Complete', '5 files renamed')
+ *   .discord(d => d
+ *     .embed(createEmbed()
+ *       .title('Rename Complete')
+ *       .field('Files', '5/5', true)
+ *       .field('Mode', 'Live', true)
+ *       .color(Colors.SUCCESS)
+ *       .timestamp()
+ *       .footer('Profilarr')
+ *     )
+ *   )
  *   .send();
  */
 export function notify(type: string): NotificationBuilder {

@@ -9,6 +9,7 @@ import { cleanupBackupsJob } from './definitions/cleanupBackups.ts';
 import { syncDatabasesJob } from './definitions/syncDatabases.ts';
 import { upgradeManagerJob } from './definitions/upgradeManager.ts';
 import { syncArrJob } from './definitions/syncArr.ts';
+import { renameManagerJob } from './definitions/renameManager.ts';
 
 /**
  * Register all job definitions
@@ -21,6 +22,7 @@ function registerAllJobs(): void {
 	jobRegistry.register(syncDatabasesJob);
 	jobRegistry.register(upgradeManagerJob);
 	jobRegistry.register(syncArrJob);
+	jobRegistry.register(renameManagerJob);
 }
 
 /**

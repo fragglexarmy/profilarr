@@ -8,7 +8,7 @@ export const load = async ({ url }: { url: URL }) => {
 	const selectedFile = url.searchParams.get('file') || logFiles[0]?.filename || '';
 
 	// Load logs from selected file or all files if no file selected
-	const logs = selectedFile ? await readLogsFromFile(selectedFile, 1000) : await readLastLogs(1000);
+	const logs = selectedFile ? await readLogsFromFile(selectedFile) : await readLastLogs();
 
 	return {
 		logs,
