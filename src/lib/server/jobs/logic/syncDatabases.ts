@@ -6,6 +6,10 @@
 import { pcdManager } from '$pcd/pcd.ts';
 import { notify } from '$notifications/builder.ts';
 import { NotificationTypes } from '$notifications/types.ts';
+import { logger } from '$logger/logger.ts';
+import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+
+const LOG_SOURCE = 'SyncDatabases';
 
 export interface DatabaseSyncStatus {
 	id: number;
@@ -34,13 +38,29 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 	let failureCount = 0;
 	const statuses: DatabaseSyncStatus[] = [];
 
+	await logger.debug(`Found ${totalChecked} database(s) due for sync`, {
+		source: LOG_SOURCE,
+		meta: { databaseIds: databases.map((d) => d.id) }
+	});
+
 	for (const db of databases) {
+		await logger.debug(`Checking "${db.name}" for updates`, {
+			source: LOG_SOURCE,
+			meta: {
+				id: db.id,
+				syncStrategy: db.sync_strategy,
+				autoPull: db.auto_pull,
+				lastSyncedAt: db.last_synced_at
+			}
+		});
+
 		try {
 			// Check for updates
 			const updateInfo = await pcdManager.checkForUpdates(db.id);
 
 			if (!updateInfo.hasUpdates) {
-				// No updates available, just mark as checked
+				await logger.debug(`No updates for "${db.name}"`, { source: LOG_SOURCE });
+				databaseInstancesQueries.updateSyncedAt(db.id);
 				statuses.push({
 					id: db.id,
 					name: db.name,
@@ -51,12 +71,21 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 				continue;
 			}
 
+			await logger.debug(`Updates available for "${db.name}"`, {
+				source: LOG_SOURCE,
+				meta: { commitsBehind: updateInfo.commitsBehind }
+			});
+
 			// Updates are available
 			if (db.auto_pull === 1) {
-				// Auto-pull is enabled, sync the database
+				await logger.debug(`Pulling updates for "${db.name}"`, { source: LOG_SOURCE });
 				const syncResult = await pcdManager.sync(db.id);
 
 				if (syncResult.success) {
+					await logger.debug(`Pull succeeded for "${db.name}"`, {
+						source: LOG_SOURCE,
+						meta: { commitsPulled: syncResult.commitsBehind }
+					});
 					await notify(NotificationTypes.PCD_SYNC_SUCCESS)
 						.title('Database Synced Successfully')
 						.message(`Database "${db.name}" has been updated (${syncResult.commitsBehind} commit${syncResult.commitsBehind === 1 ? '' : 's'} pulled)`)
@@ -87,13 +116,16 @@ export async function syncDatabases(): Promise<SyncDatabasesResult> {
 					failureCount++;
 				}
 			} else {
-				// Auto-pull is disabled, notify about available updates
+				await logger.debug(`Auto-pull disabled for "${db.name}", notifying only`, {
+					source: LOG_SOURCE
+				});
 				await notify(NotificationTypes.PCD_UPDATES_AVAILABLE)
 					.title('Database Updates Available')
 					.message(`Updates are available for database "${db.name}" (${updateInfo.commitsBehind} commit${updateInfo.commitsBehind === 1 ? '' : 's'} behind)`)
 					.meta({ databaseId: db.id, databaseName: db.name, commitsBehind: updateInfo.commitsBehind })
 					.send();
 
+				databaseInstancesQueries.updateSyncedAt(db.id);
 				statuses.push({
 					id: db.id,
 					name: db.name,
