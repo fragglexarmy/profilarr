@@ -2,6 +2,8 @@
  * Core notification types and interfaces
  */
 
+import type { DiscordEmbed } from './notifiers/discord/embed.ts';
+
 /**
  * Type-safe notification type constants
  */
@@ -40,7 +42,7 @@ export interface GenericNotification {
  * Discord-specific notification content
  */
 export interface DiscordNotification {
-	embeds: unknown[];
+	embeds: DiscordEmbed[];
 }
 
 /**

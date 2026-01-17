@@ -28,7 +28,7 @@ export class RadarrClient extends BaseArrClient {
 	/**
 	 * Get all quality profiles
 	 */
-	getQualityProfiles(): Promise<RadarrQualityProfile[]> {
+	override getQualityProfiles(): Promise<RadarrQualityProfile[]> {
 		return this.get<RadarrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
 	}
 

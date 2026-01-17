@@ -60,7 +60,7 @@ function createSkippedLog(
 /**
  * Send rename notification
  */
-async function sendRenameNotification(log: RenameJobLog): Promise<void> {
+async function sendRenameNotification(log: RenameJobLog, summaryNotifications: boolean): Promise<void> {
 	// Only notify if there were files to rename
 	if (log.results.filesNeedingRename > 0) {
 		const { DiscordNotifier } = await import('$lib/server/notifications/notifiers/discord/index.ts');
@@ -80,7 +80,7 @@ async function sendRenameNotification(log: RenameJobLog): Promise<void> {
 
 				if (service.service_type === 'discord') {
 					const notifier = new DiscordNotifier(config);
-					const notification = notifications.rename({ log, config }).build();
+					const notification = notifications.rename({ log, config, summaryNotifications }).build();
 					await notifier.notify(notification);
 				}
 			} catch {
@@ -179,7 +179,7 @@ async function processRadarrRename(
 		};
 
 		await logRenameRun(log);
-		sendRenameNotification(log);
+		sendRenameNotification(log, settings.summaryNotifications);
 		return log;
 	}
 
@@ -280,7 +280,7 @@ async function processRadarrRename(
 	};
 
 	await logRenameRun(log);
-	sendRenameNotification(log);
+	sendRenameNotification(log, settings.summaryNotifications);
 	return log;
 }
 
@@ -375,7 +375,7 @@ async function processSonarrRename(
 		};
 
 		await logRenameRun(log);
-		sendRenameNotification(log);
+		sendRenameNotification(log, settings.summaryNotifications);
 		return log;
 	}
 
@@ -490,7 +490,7 @@ async function processSonarrRename(
 	};
 
 	await logRenameRun(log);
-	sendRenameNotification(log);
+	sendRenameNotification(log, settings.summaryNotifications);
 	return log;
 }
 

@@ -8,6 +8,7 @@ import type { RenameJobLog } from '$lib/server/rename/types.ts';
 interface RenameNotificationParams {
 	log: RenameJobLog;
 	config: { username?: string; avatar_url?: string };
+	summaryNotifications?: boolean;
 }
 
 // Discord limits (https://birdie0.github.io/discord-webhooks-guide/other/field_limits.html)
@@ -231,9 +232,62 @@ function startNewEmbed(
 }
 
 /**
- * Notification for rename job completion
+ * Build a summary notification (compact, single embed)
  */
-export const rename = ({ log, config }: RenameNotificationParams) => {
+function buildSummaryNotification(
+	log: RenameJobLog,
+	config: { username?: string; avatar_url?: string }
+) {
+	const embed = createEmbed()
+		.author(config.username || 'Profilarr', config.avatar_url)
+		.title(`${getTitle(log)} - ${log.instanceName}`)
+		.color(Colors.INFO)
+		.timestamp()
+		.footer(`Type: rename.${log.status}`);
+
+	// Stats fields
+	if (log.config.dryRun) {
+		embed.field('Mode', 'Dry Run', true);
+		embed.field('Files', String(log.results.filesNeedingRename), true);
+	} else {
+		embed.field('Files', `${log.results.filesRenamed}/${log.results.filesNeedingRename}`, true);
+
+		if (log.config.renameFolders) {
+			embed.field('Folders', String(log.results.foldersRenamed), true);
+		}
+	}
+
+	// Add sample if there are renamed items
+	if (log.renamedItems.length > 0) {
+		const sample = log.renamedItems[0];
+		const sampleFile = sample.files[0];
+		const othersCount = log.results.filesNeedingRename - 1;
+		const othersText = othersCount > 0 ? ` + ${othersCount} other${othersCount === 1 ? '' : 's'}` : '';
+
+		embed.field(
+			`Sample: ${truncateFieldName(sample.title)}${othersText}`,
+			'```\n' + formatFileEntry(sampleFile) + '\n```',
+			false
+		);
+	}
+
+	const genericMessage =
+		log.status === 'failed'
+			? `Rename failed for ${log.instanceName}`
+			: `Renamed ${log.results.filesRenamed} files for ${log.instanceName}`;
+
+	return notify(`rename.${log.status}`)
+		.generic(getTitle(log), genericMessage)
+		.discord((d) => d.embed(embed));
+}
+
+/**
+ * Build a rich notification (detailed, multiple embeds if needed)
+ */
+function buildRichNotification(
+	log: RenameJobLog,
+	config: { username?: string; avatar_url?: string }
+) {
 	const embeds: EmbedBuilder[] = [];
 
 	// If no files to rename, single embed with just stats
@@ -292,4 +346,31 @@ export const rename = ({ log, config }: RenameNotificationParams) => {
 			for (const e of embeds) d.embed(e);
 			return d;
 		});
+}
+
+/**
+ * Notification for rename job completion
+ */
+export const rename = ({ log, config, summaryNotifications = true }: RenameNotificationParams) => {
+	// If no files to rename, always use a simple notification
+	if (log.renamedItems.length === 0) {
+		const embed = createEmbed()
+			.author(config.username || 'Profilarr', config.avatar_url)
+			.title(`${getTitle(log)} - ${log.instanceName}`)
+			.color(Colors.INFO)
+			.field('Status', 'No files needed renaming', false)
+			.timestamp()
+			.footer(`Type: rename.${log.status}`);
+
+		return notify(`rename.${log.status}`)
+			.generic(getTitle(log), `No files needed renaming for ${log.instanceName}`)
+			.discord((d) => d.embed(embed));
+	}
+
+	// Use summary or rich notification based on setting
+	if (summaryNotifications) {
+		return buildSummaryNotification(log, config);
+	}
+
+	return buildRichNotification(log, config);
 };

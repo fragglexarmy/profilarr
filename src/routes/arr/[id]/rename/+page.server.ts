@@ -47,13 +47,15 @@ export const actions: Actions = {
 			const renameFolders = formData.get('renameFolders') === 'true';
 			const ignoreTag = (formData.get('ignoreTag') as string) || null;
 			const schedule = parseInt(formData.get('schedule') as string, 10) || 1440;
+			const summaryNotifications = formData.get('summaryNotifications') === 'true';
 
 			const settingsData = {
 				enabled,
 				dryRun,
 				renameFolders,
 				ignoreTag,
-				schedule
+				schedule,
+				summaryNotifications
 			};
 
 			arrRenameSettingsQueries.upsert(id, settingsData);
@@ -106,13 +108,15 @@ export const actions: Actions = {
 			const renameFolders = formData.get('renameFolders') === 'true';
 			const ignoreTag = (formData.get('ignoreTag') as string) || null;
 			const schedule = parseInt(formData.get('schedule') as string, 10) || 1440;
+			const summaryNotifications = formData.get('summaryNotifications') === 'true';
 
 			const settingsData = {
 				enabled,
 				dryRun,
 				renameFolders,
 				ignoreTag,
-				schedule
+				schedule,
+				summaryNotifications
 			};
 
 			arrRenameSettingsQueries.update(id, settingsData);

@@ -465,7 +465,7 @@ CREATE INDEX idx_pattern_match_cache_created_at ON pattern_match_cache(created_a
 -- ==============================================================================
 -- TABLE: arr_rename_settings
 -- Purpose: Store rename configuration per arr instance for bulk file/folder renaming
--- Migration: 024_create_arr_rename_settings.ts
+-- Migration: 024_create_arr_rename_settings.ts, 025_add_rename_notification_mode.ts
 -- ==============================================================================
 
 CREATE TABLE arr_rename_settings (
@@ -478,6 +478,7 @@ CREATE TABLE arr_rename_settings (
     dry_run INTEGER NOT NULL DEFAULT 1,         -- 1=preview only, 0=make changes
     rename_folders INTEGER NOT NULL DEFAULT 0,  -- 1=rename folders too, 0=files only
     ignore_tag TEXT,                            -- Tag name to skip (items with tag won't be renamed)
+    summary_notifications INTEGER NOT NULL DEFAULT 1, -- 1=summary, 0=rich (Migration 025)
 
     -- Job scheduling
     enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch for scheduled job

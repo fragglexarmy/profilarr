@@ -19,6 +19,7 @@
 	let renameFolders = data.settings?.renameFolders ?? false;
 	let ignoreTag = data.settings?.ignoreTag ?? '';
 	let schedule = String(data.settings?.schedule ?? 1440);
+	let summaryNotifications = data.settings?.summaryNotifications ?? true;
 
 	// Track if settings exist (determines save vs edit)
 	$: isNewConfig = !data.settings;
@@ -29,7 +30,7 @@
 
 	// Initialize dirty tracking
 	onMount(() => {
-		const formData = { enabled, dryRun, renameFolders, ignoreTag, schedule };
+		const formData = { enabled, dryRun, renameFolders, ignoreTag, schedule, summaryNotifications };
 		if (isNewConfig) {
 			initCreate(formData);
 		} else {
@@ -44,6 +45,7 @@
 	$: update('renameFolders', renameFolders);
 	$: update('ignoreTag', ignoreTag);
 	$: update('schedule', schedule);
+	$: update('summaryNotifications', summaryNotifications);
 
 	// Handle form response - use a processed flag to avoid re-running on field changes
 	let lastFormId: unknown = null;
@@ -51,7 +53,7 @@
 		lastFormId = form;
 		if (form.success && !form.runResult) {
 			alertStore.add('success', 'Configuration saved successfully');
-			initEdit({ enabled, dryRun, renameFolders, ignoreTag, schedule });
+			initEdit({ enabled, dryRun, renameFolders, ignoreTag, schedule, summaryNotifications });
 		}
 		if (form.success && form.runResult) {
 			const r = form.runResult;
@@ -89,6 +91,7 @@
 	<input type="hidden" name="renameFolders" value={renameFolders} />
 	<input type="hidden" name="ignoreTag" value={ignoreTag} />
 	<input type="hidden" name="schedule" value={schedule} />
+	<input type="hidden" name="summaryNotifications" value={summaryNotifications} />
 
 	<div class="mt-6 space-y-6">
 		<!-- Header -->
@@ -119,7 +122,7 @@
 			/>
 		{/if}
 
-		<RenameSettings bind:enabled bind:dryRun bind:renameFolders bind:ignoreTag bind:schedule />
+		<RenameSettings bind:enabled bind:dryRun bind:renameFolders bind:ignoreTag bind:schedule bind:summaryNotifications />
 
 		<!-- Action Buttons -->
 		<div class="flex justify-end gap-3">

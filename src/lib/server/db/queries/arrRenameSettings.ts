@@ -9,6 +9,7 @@ interface RenameSettingsRow {
 	dry_run: number;
 	rename_folders: number;
 	ignore_tag: string | null;
+	summary_notifications: number;
 	enabled: number;
 	schedule: number;
 	last_run_at: string | null;
@@ -25,6 +26,7 @@ export interface RenameSettings {
 	dryRun: boolean;
 	renameFolders: boolean;
 	ignoreTag: string | null;
+	summaryNotifications: boolean;
 	enabled: boolean;
 	schedule: number;
 	lastRunAt: string | null;
@@ -39,6 +41,7 @@ export interface RenameSettingsInput {
 	dryRun?: boolean;
 	renameFolders?: boolean;
 	ignoreTag?: string | null;
+	summaryNotifications?: boolean;
 	enabled?: boolean;
 	schedule?: number;
 }
@@ -53,6 +56,7 @@ function rowToSettings(row: RenameSettingsRow): RenameSettings {
 		dryRun: row.dry_run === 1,
 		renameFolders: row.rename_folders === 1,
 		ignoreTag: row.ignore_tag,
+		summaryNotifications: row.summary_notifications === 1,
 		enabled: row.enabled === 1,
 		schedule: row.schedule,
 		lastRunAt: row.last_run_at,
@@ -110,17 +114,19 @@ export const arrRenameSettingsQueries = {
 		const dryRun = input.dryRun !== undefined ? (input.dryRun ? 1 : 0) : 1;
 		const renameFolders = input.renameFolders !== undefined ? (input.renameFolders ? 1 : 0) : 0;
 		const ignoreTag = input.ignoreTag ?? null;
+		const summaryNotifications = input.summaryNotifications !== undefined ? (input.summaryNotifications ? 1 : 0) : 1;
 		const enabled = input.enabled !== undefined ? (input.enabled ? 1 : 0) : 0;
 		const schedule = input.schedule ?? 1440;
 
 		db.execute(
 			`INSERT INTO arr_rename_settings
-			(arr_instance_id, dry_run, rename_folders, ignore_tag, enabled, schedule)
-			VALUES (?, ?, ?, ?, ?, ?)`,
+			(arr_instance_id, dry_run, rename_folders, ignore_tag, summary_notifications, enabled, schedule)
+			VALUES (?, ?, ?, ?, ?, ?, ?)`,
 			arrInstanceId,
 			dryRun,
 			renameFolders,
 			ignoreTag,
+			summaryNotifications,
 			enabled,
 			schedule
 		);
@@ -146,6 +152,10 @@ export const arrRenameSettingsQueries = {
 		if (input.ignoreTag !== undefined) {
 			updates.push('ignore_tag = ?');
 			params.push(input.ignoreTag);
+		}
+		if (input.summaryNotifications !== undefined) {
+			updates.push('summary_notifications = ?');
+			params.push(input.summaryNotifications ? 1 : 0);
 		}
 		if (input.enabled !== undefined) {
 			updates.push('enabled = ?');
