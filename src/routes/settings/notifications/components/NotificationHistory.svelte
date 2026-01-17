@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { Bell } from 'lucide-svelte';
+	import { parseUTC } from '$shared/dates';
 	import type { NotificationHistoryRecord } from '$db/queries/notificationHistory.ts';
 
 	export let history: NotificationHistoryRecord[];
 	export let services: Array<{ id: string; name: string }>;
 
 	function formatDateTime(date: string): string {
-		// SQLite stores as UTC without timezone indicator, append Z to parse correctly
-		const utcDate = date.endsWith('Z') ? date : date.replace(' ', 'T') + 'Z';
-		return new Date(utcDate).toLocaleString();
+		const d = parseUTC(date);
+		return d ? d.toLocaleString() : '-';
 	}
 
 	function getServiceName(serviceId: string): string {

@@ -5,12 +5,13 @@
 	import { Tag, Clock, Zap, Shield, Calendar } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { parseUTC } from '$shared/dates';
 
 	export let profiles: DelayProfileTableRow[];
 
 	function formatDate(dateString: string): string {
-		// SQLite stores timestamps without timezone info, treat as UTC
-		const date = new Date(dateString + 'Z');
+		const date = parseUTC(dateString);
+		if (!date) return '-';
 		return date.toLocaleString(undefined, {
 			year: 'numeric',
 			month: 'short',

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { Clock, Timer, CheckCircle, PauseCircle } from 'lucide-svelte';
+	import { parseUTC } from '$shared/dates';
 
 	export let enabled: boolean;
 	export let schedule: number; // minutes
@@ -20,8 +21,7 @@
 	});
 
 	// Calculate times
-	// Database stores timestamps without timezone - append Z to parse as UTC
-	$: lastRunTime = lastRunAt ? new Date(lastRunAt.endsWith('Z') ? lastRunAt : lastRunAt + 'Z').getTime() : null;
+	$: lastRunTime = parseUTC(lastRunAt)?.getTime() ?? null;
 	$: scheduleMs = schedule * 60 * 1000;
 	$: nextRunTime = lastRunTime ? lastRunTime + scheduleMs : null;
 	$: timeUntilNext = nextRunTime ? nextRunTime - now : null;
@@ -49,14 +49,10 @@
 		return `${seconds}s`;
 	}
 
-	// Parse timestamp - append Z if needed to treat as UTC
-	function parseTimestamp(str: string): Date {
-		return new Date(str.endsWith('Z') ? str : str + 'Z');
-	}
-
 	// Format absolute time
 	function formatTime(isoString: string): string {
-		const date = parseTimestamp(isoString);
+		const date = parseUTC(isoString);
+		if (!date) return '-';
 		return date.toLocaleTimeString('en-US', {
 			hour: 'numeric',
 			minute: '2-digit',
@@ -65,7 +61,8 @@
 	}
 
 	function formatDate(isoString: string): string {
-		const date = parseTimestamp(isoString);
+		const date = parseUTC(isoString);
+		if (!date) return '-';
 		const today = new Date();
 		const yesterday = new Date(today);
 		yesterday.setDate(yesterday.getDate() - 1);

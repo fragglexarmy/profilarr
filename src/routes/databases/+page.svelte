@@ -13,6 +13,7 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import { createSearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
+	import { parseUTC } from '$shared/dates';
 	import type { PageData } from './$types';
 	import type { Column } from '$ui/table/types';
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
@@ -66,8 +67,14 @@
 
 	// Format last synced date
 	function formatLastSynced(date: string | null): string {
-		if (!date) return 'Never';
-		return new Date(date).toLocaleDateString();
+		const d = parseUTC(date);
+		if (!d) return 'Never';
+		return d.toLocaleString(undefined, {
+			month: 'short',
+			day: 'numeric',
+			hour: 'numeric',
+			minute: '2-digit'
+		});
 	}
 
 	// Handle row click - navigate to database details

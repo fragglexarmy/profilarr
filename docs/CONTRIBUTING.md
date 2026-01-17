@@ -569,6 +569,34 @@ Examples:
 - `src/lib/server/db/queries/arrInstances.ts`
 - `src/lib/server/db/queries/jobs.ts`
 
+**Date Handling**
+
+SQLite stores timestamps from `CURRENT_TIMESTAMP` as UTC in the format
+`"YYYY-MM-DD HH:MM:SS"` without a timezone indicator. JavaScript's `Date`
+constructor interprets strings without timezone info as local time, causing
+incorrect display.
+
+Use the shared date utilities in `src/lib/shared/dates.ts`:
+
+```typescript
+import { parseUTC, toUTC } from "$shared/dates";
+
+// Parse SQLite timestamp to Date object (correctly interpreted as UTC)
+const date = parseUTC("2026-01-17 03:21:52"); // Date in UTC
+
+// Normalize to ISO 8601 string with Z suffix
+const iso = toUTC("2026-01-17 03:21:52"); // "2026-01-17T03:21:52Z"
+```
+
+**Never** manually append `'Z'` or manipulate timestamp strings directly. Always
+use these utilities to ensure consistent timezone handling across the codebase.
+
+For SQL queries that compare timestamps, normalize both sides:
+
+```sql
+datetime(replace(replace(timestamp_col, 'T', ' '), 'Z', '')) <= datetime('now')
+```
+
 #### PCD (Profilarr Compliant Database)
 
 PCDs are git repositories containing versioned configuration data—quality
