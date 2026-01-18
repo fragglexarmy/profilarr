@@ -16,6 +16,7 @@
 	export let evaluations: Record<number, ReleaseEvaluation>;
 	export let loadingEntityIds: Set<number> = new Set();
 	export let selectedProfileId: number | null;
+	export let qualityProfiles: Array<{ id: number; name: string }>;
 	export let cfScoresData: { customFormats: CustomFormatInfo[]; profiles: ProfileCfScores[] };
 	export let calculateScore: (releaseId: number, entityType: 'movie' | 'series') => number | null;
 	export let deleteLayer: 'user' | 'base' = 'user';
@@ -194,6 +195,7 @@
 					releases={row.releases}
 					{evaluations}
 					{selectedProfileId}
+					{qualityProfiles}
 					{cfScoresData}
 					{calculateScore}
 					deleteLayer={deleteReleaseLayer}

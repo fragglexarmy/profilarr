@@ -19,6 +19,7 @@
 	export let releases: TestRelease[];
 	export let evaluations: Record<number, ReleaseEvaluation>;
 	export let selectedProfileId: number | null;
+	export let qualityProfiles: Array<{ id: number; name: string }>;
 	export let cfScoresData: { customFormats: CustomFormatInfo[]; profiles: ProfileCfScores[] };
 	export let calculateScore: (releaseId: number, entityType: 'movie' | 'series') => number | null;
 	export let deleteLayer: 'user' | 'base' = 'user';
@@ -27,27 +28,30 @@
 	let expandedRows: Set<string | number> = new Set();
 
 	// Get matching custom formats for a release with their scores
-	function getMatchingFormats(releaseId: number): Array<{ id: number; name: string; score: number }> {
+	function getMatchingFormats(releaseId: number): Array<{ name: string; score: number }> {
 		const evaluation = evaluations[releaseId];
 		if (!evaluation || !evaluation.cfMatches || !selectedProfileId) return [];
 
-		const profileScores = cfScoresData.profiles.find((p) => p.profileId === selectedProfileId);
+		// Convert profile ID to name for lookup
+		const profile = qualityProfiles.find((p) => p.id === selectedProfileId);
+		if (!profile) return [];
+
+		const profileScores = cfScoresData.profiles.find((p) => p.profileName === profile.name);
 		if (!profileScores) return [];
 
 		const arrType = entityType === 'movie' ? 'radarr' : 'sonarr';
-		const matches: Array<{ id: number; name: string; score: number }> = [];
+		const matches: Array<{ name: string; score: number }> = [];
 
-		for (const [cfIdStr, matched] of Object.entries(evaluation.cfMatches)) {
+		// cfMatches keys are now CF names
+		for (const [cfName, matched] of Object.entries(evaluation.cfMatches)) {
 			if (!matched) continue;
 
-			const cfId = parseInt(cfIdStr, 10);
-			const cf = cfScoresData.customFormats.find((f) => f.id === cfId);
-			const cfScore = profileScores.scores[cfId];
+			const cfScore = profileScores.scores[cfName];
 
-			if (cf && cfScore) {
+			if (cfScore) {
 				const score = cfScore[arrType];
 				if (score !== null && score !== 0) {
-					matches.push({ id: cfId, name: cf.name, score });
+					matches.push({ name: cfName, score });
 				}
 			}
 		}

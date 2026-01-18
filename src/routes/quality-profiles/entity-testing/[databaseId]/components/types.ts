@@ -28,12 +28,11 @@ export interface CfScore {
 
 /** Profile CF scores data */
 export interface ProfileCfScores {
-	profileId: number;
-	scores: Record<number, CfScore>;
+	profileName: string;
+	scores: Record<string, CfScore>;
 }
 
 /** Custom format info */
 export interface CustomFormatInfo {
-	id: number;
 	name: string;
 }

@@ -136,17 +136,20 @@
 		const evaluation = evaluations[releaseId];
 		if (!evaluation || !evaluation.cfMatches) return null;
 
-		const profileScores = data.cfScoresData.profiles.find((p) => p.profileId === selectedProfileId);
+		// Get the profile name from the selected ID
+		const profile = data.qualityProfiles.find((p) => p.id === selectedProfileId);
+		if (!profile) return null;
+
+		const profileScores = data.cfScoresData.profiles.find((p) => p.profileName === profile.name);
 		if (!profileScores) return null;
 
 		const arrType = entityType === 'movie' ? 'radarr' : 'sonarr';
 		let totalScore = 0;
 
-		for (const [cfIdStr, matches] of Object.entries(evaluation.cfMatches)) {
+		for (const [cfName, matches] of Object.entries(evaluation.cfMatches)) {
 			if (!matches) continue;
 
-			const cfId = parseInt(cfIdStr, 10);
-			const cfScore = profileScores.scores[cfId];
+			const cfScore = profileScores.scores[cfName];
 			if (cfScore) {
 				const score = cfScore[arrType];
 				if (score !== null) {
@@ -432,6 +435,7 @@
 				{evaluations}
 				{loadingEntityIds}
 				{selectedProfileId}
+				qualityProfiles={data.qualityProfiles}
 				cfScoresData={data.cfScoresData}
 				{calculateScore}
 				{deleteLayer}
