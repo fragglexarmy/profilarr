@@ -151,7 +151,7 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 	for (const condition of newConditions) {
 		// Insert the base condition
 		queries.push({
-			sql: `INSERT INTO custom_format_conditions (custom_format_id, name, type, arr_type, negate, required) VALUES (${formatId}, '${esc(condition.name)}', '${esc(condition.type)}', 'all', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
+			sql: `INSERT INTO custom_format_conditions (custom_format_id, name, type, arr_type, negate, required) VALUES (${formatId}, '${esc(condition.name)}', '${esc(condition.type)}', '${condition.arrType ?? 'all'}', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
 			parameters: [],
 			query: {} as never
 		});
@@ -177,13 +177,14 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		const baseChanged =
 			original.name !== condition.name ||
 			original.type !== condition.type ||
+			original.arrType !== condition.arrType ||
 			original.negate !== condition.negate ||
 			original.required !== condition.required;
 
 		if (baseChanged) {
 			// Update base condition
 			queries.push({
-				sql: `UPDATE custom_format_conditions SET name = '${esc(condition.name)}', type = '${esc(condition.type)}', negate = ${condition.negate ? 1 : 0}, required = ${condition.required ? 1 : 0} WHERE id = ${condition.id}`,
+				sql: `UPDATE custom_format_conditions SET name = '${esc(condition.name)}', type = '${esc(condition.type)}', arr_type = '${condition.arrType ?? 'all'}', negate = ${condition.negate ? 1 : 0}, required = ${condition.required ? 1 : 0} WHERE id = ${condition.id}`,
 				parameters: [],
 				query: {} as never
 			});

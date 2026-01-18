@@ -112,6 +112,7 @@
 			id: nextDraftId--,
 			name: 'New Condition',
 			type: 'release_title',
+			arrType: 'all',
 			negate: false,
 			required: false
 		};

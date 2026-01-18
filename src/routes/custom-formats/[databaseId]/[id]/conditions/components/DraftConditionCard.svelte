@@ -34,6 +34,19 @@
 		dispatch('change', { ...condition, ...updates });
 	}
 
+	// Arr type toggle colors and state
+	const ARR_COLORS = { radarr: '#FFC230', sonarr: '#00CCFF' };
+
+	$: radarrEnabled = condition.arrType === 'all' || condition.arrType === 'radarr';
+	$: sonarrEnabled = condition.arrType === 'all' || condition.arrType === 'sonarr';
+
+	function getArrType(r: boolean, s: boolean): 'all' | 'radarr' | 'sonarr' {
+		if (r && s) return 'all';
+		if (r) return 'radarr';
+		if (s) return 'sonarr';
+		return 'all'; // Default to 'all' if neither is checked
+	}
+
 	// Filter condition types based on arrType
 	$: filteredConditionTypes = CONDITION_TYPES.filter(
 		(t) => t.arrType === 'all' || t.arrType === arrType
@@ -352,6 +365,28 @@
 			on:click={() => emitChange({ required: !condition.required })}
 		/>
 		<span class="text-xs text-neutral-500 dark:text-neutral-400">Required</span>
+	</div>
+
+	<!-- Radarr -->
+	<div class="flex shrink-0 items-center gap-1.5">
+		<IconCheckbox
+			icon={Check}
+			checked={radarrEnabled}
+			color={ARR_COLORS.radarr}
+			on:click={() => emitChange({ arrType: getArrType(!radarrEnabled, sonarrEnabled) })}
+		/>
+		<span class="text-xs text-neutral-500 dark:text-neutral-400">Radarr</span>
+	</div>
+
+	<!-- Sonarr -->
+	<div class="flex shrink-0 items-center gap-1.5">
+		<IconCheckbox
+			icon={Check}
+			checked={sonarrEnabled}
+			color={ARR_COLORS.sonarr}
+			on:click={() => emitChange({ arrType: getArrType(radarrEnabled, !sonarrEnabled) })}
+		/>
+		<span class="text-xs text-neutral-500 dark:text-neutral-400">Sonarr</span>
 	</div>
 
 	<!-- Confirm -->
