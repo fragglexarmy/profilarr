@@ -1,7 +1,10 @@
 <script lang="ts">
+	import type { Column } from '$lib/client/ui/table/types';
+	import Table from '$lib/client/ui/table/Table.svelte';
+	import Badge from '$lib/client/ui/badge/Badge.svelte';
 	import { CheckCircle, XCircle, Clock } from 'lucide-svelte';
 
-	export let jobRuns: Array<{
+	type JobRun = {
 		id: number;
 		job_id: number;
 		job_name: string;
@@ -11,18 +14,23 @@
 		duration_ms: number;
 		error: string | null;
 		output: string | null;
-	}>;
+	};
+
+	export let jobRuns: JobRun[];
+
+	const columns: Column<JobRun>[] = [
+		{ key: 'job_name', header: 'Job', sortable: true },
+		{ key: 'status', header: 'Status', sortable: true, width: 'w-28' },
+		{ key: 'started_at', header: 'Started', sortable: true },
+		{ key: 'duration_ms', header: 'Duration', sortable: true, width: 'w-28' },
+		{ key: 'output', header: 'Output' }
+	];
 
 	// Format duration in ms to human readable
 	function formatDuration(ms: number): string {
 		if (ms < 1000) return `${ms}ms`;
 		if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
 		return `${(ms / 60000).toFixed(1)}m`;
-	}
-
-	// Format date/time
-	function formatDateTime(dateStr: string): string {
-		return new Date(dateStr).toLocaleString();
 	}
 
 	// Format job name: sync_databases -> Sync Databases
@@ -51,128 +59,35 @@
 	}
 </script>
 
-<div
-	class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
->
-	<!-- Header -->
-	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-		<div class="flex items-center gap-2">
-			<Clock size={18} class="text-neutral-600 dark:text-neutral-400" />
-			<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Recent Job Runs</h2>
-		</div>
+<div class="space-y-4">
+	<div class="flex items-center gap-2">
+		<Clock size={18} class="text-neutral-600 dark:text-neutral-400" />
+		<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Recent Job Runs</h2>
 	</div>
 
-	<!-- Table -->
-	<div class="overflow-x-auto">
-		<table class="w-full text-xs">
-			<thead>
-				<tr>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Job
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Status
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Started
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Duration
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Output
-					</th>
-				</tr>
-			</thead>
-			<tbody class="[&_tr:last-child_td]:border-b-0">
-				{#each jobRuns as run (run.id)}
-					<tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-						<!-- Job Name -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							{formatJobName(run.job_name)}
-						</td>
-
-						<!-- Status -->
-						<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
-							{#if run.status === 'success'}
-								<span
-									class="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-100"
-								>
-									<CheckCircle size={10} />
-									Success
-								</span>
-							{:else}
-								<span
-									class="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-100"
-								>
-									<XCircle size={10} />
-									Failed
-								</span>
-							{/if}
-						</td>
-
-						<!-- Started At -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							<div class="flex flex-col gap-0.5">
-								<code
-									class="rounded bg-neutral-100 px-1 py-0.5 font-mono text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-								>
-									{getRelativeTime(run.started_at)}
-								</code>
-								<span class="text-xs text-neutral-500 dark:text-neutral-500">
-									{formatDateTime(run.started_at)}
-								</span>
-							</div>
-						</td>
-
-						<!-- Duration -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							<code
-								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-							>
-								{formatDuration(run.duration_ms)}
-							</code>
-						</td>
-
-						<!-- Output/Error -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							{#if run.error}
-								<div class="flex items-start gap-1 text-xs text-red-600 dark:text-red-400">
-									<span class="line-clamp-2">{run.error}</span>
-								</div>
-							{:else if run.output}
-								<span class="line-clamp-2 text-xs">{run.output}</span>
-							{:else}
-								<span class="text-neutral-400">-</span>
-							{/if}
-						</td>
-					</tr>
+	<Table {columns} data={jobRuns} emptyMessage="No job runs yet" compact>
+		<svelte:fragment slot="cell" let:row let:column>
+			{#if column.key === 'job_name'}
+				<span class="text-xs font-medium">{formatJobName(row.job_name)}</span>
+			{:else if column.key === 'status'}
+				{#if row.status === 'success'}
+					<Badge variant="success" icon={CheckCircle}>Success</Badge>
 				{:else}
-					<tr>
-						<td colspan="5" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-							No job runs yet
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
+					<Badge variant="danger" icon={XCircle}>Failed</Badge>
+				{/if}
+			{:else if column.key === 'started_at'}
+				<Badge variant="neutral" mono>{getRelativeTime(row.started_at)}</Badge>
+			{:else if column.key === 'duration_ms'}
+				<Badge variant="neutral" mono>{formatDuration(row.duration_ms)}</Badge>
+			{:else if column.key === 'output'}
+				{#if row.error}
+					<span class="line-clamp-1 text-xs font-mono text-red-600 dark:text-red-400">{row.error}</span>
+				{:else if row.output}
+					<span class="line-clamp-1 text-xs font-mono text-neutral-600 dark:text-neutral-400">{row.output}</span>
+				{:else}
+					<span class="text-neutral-400 dark:text-neutral-600">-</span>
+				{/if}
+			{/if}
+		</svelte:fragment>
+	</Table>
 </div>
