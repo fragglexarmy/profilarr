@@ -78,7 +78,7 @@ export class BaseHttpClient {
 					// Parse response based on responseType
 					const text = await response.text();
 					const responseType = options?.responseType ?? 'json';
-					const data = responseType === 'text' ? text : (text ? JSON.parse(text) : null);
+					const data = responseType === 'text' ? text : text ? JSON.parse(text) : null;
 
 					// Check for HTTP errors
 					if (!response.ok) {

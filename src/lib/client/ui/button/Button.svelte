@@ -24,25 +24,19 @@
 			'bg-accent-600 text-white hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600',
 		secondary:
 			'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700',
-		danger:
-			'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
+		danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
 		ghost:
 			'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
 	};
 
-	$: baseTextColor = textColor || (variant === 'ghost' ? 'text-neutral-700 dark:text-neutral-300' : '');
-	$: baseIconColor = iconColor || (variant === 'ghost' ? 'text-neutral-500 dark:text-neutral-400' : '');
+	$: baseTextColor =
+		textColor || (variant === 'ghost' ? 'text-neutral-700 dark:text-neutral-300' : '');
+	$: baseIconColor =
+		iconColor || (variant === 'ghost' ? 'text-neutral-500 dark:text-neutral-400' : '');
 	$: classes = `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]}`;
 </script>
 
-<button
-	{type}
-	{disabled}
-	class={classes}
-	on:click
-	on:mouseenter
-	on:mouseleave
->
+<button {type} {disabled} class={classes} on:click on:mouseenter on:mouseleave>
 	{#if icon && iconPosition === 'left'}
 		<svelte:component this={icon} size={size === 'sm' ? 14 : 16} class={baseIconColor} />
 	{/if}

@@ -44,82 +44,91 @@ export async function getConditionsForEvaluation(
 	const conditionNames = conditions.map((c) => c.name);
 
 	// Get all related data in parallel
-	const [patterns, languages, sources, resolutions, qualityModifiers, releaseTypes, indexerFlags, sizes, years] =
-		await Promise.all([
-			// Patterns with regex
-			db
-				.selectFrom('condition_patterns as cp')
-				.innerJoin('regular_expressions as re', 're.name', 'cp.regular_expression_name')
-				.select(['cp.condition_name', 're.name', 're.pattern'])
-				.where('cp.custom_format_name', '=', formatName)
-				.where('cp.condition_name', 'in', conditionNames)
-				.execute(),
+	const [
+		patterns,
+		languages,
+		sources,
+		resolutions,
+		qualityModifiers,
+		releaseTypes,
+		indexerFlags,
+		sizes,
+		years
+	] = await Promise.all([
+		// Patterns with regex
+		db
+			.selectFrom('condition_patterns as cp')
+			.innerJoin('regular_expressions as re', 're.name', 'cp.regular_expression_name')
+			.select(['cp.condition_name', 're.name', 're.pattern'])
+			.where('cp.custom_format_name', '=', formatName)
+			.where('cp.condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Languages
-			db
-				.selectFrom('condition_languages as cl')
-				.innerJoin('languages as l', 'l.name', 'cl.language_name')
-				.select(['cl.condition_name', 'l.name', 'cl.except_language'])
-				.where('cl.custom_format_name', '=', formatName)
-				.where('cl.condition_name', 'in', conditionNames)
-				.execute(),
+		// Languages
+		db
+			.selectFrom('condition_languages as cl')
+			.innerJoin('languages as l', 'l.name', 'cl.language_name')
+			.select(['cl.condition_name', 'l.name', 'cl.except_language'])
+			.where('cl.custom_format_name', '=', formatName)
+			.where('cl.condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Sources
-			db
-				.selectFrom('condition_sources')
-				.select(['condition_name', 'source'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute(),
+		// Sources
+		db
+			.selectFrom('condition_sources')
+			.select(['condition_name', 'source'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Resolutions
-			db
-				.selectFrom('condition_resolutions')
-				.select(['condition_name', 'resolution'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute(),
+		// Resolutions
+		db
+			.selectFrom('condition_resolutions')
+			.select(['condition_name', 'resolution'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Quality modifiers
-			db
-				.selectFrom('condition_quality_modifiers')
-				.select(['condition_name', 'quality_modifier'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute(),
+		// Quality modifiers
+		db
+			.selectFrom('condition_quality_modifiers')
+			.select(['condition_name', 'quality_modifier'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Release types
-			db
-				.selectFrom('condition_release_types')
-				.select(['condition_name', 'release_type'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute(),
+		// Release types
+		db
+			.selectFrom('condition_release_types')
+			.select(['condition_name', 'release_type'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Indexer flags
-			db
-				.selectFrom('condition_indexer_flags')
-				.select(['condition_name', 'flag'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute(),
+		// Indexer flags
+		db
+			.selectFrom('condition_indexer_flags')
+			.select(['condition_name', 'flag'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Sizes
-			db
-				.selectFrom('condition_sizes')
-				.select(['condition_name', 'min_bytes', 'max_bytes'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute(),
+		// Sizes
+		db
+			.selectFrom('condition_sizes')
+			.select(['condition_name', 'min_bytes', 'max_bytes'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute(),
 
-			// Years
-			db
-				.selectFrom('condition_years')
-				.select(['condition_name', 'min_year', 'max_year'])
-				.where('custom_format_name', '=', formatName)
-				.where('condition_name', 'in', conditionNames)
-				.execute()
-		]);
+		// Years
+		db
+			.selectFrom('condition_years')
+			.select(['condition_name', 'min_year', 'max_year'])
+			.where('custom_format_name', '=', formatName)
+			.where('condition_name', 'in', conditionNames)
+			.execute()
+	]);
 
 	// Build lookup maps using condition_name as key
 	const patternsMap = new Map<string, { name: string; pattern: string }[]>();

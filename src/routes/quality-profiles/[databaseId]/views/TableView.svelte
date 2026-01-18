@@ -26,15 +26,23 @@
 				html: `
 					<div>
 						<div class="font-medium">${row.name}</div>
-						${row.tags.length > 0 ? `
+						${
+							row.tags.length > 0
+								? `
 							<div class="mt-1 flex flex-wrap gap-1">
-								${row.tags.map(tag => `
+								${row.tags
+									.map(
+										(tag) => `
 									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 										${tag.name}
 									</span>
-								`).join('')}
+								`
+									)
+									.join('')}
 							</div>
-						` : ''}
+						`
+								: ''
+						}
 					</div>
 				`
 			})
@@ -44,7 +52,9 @@
 			header: 'Description',
 			headerIcon: FileText,
 			align: 'left',
-			cell: (row: QualityProfileTableRow) => ({ html: row.description || '<span class="text-neutral-400">No description</span>' })
+			cell: (row: QualityProfileTableRow) => ({
+				html: row.description || '<span class="text-neutral-400">No description</span>'
+			})
 		},
 		{
 			key: 'qualities',
@@ -56,7 +66,9 @@
 				return {
 					html: `
 						<div class="space-y-1 py-2">
-							${row.qualities.map(q => `
+							${row.qualities
+								.map(
+									(q) => `
 								<div class="relative px-2 py-0.5 rounded border ${
 									q.is_upgrade_until
 										? 'border-accent-200 bg-accent-50 dark:border-accent-800 dark:bg-accent-950'
@@ -64,7 +76,9 @@
 								}">
 									<span class="font-mono text-xs">${q.name}</span>
 								</div>
-							`).join('')}
+							`
+								)
+								.join('')}
 						</div>
 					`
 				};
@@ -96,12 +110,16 @@
 				html: `
 					<div class="text-xs space-y-0.5">
 						<div>Minimum: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.minimum_custom_format_score}</span></div>
-						${row.upgrades_allowed ? `
+						${
+							row.upgrades_allowed
+								? `
 							<div>Upgrade Until: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.upgrade_until_score}</span></div>
 							<div>Increment: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.upgrade_score_increment}</span></div>
-						` : `
+						`
+								: `
 							<div class="text-neutral-500 dark:text-neutral-400">No Upgrades</div>
-						`}
+						`
+						}
 					</div>
 				`
 			})

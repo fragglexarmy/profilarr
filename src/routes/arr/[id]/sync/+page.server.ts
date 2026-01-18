@@ -145,7 +145,9 @@ export const actions: Actions = {
 		const instance = arrInstancesQueries.getById(id);
 		const formData = await request.formData();
 		const namingDatabaseId = formData.get('namingDatabaseId') as string | null;
-		const qualityDefinitionsDatabaseId = formData.get('qualityDefinitionsDatabaseId') as string | null;
+		const qualityDefinitionsDatabaseId = formData.get('qualityDefinitionsDatabaseId') as
+			| string
+			| null;
 		const mediaSettingsDatabaseId = formData.get('mediaSettingsDatabaseId') as string | null;
 		const trigger = formData.get('trigger') as SyncTrigger;
 		const cron = formData.get('cron') as string | null;
@@ -155,8 +157,12 @@ export const actions: Actions = {
 			const effectiveCron = cron || null;
 			arrSyncQueries.saveMediaManagementSync(id, {
 				namingDatabaseId: namingDatabaseId ? parseInt(namingDatabaseId, 10) : null,
-				qualityDefinitionsDatabaseId: qualityDefinitionsDatabaseId ? parseInt(qualityDefinitionsDatabaseId, 10) : null,
-				mediaSettingsDatabaseId: mediaSettingsDatabaseId ? parseInt(mediaSettingsDatabaseId, 10) : null,
+				qualityDefinitionsDatabaseId: qualityDefinitionsDatabaseId
+					? parseInt(qualityDefinitionsDatabaseId, 10)
+					: null,
+				mediaSettingsDatabaseId: mediaSettingsDatabaseId
+					? parseInt(mediaSettingsDatabaseId, 10)
+					: null,
 				trigger: effectiveTrigger,
 				cron: effectiveCron,
 				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null
@@ -191,7 +197,11 @@ export const actions: Actions = {
 		try {
 			const { createArrClient } = await import('$arr/factory.ts');
 			const { DelayProfileSyncer } = await import('$lib/server/sync/delayProfiles.ts');
-			const client = createArrClient(instance.type as 'radarr' | 'sonarr', instance.url, instance.api_key);
+			const client = createArrClient(
+				instance.type as 'radarr' | 'sonarr',
+				instance.url,
+				instance.api_key
+			);
 			const syncer = new DelayProfileSyncer(client, id, instance.name);
 			const result = await syncer.sync();
 
@@ -225,8 +235,17 @@ export const actions: Actions = {
 		try {
 			const { createArrClient } = await import('$arr/factory.ts');
 			const { QualityProfileSyncer } = await import('$lib/server/sync/qualityProfiles.ts');
-			const client = createArrClient(instance.type as 'radarr' | 'sonarr', instance.url, instance.api_key);
-			const syncer = new QualityProfileSyncer(client, id, instance.name, instance.type as 'radarr' | 'sonarr');
+			const client = createArrClient(
+				instance.type as 'radarr' | 'sonarr',
+				instance.url,
+				instance.api_key
+			);
+			const syncer = new QualityProfileSyncer(
+				client,
+				id,
+				instance.name,
+				instance.type as 'radarr' | 'sonarr'
+			);
 			const result = await syncer.sync();
 
 			await logger.info(`Manual quality profiles sync completed for "${instance.name}"`, {
@@ -259,8 +278,17 @@ export const actions: Actions = {
 		try {
 			const { createArrClient } = await import('$arr/factory.ts');
 			const { MediaManagementSyncer } = await import('$lib/server/sync/mediaManagement.ts');
-			const client = createArrClient(instance.type as 'radarr' | 'sonarr', instance.url, instance.api_key);
-			const syncer = new MediaManagementSyncer(client, id, instance.name, instance.type as 'radarr' | 'sonarr');
+			const client = createArrClient(
+				instance.type as 'radarr' | 'sonarr',
+				instance.url,
+				instance.api_key
+			);
+			const syncer = new MediaManagementSyncer(
+				client,
+				id,
+				instance.name,
+				instance.type as 'radarr' | 'sonarr'
+			);
 			const result = await syncer.sync();
 
 			await logger.info(`Manual media management sync completed for "${instance.name}"`, {

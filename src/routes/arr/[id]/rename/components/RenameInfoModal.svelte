@@ -10,9 +10,9 @@
 		<div>
 			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Overview</h3>
 			<p class="text-sm text-neutral-600 dark:text-neutral-400">
-				The rename feature scans your library and renames files that don't match your
-				Radarr/Sonarr naming format. This helps keep your library organized and consistent
-				without manual intervention.
+				The rename feature scans your library and renames files that don't match your Radarr/Sonarr
+				naming format. This helps keep your library organized and consistent without manual
+				intervention.
 			</p>
 		</div>
 
@@ -34,31 +34,36 @@
 				<div>
 					<dt class="font-medium text-neutral-900 dark:text-neutral-100">Dry Run</dt>
 					<dd class="text-neutral-600 dark:text-neutral-400">
-						Shows what would be renamed without making changes. Use this to preview before committing.
+						Shows what would be renamed without making changes. Use this to preview before
+						committing.
 					</dd>
 				</div>
 				<div>
 					<dt class="font-medium text-neutral-900 dark:text-neutral-100">Rename Folders</dt>
 					<dd class="text-neutral-600 dark:text-neutral-400">
-						Also rename movie/series folders to match the naming format. Requires a metadata refresh after completion.
+						Also rename movie/series folders to match the naming format. Requires a metadata refresh
+						after completion.
 					</dd>
 				</div>
 				<div>
 					<dt class="font-medium text-neutral-900 dark:text-neutral-100">Ignore Tag</dt>
 					<dd class="text-neutral-600 dark:text-neutral-400">
-						Items with this tag in your arr will be skipped. Useful for items you want to keep with custom names.
+						Items with this tag in your arr will be skipped. Useful for items you want to keep with
+						custom names.
 					</dd>
 				</div>
 				<div>
 					<dt class="font-medium text-neutral-900 dark:text-neutral-100">Schedule</dt>
 					<dd class="text-neutral-600 dark:text-neutral-400">
-						How often to check for files needing rename. Daily is usually sufficient for most libraries.
+						How often to check for files needing rename. Daily is usually sufficient for most
+						libraries.
 					</dd>
 				</div>
 				<div>
 					<dt class="font-medium text-neutral-900 dark:text-neutral-100">Summary Notifications</dt>
 					<dd class="text-neutral-600 dark:text-neutral-400">
-						When enabled, sends a compact notification with the total count and one sample rename. When disabled, sends detailed notifications listing every renamed file.
+						When enabled, sends a compact notification with the total count and one sample rename.
+						When disabled, sends detailed notifications listing every renamed file.
 					</dd>
 				</div>
 			</dl>

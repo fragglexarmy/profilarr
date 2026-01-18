@@ -382,13 +382,21 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 			}
 			return fieldValue !== ruleValue;
 		case 'gt':
-			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue > ruleValue;
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue > ruleValue
+			);
 		case 'gte':
-			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue >= ruleValue;
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue >= ruleValue
+			);
 		case 'lt':
-			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue < ruleValue;
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue < ruleValue
+			);
 		case 'lte':
-			return typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue <= ruleValue;
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue <= ruleValue
+			);
 
 		// Text operators (case-insensitive)
 		case 'contains': {

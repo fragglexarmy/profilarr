@@ -78,7 +78,8 @@ export const actions: Actions = {
 		// Parse form data
 		const minimumScore = parseInt(formData.get('minimumScore') as string, 10) || 0;
 		const upgradeUntilScore = parseInt(formData.get('upgradeUntilScore') as string, 10) || 0;
-		const upgradeScoreIncrement = parseInt(formData.get('upgradeScoreIncrement') as string, 10) || 1;
+		const upgradeScoreIncrement =
+			parseInt(formData.get('upgradeScoreIncrement') as string, 10) || 1;
 		const layer = (formData.get('layer') as OperationLayer) || 'user';
 		const customFormatScoresJson = formData.get('customFormatScores') as string;
 
@@ -93,7 +94,11 @@ export const actions: Actions = {
 		}
 
 		// Parse custom format scores
-		let customFormatScores: Array<{ customFormatName: string; arrType: string; score: number | null }> = [];
+		let customFormatScores: Array<{
+			customFormatName: string;
+			arrType: string;
+			score: number | null;
+		}> = [];
 		try {
 			customFormatScores = JSON.parse(customFormatScoresJson || '[]');
 		} catch {

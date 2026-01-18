@@ -8,7 +8,10 @@ import type { CustomFormatBasic, CustomFormatTest } from './types.ts';
 /**
  * Get custom format basic info by ID
  */
-export async function getById(cache: PCDCache, formatId: number): Promise<CustomFormatBasic | null> {
+export async function getById(
+	cache: PCDCache,
+	formatId: number
+): Promise<CustomFormatBasic | null> {
 	const db = cache.kb;
 
 	const format = await db
@@ -47,7 +50,12 @@ export async function listTests(cache: PCDCache, formatName: string): Promise<Cu
 /**
  * Get a single test by composite key
  */
-export async function getTest(cache: PCDCache, formatName: string, title: string, type: string): Promise<CustomFormatTest | null> {
+export async function getTest(
+	cache: PCDCache,
+	formatName: string,
+	title: string,
+	type: string
+): Promise<CustomFormatTest | null> {
 	const db = cache.kb;
 
 	const test = await db

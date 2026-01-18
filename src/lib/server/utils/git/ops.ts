@@ -151,9 +151,11 @@ export async function getMaxOpNumber(repoPath: string): Promise<number> {
 export async function discardOps(repoPath: string, filepaths: string[]): Promise<void> {
 	for (const filepath of filepaths) {
 		// Security: ensure file is within repo and not in user_ops or deps
-		if (!filepath.startsWith(repoPath + '/') ||
+		if (
+			!filepath.startsWith(repoPath + '/') ||
 			filepath.startsWith(repoPath + '/user_ops/') ||
-			filepath.startsWith(repoPath + '/deps/')) {
+			filepath.startsWith(repoPath + '/deps/')
+		) {
 			continue;
 		}
 
@@ -209,9 +211,11 @@ export async function addOps(
 
 		for (const filepath of filepaths) {
 			// Security: ensure file is within repo and not in user_ops or deps
-			if (!filepath.startsWith(repoPath + '/') ||
+			if (
+				!filepath.startsWith(repoPath + '/') ||
 				filepath.startsWith(repoPath + '/user_ops/') ||
-				filepath.startsWith(repoPath + '/deps/')) {
+				filepath.startsWith(repoPath + '/deps/')
+			) {
 				continue;
 			}
 

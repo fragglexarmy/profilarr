@@ -24,7 +24,6 @@ function getFilename(path: string): string {
 	return path.split('/').pop() || path;
 }
 
-
 /**
  * Build the title based on manual/automatic and status
  */
@@ -97,9 +96,10 @@ function buildItemFields(
 		const chunks = splitFilesIntoChunks(seasonFiles);
 
 		for (let i = 0; i < chunks.length; i++) {
-			const name = chunks.length > 1
-				? `${title} - Season ${season} (Part ${i + 1})`
-				: `${title} - Season ${season}`;
+			const name =
+				chunks.length > 1
+					? `${title} - Season ${season} (Part ${i + 1})`
+					: `${title} - Season ${season}`;
 			fields.push({
 				name: truncateFieldName(name),
 				value: formatChunk(chunks[i])
@@ -138,7 +138,10 @@ function splitFilesIntoChunks(
 		const separator = currentChunk.length > 0 ? 4 : 0; // \n\n between entries
 		const entryLength = entry.length + separator;
 
-		if (currentLength + entryLength + codeBlockOverhead > MAX_FIELD_VALUE && currentChunk.length > 0) {
+		if (
+			currentLength + entryLength + codeBlockOverhead > MAX_FIELD_VALUE &&
+			currentChunk.length > 0
+		) {
 			chunks.push(currentChunk);
 			currentChunk = [];
 			currentLength = 0;
@@ -262,7 +265,8 @@ function buildSummaryNotification(
 		const sample = log.renamedItems[0];
 		const sampleFile = sample.files[0];
 		const othersCount = log.results.filesNeedingRename - 1;
-		const othersText = othersCount > 0 ? ` + ${othersCount} other${othersCount === 1 ? '' : 's'}` : '';
+		const othersText =
+			othersCount > 0 ? ` + ${othersCount} other${othersCount === 1 ? '' : 's'}` : '';
 
 		embed.field(
 			`Sample: ${truncateFieldName(sample.title)}${othersText}`,

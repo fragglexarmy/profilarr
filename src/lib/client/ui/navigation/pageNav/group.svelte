@@ -1,20 +1,15 @@
 <script lang="ts">
 	import GroupHeader from './groupHeader.svelte';
-	import type { Snippet, Component } from 'svelte';
-	import type { IconProps } from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
 	import { slide } from 'svelte/transition';
 
-	interface Props {
-		label: string;
-		href: string;
-		icon?: Component<IconProps>;
-		initialOpen?: boolean;
-		hasItems?: boolean;
-		children?: Snippet;
-	}
+	export let label: string;
+	export let href: string;
+	export let icon: ComponentType | undefined = undefined;
+	export let initialOpen: boolean = true;
+	export let hasItems: boolean = false;
 
-	let { label, href, icon, initialOpen = true, hasItems = false, children }: Props = $props();
-	let isOpen = $state(initialOpen);
+	let isOpen = initialOpen;
 
 	function toggleOpen() {
 		isOpen = !isOpen;
@@ -24,7 +19,7 @@
 <div class="mb-4">
 	<GroupHeader {label} {href} {icon} {isOpen} {hasItems} onToggle={toggleOpen} />
 
-	{#if isOpen && hasItems && children}
+	{#if isOpen && hasItems}
 		<div class="mt-2 grid grid-cols-[auto_1fr]" transition:slide={{ duration: 200 }}>
 			<!-- Column 1: Vertical line -->
 			<div class="flex justify-center px-5">
@@ -33,7 +28,7 @@
 
 			<!-- Column 2: Items -->
 			<div class="-ml-3 flex flex-col gap-1">
-				{@render children()}
+				<slot />
 			</div>
 		</div>
 	{/if}

@@ -94,31 +94,54 @@
 				/>
 				<div class="mt-2 space-y-2">
 					<p class="text-sm text-neutral-600 dark:text-neutral-400">
-						Cron expression: <code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">minute hour day month weekday</code>
+						Cron expression: <code
+							class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+							>minute hour day month weekday</code
+						>
 					</p>
-					<div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-600 dark:text-neutral-400">
+					<div
+						class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-600 dark:text-neutral-400"
+					>
 						<div class="flex items-center gap-2">
-							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">* * * * *</code>
+							<code
+								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+								>* * * * *</code
+							>
 							<span>Every minute</span>
 						</div>
 						<div class="flex items-center gap-2">
-							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">*/5 * * * *</code>
+							<code
+								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+								>*/5 * * * *</code
+							>
 							<span>Every 5 minutes</span>
 						</div>
 						<div class="flex items-center gap-2">
-							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 * * * *</code>
+							<code
+								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+								>0 * * * *</code
+							>
 							<span>Every hour</span>
 						</div>
 						<div class="flex items-center gap-2">
-							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 0 * * *</code>
+							<code
+								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+								>0 0 * * *</code
+							>
 							<span>Daily at midnight</span>
 						</div>
 						<div class="flex items-center gap-2">
-							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 6 * * 1</code>
+							<code
+								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+								>0 6 * * 1</code
+							>
 							<span>Mondays at 6am</span>
 						</div>
 						<div class="flex items-center gap-2">
-							<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">0 0 1 * *</code>
+							<code
+								class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800"
+								>0 0 1 * *</code
+							>
 							<span>First of month</span>
 						</div>
 					</div>

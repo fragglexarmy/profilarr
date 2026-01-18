@@ -142,7 +142,6 @@
 	// Pagination info
 	$: totalPages = Math.ceil(data.logs.totalRecords / data.logs.pageSize);
 	$: currentPage = data.logs.page;
-
 </script>
 
 <svelte:head>
@@ -164,10 +163,14 @@
 							on:click={() => changeLevel(level)}
 							class="flex w-full items-center justify-between gap-3 border-b border-neutral-200 px-4 py-2 text-left transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
 								{selectedLevel === level
-									? 'bg-neutral-100 dark:bg-neutral-700'
-									: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+								? 'bg-neutral-100 dark:bg-neutral-700'
+								: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
 						>
-							<span class="font-medium {level === 'ALL' ? 'text-neutral-600 dark:text-neutral-400' : levelColors[level]}">{level}</span>
+							<span
+								class="font-medium {level === 'ALL'
+									? 'text-neutral-600 dark:text-neutral-400'
+									: levelColors[level]}">{level}</span
+							>
 						</button>
 					{/each}
 				</Dropdown>
@@ -179,7 +182,10 @@
 			<svelte:fragment slot="dropdown" let:dropdownPosition>
 				<Dropdown position={dropdownPosition} minWidth="10rem">
 					<div class="p-3">
-						<label for="pageSize" class="mb-2 block text-xs font-medium text-neutral-600 dark:text-neutral-400">
+						<label
+							for="pageSize"
+							class="mb-2 block text-xs font-medium text-neutral-600 dark:text-neutral-400"
+						>
 							Rows per page
 						</label>
 						<NumberInput
@@ -203,16 +209,16 @@
 			/>
 			<svelte:fragment slot="dropdown" let:dropdownPosition>
 				<Dropdown position={dropdownPosition} minWidth="6rem">
-					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-						Refresh logs
-					</div>
+					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">Refresh logs</div>
 				</Dropdown>
 			</svelte:fragment>
 		</ActionButton>
 	</ActionsBar>
 
 	<!-- Stats -->
-	<div class="mt-6 mb-4 flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-400">
+	<div
+		class="mt-6 mb-4 flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-400"
+	>
 		<span>
 			Showing {filteredLogs.length} of {data.logs.totalRecords} logs
 			{#if selectedLevel !== 'ALL'}
@@ -227,7 +233,7 @@
 					type="button"
 					disabled={currentPage <= 1}
 					on:click={() => goToPage(currentPage - 1)}
-					class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-neutral-700"
+					class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 				>
 					<ChevronLeft size={20} />
 				</button>
@@ -238,7 +244,7 @@
 					type="button"
 					disabled={currentPage >= totalPages}
 					on:click={() => goToPage(currentPage + 1)}
-					class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-neutral-700"
+					class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 				>
 					<ChevronRight size={20} />
 				</button>
@@ -250,11 +256,7 @@
 	<Table data={filteredLogs} {columns} emptyMessage="No logs found" hoverable={true} compact={true}>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
-				<TableActionButton
-					icon={Copy}
-					title="Copy log entry"
-					on:click={() => copyLog(row)}
-				/>
+				<TableActionButton icon={Copy} title="Copy log entry" on:click={() => copyLog(row)} />
 			</div>
 		</svelte:fragment>
 	</Table>
@@ -266,7 +268,7 @@
 				type="button"
 				disabled={currentPage <= 1}
 				on:click={() => goToPage(currentPage - 1)}
-				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-neutral-700"
+				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 			>
 				Previous
 			</button>
@@ -277,7 +279,7 @@
 				type="button"
 				disabled={currentPage >= totalPages}
 				on:click={() => goToPage(currentPage + 1)}
-				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-neutral-700"
+				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 			>
 				Next
 			</button>

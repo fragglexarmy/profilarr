@@ -574,9 +574,7 @@ class NormalizeTest extends BaseTest {
 				[2, this.createMockMovieFile({ movieId: 2, customFormatScore: 150000 })] // Below 80%
 			]);
 
-			const profileMap = new Map([
-				[7, this.createMockProfile({ cutoffFormatScore: 400000 })]
-			]);
+			const profileMap = new Map([[7, this.createMockProfile({ cutoffFormatScore: 400000 })]]);
 
 			const results = normalizeRadarrItems(movies, movieFileMap, profileMap, 80);
 

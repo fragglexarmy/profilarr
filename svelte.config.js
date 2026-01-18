@@ -28,7 +28,7 @@ const config = {
 			$http: './src/lib/server/utils/http',
 			$utils: './src/lib/server/utils',
 			$notifications: './src/lib/server/notifications',
-			$cache: './src/lib/server/utils/cache',
+			$cache: './src/lib/server/utils/cache'
 		}
 	}
 };

@@ -13,7 +13,11 @@ import type {
 	MediaSettings,
 	PropersRepacks
 } from './types.ts';
-import { colonReplacementFromDb, multiEpisodeStyleFromDb, radarrColonReplacementFromDb } from './types.ts';
+import {
+	colonReplacementFromDb,
+	multiEpisodeStyleFromDb,
+	radarrColonReplacementFromDb
+} from './types.ts';
 
 /**
  * Get Radarr media management data
@@ -87,18 +91,11 @@ export async function get(cache: PCDCache): Promise<MediaManagementData> {
 /**
  * Get Radarr quality definitions with quality names
  */
-async function getRadarrQualityDefinitions(
-	db: PCDCache['kb']
-): Promise<QualityDefinition[]> {
+async function getRadarrQualityDefinitions(db: PCDCache['kb']): Promise<QualityDefinition[]> {
 	const rows = await db
 		.selectFrom('radarr_quality_definitions as rqd')
 		.innerJoin('qualities as q', 'q.name', 'rqd.quality_name')
-		.select([
-			'rqd.quality_name',
-			'rqd.min_size',
-			'rqd.max_size',
-			'rqd.preferred_size'
-		])
+		.select(['rqd.quality_name', 'rqd.min_size', 'rqd.max_size', 'rqd.preferred_size'])
 		.orderBy('rqd.quality_name')
 		.execute();
 
@@ -113,18 +110,11 @@ async function getRadarrQualityDefinitions(
 /**
  * Get Sonarr quality definitions with quality names
  */
-async function getSonarrQualityDefinitions(
-	db: PCDCache['kb']
-): Promise<QualityDefinition[]> {
+async function getSonarrQualityDefinitions(db: PCDCache['kb']): Promise<QualityDefinition[]> {
 	const rows = await db
 		.selectFrom('sonarr_quality_definitions as sqd')
 		.innerJoin('qualities as q', 'q.name', 'sqd.quality_name')
-		.select([
-			'sqd.quality_name',
-			'sqd.min_size',
-			'sqd.max_size',
-			'sqd.preferred_size'
-		])
+		.select(['sqd.quality_name', 'sqd.min_size', 'sqd.max_size', 'sqd.preferred_size'])
 		.orderBy('sqd.quality_name')
 		.execute();
 

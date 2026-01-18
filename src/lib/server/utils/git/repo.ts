@@ -8,20 +8,25 @@ import type { RepoInfo } from './types.ts';
 /**
  * Validate that a repository URL is accessible and detect if it's private
  */
-async function validateRepository(repositoryUrl: string, personalAccessToken?: string): Promise<boolean> {
+async function validateRepository(
+	repositoryUrl: string,
+	personalAccessToken?: string
+): Promise<boolean> {
 	const githubPattern = /^https:\/\/github\.com\/([\w-]+)\/([\w-]+)\/?$/;
 	const normalizedUrl = repositoryUrl.replace(/\.git$/, '');
 	const match = normalizedUrl.match(githubPattern);
 
 	if (!match) {
-		throw new Error('Repository URL must be a valid GitHub repository (https://github.com/username/repo)');
+		throw new Error(
+			'Repository URL must be a valid GitHub repository (https://github.com/username/repo)'
+		);
 	}
 
 	const [, owner, repo] = match;
 	const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
 
 	const headers: Record<string, string> = {
-		'Accept': 'application/vnd.github+json',
+		Accept: 'application/vnd.github+json',
 		'X-GitHub-Api-Version': '2022-11-28',
 		'User-Agent': 'Profilarr'
 	};
@@ -37,7 +42,7 @@ async function validateRepository(repositoryUrl: string, personalAccessToken?: s
 	// If 404/403 and we have PAT, try with auth
 	if ((response.status === 404 || response.status === 403) && personalAccessToken) {
 		const authResponse = await globalThis.fetch(apiUrl, {
-			headers: { ...headers, 'Authorization': `Bearer ${personalAccessToken}` }
+			headers: { ...headers, Authorization: `Bearer ${personalAccessToken}` }
 		});
 
 		if (authResponse.ok) {
@@ -57,7 +62,9 @@ async function validateRepository(repositoryUrl: string, personalAccessToken?: s
 	}
 
 	if (response.status === 404 || response.status === 403) {
-		throw new Error('Repository not found or is private. Provide a Personal Access Token for private repos.');
+		throw new Error(
+			'Repository not found or is private. Provide a Personal Access Token for private repos.'
+		);
 	}
 
 	throw new Error(`GitHub API error: ${response.status}`);
@@ -80,7 +87,10 @@ export async function clone(
 
 	let authUrl = repositoryUrl;
 	if (personalAccessToken) {
-		authUrl = repositoryUrl.replace('https://github.com', `https://${personalAccessToken}@github.com`);
+		authUrl = repositoryUrl.replace(
+			'https://github.com',
+			`https://${personalAccessToken}@github.com`
+		);
 	}
 
 	args.push(authUrl, targetPath);

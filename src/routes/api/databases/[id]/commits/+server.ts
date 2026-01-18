@@ -14,10 +14,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const limit = parseInt(url.searchParams.get('limit') || '50', 10);
 	const git = new Git(database.local_path);
 
-	const [commits, branch] = await Promise.all([
-		git.getCommits(limit),
-		git.getBranch()
-	]);
+	const [commits, branch] = await Promise.all([git.getCommits(limit), git.getBranch()]);
 
 	return json({
 		commits,

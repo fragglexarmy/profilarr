@@ -62,9 +62,7 @@
 			<div
 				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 			>
-				<p class="text-neutral-600 dark:text-neutral-400">
-					No quality profiles match your search
-				</p>
+				<p class="text-neutral-600 dark:text-neutral-400">No quality profiles match your search</p>
 			</div>
 		{:else if $view === 'table'}
 			<TableView profiles={$filtered} />

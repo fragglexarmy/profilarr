@@ -2,7 +2,14 @@
  * Git class - wraps git operations for a repository
  */
 
-import type { GitStatus, OperationFile, CommitResult, UpdateInfo, Commit, IncomingChanges } from './types.ts';
+import type {
+	GitStatus,
+	OperationFile,
+	CommitResult,
+	UpdateInfo,
+	Commit,
+	IncomingChanges
+} from './types.ts';
 import * as repo from './repo.ts';
 import * as status from './status.ts';
 import * as ops from './ops.ts';
@@ -20,7 +27,8 @@ export class Git {
 	// Status queries
 	getBranch = () => status.getBranch(this.repoPath);
 	getBranches = () => status.getBranches(this.repoPath);
-	status = (options?: status.GetStatusOptions): Promise<GitStatus> => status.getStatus(this.repoPath, options);
+	status = (options?: status.GetStatusOptions): Promise<GitStatus> =>
+		status.getStatus(this.repoPath, options);
 	checkForUpdates = (): Promise<UpdateInfo> => status.checkForUpdates(this.repoPath);
 	getIncomingChanges = (): Promise<IncomingChanges> => status.getIncomingChanges(this.repoPath);
 	getLastPushed = () => status.getLastPushed(this.repoPath);

@@ -40,9 +40,9 @@
 	let showTypeDropdown = false;
 	let showLanguageDropdown = false;
 
-	$: selectedLanguage = data.availableLanguages.find(l => l.name === selectedLanguageName);
+	$: selectedLanguage = data.availableLanguages.find((l) => l.name === selectedLanguageName);
 
-	$: filteredLanguages = data.availableLanguages.filter(lang =>
+	$: filteredLanguages = data.availableLanguages.filter((lang) =>
 		lang.name.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
@@ -66,7 +66,7 @@
 		showLanguageDropdown = true;
 
 		const exactMatch = data.availableLanguages.find(
-			l => l.name.toLowerCase() === searchQuery.toLowerCase()
+			(l) => l.name.toLowerCase() === searchQuery.toLowerCase()
 		);
 		if (!exactMatch) {
 			update('languageName', null);
@@ -131,9 +131,7 @@
 <div class="mt-6 space-y-3">
 	<div class="flex items-start justify-between">
 		<div>
-			<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-				Language
-			</div>
+			<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">Language</div>
 			<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
 				Configure the language preference for this profile
 			</p>
@@ -152,7 +150,7 @@
 			{/if}
 			<button
 				type="button"
-				on:click={() => showInfoModal = true}
+				on:click={() => (showInfoModal = true)}
 				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
 				<Info size={14} />
@@ -170,7 +168,7 @@
 				on:blur={() => setTimeout(() => (showTypeDropdown = false), 200)}
 				class="flex w-full items-center justify-between rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
 			>
-				<span>{typeOptions.find(t => t.value === selectedType)?.label}</span>
+				<span>{typeOptions.find((t) => t.value === selectedType)?.label}</span>
 				<ChevronDown size={14} />
 			</button>
 
@@ -200,7 +198,7 @@
 				on:focus={handleFocus}
 				on:blur={handleBlur}
 				placeholder="Search for a language..."
-				class="block w-full rounded-lg border px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none focus:ring-1 dark:text-neutral-50 dark:placeholder-neutral-500 {showValidationError
+				class="block w-full rounded-lg border px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:ring-1 focus:outline-none dark:text-neutral-50 dark:placeholder-neutral-500 {showValidationError
 					? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500 dark:border-red-700 dark:bg-red-950 dark:focus:border-red-500'
 					: 'border-neutral-300 bg-white focus:border-accent-500 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800'}"
 			/>
@@ -228,7 +226,6 @@
 			{/if}
 		</div>
 	</div>
-
 </div>
 
 <InfoModal bind:open={showInfoModal} header="Language Options">
@@ -236,7 +233,10 @@
 		<div>
 			<div class="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100">
 				<span>Preferred</span>
-				<span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">Radarr Only</span>
+				<span
+					class="inline-flex items-center rounded bg-accent-100 px-1.5 py-0.5 text-xs font-medium text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+					>Radarr Only</span
+				>
 			</div>
 			<div class="mt-1">Uses Radarr's built-in language preference setting</div>
 		</div>
@@ -257,5 +257,6 @@
 
 <SaveTargetModal
 	bind:open={showSaveModal}
-	onSelect={submitForm}
+	on:select={(e) => submitForm(e.detail)}
+	on:cancel={() => (showSaveModal = false)}
 />

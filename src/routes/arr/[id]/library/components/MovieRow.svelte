@@ -34,7 +34,7 @@
 			{/if}
 		</div>
 	{:else if column.key === 'qualityProfileName'}
-		<div class="relative group inline-flex">
+		<div class="group relative inline-flex">
 			<Badge
 				variant={row.isProfilarrProfile ? 'accent' : 'warning'}
 				icon={row.isProfilarrProfile ? null : CircleAlert}
@@ -43,7 +43,9 @@
 				{row.qualityProfileName}
 			</Badge>
 			{#if !row.isProfilarrProfile}
-				<div class="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 text-xs text-white bg-neutral-800 dark:bg-neutral-700 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+				<div
+					class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 rounded bg-neutral-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 group-hover:opacity-100 dark:bg-neutral-700"
+				>
 					Not managed by Profilarr
 				</div>
 			{/if}
@@ -59,16 +61,16 @@
 		</div>
 	{:else if column.key === 'progress'}
 		<div class="flex items-center gap-2">
-			<div class="flex-1 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+			<div class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
 				<div
 					class="h-full rounded-full transition-all {getProgressColor(row.progress, row.cutoffMet)}"
 					style="width: {Math.min(row.progress * 100, 100)}%"
 				></div>
 			</div>
 			{#if row.cutoffMet}
-				<Check size={16} class="text-green-600 dark:text-green-400 flex-shrink-0" />
+				<Check size={16} class="flex-shrink-0 text-green-600 dark:text-green-400" />
 			{:else}
-				<span class="text-xs font-mono text-neutral-500 dark:text-neutral-400 w-10 text-right">
+				<span class="w-10 text-right font-mono text-xs text-neutral-500 dark:text-neutral-400">
 					{Math.round(row.progress * 100)}%
 				</span>
 			{/if}
@@ -98,7 +100,9 @@
 	<div class="flex flex-col gap-3">
 		<!-- File Name -->
 		{#if row.fileName}
-			<code class="text-xs font-mono text-neutral-600 dark:text-neutral-400 break-all">{row.fileName}</code>
+			<code class="font-mono text-xs break-all text-neutral-600 dark:text-neutral-400"
+				>{row.fileName}</code
+			>
 		{/if}
 
 		<!-- Custom Formats with Scores (sorted by score descending) -->

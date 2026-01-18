@@ -120,7 +120,7 @@ export async function updateQualities(options: UpdateQualitiesOptions) {
 		meta: {
 			profileName,
 			itemCount: input.orderedItems.length,
-			groupCount: input.orderedItems.filter(i => i.type === 'group').length
+			groupCount: input.orderedItems.filter((i) => i.type === 'group').length
 		}
 	});
 

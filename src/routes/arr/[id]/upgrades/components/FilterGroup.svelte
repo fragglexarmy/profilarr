@@ -67,7 +67,7 @@
 			<select
 				bind:value={group.match}
 				on:change={notifyChange}
-				class="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+				class="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 			>
 				<option value="all">All (AND)</option>
 				<option value="any">Any (OR)</option>
@@ -100,7 +100,7 @@
 						<select
 							value={child.field}
 							on:change={(e) => onFieldChange(child, e.currentTarget.value)}
-							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{#each filterFields as f}
 								<option value={f.id}>{f.label}</option>
@@ -111,7 +111,7 @@
 						<select
 							bind:value={child.operator}
 							on:change={notifyChange}
-							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{#if field}
 								{#each field.operators as op}
@@ -125,7 +125,7 @@
 							<select
 								bind:value={child.value}
 								on:change={notifyChange}
-								class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+								class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 							>
 								{#if field.values}
 									{#each field.values as v}
@@ -138,17 +138,34 @@
 								type="text"
 								bind:value={child.value}
 								on:input={notifyChange}
-								class="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+								class="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 							/>
 						{:else if field?.valueType === 'number'}
 							<div class="w-32">
-								<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => { child.value = e.detail; notifyChange(); }} font="mono" />
+								<NumberInput
+									name="value-{childIndex}"
+									value={child.value as number}
+									on:change={(e) => {
+										child.value = e.detail;
+										notifyChange();
+									}}
+									font="mono"
+								/>
 							</div>
 						{:else if field?.valueType === 'date'}
 							{#if child.operator === 'in_last' || child.operator === 'not_in_last'}
 								<div class="flex items-center gap-2">
 									<div class="w-24">
-										<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => { child.value = e.detail; notifyChange(); }} min={1} font="mono" />
+										<NumberInput
+											name="value-{childIndex}"
+											value={child.value as number}
+											on:change={(e) => {
+												child.value = e.detail;
+												notifyChange();
+											}}
+											min={1}
+											font="mono"
+										/>
 									</div>
 									<span class="text-sm text-neutral-500 dark:text-neutral-400">days</span>
 								</div>
@@ -157,7 +174,7 @@
 									type="date"
 									bind:value={child.value}
 									on:change={notifyChange}
-									class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+									class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 								/>
 							{/if}
 						{/if}

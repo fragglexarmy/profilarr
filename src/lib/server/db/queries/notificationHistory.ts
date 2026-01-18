@@ -187,10 +187,7 @@ export const notificationHistoryQueries = {
 	 * Delete all history for a specific service (used when service is deleted)
 	 */
 	deleteByServiceId(serviceId: string): number {
-		const affected = db.execute(
-			'DELETE FROM notification_history WHERE service_id = ?',
-			serviceId
-		);
+		const affected = db.execute('DELETE FROM notification_history WHERE service_id = ?', serviceId);
 
 		return affected;
 	}

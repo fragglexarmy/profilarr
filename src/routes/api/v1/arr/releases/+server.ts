@@ -67,7 +67,10 @@ export const GET: RequestHandler = async ({ url }) => {
 			try {
 				// Search specified season (default to 1) and filter for season packs
 				const seasonNum = season ? parseInt(season, 10) : 1;
-				const releases = await client.getSeasonPackReleases(itemIdNum, isNaN(seasonNum) ? 1 : seasonNum);
+				const releases = await client.getSeasonPackReleases(
+					itemIdNum,
+					isNaN(seasonNum) ? 1 : seasonNum
+				);
 				const grouped = groupSonarrReleases(releases);
 				return json({
 					type: 'sonarr',

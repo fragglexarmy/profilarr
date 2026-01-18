@@ -115,7 +115,8 @@ export function transformQualityProfile(
 	for (const item of profile.qualities) {
 		if (item.type === 'group' && item.members) {
 			for (const member of item.members) {
-				const apiName = qualityApiMappings.get(member.name.toLowerCase()) ?? mapQualityName(member.name, arrType);
+				const apiName =
+					qualityApiMappings.get(member.name.toLowerCase()) ?? mapQualityName(member.name, arrType);
 				const quality = allQualities[apiName];
 				if (quality) {
 					qualityIdsInGroups.add(quality.id);
@@ -141,7 +142,8 @@ export function transformQualityProfile(
 			if (item.members) {
 				for (const member of item.members) {
 					const apiName =
-						qualityApiMappings.get(member.name.toLowerCase()) ?? mapQualityName(member.name, arrType);
+						qualityApiMappings.get(member.name.toLowerCase()) ??
+						mapQualityName(member.name, arrType);
 					const quality = allQualities[apiName];
 
 					if (quality) {
@@ -165,7 +167,8 @@ export function transformQualityProfile(
 			}
 		} else {
 			// Single quality
-			const apiName = qualityApiMappings.get(item.name.toLowerCase()) ?? mapQualityName(item.name, arrType);
+			const apiName =
+				qualityApiMappings.get(item.name.toLowerCase()) ?? mapQualityName(item.name, arrType);
 			const quality = allQualities[apiName];
 
 			if (quality) {
@@ -325,8 +328,8 @@ export async function fetchQualityProfileFromPcd(
 		const name = isGroup ? item.quality_group_name! : item.quality_name!;
 		// Get ID from name for referenceId (used for cutoff)
 		const referenceId = isGroup
-			? groups.findIndex(g => g.name === name) + 1
-			: allQualities.find(q => q.name === name)?.id ?? 0;
+			? groups.findIndex((g) => g.name === name) + 1
+			: (allQualities.find((q) => q.name === name)?.id ?? 0);
 
 		const result: PcdQualityItem = {
 			type: isGroup ? 'group' : 'quality',
@@ -397,7 +400,10 @@ export async function fetchQualityProfileFromPcd(
  * Get quality API mappings from PCD cache
  * Returns a map of PCD quality name (lowercase) -> arr API name
  */
-export async function getQualityApiMappings(cache: PCDCache, arrType: SyncArrType): Promise<Map<string, string>> {
+export async function getQualityApiMappings(
+	cache: PCDCache,
+	arrType: SyncArrType
+): Promise<Map<string, string>> {
 	const rows = await cache.kb
 		.selectFrom('quality_api_mappings as qam')
 		.innerJoin('qualities as q', 'q.id', 'qam.quality_id')

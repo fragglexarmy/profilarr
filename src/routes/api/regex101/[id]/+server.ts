@@ -31,13 +31,24 @@ async function runRegexTests(
 
 	try {
 		const scriptPath = `${Deno.cwd()}/src/lib/server/regex/test.ps1`;
-		const testsJson = JSON.stringify(tests.map(t => ({
-			testString: t.testString,
-			criteria: t.criteria
-		})));
+		const testsJson = JSON.stringify(
+			tests.map((t) => ({
+				testString: t.testString,
+				criteria: t.criteria
+			}))
+		);
 
 		const command = new Deno.Command('pwsh', {
-			args: ['-NoProfile', '-NonInteractive', '-File', scriptPath, '-Pattern', pattern, '-TestsJson', testsJson],
+			args: [
+				'-NoProfile',
+				'-NonInteractive',
+				'-File',
+				scriptPath,
+				'-Pattern',
+				pattern,
+				'-TestsJson',
+				testsJson
+			],
 			stdout: 'piped',
 			stderr: 'piped'
 		});
@@ -115,7 +126,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 
 		const response = await fetch(url, {
 			headers: {
-				'Accept': 'application/json',
+				Accept: 'application/json',
 				'User-Agent': 'Profilarr/1.0'
 			}
 		});
@@ -134,11 +145,13 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		});
 
 		// Extract unit tests
-		const unitTests: Regex101UnitTest[] = (data.unitTests || []).map((test: Record<string, unknown>) => ({
-			description: test.description || '',
-			testString: test.testString || '',
-			criteria: (test.criteria as string) || 'DOES_MATCH'
-		}));
+		const unitTests: Regex101UnitTest[] = (data.unitTests || []).map(
+			(test: Record<string, unknown>) => ({
+				description: test.description || '',
+				testString: test.testString || '',
+				criteria: (test.criteria as string) || 'DOES_MATCH'
+			})
+		);
 
 		// Run tests through PowerShell to get pass/fail results
 		const testedUnitTests = await runRegexTests(data.regex, unitTests);
@@ -160,6 +173,9 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;
 		}
-		throw error(500, `Failed to fetch regex101 data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+		throw error(
+			500,
+			`Failed to fetch regex101 data: ${err instanceof Error ? err.message : 'Unknown error'}`
+		);
 	}
 };

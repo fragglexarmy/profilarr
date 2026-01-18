@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { Check, SlidersHorizontal, TableProperties, RefreshCw, ExternalLink, Pencil, Trash2, Info } from 'lucide-svelte';
+	import {
+		Check,
+		SlidersHorizontal,
+		TableProperties,
+		RefreshCw,
+		ExternalLink,
+		Pencil,
+		Trash2,
+		Info
+	} from 'lucide-svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -28,7 +37,12 @@
 	export let instanceName: string = '';
 
 	export let onToggleColumn: (key: string) => void;
-	export let onToggleFilter: (field: FilterField, operator: FilterOperator, value: string | number | boolean, label: string) => void;
+	export let onToggleFilter: (
+		field: FilterField,
+		operator: FilterOperator,
+		value: string | number | boolean,
+		label: string
+	) => void;
 	export let onRefresh: () => void;
 	export let onOpen: () => void;
 	export let onEdit: () => void;
@@ -42,25 +56,36 @@
 	<SearchAction {searchStore} placeholder="Search movies..." />
 	<ActionButton icon={SlidersHorizontal} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="16rem">
-				<div class="px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Filter movies by quality or profile</p>
+			<Dropdown position={dropdownPosition} minWidth="16rem">
+				<div class="border-b border-neutral-100 px-4 py-3 dark:border-neutral-700">
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
+						Filter movies by quality or profile
+					</p>
 				</div>
 				<div class="max-h-96 overflow-y-auto">
 					<!-- Quality Filter -->
 					<div class="border-b border-neutral-100 dark:border-neutral-700">
-						<div class="px-3 py-2 bg-neutral-50 dark:bg-neutral-800">
-							<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Quality</span>
+						<div class="bg-neutral-50 px-3 py-2 dark:bg-neutral-800">
+							<span
+								class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-400"
+								>Quality</span
+							>
 						</div>
 						{#each uniqueQualities as quality}
 							<button
 								type="button"
 								on:click={() => onToggleFilter('qualityName', 'eq', quality, quality)}
-								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {activeFilters.find(f => f.field === 'qualityName' && f.value === quality) ? 'bg-neutral-50 dark:bg-neutral-700' : ''}"
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {activeFilters.find(
+									(f) => f.field === 'qualityName' && f.value === quality
+								)
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
 							>
 								<span class="text-neutral-700 dark:text-neutral-300">{quality}</span>
 								<IconCheckbox
-									checked={!!activeFilters.find(f => f.field === 'qualityName' && f.value === quality)}
+									checked={!!activeFilters.find(
+										(f) => f.field === 'qualityName' && f.value === quality
+									)}
 									icon={Check}
 									color="blue"
 									shape="circle"
@@ -71,18 +96,27 @@
 
 					<!-- Profile Filter -->
 					<div>
-						<div class="px-3 py-2 bg-neutral-50 dark:bg-neutral-800">
-							<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Profile</span>
+						<div class="bg-neutral-50 px-3 py-2 dark:bg-neutral-800">
+							<span
+								class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-400"
+								>Profile</span
+							>
 						</div>
 						{#each uniqueProfiles as profile}
 							<button
 								type="button"
 								on:click={() => onToggleFilter('qualityProfileName', 'eq', profile, profile)}
-								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {activeFilters.find(f => f.field === 'qualityProfileName' && f.value === profile) ? 'bg-neutral-50 dark:bg-neutral-700' : ''}"
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {activeFilters.find(
+									(f) => f.field === 'qualityProfileName' && f.value === profile
+								)
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
 							>
 								<span class="text-neutral-700 dark:text-neutral-300">{profile}</span>
 								<IconCheckbox
-									checked={!!activeFilters.find(f => f.field === 'qualityProfileName' && f.value === profile)}
+									checked={!!activeFilters.find(
+										(f) => f.field === 'qualityProfileName' && f.value === profile
+									)}
 									icon={Check}
 									color="blue"
 									shape="circle"
@@ -96,8 +130,8 @@
 	</ActionButton>
 	<ActionButton icon={TableProperties} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="14rem">
-				<div class="px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
+			<Dropdown position={dropdownPosition} minWidth="14rem">
+				<div class="border-b border-neutral-100 px-4 py-3 dark:border-neutral-700">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Toggle visible table columns</p>
 				</div>
 				<div class="py-1">
@@ -105,7 +139,11 @@
 						<button
 							type="button"
 							on:click={() => onToggleColumn(colKey)}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {visibleColumns.has(colKey) ? 'bg-neutral-50 dark:bg-neutral-700' : ''}"
+							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {visibleColumns.has(
+								colKey
+							)
+								? 'bg-neutral-50 dark:bg-neutral-700'
+								: ''}"
 						>
 							<span class="text-neutral-700 dark:text-neutral-300">{columnLabels[colKey]}</span>
 							<IconCheckbox
@@ -122,11 +160,11 @@
 	</ActionButton>
 	<ActionButton icon={Info} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+			<Dropdown position={dropdownPosition} minWidth="10rem">
 				<button
 					type="button"
 					on:click={onInfo}
-					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
 					About this page
 				</button>
@@ -135,11 +173,11 @@
 	</ActionButton>
 	<ActionButton icon={RefreshCw} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+			<Dropdown position={dropdownPosition} minWidth="10rem">
 				<button
 					type="button"
 					on:click={onRefresh}
-					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
 					Refresh library
 				</button>
@@ -148,11 +186,11 @@
 	</ActionButton>
 	<ActionButton icon={ExternalLink} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+			<Dropdown position={dropdownPosition} minWidth="10rem">
 				<button
 					type="button"
 					on:click={onOpen}
-					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
 					Open in Radarr
 				</button>
@@ -161,11 +199,11 @@
 	</ActionButton>
 	<ActionButton icon={Pencil} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+			<Dropdown position={dropdownPosition} minWidth="10rem">
 				<button
 					type="button"
 					on:click={onEdit}
-					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
 					Edit instance
 				</button>
@@ -174,11 +212,11 @@
 	</ActionButton>
 	<ActionButton icon={Trash2} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+			<Dropdown position={dropdownPosition} minWidth="10rem">
 				<button
 					type="button"
 					on:click={() => (showDeleteModal = true)}
-					class="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-lg"
+					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
 					Delete instance
 				</button>

@@ -42,7 +42,9 @@ export const notificationServicesQueries = {
 	 * Get all notification services
 	 */
 	getAll(): NotificationService[] {
-		return db.query<NotificationService>('SELECT * FROM notification_services ORDER BY created_at DESC');
+		return db.query<NotificationService>(
+			'SELECT * FROM notification_services ORDER BY created_at DESC'
+		);
 	},
 
 	/**
@@ -137,10 +139,7 @@ export const notificationServicesQueries = {
 	 * Delete a notification service
 	 */
 	delete(id: string): boolean {
-		const affected = db.execute(
-			'DELETE FROM notification_services WHERE id = ?',
-			id
-		);
+		const affected = db.execute('DELETE FROM notification_services WHERE id = ?', id);
 
 		return affected > 0;
 	},

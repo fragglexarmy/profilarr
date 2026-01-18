@@ -147,9 +147,7 @@ export function validateOperations(operations: Operation[]): void {
 
 		const orders = layerOrders.get(op.layer)!;
 		if (orders.has(op.order)) {
-			throw new Error(
-				`Duplicate order number ${op.order} in ${op.layer} layer (${op.filename})`
-			);
+			throw new Error(`Duplicate order number ${op.order} in ${op.layer} layer (${op.filename})`);
 		}
 		orders.add(op.order);
 	}

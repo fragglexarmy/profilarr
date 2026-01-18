@@ -78,7 +78,7 @@
 	}
 
 	// Check if type is pattern-based
-	$: isPatternType = PATTERN_TYPES.includes(condition.type as typeof PATTERN_TYPES[number]);
+	$: isPatternType = PATTERN_TYPES.includes(condition.type as (typeof PATTERN_TYPES)[number]);
 
 	// Autocomplete options for patterns (use name as value for FK stability)
 	$: patternOptions = availablePatterns.map((p) => ({ value: p.name, label: p.name }));

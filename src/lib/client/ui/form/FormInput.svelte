@@ -4,6 +4,8 @@
 	export let placeholder: string = '';
 	export let value: string = '';
 	export let textarea: boolean = false;
+	export let type: 'text' | 'number' | 'email' | 'password' | 'url' = 'text';
+	export let required: boolean = false;
 </script>
 
 <div class="space-y-2">
@@ -26,9 +28,10 @@
 		></textarea>
 	{:else}
 		<input
-			type="text"
+			{type}
 			bind:value
 			{placeholder}
+			{required}
 			class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 		/>
 	{/if}

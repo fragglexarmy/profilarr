@@ -1,6 +1,11 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { readManifest, writeManifest, validateManifest, type Manifest } from '$lib/server/pcd/manifest.ts';
+import {
+	readManifest,
+	writeManifest,
+	validateManifest,
+	type Manifest
+} from '$lib/server/pcd/manifest.ts';
 import { readReadme, writeReadme } from '$lib/server/pcd/readme.ts';
 import { parseMarkdown } from '$utils/markdown/markdown.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';

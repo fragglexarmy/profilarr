@@ -10,15 +10,40 @@ import { marked } from 'marked';
 function sanitizeHtml(html: string): string {
 	// Allowed tags
 	const allowedTags = new Set([
-		'p', 'br', 'strong', 'em', 'u', 'code', 'pre', 'blockquote',
-		'ul', 'ol', 'li', 'a', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-		'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'del', 'ins'
+		'p',
+		'br',
+		'strong',
+		'em',
+		'u',
+		'code',
+		'pre',
+		'blockquote',
+		'ul',
+		'ol',
+		'li',
+		'a',
+		'img',
+		'h1',
+		'h2',
+		'h3',
+		'h4',
+		'h5',
+		'h6',
+		'table',
+		'thead',
+		'tbody',
+		'tr',
+		'th',
+		'td',
+		'hr',
+		'del',
+		'ins'
 	]);
 
 	// Allowed attributes per tag
 	const allowedAttrs: Record<string, Set<string>> = {
-		'a': new Set(['href', 'title']),
-		'img': new Set(['src', 'alt', 'title'])
+		a: new Set(['href', 'title']),
+		img: new Set(['src', 'alt', 'title'])
 	};
 
 	// Remove script tags and their content
@@ -48,13 +73,15 @@ function sanitizeHtml(html: string): string {
 			return `<${lowerTag}>`;
 		}
 
-		const filteredAttrs = attrs.replace(/([a-z][a-z0-9-]*)\s*=\s*["']([^"']*)["']/gi,
+		const filteredAttrs = attrs.replace(
+			/([a-z][a-z0-9-]*)\s*=\s*["']([^"']*)["']/gi,
 			(attrMatch: string, attrName: string, attrValue: string) => {
 				if (allowedForTag.has(attrName.toLowerCase())) {
 					return ` ${attrName}="${attrValue}"`;
 				}
 				return '';
-			});
+			}
+		);
 
 		return `<${lowerTag}${filteredAttrs}>`;
 	});

@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Database, Plus, Lock, Code, Trash2, Pencil, ExternalLink, ChevronRight, Info } from 'lucide-svelte';
+	import {
+		Database,
+		Plus,
+		Lock,
+		Code,
+		Trash2,
+		Pencil,
+		ExternalLink,
+		ChevronRight,
+		Info
+	} from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import EmptyState from '$ui/state/EmptyState.svelte';
@@ -27,10 +37,7 @@
 	$: filteredDatabases = data.databases.filter((db) => {
 		const query = $searchStore.query.toLowerCase();
 		if (!query) return true;
-		return (
-			db.name.toLowerCase().includes(query) ||
-			db.repository_url.toLowerCase().includes(query)
-		);
+		return db.name.toLowerCase().includes(query) || db.repository_url.toLowerCase().includes(query);
 	});
 
 	// Modal state
@@ -123,17 +130,27 @@
 		<!-- Database Table -->
 		<Table {columns} data={filteredDatabases} hoverable={true}>
 			<svelte:fragment slot="cell" let:row let:column>
-				<div on:click={() => handleRowClick(row)} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)} class="cursor-pointer">
+				<div
+					on:click={() => handleRowClick(row)}
+					role="button"
+					tabindex="0"
+					on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)}
+					class="cursor-pointer"
+				>
 					{#if column.key === 'name'}
 						<div class="flex items-center gap-3">
 							<div class="relative h-8 w-8">
 								{#if !loadedImages.has(row.id)}
-									<div class="absolute inset-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-700"></div>
+									<div
+										class="absolute inset-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-700"
+									></div>
 								{/if}
 								<img
 									src={getGitHubAvatar(row.repository_url)}
 									alt="{row.name} avatar"
-									class="h-8 w-8 rounded-lg {loadedImages.has(row.id) ? 'opacity-100' : 'opacity-0'}"
+									class="h-8 w-8 rounded-lg {loadedImages.has(row.id)
+										? 'opacity-100'
+										: 'opacity-0'}"
 									on:load={() => handleImageLoad(row.id)}
 								/>
 							</div>
@@ -150,7 +167,9 @@
 							</div>
 						</div>
 					{:else if column.key === 'repository_url'}
-						<Badge variant="neutral" mono>{row.repository_url.replace('https://github.com/', '')}</Badge>
+						<Badge variant="neutral" mono
+							>{row.repository_url.replace('https://github.com/', '')}</Badge
+						>
 					{:else if column.key === 'sync_strategy'}
 						<Badge variant="neutral" mono>{formatSyncStrategy(row.sync_strategy)}</Badge>
 					{:else if column.key === 'last_synced_at'}
@@ -164,7 +183,12 @@
 					<a href="/databases/{row.id}/edit" on:click={(e) => e.stopPropagation()}>
 						<TableActionButton icon={Pencil} title="Edit database" />
 					</a>
-					<a href={row.repository_url} target="_blank" rel="noopener noreferrer" on:click={(e) => e.stopPropagation()}>
+					<a
+						href={row.repository_url}
+						target="_blank"
+						rel="noopener noreferrer"
+						on:click={(e) => e.stopPropagation()}
+					>
 						<TableActionButton icon={ExternalLink} title="View on GitHub" />
 					</a>
 					<TableActionButton
@@ -239,26 +263,25 @@
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Private & Dev Badges</div>
 			<div class="mt-1">
 				<strong>Private</strong> indicates the repository requires authentication.
-				<strong>Dev</strong> means you have a personal access token configured, allowing you to
-				push changes back to the repository.
+				<strong>Dev</strong> means you have a personal access token configured, allowing you to push
+				changes back to the repository.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Sync Strategy</div>
 			<div class="mt-1">
-				Controls how often Profilarr checks for updates from the remote repository. Set to
-				"Manual" to only sync when you explicitly trigger it, or choose an interval for
-				automatic updates.
+				Controls how often Profilarr checks for updates from the remote repository. Set to "Manual"
+				to only sync when you explicitly trigger it, or choose an interval for automatic updates.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Unlinking</div>
 			<div class="mt-1">
-				Unlinking a database removes all local data associated with it. Your Arr instances
-				will keep any configurations that were already synced, but you won't be able to
-				sync updates until you re-link the database.
+				Unlinking a database removes all local data associated with it. Your Arr instances will keep
+				any configurations that were already synced, but you won't be able to sync updates until you
+				re-link the database.
 			</div>
 		</div>
 	</div>

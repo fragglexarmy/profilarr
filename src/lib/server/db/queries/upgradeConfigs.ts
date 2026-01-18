@@ -76,9 +76,7 @@ export const upgradeConfigsQueries = {
 	 * Get all enabled upgrade configs
 	 */
 	getEnabled(): UpgradeConfig[] {
-		const rows = db.query<UpgradeConfigRow>(
-			'SELECT * FROM upgrade_configs WHERE enabled = 1'
-		);
+		const rows = db.query<UpgradeConfigRow>('SELECT * FROM upgrade_configs WHERE enabled = 1');
 		return rows.map(rowToConfig);
 	},
 

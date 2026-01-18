@@ -149,7 +149,11 @@ export async function runUpgradeManager(): Promise<UpgradeManagerResult> {
 
 		if (status.success) {
 			successCount++;
-		} else if (status.error?.includes('disabled') || status.error?.includes('not yet supported') || status.error?.includes('No enabled')) {
+		} else if (
+			status.error?.includes('disabled') ||
+			status.error?.includes('not yet supported') ||
+			status.error?.includes('No enabled')
+		) {
 			skippedCount++;
 		} else {
 			failureCount++;

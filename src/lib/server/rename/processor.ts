@@ -60,10 +60,15 @@ function createSkippedLog(
 /**
  * Send rename notification
  */
-async function sendRenameNotification(log: RenameJobLog, summaryNotifications: boolean): Promise<void> {
+async function sendRenameNotification(
+	log: RenameJobLog,
+	summaryNotifications: boolean
+): Promise<void> {
 	// Only notify if there were files to rename
 	if (log.results.filesNeedingRename > 0) {
-		const { DiscordNotifier } = await import('$lib/server/notifications/notifiers/discord/index.ts');
+		const { DiscordNotifier } = await import(
+			'$lib/server/notifications/notifiers/discord/index.ts'
+		);
 
 		// Get all enabled services that have this notification type enabled
 		const services = notificationServicesQueries.getAllEnabled();
@@ -110,9 +115,7 @@ async function processRadarrRename(
 	// Find the ignore tag ID if configured
 	let ignoreTagId: number | null = null;
 	if (settings.ignoreTag) {
-		const ignoreTag = tags.find(
-			(t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase()
-		);
+		const ignoreTag = tags.find((t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase());
 		ignoreTagId = ignoreTag?.id ?? null;
 	}
 
@@ -189,7 +192,11 @@ async function processRadarrRename(
 	let commandsCompleted = 0;
 	let commandsFailed = 0;
 	const errors: string[] = [];
-	const renamedItems: { id: number; title: string; files: { existingPath: string; newPath: string }[] }[] = [];
+	const renamedItems: {
+		id: number;
+		title: string;
+		files: { existingPath: string; newPath: string }[];
+	}[] = [];
 
 	if (renameItems.length > 0) {
 		const movieIds = renameItems.map((item) => item.id);
@@ -224,7 +231,9 @@ async function processRadarrRename(
 
 		// Get movies to find their root folder paths
 		const moviesToRename = movies.filter((m) => movieIds.includes(m.id));
-		const rootFolderPaths = [...new Set(moviesToRename.map((m) => m.rootFolderPath).filter(Boolean))];
+		const rootFolderPaths = [
+			...new Set(moviesToRename.map((m) => m.rootFolderPath).filter(Boolean))
+		];
 
 		for (const rootPath of rootFolderPaths) {
 			const movieIdsInPath = moviesToRename
@@ -252,7 +261,12 @@ async function processRadarrRename(
 		instanceType: 'radarr',
 		startedAt: startedAt.toISOString(),
 		completedAt: new Date().toISOString(),
-		status: commandsFailed > 0 && commandsCompleted === 0 ? 'failed' : commandsFailed > 0 ? 'partial' : 'success',
+		status:
+			commandsFailed > 0 && commandsCompleted === 0
+				? 'failed'
+				: commandsFailed > 0
+					? 'partial'
+					: 'success',
 		config: {
 			dryRun: false,
 			renameFolders: settings.renameFolders,
@@ -304,9 +318,7 @@ async function processSonarrRename(
 	// Find the ignore tag ID if configured
 	let ignoreTagId: number | null = null;
 	if (settings.ignoreTag) {
-		const ignoreTag = tags.find(
-			(t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase()
-		);
+		const ignoreTag = tags.find((t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase());
 		ignoreTagId = ignoreTag?.id ?? null;
 	}
 
@@ -385,7 +397,11 @@ async function processSonarrRename(
 	let commandsCompleted = 0;
 	let commandsFailed = 0;
 	const errors: string[] = [];
-	const renamedItems: { id: number; title: string; files: { existingPath: string; newPath: string }[] }[] = [];
+	const renamedItems: {
+		id: number;
+		title: string;
+		files: { existingPath: string; newPath: string }[];
+	}[] = [];
 
 	if (renameItems.length > 0) {
 		const seriesIds = renameItems.map((item) => item.id);
@@ -462,7 +478,12 @@ async function processSonarrRename(
 		instanceType: 'sonarr',
 		startedAt: startedAt.toISOString(),
 		completedAt: new Date().toISOString(),
-		status: commandsFailed > 0 && commandsCompleted === 0 ? 'failed' : commandsFailed > 0 ? 'partial' : 'success',
+		status:
+			commandsFailed > 0 && commandsCompleted === 0
+				? 'failed'
+				: commandsFailed > 0
+					? 'partial'
+					: 'success',
 		config: {
 			dryRun: false,
 			renameFolders: settings.renameFolders,
@@ -523,8 +544,17 @@ export async function processRenameConfig(
 				client.close();
 			}
 		} else {
-			const log = createSkippedLog(settings, instance, `Rename not supported for ${instance.type}`, manual);
-			await logRenameSkipped(instance.id, instance.name, `Rename not supported for ${instance.type}`);
+			const log = createSkippedLog(
+				settings,
+				instance,
+				`Rename not supported for ${instance.type}`,
+				manual
+			);
+			await logRenameSkipped(
+				instance.id,
+				instance.name,
+				`Rename not supported for ${instance.type}`
+			);
 			return log;
 		}
 	} catch (error) {

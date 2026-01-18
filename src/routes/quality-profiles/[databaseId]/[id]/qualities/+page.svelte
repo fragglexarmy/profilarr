@@ -9,12 +9,7 @@
 	import { alertStore } from '$lib/client/alerts/store';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import {
-		current,
-		isDirty,
-		initEdit,
-		update
-	} from '$lib/client/stores/dirty';
+	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -29,6 +24,7 @@
 	interface QualitiesFormData {
 		orderedItems: OrderedItem[];
 		availableQualities: QualityMember[];
+		[key: string]: unknown;
 	}
 
 	// Build initial data from server
@@ -149,22 +145,17 @@
 		if (isGroupingMode && draggedItem.type === 'quality') {
 			if (targetItem.type === 'quality') {
 				const newGroup: OrderedItem = {
-					id: -1,
 					type: 'group',
-					referenceId: -1,
 					name: `${draggedItem.name} + ${targetItem.name}`,
 					position: targetIndex,
 					enabled: draggedItem.enabled && targetItem.enabled,
 					upgradeUntil: draggedItem.upgradeUntil || targetItem.upgradeUntil,
-					members: [
-						{ id: draggedItem.referenceId, name: draggedItem.name },
-						{ id: targetItem.referenceId, name: targetItem.name }
-					]
+					members: [{ name: draggedItem.name }, { name: targetItem.name }]
 				};
 
 				const newBucket = [...mainBucket];
 				const indicesToRemove = [sourceIndex, targetIndex].sort((a, b) => b - a);
-				indicesToRemove.forEach(idx => newBucket.splice(idx, 1));
+				indicesToRemove.forEach((idx) => newBucket.splice(idx, 1));
 				const insertPos = Math.min(sourceIndex, targetIndex);
 				newBucket.splice(insertPos, 0, newGroup);
 
@@ -177,10 +168,12 @@
 				const targetGroup = { ...newBucket[targetIndex] };
 
 				if (!targetGroup.members) targetGroup.members = [];
-				targetGroup.members = [...targetGroup.members, {
-					id: draggedItem.referenceId,
-					name: draggedItem.name
-				}];
+				targetGroup.members = [
+					...targetGroup.members,
+					{
+						name: draggedItem.name
+					}
+				];
 
 				newBucket[targetIndex] = targetGroup;
 				newBucket.splice(sourceIndex, 1);
@@ -213,7 +206,10 @@
 	function saveGroupName() {
 		if (editingGroupIndex !== null && editingGroupName.trim()) {
 			const newBucket = [...mainBucket];
-			newBucket[editingGroupIndex] = { ...newBucket[editingGroupIndex], name: editingGroupName.trim() };
+			newBucket[editingGroupIndex] = {
+				...newBucket[editingGroupIndex],
+				name: editingGroupName.trim()
+			};
 			updateMainBucket(newBucket);
 		}
 		editingGroupIndex = null;
@@ -227,7 +223,10 @@
 
 	function toggleEnabled(index: number) {
 		if (mainBucket[index].enabled && mainBucket[index].upgradeUntil) {
-			alertStore.add('warning', 'Cannot disable an item that is set as "Upgrade Until". Please remove the "Upgrade Until" flag first.');
+			alertStore.add(
+				'warning',
+				'Cannot disable an item that is set as "Upgrade Until". Please remove the "Upgrade Until" flag first.'
+			);
 			return;
 		}
 
@@ -241,7 +240,10 @@
 
 		if (!newBucket[index].enabled) {
 			newBucket[index] = { ...newBucket[index], enabled: true };
-			alertStore.add('info', 'Item was automatically enabled because "Upgrade Until" requires it to be enabled.');
+			alertStore.add(
+				'info',
+				'Item was automatically enabled because "Upgrade Until" requires it to be enabled.'
+			);
 		}
 
 		newBucket.forEach((item, i) => {
@@ -262,13 +264,11 @@
 		e.preventDefault();
 		if (!draggedFromLegacy) return;
 
-		const newLegacyBucket = legacyBucket.filter(q => q.id !== draggedFromLegacy!.id);
+		const newLegacyBucket = legacyBucket.filter((q) => q.name !== draggedFromLegacy!.name);
 		updateLegacyBucket(newLegacyBucket);
 
 		const newItem: OrderedItem = {
-			id: -1,
 			type: 'quality',
-			referenceId: draggedFromLegacy.id,
 			name: draggedFromLegacy.name,
 			position: mainBucket.length,
 			enabled: false,
@@ -291,13 +291,13 @@
 	function collapseGroup(group: OrderedItem) {
 		if (group.type !== 'group' || !group.members) return;
 
-		const groupIndex = mainBucket.findIndex(item => item.id === group.id && item.type === 'group' && item.name === group.name);
+		const groupIndex = mainBucket.findIndex(
+			(item) => item.type === 'group' && item.name === group.name
+		);
 		if (groupIndex === -1) return;
 
 		const newQualities: OrderedItem[] = group.members.map((member, index) => ({
-			id: -1,
 			type: 'quality' as const,
-			referenceId: member.id,
 			name: member.name,
 			position: groupIndex + index,
 			enabled: group.enabled,
@@ -338,7 +338,9 @@
 
 <!-- Save Bar -->
 {#if $isDirty}
-	<div class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95">
+	<div
+		class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95"
+	>
 		<div class="flex items-center gap-3">
 			<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
 			{#if saveError}
@@ -398,12 +400,14 @@
 		/>
 	</ActionsBar>
 
-	<div class="grid gap-6" class:grid-cols-2={showLegacyQualities} class:grid-cols-1={!showLegacyQualities}>
+	<div
+		class="grid gap-6"
+		class:grid-cols-2={showLegacyQualities}
+		class:grid-cols-1={!showLegacyQualities}
+	>
 		<!-- Main Bucket -->
 		<div>
-			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-				Qualities
-			</h2>
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Qualities</h2>
 			<div
 				class="min-h-[36rem] rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
 				on:dragover={handleDragOverMain}
@@ -412,12 +416,14 @@
 				aria-label="Main quality configuration"
 			>
 				{#if mainBucket.length === 0}
-					<div class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400">
+					<div
+						class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400"
+					>
 						Drop qualities here
 					</div>
 				{:else}
 					<div class="space-y-4">
-						{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.referenceId}-${index}` : `group-${item.name}-${index}`)}
+						{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.name}-${index}` : `group-${item.name}-${index}`)}
 							<div
 								draggable={true}
 								on:dragstart={() => handleQualityDragStart(item, index)}
@@ -426,64 +432,78 @@
 								on:drop={(e) => handleQualityDrop(e, item, index)}
 								on:dragend={resetDragState}
 								on:click={() => toggleEnabled(index)}
-								on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleEnabled(index); } }}
-								class="relative cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {draggedQualityFromMain?.index === index ? 'opacity-50 scale-95' : ''}"
+								on:keydown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										toggleEnabled(index);
+									}
+								}}
+								class="relative cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {draggedQualityFromMain?.index ===
+								index
+									? 'scale-95 opacity-50'
+									: ''}"
 								style="transition: opacity 100ms, transform 100ms;"
 								role="button"
 								tabindex="0"
 							>
 								{#if hoverTargetIndex === index && willCreateGroup}
-									<div class="absolute inset-0 rounded-lg border-2 border-dashed border-green-500 bg-green-50/30 dark:border-green-400 dark:bg-green-950/30 pointer-events-none"></div>
+									<div
+										class="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-green-500 bg-green-50/30 dark:border-green-400 dark:bg-green-950/30"
+									></div>
 								{/if}
 								{#if hoverTargetIndex === index && willAddToGroup}
-									<div class="absolute inset-0 rounded-lg border-2 border-dashed border-accent-500 bg-accent-50/30 dark:border-accent-400 dark:bg-accent-950/30 pointer-events-none"></div>
+									<div
+										class="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-accent-500 bg-accent-50/30 dark:border-accent-400 dark:bg-accent-950/30"
+									></div>
 								{/if}
-								<div class="flex items-center justify-between relative">
+								<div class="relative flex items-center justify-between">
 									<div class="flex-1">
-											{#if item.type === 'group' && editingGroupIndex === index}
-												<input
-													type="text"
-													bind:value={editingGroupName}
-													on:blur={saveGroupName}
-													on:click={(e) => e.stopPropagation()}
-													on:keydown={(e) => {
-														if (e.key === 'Enter') saveGroupName();
-														if (e.key === 'Escape') cancelEditingGroupName();
-													}}
-													class="max-w-xs rounded border border-accent-500 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-neutral-800 dark:text-neutral-100"
-												/>
-											{:else}
-												<div class="font-medium text-neutral-900 dark:text-neutral-100">
-													{#if item.type === 'group'}
-														<span
-															class="cursor-pointer hover:text-accent-600 dark:hover:text-accent-400"
-															on:click={(e) => {
+										{#if item.type === 'group' && editingGroupIndex === index}
+											<input
+												type="text"
+												bind:value={editingGroupName}
+												on:blur={saveGroupName}
+												on:click={(e) => e.stopPropagation()}
+												on:keydown={(e) => {
+													if (e.key === 'Enter') saveGroupName();
+													if (e.key === 'Escape') cancelEditingGroupName();
+												}}
+												class="max-w-xs rounded border border-accent-500 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:ring-2 focus:ring-accent-500 focus:outline-none dark:bg-neutral-800 dark:text-neutral-100"
+											/>
+										{:else}
+											<div class="font-medium text-neutral-900 dark:text-neutral-100">
+												{#if item.type === 'group'}
+													<span
+														class="cursor-pointer hover:text-accent-600 dark:hover:text-accent-400"
+														on:click={(e) => {
+															e.stopPropagation();
+															startEditingGroupName(item, index);
+														}}
+														on:keydown={(e) => {
+															if (e.key === 'Enter' || e.key === ' ') {
+																e.preventDefault();
 																e.stopPropagation();
 																startEditingGroupName(item, index);
-															}}
-															on:keydown={(e) => {
-																if (e.key === 'Enter' || e.key === ' ') {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	startEditingGroupName(item, index);
-																}
-															}}
-															role="button"
-															tabindex="0"
-														>
-															{item.name}
-														</span>
-														<span class="ml-2 text-xs text-neutral-500 dark:text-neutral-400">(Group)</span>
-													{:else}
+															}
+														}}
+														role="button"
+														tabindex="0"
+													>
 														{item.name}
-													{/if}
-												</div>
-												{#if item.type === 'group' && item.members}
-													<div class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-														{item.members.map(m => m.name).join(', ')}
-													</div>
+													</span>
+													<span class="ml-2 text-xs text-neutral-500 dark:text-neutral-400"
+														>(Group)</span
+													>
+												{:else}
+													{item.name}
 												{/if}
+											</div>
+											{#if item.type === 'group' && item.members}
+												<div class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+													{item.members.map((m) => m.name).join(', ')}
+												</div>
 											{/if}
+										{/if}
 									</div>
 									<div class="flex items-center gap-3">
 										{#if hoverTargetIndex === index && willCreateGroup}
@@ -539,37 +559,39 @@
 
 		<!-- Legacy Bucket -->
 		{#if showLegacyQualities}
-		<div>
-			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-				Unmigrated Qualities
-			</h2>
-			<div
-				class="min-h-96 rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
-			>
-				{#if legacyBucket.length === 0}
-					<div class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400">
-						All qualities added!
-					</div>
-				{:else}
-					<div class="space-y-2">
-						{#each legacyBucket as quality}
-							<div
-								draggable={true}
-								on:dragstart={() => handleDragStart(quality)}
-								on:dragend={handleDragEnd}
-								class="cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-								role="button"
-								tabindex="0"
-							>
-								<div class="font-medium text-neutral-900 dark:text-neutral-100">
-									{quality.name}
+			<div>
+				<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+					Unmigrated Qualities
+				</h2>
+				<div
+					class="min-h-96 rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
+				>
+					{#if legacyBucket.length === 0}
+						<div
+							class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400"
+						>
+							All qualities added!
+						</div>
+					{:else}
+						<div class="space-y-2">
+							{#each legacyBucket as quality}
+								<div
+									draggable={true}
+									on:dragstart={() => handleDragStart(quality)}
+									on:dragend={handleDragEnd}
+									class="cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+									role="button"
+									tabindex="0"
+								>
+									<div class="font-medium text-neutral-900 dark:text-neutral-100">
+										{quality.name}
+									</div>
 								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</div>
-		</div>
 		{/if}
 	</div>
 </div>
@@ -579,56 +601,70 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Qualities</div>
 			<div class="mt-1">
-				Define the order, grouping, and configuration of qualities. In previous versions, only enabled qualities were tracked. The new system stores all qualities (enabled and disabled) to maintain proper ordering across your entire quality profile.
+				Define the order, grouping, and configuration of qualities. In previous versions, only
+				enabled qualities were tracked. The new system stores all qualities (enabled and disabled)
+				to maintain proper ordering across your entire quality profile.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Reordering</div>
 			<div class="mt-1">
-				Drag and drop qualities to change their priority. Higher positions indicate higher preference. The order determines which quality will be selected when multiple options are available.
+				Drag and drop qualities to change their priority. Higher positions indicate higher
+				preference. The order determines which quality will be selected when multiple options are
+				available.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Creating Groups</div>
 			<div class="mt-1">
-				Hold Ctrl (or Cmd on Mac) while dragging a quality onto another quality to create a group. Groups allow multiple qualities to be treated as equal priority. You can also drag a quality onto an existing group to add it to that group.
+				Hold Ctrl (or Cmd on Mac) while dragging a quality onto another quality to create a group.
+				Groups allow multiple qualities to be treated as equal priority. You can also drag a quality
+				onto an existing group to add it to that group.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Group Names</div>
 			<div class="mt-1">
-				Click on a group name to edit it. Groups automatically get a default name when created, but you can customize this to better describe the qualities it contains.
+				Click on a group name to edit it. Groups automatically get a default name when created, but
+				you can customize this to better describe the qualities it contains.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Collapsing Groups</div>
 			<div class="mt-1">
-				Click the X button on a group to break it apart into individual qualities. The qualities will maintain their enabled state and position.
+				Click the X button on a group to break it apart into individual qualities. The qualities
+				will maintain their enabled state and position.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Enabled/Disabled</div>
 			<div class="mt-1">
-				The blue checkbox indicates whether a quality is enabled. Click anywhere on the quality row or the checkbox itself to toggle. Disabled qualities are still tracked for ordering purposes but won't be used for downloads.
+				The blue checkbox indicates whether a quality is enabled. Click anywhere on the quality row
+				or the checkbox itself to toggle. Disabled qualities are still tracked for ordering purposes
+				but won't be used for downloads.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Upgrade Until</div>
 			<div class="mt-1">
-				The green arrow checkbox marks a quality as the "upgrade until" threshold. Only one quality can have this flag at a time. When a file reaches this quality level, the system will stop looking for upgrades. This quality must be enabled.
+				The green arrow checkbox marks a quality as the "upgrade until" threshold. Only one quality
+				can have this flag at a time. When a file reaches this quality level, the system will stop
+				looking for upgrades. This quality must be enabled.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Unmigrated Qualities</div>
 			<div class="mt-1">
-				When migrating from older profile versions, qualities that weren't previously enabled appear in the "Unmigrated Qualities" section. Drag these into your main configuration to include them in your quality profile ordering. These start as disabled by default.
+				When migrating from older profile versions, qualities that weren't previously enabled appear
+				in the "Unmigrated Qualities" section. Drag these into your main configuration to include
+				them in your quality profile ordering. These start as disabled by default.
 			</div>
 		</div>
 	</div>

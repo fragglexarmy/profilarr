@@ -4,23 +4,23 @@
 
 // Export all types
 export type {
-  QualityItem,
-  ProfileLanguage,
-  CustomFormatCounts,
-  QualityProfileGeneral,
-  QualityProfileLanguage,
-  QualityProfileLanguages,
-  QualitySingle,
-  QualityGroup,
-  QualityProfileQualities,
-  QualityProfileTableRow
+	QualityItem,
+	ProfileLanguage,
+	CustomFormatCounts,
+	QualityProfileGeneral,
+	QualityProfileLanguage,
+	QualityProfileLanguages,
+	QualitySingle,
+	QualityGroup,
+	QualityProfileQualities,
+	QualityProfileTableRow
 } from './types.ts';
 
 export type {
-  QualityMember,
-  OrderedItem,
-  QualityGroup as QualitiesGroup,
-  QualitiesPageData
+	QualityMember,
+	OrderedItem,
+	QualityGroup as QualitiesGroup,
+	QualitiesPageData
 } from './qualities.ts';
 
 // Export query functions

@@ -1,7 +1,4 @@
-<script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-
-	// Types
+<script context="module" lang="ts">
 	export type MarkerColor = 'accent' | 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'neutral';
 
 	export interface Marker {
@@ -10,6 +7,10 @@
 		color: MarkerColor;
 		value: number;
 	}
+</script>
+
+<script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 
 	// Props
 	export let orientation: 'horizontal' | 'vertical' = 'horizontal';
@@ -205,7 +206,9 @@
 	>
 		<!-- Track line -->
 		<div
-			class="absolute rounded-full bg-neutral-200 dark:bg-neutral-700 {orientation === 'horizontal' ? 'h-1 w-full top-1/2 -translate-y-1/2' : 'w-1 h-full left-1/2 -translate-x-1/2'}"
+			class="absolute rounded-full bg-neutral-200 dark:bg-neutral-700 {orientation === 'horizontal'
+				? 'top-1/2 h-1 w-full -translate-y-1/2'
+				: 'left-1/2 h-full w-1 -translate-x-1/2'}"
 		></div>
 
 		<!-- Markers -->
@@ -213,7 +216,9 @@
 			{@const percent = valueToPercent(marker.value)}
 			{@const colors = colorClasses[marker.color]}
 			<div
-				class="absolute {orientation === 'horizontal' ? 'top-1/2 -translate-y-1/2' : 'left-1/2 -translate-x-1/2'}"
+				class="absolute {orientation === 'horizontal'
+					? 'top-1/2 -translate-y-1/2'
+					: 'left-1/2 -translate-x-1/2'}"
 				style="{orientation === 'horizontal' ? 'left' : 'top'}: {percent}%;"
 			>
 				<!-- Dot -->
@@ -221,7 +226,10 @@
 					type="button"
 					on:mousedown={(e) => handleDragStart(index, e)}
 					on:touchstart={(e) => handleDragStart(index, e)}
-					class="relative -translate-x-1/2 h-4 w-4 cursor-grab rounded-full shadow-sm transition-transform hover:scale-125 {colors.dot} {orientation === 'vertical' ? '-translate-y-1/2' : ''} {draggingIndex === index ? 'scale-150 cursor-grabbing' : ''}"
+					class="relative h-4 w-4 -translate-x-1/2 cursor-grab rounded-full shadow-sm transition-transform hover:scale-125 {colors.dot} {orientation ===
+					'vertical'
+						? '-translate-y-1/2'
+						: ''} {draggingIndex === index ? 'scale-150 cursor-grabbing' : ''}"
 					aria-label="Drag to adjust {marker.label}"
 				></button>
 
@@ -231,10 +239,10 @@
 						? `left-0 -translate-x-1/2 ${index % 2 === 0 ? 'top-6' : 'bottom-6'}`
 						: 'left-6 translate-x-0'}"
 				>
-					<span
-						class="inline-block rounded px-1.5 py-0.5 text-xs font-medium {colors.badge}"
-					>
-						{marker.label}: {unlimitedValue !== null && marker.value >= unlimitedValue ? 'Unlimited' : `${displayTransform ? displayTransform(marker.value).toFixed(1) : Math.round(marker.value)}${unit ? ` ${unit}` : ''}`}
+					<span class="inline-block rounded px-1.5 py-0.5 text-xs font-medium {colors.badge}">
+						{marker.label}: {unlimitedValue !== null && marker.value >= unlimitedValue
+							? 'Unlimited'
+							: `${displayTransform ? displayTransform(marker.value).toFixed(1) : Math.round(marker.value)}${unit ? ` ${unit}` : ''}`}
 					</span>
 				</div>
 			</div>

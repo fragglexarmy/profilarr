@@ -15,24 +15,61 @@
 	class:-translate-x-[calc(100%-24px)]={collapsed}
 >
 	<div class="flex-1 overflow-y-auto p-4">
-		<Group label={useEmoji ? '🏠 Home' : 'Home'} href="/" icon={useEmoji ? undefined : Home} hasItems={true}>
+		<Group
+			label={useEmoji ? '🏠 Home' : 'Home'}
+			href="/"
+			icon={useEmoji ? undefined : Home}
+			hasItems={true}
+		>
 			<GroupItem label="Databases" href="/databases" />
 			<GroupItem label="Arrs" href="/arr" />
 		</Group>
 
-		<Group label={useEmoji ? '⚡ Quality Profiles' : 'Quality Profiles'} href="/quality-profiles" icon={useEmoji ? undefined : Sliders} initialOpen={true} hasItems={true}>
+		<Group
+			label={useEmoji ? '⚡ Quality Profiles' : 'Quality Profiles'}
+			href="/quality-profiles"
+			icon={useEmoji ? undefined : Sliders}
+			initialOpen={true}
+			hasItems={true}
+		>
 			<GroupItem label="Testing" href="/quality-profiles/entity-testing" />
 		</Group>
 
-		<Group label={useEmoji ? '🎨 Custom Formats' : 'Custom Formats'} href="/custom-formats" icon={useEmoji ? undefined : Palette} initialOpen={false} />
+		<Group
+			label={useEmoji ? '🎨 Custom Formats' : 'Custom Formats'}
+			href="/custom-formats"
+			icon={useEmoji ? undefined : Palette}
+			initialOpen={false}
+		/>
 
-		<Group label={useEmoji ? '🔬 Regular Expressions' : 'Regular Expressions'} href="/regular-expressions" icon={useEmoji ? undefined : Microscope} initialOpen={false} />
+		<Group
+			label={useEmoji ? '🔬 Regular Expressions' : 'Regular Expressions'}
+			href="/regular-expressions"
+			icon={useEmoji ? undefined : Microscope}
+			initialOpen={false}
+		/>
 
-		<Group label={useEmoji ? '🏷️ Media Management' : 'Media Management'} href="/media-management" icon={useEmoji ? undefined : Tag} initialOpen={false} />
+		<Group
+			label={useEmoji ? '🏷️ Media Management' : 'Media Management'}
+			href="/media-management"
+			icon={useEmoji ? undefined : Tag}
+			initialOpen={false}
+		/>
 
-		<Group label={useEmoji ? '⏱️ Delay Profiles' : 'Delay Profiles'} href="/delay-profiles" icon={useEmoji ? undefined : Clock} initialOpen={false} />
+		<Group
+			label={useEmoji ? '⏱️ Delay Profiles' : 'Delay Profiles'}
+			href="/delay-profiles"
+			icon={useEmoji ? undefined : Clock}
+			initialOpen={false}
+		/>
 
-		<Group label={useEmoji ? '⚙️ Settings' : 'Settings'} href="/settings" icon={useEmoji ? undefined : Settings} initialOpen={true} hasItems={true}>
+		<Group
+			label={useEmoji ? '⚙️ Settings' : 'Settings'}
+			href="/settings"
+			icon={useEmoji ? undefined : Settings}
+			initialOpen={true}
+			hasItems={true}
+		>
 			<GroupItem label="General" href="/settings/general" />
 			<GroupItem label="Jobs" href="/settings/jobs" />
 			<GroupItem label="Logs" href="/settings/logs" />

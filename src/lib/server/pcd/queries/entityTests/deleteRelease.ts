@@ -19,10 +19,7 @@ export async function deleteRelease(options: DeleteTestReleaseOptions) {
 	const { databaseId, cache, layer, releaseId } = options;
 	const db = cache.kb;
 
-	const deleteQuery = db
-		.deleteFrom('test_releases')
-		.where('id', '=', releaseId)
-		.compile();
+	const deleteQuery = db.deleteFrom('test_releases').where('id', '=', releaseId).compile();
 
 	const result = await writeOperation({
 		databaseId,

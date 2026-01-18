@@ -29,7 +29,8 @@ export const actions = {
 		const branch = formData.get('branch')?.toString().trim() || undefined;
 		const syncStrategy = parseInt(formData.get('sync_strategy')?.toString() || '0', 10);
 		const autoPull = formData.get('auto_pull') === '1';
-		const personalAccessToken = formData.get('personal_access_token')?.toString().trim() || undefined;
+		const personalAccessToken =
+			formData.get('personal_access_token')?.toString().trim() || undefined;
 
 		// Validation
 		if (!name || !repositoryUrl) {
@@ -53,13 +54,22 @@ export const actions = {
 		});
 
 		if (repositoryUrl.includes('youtube.com') || repositoryUrl.includes('youtu.be')) {
-			redirect(303, `/databases/bruh?url=${encodeURIComponent(repositoryUrl)}&type=youtube&${bruhParams.toString()}`);
+			redirect(
+				303,
+				`/databases/bruh?url=${encodeURIComponent(repositoryUrl)}&type=youtube&${bruhParams.toString()}`
+			);
 		}
 		if (repositoryUrl.includes('twitter.com') || repositoryUrl.includes('x.com')) {
-			redirect(303, `/databases/bruh?url=${encodeURIComponent(repositoryUrl)}&type=twitter&${bruhParams.toString()}`);
+			redirect(
+				303,
+				`/databases/bruh?url=${encodeURIComponent(repositoryUrl)}&type=twitter&${bruhParams.toString()}`
+			);
 		}
 		if (repositoryUrl.includes('reddit.com')) {
-			redirect(303, `/databases/bruh?url=${encodeURIComponent(repositoryUrl)}&type=reddit&${bruhParams.toString()}`);
+			redirect(
+				303,
+				`/databases/bruh?url=${encodeURIComponent(repositoryUrl)}&type=reddit&${bruhParams.toString()}`
+			);
 		}
 
 		// Check if name already exists

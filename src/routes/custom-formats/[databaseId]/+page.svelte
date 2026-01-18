@@ -134,9 +134,7 @@
 			<div
 				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 			>
-				<p class="text-neutral-600 dark:text-neutral-400">
-					No custom formats match your search
-				</p>
+				<p class="text-neutral-600 dark:text-neutral-400">No custom formats match your search</p>
 			</div>
 		{:else if $view === 'table'}
 			<TableView formats={filtered} />
@@ -150,7 +148,9 @@
 <InfoModal bind:open={infoModalOpen} header="About Custom Formats">
 	<div class="space-y-4 text-sm text-neutral-700 dark:text-neutral-300">
 		<section>
-			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">What Are Custom Formats?</h3>
+			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">
+				What Are Custom Formats?
+			</h3>
 			<p>
 				Custom formats are rules that match specific release characteristics like codec, resolution,
 				source, or release group. They're used to score releases and guide quality decisions.

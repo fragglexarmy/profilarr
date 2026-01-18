@@ -78,26 +78,32 @@
 			headerIcon: Layers,
 			align: 'left',
 			cell: (row: CustomFormatTableRow) => ({
-				html: row.conditions.length > 0
-					? `<div class="flex flex-wrap gap-1">${row.conditions.map((c) => {
-						// Color based on required/negate:
-						// required + negate = red (must NOT match)
-						// required + !negate = accent (must match)
-						// !required + negate = amber (optional negative)
-						// !required + !negate = neutral (optional)
-						let colorClass: string;
-						if (c.required && c.negate) {
-							colorClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-						} else if (c.required) {
-							colorClass = 'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200';
-						} else if (c.negate) {
-							colorClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
-						} else {
-							colorClass = 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
-						}
-						return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${colorClass}">${escapeHtml(c.name)}</span>`;
-					}).join('')}</div>`
-					: `<span class="text-neutral-400 text-xs">None</span>`
+				html:
+					row.conditions.length > 0
+						? `<div class="flex flex-wrap gap-1">${row.conditions
+								.map((c) => {
+									// Color based on required/negate:
+									// required + negate = red (must NOT match)
+									// required + !negate = accent (must match)
+									// !required + negate = amber (optional negative)
+									// !required + !negate = neutral (optional)
+									let colorClass: string;
+									if (c.required && c.negate) {
+										colorClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+									} else if (c.required) {
+										colorClass =
+											'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200';
+									} else if (c.negate) {
+										colorClass =
+											'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+									} else {
+										colorClass =
+											'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
+									}
+									return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${colorClass}">${escapeHtml(c.name)}</span>`;
+								})
+								.join('')}</div>`
+						: `<span class="text-neutral-400 text-xs">None</span>`
 			})
 		},
 		{
@@ -108,15 +114,23 @@
 			width: 'w-20',
 			sortable: true,
 			cell: (row: CustomFormatTableRow) => ({
-				html: row.testCount > 0
-					? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">${row.testCount}</span>`
-					: `<span class="text-neutral-400 text-xs">-</span>`
+				html:
+					row.testCount > 0
+						? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">${row.testCount}</span>`
+						: `<span class="text-neutral-400 text-xs">-</span>`
 			})
 		}
 	];
 </script>
 
-<Table data={formats} {columns} emptyMessage="No custom formats found" hoverable={true} compact={false} onRowClick={handleRowClick} />
+<Table
+	data={formats}
+	{columns}
+	emptyMessage="No custom formats found"
+	hoverable={true}
+	compact={false}
+	onRowClick={handleRowClick}
+/>
 
 <style>
 	/* Inline prose styles for markdown content */

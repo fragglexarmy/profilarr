@@ -140,9 +140,7 @@ export async function parse(title: string, type: MediaType): Promise<ParseResult
 		modifier:
 			QualityModifier[data.modifier as keyof typeof QualityModifier] ?? QualityModifier.None,
 		revision: data.revision,
-		languages: data.languages.map(
-			(l) => Language[l as keyof typeof Language] ?? Language.Unknown
-		),
+		languages: data.languages.map((l) => Language[l as keyof typeof Language] ?? Language.Unknown),
 		releaseGroup: data.releaseGroup,
 		movieTitles: data.movieTitles,
 		year: data.year,
@@ -164,8 +162,7 @@ export async function parse(title: string, type: MediaType): Promise<ParseResult
 					isMiniSeries: data.episode.isMiniSeries,
 					special: data.episode.special,
 					releaseType:
-						ReleaseType[data.episode.releaseType as keyof typeof ReleaseType] ??
-						ReleaseType.Unknown
+						ReleaseType[data.episode.releaseType as keyof typeof ReleaseType] ?? ReleaseType.Unknown
 				}
 			: null
 	};
@@ -243,10 +240,7 @@ function getCacheKey(title: string, type: MediaType): string {
  * @param type - The media type: 'movie' or 'series'
  * @returns ParseResult or null if parser unavailable
  */
-export async function parseWithCache(
-	title: string,
-	type: MediaType
-): Promise<ParseResult | null> {
+export async function parseWithCache(title: string, type: MediaType): Promise<ParseResult | null> {
 	const parserVersion = await getParserVersion();
 	if (!parserVersion) {
 		// Parser not available
@@ -334,10 +328,13 @@ export async function parseWithCacheBatch(
 		}
 	}
 
-	await logger.debug(`Parsed ${items.length} releases: ${cacheHits} cache hits, ${uncached.length} parsed`, {
-		source: 'ParserCache',
-		meta: { total: items.length, cacheHits, parsed: uncached.length, version: parserVersion }
-	});
+	await logger.debug(
+		`Parsed ${items.length} releases: ${cacheHits} cache hits, ${uncached.length} parsed`,
+		{
+			source: 'ParserCache',
+			meta: { total: items.length, cacheHits, parsed: uncached.length, version: parserVersion }
+		}
+	);
 
 	return results;
 }
@@ -399,7 +396,10 @@ async function hashPatterns(patterns: string[]): Promise<string> {
 	const data = new TextEncoder().encode(sorted.join('\n'));
 	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
 	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+	return hashArray
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
+		.slice(0, 16);
 }
 
 /**
@@ -478,10 +478,13 @@ export async function matchPatternsBatch(
 	if (!fetchedResults) {
 		// Parser unavailable - return partial results if any
 		if (cacheHits > 0) {
-			await logger.debug(`Pattern match: ${cacheHits} cache hits, parser unavailable for ${uncachedTexts.length}`, {
-				source: 'PatternMatchCache',
-				meta: { total: texts.length, cacheHits, uncached: uncachedTexts.length }
-			});
+			await logger.debug(
+				`Pattern match: ${cacheHits} cache hits, parser unavailable for ${uncachedTexts.length}`,
+				{
+					source: 'PatternMatchCache',
+					meta: { total: texts.length, cacheHits, uncached: uncachedTexts.length }
+				}
+			);
 			return results;
 		}
 		return null;

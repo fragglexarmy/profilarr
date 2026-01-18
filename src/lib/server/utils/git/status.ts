@@ -21,7 +21,10 @@ export interface GetStatusOptions {
 /**
  * Get full repository status
  */
-export async function getStatus(repoPath: string, options: GetStatusOptions = {}): Promise<GitStatus> {
+export async function getStatus(
+	repoPath: string,
+	options: GetStatusOptions = {}
+): Promise<GitStatus> {
 	const branch = await getBranch(repoPath);
 
 	// Optionally fetch to get accurate ahead/behind
@@ -37,7 +40,7 @@ export async function getStatus(repoPath: string, options: GetStatusOptions = {}
 		repoPath
 	);
 	if (revOutput) {
-		const parts = revOutput.split('\t').map(n => parseInt(n, 10) || 0);
+		const parts = revOutput.split('\t').map((n) => parseInt(n, 10) || 0);
 		behind = parts[0] || 0;
 		ahead = parts[1] || 0;
 	}
@@ -93,7 +96,10 @@ export async function checkForUpdates(repoPath: string): Promise<UpdateInfo> {
 		};
 	}
 
-	const behindOutput = await execGitSafe(['rev-list', '--count', `HEAD..${remoteBranch}`], repoPath);
+	const behindOutput = await execGitSafe(
+		['rev-list', '--count', `HEAD..${remoteBranch}`],
+		repoPath
+	);
 	const commitsBehind = parseInt(behindOutput || '0') || 0;
 
 	const aheadOutput = await execGitSafe(['rev-list', '--count', `${remoteBranch}..HEAD`], repoPath);
@@ -176,7 +182,10 @@ new file mode 100644
 --- /dev/null
 +++ b/${relativePath}
 @@ -0,0 +1,${content.split('\n').length} @@
-${content.split('\n').map(line => '+' + line).join('\n')}`);
+${content
+	.split('\n')
+	.map((line) => '+' + line)
+	.join('\n')}`);
 				} catch {
 					// File doesn't exist or can't be read
 				}
@@ -205,10 +214,7 @@ ${content.split('\n').map(line => '+' + line).join('\n')}`);
 export async function getCommits(repoPath: string, limit: number = 50): Promise<Commit[]> {
 	// Format: hash|shortHash|message|author|email|date
 	const format = '%H|%h|%s|%an|%ae|%cI';
-	const output = await execGit(
-		['log', `--format=${format}`, `-${limit}`],
-		repoPath
-	);
+	const output = await execGit(['log', `--format=${format}`, `-${limit}`], repoPath);
 
 	if (!output.trim()) {
 		return [];
@@ -226,7 +232,7 @@ export async function getCommits(repoPath: string, limit: number = 50): Promise<
 			['diff-tree', '--no-commit-id', '--name-only', '-r', hash],
 			repoPath
 		);
-		const files = statOutput ? statOutput.split('\n').filter(f => f.trim()) : [];
+		const files = statOutput ? statOutput.split('\n').filter((f) => f.trim()) : [];
 
 		commits.push({
 			hash,
@@ -252,10 +258,7 @@ export async function getIncomingChanges(repoPath: string): Promise<IncomingChan
 	const remoteBranch = `origin/${branch}`;
 
 	// Count commits behind
-	const countOutput = await execGitSafe(
-		['rev-list', '--count', `HEAD..${remoteBranch}`],
-		repoPath
-	);
+	const countOutput = await execGitSafe(['rev-list', '--count', `HEAD..${remoteBranch}`], repoPath);
 	const commitsBehind = parseInt(countOutput || '0') || 0;
 
 	if (commitsBehind === 0) {
@@ -264,10 +267,7 @@ export async function getIncomingChanges(repoPath: string): Promise<IncomingChan
 
 	// Get commit details for incoming commits
 	const format = '%H|%h|%s|%an|%ae|%cI';
-	const output = await execGit(
-		['log', `--format=${format}`, `HEAD..${remoteBranch}`],
-		repoPath
-	);
+	const output = await execGit(['log', `--format=${format}`, `HEAD..${remoteBranch}`], repoPath);
 
 	const commits: Commit[] = [];
 

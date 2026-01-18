@@ -38,10 +38,7 @@ export const regex101CacheQueries = {
 	 * Delete a cached entry
 	 */
 	delete(regex101Id: string): boolean {
-		const affected = db.execute(
-			'DELETE FROM regex101_cache WHERE regex101_id = ?',
-			regex101Id
-		);
+		const affected = db.execute('DELETE FROM regex101_cache WHERE regex101_id = ?', regex101Id);
 		return affected > 0;
 	},
 

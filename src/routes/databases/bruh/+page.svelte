@@ -30,13 +30,13 @@
 	<div class="mx-auto w-full max-w-4xl space-y-6">
 		<!-- Cheeky Message -->
 		<div class="text-center">
-			<p class="text-2xl font-medium text-neutral-900 dark:text-neutral-50">
-				If you insist...
-			</p>
+			<p class="text-2xl font-medium text-neutral-900 dark:text-neutral-50">If you insist...</p>
 		</div>
 
 		<!-- Embed Container -->
-		<div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
+		<div
+			class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+		>
 			{#if data.type === 'youtube' && embedUrl}
 				<div class="aspect-video w-full">
 					<iframe
@@ -50,9 +50,7 @@
 				</div>
 			{:else if data.type === 'twitter'}
 				<div class="p-12 text-center">
-					<p class="mb-4 text-2xl text-neutral-700 dark:text-neutral-300">
-						Here's your tweet:
-					</p>
+					<p class="mb-4 text-2xl text-neutral-700 dark:text-neutral-300">Here's your tweet:</p>
 					<a
 						href={data.url}
 						target="_blank"
@@ -94,12 +92,20 @@
 		</div>
 
 		<!-- Footer Message with Button -->
-		<div class="flex flex-wrap items-center justify-center gap-4 text-center text-neutral-600 dark:text-neutral-400">
+		<div
+			class="flex flex-wrap items-center justify-center gap-4 text-center text-neutral-600 dark:text-neutral-400"
+		>
 			<p>
-				You need to link a <strong class="text-neutral-900 dark:text-neutral-50">GitHub repository</strong>
+				You need to link a <strong class="text-neutral-900 dark:text-neutral-50"
+					>GitHub repository</strong
+				>
 			</p>
 			<a
-				href="/databases/new?name={encodeURIComponent(data.formData.name)}&branch={encodeURIComponent(data.formData.branch)}&sync_strategy={encodeURIComponent(data.formData.syncStrategy)}&auto_pull={encodeURIComponent(data.formData.autoPull)}"
+				href="/databases/new?name={encodeURIComponent(
+					data.formData.name
+				)}&branch={encodeURIComponent(data.formData.branch)}&sync_strategy={encodeURIComponent(
+					data.formData.syncStrategy
+				)}&auto_pull={encodeURIComponent(data.formData.autoPull)}"
 				class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
 			>
 				<RotateCcw size={16} />

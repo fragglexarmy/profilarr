@@ -327,7 +327,7 @@
 					<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 						{#each row.definitions as def (def.quality_name)}
 							{@const markers = markersMap[def.quality_name] || createMarkers(def)}
-							<div class="flex items-center gap-3 bg-white pb-8 pt-5 pl-8 pr-4 dark:bg-neutral-900">
+							<div class="flex items-center gap-3 bg-white pt-5 pr-4 pb-8 pl-8 dark:bg-neutral-900">
 								<!-- Quality Name -->
 								<div
 									class="w-32 shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100"
@@ -336,7 +336,7 @@
 								</div>
 
 								<!-- Range Scale -->
-								<div class="min-w-0 flex-1 pl-2 pr-16 pt-4">
+								<div class="min-w-0 flex-1 pt-4 pr-16 pl-2">
 									<RangeScale
 										orientation="horizontal"
 										direction="start"
@@ -463,14 +463,14 @@
 				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 					{#each row.definitions as def (def.quality_name)}
 						{@const markers = markersMap[def.quality_name] || createMarkers(def)}
-						<div class="flex items-center gap-3 bg-white pb-8 pt-5 pl-8 pr-4 dark:bg-neutral-900">
+						<div class="flex items-center gap-3 bg-white pt-5 pr-4 pb-8 pl-8 dark:bg-neutral-900">
 							<!-- Quality Name -->
 							<div class="w-32 shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100">
 								{def.quality_name}
 							</div>
 
 							<!-- Range Scale (read-only) -->
-							<div class="pointer-events-none min-w-0 flex-1 pl-2 pr-16 pt-4">
+							<div class="pointer-events-none min-w-0 flex-1 pt-4 pr-16 pl-2">
 								<RangeScale
 									orientation="horizontal"
 									direction="start"

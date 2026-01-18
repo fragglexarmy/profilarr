@@ -19,9 +19,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ success: false, error: result.status_message }, { status: 400 });
 		}
 	} catch (error) {
-		return json({
-			success: false,
-			error: error instanceof Error ? error.message : 'Connection failed'
-		}, { status: 400 });
+		return json(
+			{
+				success: false,
+				error: error instanceof Error ? error.message : 'Connection failed'
+			},
+			{ status: 400 }
+		);
 	}
 };

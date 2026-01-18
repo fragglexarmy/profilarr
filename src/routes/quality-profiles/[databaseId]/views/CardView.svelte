@@ -16,7 +16,7 @@
 	{#each profiles as profile}
 		<button
 			on:click={() => handleCardClick(profile)}
-			class="group relative flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 cursor-pointer"
+			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name and tags -->
 			<div>
@@ -24,7 +24,9 @@
 				{#if profile.tags.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each profile.tags as tag}
-							<span class="inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
+							<span
+								class="inline-flex items-center rounded bg-accent-100 px-1.5 py-0.5 font-mono text-[10px] text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+							>
 								{tag.name}
 							</span>
 						{/each}
@@ -45,10 +47,12 @@
 					{#if idx > 0}
 						<span class="text-xs text-neutral-400">›</span>
 					{/if}
-					<span class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-mono text-neutral-900 dark:text-neutral-100
+					<span
+						class="inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] text-neutral-900 dark:text-neutral-100
 						{quality.is_upgrade_until
 							? 'border-accent-200 bg-accent-50 dark:border-accent-800 dark:bg-accent-950'
-							: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}">
+							: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}"
+					>
 						{quality.name}
 					</span>
 				{/each}
@@ -60,11 +64,15 @@
 			</div>
 
 			<!-- Stats row -->
-			<div class="flex items-center gap-3 border-t border-neutral-100 pt-3 text-xs dark:border-neutral-800">
+			<div
+				class="flex items-center gap-3 border-t border-neutral-100 pt-3 text-xs dark:border-neutral-800"
+			>
 				<!-- Custom Formats -->
 				<div class="flex items-center gap-1">
 					<BookOpenText size={12} class="text-neutral-400" />
-					<span class="font-mono text-[10px] text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+					<span
+						class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+					>
 						{profile.custom_formats.total}
 					</span>
 				</div>
@@ -72,7 +80,9 @@
 				<!-- Scores -->
 				<div class="flex items-center gap-1">
 					<Gauge size={12} class="text-neutral-400" />
-					<span class="font-mono text-[10px] text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+					<span
+						class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+					>
 						{profile.minimum_custom_format_score}
 					</span>
 				</div>
@@ -81,7 +91,9 @@
 				{#if profile.language}
 					<div class="flex items-center gap-1">
 						<Earth size={12} class="text-neutral-400" />
-						<span class="font-mono text-[10px] text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+						<span
+							class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+						>
 							{profile.language.name}
 						</span>
 					</div>

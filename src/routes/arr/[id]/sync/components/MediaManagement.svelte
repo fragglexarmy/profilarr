@@ -60,7 +60,10 @@
 		try {
 			const formData = new FormData();
 			formData.set('namingDatabaseId', state.namingDatabaseId?.toString() ?? '');
-			formData.set('qualityDefinitionsDatabaseId', state.qualityDefinitionsDatabaseId?.toString() ?? '');
+			formData.set(
+				'qualityDefinitionsDatabaseId',
+				state.qualityDefinitionsDatabaseId?.toString() ?? ''
+			);
 			formData.set('mediaSettingsDatabaseId', state.mediaSettingsDatabaseId?.toString() ?? '');
 			formData.set('trigger', syncTrigger);
 			formData.set('cron', cronExpression);
@@ -105,7 +108,9 @@
 	}
 </script>
 
-<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+<div
+	class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+>
 	<!-- Header -->
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
 		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Media Management</h2>
@@ -134,7 +139,9 @@
 					</button>
 
 					{#if showNamingDropdown}
-						<div class="absolute top-full z-50 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
+						<div
+							class="absolute top-full z-50 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+						>
 							<button
 								type="button"
 								on:click={() => selectNaming(null)}
@@ -179,7 +186,9 @@
 					</button>
 
 					{#if showQualityDropdown}
-						<div class="absolute top-full z-50 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
+						<div
+							class="absolute top-full z-50 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+						>
 							<button
 								type="button"
 								on:click={() => selectQuality(null)}
@@ -224,7 +233,9 @@
 					</button>
 
 					{#if showMediaDropdown}
-						<div class="absolute top-full z-50 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
+						<div
+							class="absolute top-full z-50 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+						>
 							<button
 								type="button"
 								on:click={() => selectMedia(null)}
@@ -254,5 +265,13 @@
 		</div>
 	</div>
 
-	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} {isDirty} on:save={handleSave} on:sync={handleSync} />
+	<SyncFooter
+		bind:syncTrigger
+		bind:cronExpression
+		{saving}
+		{syncing}
+		{isDirty}
+		on:save={handleSave}
+		on:sync={handleSync}
+	/>
 </div>

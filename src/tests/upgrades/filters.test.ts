@@ -134,7 +134,12 @@ class FilterEvaluationTest extends BaseTest {
 
 		this.test('text: contains operator matches (case insensitive)', () => {
 			const item = { title: 'The Dark Knight' };
-			const rule: FilterRule = { type: 'rule', field: 'title', operator: 'contains', value: 'dark' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'title',
+				operator: 'contains',
+				value: 'dark'
+			};
 			assertEquals(evaluateRule(item, rule), true);
 		});
 

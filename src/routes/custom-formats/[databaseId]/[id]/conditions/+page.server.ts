@@ -89,7 +89,10 @@ export const actions: Actions = {
 			return fail(404, { error: 'Custom format not found' });
 		}
 
-		const originalConditions = await customFormatQueries.getConditionsForEvaluation(cache, format.name);
+		const originalConditions = await customFormatQueries.getConditionsForEvaluation(
+			cache,
+			format.name
+		);
 
 		const formData = await request.formData();
 

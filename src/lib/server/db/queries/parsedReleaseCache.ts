@@ -42,10 +42,7 @@ export const parsedReleaseCacheQueries = {
 	 * Delete a cached entry
 	 */
 	delete(cacheKey: string): boolean {
-		const affected = db.execute(
-			'DELETE FROM parsed_release_cache WHERE cache_key = ?',
-			cacheKey
-		);
+		const affected = db.execute('DELETE FROM parsed_release_cache WHERE cache_key = ?', cacheKey);
 		return affected > 0;
 	},
 
@@ -54,10 +51,7 @@ export const parsedReleaseCacheQueries = {
 	 * Call this periodically or on startup to clean up stale cache entries
 	 */
 	deleteOldVersions(currentVersion: string): number {
-		return db.execute(
-			'DELETE FROM parsed_release_cache WHERE parser_version != ?',
-			currentVersion
-		);
+		return db.execute('DELETE FROM parsed_release_cache WHERE parser_version != ?', currentVersion);
 	},
 
 	/**
@@ -71,9 +65,9 @@ export const parsedReleaseCacheQueries = {
 	 * Get cache stats
 	 */
 	getStats(): { total: number; byVersion: Record<string, number> } {
-		const total = db.queryFirst<{ count: number }>(
-			'SELECT COUNT(*) as count FROM parsed_release_cache'
-		)?.count ?? 0;
+		const total =
+			db.queryFirst<{ count: number }>('SELECT COUNT(*) as count FROM parsed_release_cache')
+				?.count ?? 0;
 
 		const versionCounts = db.query<{ parser_version: string; count: number }>(
 			'SELECT parser_version, COUNT(*) as count FROM parsed_release_cache GROUP BY parser_version'

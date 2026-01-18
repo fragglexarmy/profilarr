@@ -45,7 +45,12 @@ class AIClient extends BaseHttpClient {
 	/**
 	 * Chat completions API (GPT-4, etc.)
 	 */
-	chatCompletions(model: string, messages: ChatMessage[], maxTokens = 100, temperature = 0.3): Promise<ChatCompletionResponse> {
+	chatCompletions(
+		model: string,
+		messages: ChatMessage[],
+		maxTokens = 100,
+		temperature = 0.3
+	): Promise<ChatCompletionResponse> {
 		return this.post<ChatCompletionResponse>('/chat/completions', {
 			model,
 			messages,
@@ -160,8 +165,8 @@ Output only the commit message, max 72 chars.`;
 
 		// Handle Responses API format
 		if (data.output) {
-			const textOutput = data.output.find(o => o.type === 'message');
-			const textContent = textOutput?.content?.find(c => c.type === 'output_text');
+			const textOutput = data.output.find((o) => o.type === 'message');
+			const textContent = textOutput?.content?.find((c) => c.type === 'output_text');
 			if (textContent?.text) {
 				return textContent.text.trim();
 			}

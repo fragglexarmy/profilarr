@@ -20,7 +20,8 @@
 	let generating = false;
 
 	$: canDiscard = selectedCount > 0 && !discarding;
-	$: canAdd = selectedCount > 0 && commitMessage.trim().length > 0 && !hasIncomingChanges && !adding;
+	$: canAdd =
+		selectedCount > 0 && commitMessage.trim().length > 0 && !hasIncomingChanges && !adding;
 	$: canGenerate = aiEnabled && selectedCount > 0 && !generating && !hasIncomingChanges;
 
 	async function handleGenerate() {
@@ -52,13 +53,15 @@
 <ActionsBar className="w-full">
 	<div class="relative flex flex-1">
 		<div
-			class="flex h-10 w-full items-center border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 {hasIncomingChanges ? 'opacity-50' : ''}"
+			class="flex h-10 w-full items-center border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 {hasIncomingChanges
+				? 'opacity-50'
+				: ''}"
 		>
 			<input
 				type="text"
 				bind:value={commitMessage}
 				disabled={hasIncomingChanges}
-				placeholder={hasIncomingChanges ? "Pull incoming changes first..." : "Commit message..."}
+				placeholder={hasIncomingChanges ? 'Pull incoming changes first...' : 'Commit message...'}
 				class="h-full w-full bg-transparent px-3 font-mono text-sm text-neutral-700 placeholder-neutral-400 outline-none disabled:cursor-not-allowed dark:text-neutral-300 dark:placeholder-neutral-500"
 			/>
 		</div>
@@ -70,10 +73,10 @@
 			iconClass={generating ? 'animate-spin' : ''}
 			hasDropdown={true}
 			dropdownPosition="right"
-			on:click={canGenerate ? handleGenerate : undefined}
+			on:click={() => canGenerate && handleGenerate()}
 		>
 			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} {open} minWidth="12rem">
+				<Dropdown position={dropdownPosition} minWidth="12rem">
 					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
 						{#if hasIncomingChanges}
 							Pull incoming changes first
@@ -95,10 +98,10 @@
 		iconClass={adding ? 'animate-spin' : ''}
 		hasDropdown={true}
 		dropdownPosition="right"
-		on:click={canAdd ? onAdd : undefined}
+		on:click={() => canAdd && onAdd()}
 	>
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="12rem">
+			<Dropdown position={dropdownPosition} minWidth="12rem">
 				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
 					{#if adding}
 						Pushing...
@@ -121,10 +124,10 @@
 		iconClass={discarding ? 'animate-spin' : ''}
 		hasDropdown={true}
 		dropdownPosition="right"
-		on:click={canDiscard ? onDiscard : undefined}
+		on:click={() => canDiscard && onDiscard()}
 	>
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="10rem">
+			<Dropdown position={dropdownPosition} minWidth="10rem">
 				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
 					{#if discarding}
 						Discarding...

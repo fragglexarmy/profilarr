@@ -39,7 +39,9 @@ export class NotificationManager {
 
 			// Send to each service in parallel (fire-and-forget)
 			await Promise.allSettled(
-				relevantServices.map((service) => this.sendToService(service.id, service.service_type, service.config, notification))
+				relevantServices.map((service) =>
+					this.sendToService(service.id, service.service_type, service.config, notification)
+				)
 			);
 		} catch (error) {
 			await logger.error('Error in notification manager', {

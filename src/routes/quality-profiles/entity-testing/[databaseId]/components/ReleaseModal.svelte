@@ -123,29 +123,23 @@
 		/>
 
 		<div class="space-y-1">
-			<label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+			<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 				Languages
-			</label>
-			<p class="text-xs text-neutral-500 dark:text-neutral-400">
-				Press Enter to add languages
-			</p>
+			</span>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">Press Enter to add languages</p>
 			<TagInput bind:tags={languages} placeholder="Type language and press Enter" />
 		</div>
 
 		<div class="space-y-1">
-			<label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+			<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 				Indexers
-			</label>
-			<p class="text-xs text-neutral-500 dark:text-neutral-400">
-				Press Enter to add indexers
-			</p>
+			</span>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">Press Enter to add indexers</p>
 			<TagInput bind:tags={indexers} placeholder="Type indexer and press Enter" />
 		</div>
 
 		<div class="space-y-1">
-			<label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-				Flags
-			</label>
+			<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"> Flags </span>
 			<p class="text-xs text-neutral-500 dark:text-neutral-400">
 				Press Enter to add flags (e.g., freeleech, scene)
 			</p>

@@ -135,7 +135,9 @@ export const actions: Actions = {
 
 		// Only allow manual runs in dry run mode
 		if (!config.dryRun) {
-			return fail(400, { error: 'Manual runs only allowed in Dry Run mode. Enable Dry Run first.' });
+			return fail(400, {
+				error: 'Manual runs only allowed in Dry Run mode. Enable Dry Run first.'
+			});
 		}
 
 		try {

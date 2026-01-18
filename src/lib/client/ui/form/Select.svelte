@@ -86,12 +86,18 @@
 		on:keydown={handleKeydown}
 		class="flex min-h-[2.25rem] w-full items-center justify-between gap-2 rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-left text-sm dark:border-neutral-700 dark:bg-neutral-800"
 	>
-		<span class="{mono ? 'font-mono' : ''} {selectedOption ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-500'}">
+		<span
+			class="{mono ? 'font-mono' : ''} {selectedOption
+				? 'text-neutral-900 dark:text-neutral-100'
+				: 'text-neutral-400 dark:text-neutral-500'}"
+		>
 			{selectedOption?.label ?? placeholder}
 		</span>
 		<ChevronDown
 			size={16}
-			class="text-neutral-400 transition-transform dark:text-neutral-500 {isOpen ? 'rotate-180' : ''}"
+			class="text-neutral-400 transition-transform dark:text-neutral-500 {isOpen
+				? 'rotate-180'
+				: ''}"
 		/>
 	</button>
 
@@ -105,7 +111,9 @@
 					type="button"
 					on:mousedown|preventDefault={() => selectOption(option)}
 					on:mouseenter={() => (highlightedIndex = index)}
-					class="w-full px-3 py-2 text-left text-sm transition-colors {mono ? 'font-mono' : ''} {highlightedIndex === index
+					class="w-full px-3 py-2 text-left text-sm transition-colors {mono
+						? 'font-mono'
+						: ''} {highlightedIndex === index
 						? 'bg-accent-100 text-accent-900 dark:bg-accent-900/30 dark:text-accent-100'
 						: 'text-neutral-900 hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700'}"
 				>

@@ -144,7 +144,14 @@
 						}}
 					>
 						<input type="hidden" name="job_name" value={row.name} />
-						<TableActionButton icon={Play} title="Run now" variant="accent" size="sm" type="submit" disabled={!row.enabled} />
+						<TableActionButton
+							icon={Play}
+							title="Run now"
+							variant="accent"
+							size="sm"
+							type="submit"
+							disabled={!row.enabled}
+						/>
 					</form>
 
 					<!-- Enable/Disable Button -->
@@ -171,8 +178,8 @@
 							type="submit"
 							class="inline-flex h-6 w-6 items-center justify-center rounded border transition-colors
 								{row.enabled
-									? 'border-emerald-300 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40'
-									: 'border-neutral-300 bg-white text-neutral-400 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400'}"
+								? 'border-emerald-300 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40'
+								: 'border-neutral-300 bg-white text-neutral-400 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400'}"
 							title={row.enabled ? 'Disable job' : 'Enable job'}
 						>
 							<Power size={12} />
@@ -191,7 +198,9 @@
 					<div class="grid grid-cols-3 gap-4">
 						<!-- Last Run Details -->
 						<div>
-							<div class="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-500">
+							<div
+								class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-500"
+							>
 								Last Run
 							</div>
 							<div class="mt-1">
@@ -201,7 +210,9 @@
 
 						<!-- Duration -->
 						<div>
-							<div class="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-500">
+							<div
+								class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-500"
+							>
 								Duration
 							</div>
 							<div class="mt-1">
@@ -211,7 +222,9 @@
 
 						<!-- Next Run Details -->
 						<div>
-							<div class="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-500">
+							<div
+								class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-500"
+							>
 								Next Run
 							</div>
 							<div class="mt-1">
@@ -226,7 +239,9 @@
 
 					<!-- Error Message -->
 					{#if row.last_run_error}
-						<div class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+						<div
+							class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
+						>
 							<AlertCircle size={16} class="mt-0.5 flex-shrink-0 text-red-600 dark:text-red-400" />
 							<div>
 								<div class="text-xs font-medium text-red-800 dark:text-red-200">Last Run Error</div>

@@ -30,11 +30,10 @@
 >
 	<!-- Header -->
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-			AI Configuration
-		</h2>
+		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">AI Configuration</h2>
 		<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-			Configure AI-powered features like commit message generation. Works with OpenAI, Ollama, LM Studio, or any OpenAI-compatible API.
+			Configure AI-powered features like commit message generation. Works with OpenAI, Ollama, LM
+			Studio, or any OpenAI-compatible API.
 		</p>
 	</div>
 
@@ -95,10 +94,11 @@
 						name="api_url"
 						bind:value={settings.api_url}
 						placeholder="https://api.openai.com/v1"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 					/>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						OpenAI-compatible endpoint. Examples: Ollama (http://localhost:11434/v1), LM Studio (http://localhost:1234/v1)
+						OpenAI-compatible endpoint. Examples: Ollama (http://localhost:11434/v1), LM Studio
+						(http://localhost:1234/v1)
 					</p>
 				</div>
 
@@ -117,12 +117,12 @@
 							name="api_key"
 							bind:value={settings.api_key}
 							placeholder="sk-..."
-							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 						/>
 						<button
 							type="button"
 							on:click={() => (showApiKey = !showApiKey)}
-							class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+							class="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
 						>
 							{#if showApiKey}
 								<EyeOff size={16} />
@@ -150,7 +150,7 @@
 						name="model"
 						bind:value={settings.model}
 						placeholder="gpt-4o-mini"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 					/>
 					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 						Model name. Examples: gpt-4o-mini, llama3.2, claude-3-haiku

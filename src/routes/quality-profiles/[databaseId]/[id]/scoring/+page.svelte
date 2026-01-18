@@ -1,7 +1,20 @@
 <script lang="ts">
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import { Info, ArrowUpDown, ArrowUp, ArrowDown, Layers, Check, LayoutGrid, Settings, User, X, Save, Loader2 } from 'lucide-svelte';
+	import {
+		Info,
+		ArrowUpDown,
+		ArrowUp,
+		ArrowDown,
+		Layers,
+		Check,
+		LayoutGrid,
+		Settings,
+		User,
+		X,
+		Save,
+		Loader2
+	} from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -14,12 +27,7 @@
 	import { onMount, tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import {
-		current,
-		isDirty,
-		initEdit,
-		update
-	} from '$lib/client/stores/dirty';
+	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
 
@@ -37,6 +45,7 @@
 		upgradeScoreIncrement: number;
 		customFormatScores: Record<string, Record<string, number | null>>;
 		customFormatEnabled: Record<string, Record<string, boolean>>;
+		[key: string]: unknown;
 	}
 
 	// Build initial data from server
@@ -80,8 +89,14 @@
 	$: minimumScore = ($current.minimumScore ?? 0) as number;
 	$: upgradeUntilScore = ($current.upgradeUntilScore ?? 0) as number;
 	$: upgradeScoreIncrement = ($current.upgradeScoreIncrement ?? 1) as number;
-	$: customFormatScores = ($current.customFormatScores ?? {}) as Record<string, Record<string, number | null>>;
-	$: customFormatEnabled = ($current.customFormatEnabled ?? {}) as Record<string, Record<string, boolean>>;
+	$: customFormatScores = ($current.customFormatScores ?? {}) as Record<
+		string,
+		Record<string, number | null>
+	>;
+	$: customFormatEnabled = ($current.customFormatEnabled ?? {}) as Record<
+		string,
+		Record<string, boolean>
+	>;
 
 	// Save state
 	let isSaving = false;
@@ -114,16 +129,41 @@
 	const builtInGroups = [
 		{ name: 'Audio', key: 'audio' as const, tags: ['audio'], custom: false },
 		{ name: 'HDR/Colour', key: 'hdr' as const, tags: ['hdr', 'colour grade'], custom: false },
-		{ name: 'Release Group', key: 'release-group' as const, tags: ['release group', 'release groups'], custom: false },
-		{ name: 'Release Group Tier', key: 'release-group-tier' as const, tags: ['release group tier', 'release group tiers'], custom: false },
-		{ name: 'Streaming Service', key: 'streaming-service' as const, tags: ['streaming service'], custom: false },
+		{
+			name: 'Release Group',
+			key: 'release-group' as const,
+			tags: ['release group', 'release groups'],
+			custom: false
+		},
+		{
+			name: 'Release Group Tier',
+			key: 'release-group-tier' as const,
+			tags: ['release group tier', 'release group tiers'],
+			custom: false
+		},
+		{
+			name: 'Streaming Service',
+			key: 'streaming-service' as const,
+			tags: ['streaming service'],
+			custom: false
+		},
 		{ name: 'Codec', key: 'codec' as const, tags: ['codec'], custom: false },
 		{ name: 'Storage', key: 'storage' as const, tags: ['storage'], custom: false },
 		{ name: 'Source', key: 'source' as const, tags: ['source'], custom: false },
-		{ name: 'Resolution', key: 'resolution' as const, tags: ['sd', '480p', '576p', '720p', '1080p', '2160p', '4k', '8k', 'resolution'], custom: false },
+		{
+			name: 'Resolution',
+			key: 'resolution' as const,
+			tags: ['sd', '480p', '576p', '720p', '1080p', '2160p', '4k', '8k', 'resolution'],
+			custom: false
+		},
 		{ name: 'Indexer Flag', key: 'indexer-flag' as const, tags: ['flag'], custom: false },
 		{ name: 'Edition', key: 'edition' as const, tags: ['edition'], custom: false },
-		{ name: 'Enhancement', key: 'enhancement' as const, tags: ['enhancement', 'enhancements'], custom: false },
+		{
+			name: 'Enhancement',
+			key: 'enhancement' as const,
+			tags: ['enhancement', 'enhancements'],
+			custom: false
+		},
 		{ name: 'Languages', key: 'languages' as const, tags: ['languages'], custom: false }
 	];
 
@@ -135,7 +175,7 @@
 
 	// Check if current config matches active profile - uncheck if different
 	$: if (currentProfileId && !isLoadingProfile) {
-		const activeProfile = profiles.find(p => p.id === currentProfileId);
+		const activeProfile = profiles.find((p) => p.id === currentProfileId);
 		if (activeProfile) {
 			const searchQuery = $searchStore.query ?? '';
 			const selectedGroupsArray = [...selectedGroups];
@@ -190,7 +230,7 @@
 		if (saved) {
 			try {
 				const parsed = JSON.parse(saved) as GroupKey[];
-				selectedGroups = new Set(parsed.filter(key => groups.some(g => g.key === key)));
+				selectedGroups = new Set(parsed.filter((key) => groups.some((g) => g.key === key)));
 			} catch {
 				selectedGroups = new Set();
 			}
@@ -290,7 +330,7 @@
 	}
 
 	function loadProfile(id: string) {
-		const profile = profiles.find(p => p.id === id);
+		const profile = profiles.find((p) => p.id === id);
 		if (!profile) return;
 
 		isLoadingProfile = true;
@@ -299,7 +339,7 @@
 		searchStore.setQuery(profile.searchQuery);
 		sortState = profile.sortState as { key: SortKey; direction: SortDirection } | null;
 		selectedGroups = new Set(profile.selectedGroups);
-		customGroups = profile.customGroups.map(g => ({ ...g, custom: true }));
+		customGroups = profile.customGroups.map((g) => ({ ...g, custom: true }));
 		tileColumns = profile.tileColumns;
 		hideUnscoredFormats = profile.hideUnscoredFormats;
 
@@ -314,7 +354,7 @@
 	}
 
 	function deleteProfile(id: string) {
-		profiles = profiles.filter(p => p.id !== id);
+		profiles = profiles.filter((p) => p.id !== id);
 		localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
 		if (currentProfileId === id) {
 			currentProfileId = null;
@@ -363,30 +403,37 @@
 
 	// Compute filtered and sorted formats
 	$: searchQuery = ($searchStore.query ?? '').trim().toLowerCase();
-	$: filteredCustomFormats = scoring?.customFormats.filter((format) => {
-		if (searchQuery && !format.name?.toLowerCase().includes(searchQuery)) {
-			return false;
-		}
-		if (hideUnscoredFormats) {
-			const hasAnyScore = scoring.arrTypes.some((arrType) => format.scores[arrType] !== null);
-			if (!hasAnyScore) return false;
-		}
-		return true;
-	}) || [];
+	$: filteredCustomFormats =
+		scoring?.customFormats.filter((format) => {
+			if (searchQuery && !format.name?.toLowerCase().includes(searchQuery)) {
+				return false;
+			}
+			if (hideUnscoredFormats) {
+				const hasAnyScore = scoring.arrTypes.some((arrType) => format.scores[arrType] !== null);
+				if (!hasAnyScore) return false;
+			}
+			return true;
+		}) || [];
 
 	$: sortedCustomFormats = sortFormats(filteredCustomFormats, customFormatScores, sortState);
 	$: groupedFormats = groupFormats(sortedCustomFormats, selectedGroups);
 
 	// Apply default sort
 	$: if (scoring && !sortState) {
-		const defaultSortKey = (scoring.arrTypes.includes('radarr') ? 'radarr' : scoring.arrTypes[0]) as SortKey;
+		const defaultSortKey = (
+			scoring.arrTypes.includes('radarr') ? 'radarr' : scoring.arrTypes[0]
+		) as SortKey;
 		if (defaultSortKey) {
 			sortState = { key: defaultSortKey, direction: 'desc' };
 		}
 	}
 
 	// Build custom format scores array for form submission
-	function buildCustomFormatScoresArray(): Array<{ customFormatName: string; arrType: string; score: number | null }> {
+	function buildCustomFormatScoresArray(): Array<{
+		customFormatName: string;
+		arrType: string;
+		score: number | null;
+	}> {
 		const result: Array<{ customFormatName: string; arrType: string; score: number | null }> = [];
 		const initial = initialData.customFormatScores;
 
@@ -405,7 +452,9 @@
 	}
 
 	// Handlers for score changes from ScoringTable
-	function handleScoreChange(event: CustomEvent<{ formatName: string; arrType: string; score: number | null }>) {
+	function handleScoreChange(
+		event: CustomEvent<{ formatName: string; arrType: string; score: number | null }>
+	) {
 		const { formatName, arrType, score } = event.detail;
 		const newScores = { ...customFormatScores };
 		if (!newScores[formatName]) newScores[formatName] = {};
@@ -413,7 +462,9 @@
 		update('customFormatScores', newScores);
 	}
 
-	function handleEnabledChange(event: CustomEvent<{ formatName: string; arrType: string; enabled: boolean }>) {
+	function handleEnabledChange(
+		event: CustomEvent<{ formatName: string; arrType: string; enabled: boolean }>
+	) {
 		const { formatName, arrType, enabled } = event.detail;
 		const newEnabled = { ...customFormatEnabled };
 		if (!newEnabled[formatName]) newEnabled[formatName] = {};
@@ -448,7 +499,11 @@
 		}
 	}
 
-	function sortFormats(formats: any[], scores: Record<string, Record<string, number | null>>, sortState: { key: SortKey; direction: SortDirection } | null) {
+	function sortFormats(
+		formats: any[],
+		scores: Record<string, Record<string, number | null>>,
+		sortState: { key: SortKey; direction: SortDirection } | null
+	) {
 		if (!sortState) return formats;
 
 		const sorted = [...formats].sort((a, b) => {
@@ -458,9 +513,7 @@
 			if (sortState.key === 'name') {
 				aVal = a.name?.toLowerCase() || '';
 				bVal = b.name?.toLowerCase() || '';
-				return sortState.direction === 'asc'
-					? aVal.localeCompare(bVal)
-					: bVal.localeCompare(aVal);
+				return sortState.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
 			} else {
 				// Sort by score (radarr or sonarr)
 				aVal = scores[a.name]?.[sortState.key] ?? null;
@@ -471,9 +524,7 @@
 				if (aVal === null) return 1;
 				if (bVal === null) return -1;
 
-				return sortState.direction === 'desc'
-					? bVal - aVal
-					: aVal - bVal;
+				return sortState.direction === 'desc' ? bVal - aVal : aVal - bVal;
 			}
 		});
 
@@ -515,7 +566,6 @@
 
 		return result;
 	}
-
 </script>
 
 <svelte:head>
@@ -523,415 +573,458 @@
 </svelte:head>
 
 {#if scoring}
-<!-- Save Bar -->
-{#if $isDirty}
-	<div class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95">
-		<div class="flex items-center gap-3">
-			<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
-			{#if saveError}
-				<span class="text-sm text-red-600 dark:text-red-400">{saveError}</span>
-			{/if}
-		</div>
-
-		<button
-			type="button"
-			disabled={isSaving}
-			on:click={handleSaveClick}
-			class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-		>
-			{#if isSaving}
-				<Loader2 size={14} class="animate-spin" />
-				Saving...
-			{:else}
-				<Save size={14} />
-				Save
-			{/if}
-		</button>
-	</div>
-
-	<!-- Hidden form for submission -->
-	<form
-		bind:this={formElement}
-		method="POST"
-		action="?/update"
-		class="hidden"
-		use:enhance={() => {
-			isSaving = true;
-			saveError = null;
-			return async ({ result, update: formUpdate }) => {
-				isSaving = false;
-				if (result.type === 'success') {
-					alertStore.add('success', 'Scoring saved!');
-					// Mark as clean so navigation guard doesn't trigger
-					initEdit(initialData);
-					await formUpdate();
-				} else if (result.type === 'failure') {
-					saveError = (result.data as { error?: string })?.error || 'Failed to save';
-					alertStore.add('error', saveError);
-				}
-			};
-		}}
-	>
-		<input type="hidden" name="minimumScore" value={minimumScore} />
-		<input type="hidden" name="upgradeUntilScore" value={upgradeUntilScore} />
-		<input type="hidden" name="upgradeScoreIncrement" value={upgradeScoreIncrement} />
-		<input type="hidden" name="customFormatScores" value={JSON.stringify(buildCustomFormatScoresArray())} />
-		<input type="hidden" name="layer" value={selectedLayer} />
-	</form>
-{/if}
-
-<div class="mt-6 space-y-6">
-	<!-- Profile-level Score Settings -->
-	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-		<div class="space-y-2">
-			<label
-				for="minimumScore"
-				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
-			>
-				Minimum Score
-			</label>
-			<p class="text-xs text-neutral-600 dark:text-neutral-400">
-				Minimum custom format score required to download
-			</p>
-			<NumberInput name="minimumScore" value={minimumScore} onchange={(v) => update('minimumScore', v)} step={1} font="mono" />
-		</div>
-
-		<div class="space-y-2">
-			<label
-				for="upgradeUntilScore"
-				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
-			>
-				Upgrade Until Score
-			</label>
-			<p class="text-xs text-neutral-600 dark:text-neutral-400">
-				Stop upgrading when this score is reached
-			</p>
-			<NumberInput
-				name="upgradeUntilScore"
-				value={upgradeUntilScore}
-				onchange={(v) => update('upgradeUntilScore', v)}
-				step={1}
-				font="mono"
-			/>
-		</div>
-
-		<div class="space-y-2">
-			<label
-				for="upgradeScoreIncrement"
-				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
-			>
-				Upgrade Score Increment
-			</label>
-			<p class="text-xs text-neutral-600 dark:text-neutral-400">
-				Minimum score improvement needed to upgrade
-			</p>
-			<NumberInput
-				name="upgradeScoreIncrement"
-				value={upgradeScoreIncrement}
-				onchange={(v) => update('upgradeScoreIncrement', v)}
-				step={1}
-				font="mono"
-			/>
-		</div>
-	</div>
-
-	<!-- Section Header -->
-	<div class="flex items-start justify-between">
-		<div>
-			<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-				Custom Format Scoring
-			</div>
-			<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-				Configure custom format scores for each Arr type
-			</p>
-		</div>
-		<button
-			type="button"
-			on:click={() => (showInfoModal = true)}
-			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<Info size={14} />
-			Info
-		</button>
-	</div>
-
-	<ActionsBar className="w-full">
-		<SearchAction {searchStore} placeholder="Search custom formats..." />
-		<ActionButton icon={ArrowUpDown} hasDropdown={true} dropdownPosition="right">
-			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} {open} minWidth="10rem">
-					<div class="py-1">
-						<button
-							type="button"
-							on:click={() => toggleSort('name', 'asc')}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key === 'name'
-								? 'bg-neutral-50 dark:bg-neutral-700'
-								: ''}"
-						>
-							<span class="text-neutral-700 dark:text-neutral-300">Name</span>
-							<IconCheckbox
-								checked={sortState?.key === 'name'}
-								icon={sortState?.key === 'name' && sortState.direction === 'desc' ? ArrowDown : ArrowUp}
-								color="blue"
-								shape="circle"
-							/>
-						</button>
-						<button
-							type="button"
-							on:click={() => toggleSort('radarr', 'desc')}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key === 'radarr'
-								? 'bg-neutral-50 dark:bg-neutral-700'
-								: ''}"
-						>
-							<span class="text-neutral-700 dark:text-neutral-300">Radarr</span>
-							<IconCheckbox
-								checked={sortState?.key === 'radarr'}
-								icon={sortState?.key === 'radarr' && sortState.direction === 'asc' ? ArrowUp : ArrowDown}
-								color={getArrTypeColor('radarr')}
-								shape="circle"
-							/>
-						</button>
-						<button
-							type="button"
-							on:click={() => toggleSort('sonarr', 'desc')}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key === 'sonarr'
-								? 'bg-neutral-50 dark:bg-neutral-700'
-								: ''}"
-						>
-							<span class="text-neutral-700 dark:text-neutral-300">Sonarr</span>
-							<IconCheckbox
-								checked={sortState?.key === 'sonarr'}
-								icon={sortState?.key === 'sonarr' && sortState.direction === 'asc' ? ArrowUp : ArrowDown}
-								color={getArrTypeColor('sonarr')}
-								shape="circle"
-							/>
-						</button>
-					</div>
-				</Dropdown>
-			</svelte:fragment>
-		</ActionButton>
-		<ActionButton icon={Layers} hasDropdown={true} dropdownPosition="right">
-			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} {open} minWidth="14rem">
-					<div class="py-1">
-						<button
-							type="button"
-							on:click={clearGrouping}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {selectedGroups.size === 0
-								? 'bg-neutral-50 dark:bg-neutral-700'
-								: ''}"
-						>
-							<span class="text-neutral-700 dark:text-neutral-300">No Grouping</span>
-							<IconCheckbox
-								checked={selectedGroups.size === 0}
-								icon={Check}
-								color="blue"
-								shape="circle"
-							/>
-						</button>
-						{#each builtInGroups as group}
-							<button
-								type="button"
-								on:click={() => toggleGroup(group.key)}
-								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {selectedGroups.has(group.key)
-									? 'bg-neutral-50 dark:bg-neutral-700'
-									: ''}"
-							>
-								<span class="text-neutral-700 dark:text-neutral-300">{group.name}</span>
-								<IconCheckbox
-									checked={selectedGroups.has(group.key)}
-									icon={Check}
-									color="blue"
-									shape="circle"
-								/>
-							</button>
-						{/each}
-					</div>
-					<CustomGroupManager
-						{customGroups}
-						{selectedGroups}
-						onAdd={addCustomGroup}
-						onDelete={deleteCustomGroup}
-						onToggle={toggleGroup}
-					/>
-				</Dropdown>
-			</svelte:fragment>
-		</ActionButton>
-		<ActionButton icon={LayoutGrid} hasDropdown={true} dropdownPosition="right">
-			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} {open} minWidth="10rem">
-					<div class="py-1">
-						{#each [1, 2, 3] as columns}
-							<button
-								type="button"
-								on:click={() => setTileColumns(columns)}
-								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {tileColumns === columns
-									? 'bg-neutral-50 dark:bg-neutral-700'
-									: ''}"
-							>
-								<span class="text-neutral-700 dark:text-neutral-300">{columns} Column{columns > 1 ? 's' : ''}</span>
-								<IconCheckbox
-									checked={tileColumns === columns}
-									icon={Check}
-									color="blue"
-									shape="circle"
-								/>
-							</button>
-						{/each}
-					</div>
-				</Dropdown>
-			</svelte:fragment>
-		</ActionButton>
-		<ActionButton icon={Settings} hasDropdown={true} dropdownPosition="right">
-			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} {open} minWidth="14rem">
-					<div class="py-1">
-						<button
-							type="button"
-							on:click={toggleHideUnscored}
-							class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {hideUnscoredFormats
-								? 'bg-neutral-50 dark:bg-neutral-700'
-								: ''}"
-						>
-							<span class="text-neutral-700 dark:text-neutral-300">Hide Unscored Formats</span>
-							<IconCheckbox
-								checked={hideUnscoredFormats}
-								icon={Check}
-								color="blue"
-								shape="circle"
-							/>
-						</button>
-					</div>
-				</Dropdown>
-			</svelte:fragment>
-		</ActionButton>
-		<ActionButton icon={User} hasDropdown={true} dropdownPosition="right">
-			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} {open} minWidth="16rem">
-					<!-- Save current config form -->
-					<div class="border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
-						<div class="mb-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-							Save Current Settings
-						</div>
-						<form on:submit|preventDefault={handleSaveProfile} class="space-y-2">
-							<input
-								type="text"
-								bind:value={newProfileName}
-								placeholder="Profile name"
-								class="block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
-							/>
-							<button
-								type="submit"
-								class="w-full rounded bg-accent-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-								disabled={!newProfileName.trim()}
-							>
-								Save Profile
-							</button>
-						</form>
-					</div>
-
-					<!-- Saved profiles list -->
-					<div class="py-1">
-						<!-- Default profile option -->
-						<div class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700">
-							<button
-								type="button"
-								on:click={loadDefaultProfile}
-								class="flex flex-1 items-center justify-between gap-3"
-							>
-								<div class="flex-1 text-left">
-									<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">Default</div>
-								</div>
-								<IconCheckbox
-									checked={currentProfileId === null}
-									icon={Check}
-									color="blue"
-									shape="circle"
-								/>
-							</button>
-						</div>
-
-						{#if profiles.length > 0}
-							<div class="border-t border-neutral-200 dark:border-neutral-700"></div>
-							{#each profiles as profile}
-								<div class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700">
-									<button
-										type="button"
-										on:click={() => loadProfile(profile.id)}
-										class="flex flex-1 items-center justify-between gap-3"
-									>
-										<div class="flex-1 text-left">
-											<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">{profile.name}</div>
-										</div>
-										<IconCheckbox
-											checked={currentProfileId === profile.id}
-											icon={Check}
-											color="blue"
-											shape="circle"
-										/>
-									</button>
-									<button
-										type="button"
-										on:click|stopPropagation={() => deleteProfile(profile.id)}
-										class="flex h-5 w-5 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
-									>
-										<X size={12} />
-									</button>
-								</div>
-							{/each}
-						{/if}
-					</div>
-				</Dropdown>
-			</svelte:fragment>
-		</ActionButton>
-		<ActionButton icon={Info} on:click={() => (showOptionsInfoModal = true)} />
-	</ActionsBar>
-
-	<!-- Custom Format Scores Tables -->
-	{#if searchQuery === 'santiagoisthebest'}
-		<div class="flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900">
-			<img src="/src/lib/client/assets/thanks.gif" alt="Thanks!" class="max-w-full" />
-		</div>
-	{:else if searchQuery === 'rickroll' || searchQuery === 'nevergonnagiveyouup'}
-		<div class="flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900">
-			<img src="/src/lib/client/assets/nggyu.gif" alt="Never gonna give you up" class="max-w-full" />
-		</div>
-	{:else if sortedCustomFormats.length === 0}
-		<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
-			<div class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-				{#if scoring.customFormats.length === 0}
-					No custom formats found
-				{:else}
-					No custom formats match your search
-				{/if}
-			</div>
-		</div>
-	{:else}
+	<!-- Save Bar -->
+	{#if $isDirty}
 		<div
-			class="grid gap-6"
-			class:grid-cols-1={tileColumns === 1}
-			class:grid-cols-2={tileColumns === 2}
-			class:grid-cols-3={tileColumns === 3}
+			class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95"
 		>
-			{#each groupedFormats as group}
-				{#if group.formats.length > 0}
-					<div class="min-w-0">
-						<ScoringTable
-							formats={group.formats}
-							arrTypes={scoring.arrTypes}
-							{customFormatScores}
-							{customFormatEnabled}
-							{getArrTypeColor}
-							title={group.name}
-							on:scoreChange={handleScoreChange}
-							on:enabledChange={handleEnabledChange}
-						/>
-					</div>
+			<div class="flex items-center gap-3">
+				<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
+				{#if saveError}
+					<span class="text-sm text-red-600 dark:text-red-400">{saveError}</span>
 				{/if}
-			{/each}
+			</div>
+
+			<button
+				type="button"
+				disabled={isSaving}
+				on:click={handleSaveClick}
+				class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+			>
+				{#if isSaving}
+					<Loader2 size={14} class="animate-spin" />
+					Saving...
+				{:else}
+					<Save size={14} />
+					Save
+				{/if}
+			</button>
 		</div>
+
+		<!-- Hidden form for submission -->
+		<form
+			bind:this={formElement}
+			method="POST"
+			action="?/update"
+			class="hidden"
+			use:enhance={() => {
+				isSaving = true;
+				saveError = null;
+				return async ({ result, update: formUpdate }) => {
+					isSaving = false;
+					if (result.type === 'success') {
+						alertStore.add('success', 'Scoring saved!');
+						// Mark as clean so navigation guard doesn't trigger
+						initEdit(initialData);
+						await formUpdate();
+					} else if (result.type === 'failure') {
+						saveError = (result.data as { error?: string })?.error || 'Failed to save';
+						alertStore.add('error', saveError);
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="minimumScore" value={minimumScore} />
+			<input type="hidden" name="upgradeUntilScore" value={upgradeUntilScore} />
+			<input type="hidden" name="upgradeScoreIncrement" value={upgradeScoreIncrement} />
+			<input
+				type="hidden"
+				name="customFormatScores"
+				value={JSON.stringify(buildCustomFormatScoresArray())}
+			/>
+			<input type="hidden" name="layer" value={selectedLayer} />
+		</form>
 	{/if}
-</div>
+
+	<div class="mt-6 space-y-6">
+		<!-- Profile-level Score Settings -->
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+			<div class="space-y-2">
+				<label
+					for="minimumScore"
+					class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+				>
+					Minimum Score
+				</label>
+				<p class="text-xs text-neutral-600 dark:text-neutral-400">
+					Minimum custom format score required to download
+				</p>
+				<NumberInput
+					name="minimumScore"
+					value={minimumScore}
+					onchange={(v) => update('minimumScore', v)}
+					step={1}
+					font="mono"
+				/>
+			</div>
+
+			<div class="space-y-2">
+				<label
+					for="upgradeUntilScore"
+					class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+				>
+					Upgrade Until Score
+				</label>
+				<p class="text-xs text-neutral-600 dark:text-neutral-400">
+					Stop upgrading when this score is reached
+				</p>
+				<NumberInput
+					name="upgradeUntilScore"
+					value={upgradeUntilScore}
+					onchange={(v) => update('upgradeUntilScore', v)}
+					step={1}
+					font="mono"
+				/>
+			</div>
+
+			<div class="space-y-2">
+				<label
+					for="upgradeScoreIncrement"
+					class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+				>
+					Upgrade Score Increment
+				</label>
+				<p class="text-xs text-neutral-600 dark:text-neutral-400">
+					Minimum score improvement needed to upgrade
+				</p>
+				<NumberInput
+					name="upgradeScoreIncrement"
+					value={upgradeScoreIncrement}
+					onchange={(v) => update('upgradeScoreIncrement', v)}
+					step={1}
+					font="mono"
+				/>
+			</div>
+		</div>
+
+		<!-- Section Header -->
+		<div class="flex items-start justify-between">
+			<div>
+				<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+					Custom Format Scoring
+				</div>
+				<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+					Configure custom format scores for each Arr type
+				</p>
+			</div>
+			<button
+				type="button"
+				on:click={() => (showInfoModal = true)}
+				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+			>
+				<Info size={14} />
+				Info
+			</button>
+		</div>
+
+		<ActionsBar className="w-full">
+			<SearchAction {searchStore} placeholder="Search custom formats..." />
+			<ActionButton icon={ArrowUpDown} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+					<Dropdown position={dropdownPosition} minWidth="10rem">
+						<div class="py-1">
+							<button
+								type="button"
+								on:click={() => toggleSort('name', 'asc')}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key ===
+								'name'
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">Name</span>
+								<IconCheckbox
+									checked={sortState?.key === 'name'}
+									icon={sortState?.key === 'name' && sortState.direction === 'desc'
+										? ArrowDown
+										: ArrowUp}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+							<button
+								type="button"
+								on:click={() => toggleSort('radarr', 'desc')}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key ===
+								'radarr'
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">Radarr</span>
+								<IconCheckbox
+									checked={sortState?.key === 'radarr'}
+									icon={sortState?.key === 'radarr' && sortState.direction === 'asc'
+										? ArrowUp
+										: ArrowDown}
+									color={getArrTypeColor('radarr')}
+									shape="circle"
+								/>
+							</button>
+							<button
+								type="button"
+								on:click={() => toggleSort('sonarr', 'desc')}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {sortState?.key ===
+								'sonarr'
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">Sonarr</span>
+								<IconCheckbox
+									checked={sortState?.key === 'sonarr'}
+									icon={sortState?.key === 'sonarr' && sortState.direction === 'asc'
+										? ArrowUp
+										: ArrowDown}
+									color={getArrTypeColor('sonarr')}
+									shape="circle"
+								/>
+							</button>
+						</div>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton icon={Layers} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+					<Dropdown position={dropdownPosition} minWidth="14rem">
+						<div class="py-1">
+							<button
+								type="button"
+								on:click={clearGrouping}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {selectedGroups.size ===
+								0
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">No Grouping</span>
+								<IconCheckbox
+									checked={selectedGroups.size === 0}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+							{#each builtInGroups as group}
+								<button
+									type="button"
+									on:click={() => toggleGroup(group.key)}
+									class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {selectedGroups.has(
+										group.key
+									)
+										? 'bg-neutral-50 dark:bg-neutral-700'
+										: ''}"
+								>
+									<span class="text-neutral-700 dark:text-neutral-300">{group.name}</span>
+									<IconCheckbox
+										checked={selectedGroups.has(group.key)}
+										icon={Check}
+										color="blue"
+										shape="circle"
+									/>
+								</button>
+							{/each}
+						</div>
+						<CustomGroupManager
+							{customGroups}
+							{selectedGroups}
+							onAdd={addCustomGroup}
+							onDelete={deleteCustomGroup}
+							onToggle={toggleGroup}
+						/>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton icon={LayoutGrid} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+					<Dropdown position={dropdownPosition} minWidth="10rem">
+						<div class="py-1">
+							{#each [1, 2, 3] as columns}
+								<button
+									type="button"
+									on:click={() => setTileColumns(columns)}
+									class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {tileColumns ===
+									columns
+										? 'bg-neutral-50 dark:bg-neutral-700'
+										: ''}"
+								>
+									<span class="text-neutral-700 dark:text-neutral-300"
+										>{columns} Column{columns > 1 ? 's' : ''}</span
+									>
+									<IconCheckbox
+										checked={tileColumns === columns}
+										icon={Check}
+										color="blue"
+										shape="circle"
+									/>
+								</button>
+							{/each}
+						</div>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton icon={Settings} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+					<Dropdown position={dropdownPosition} minWidth="14rem">
+						<div class="py-1">
+							<button
+								type="button"
+								on:click={toggleHideUnscored}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {hideUnscoredFormats
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">Hide Unscored Formats</span>
+								<IconCheckbox
+									checked={hideUnscoredFormats}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+						</div>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton icon={User} hasDropdown={true} dropdownPosition="right">
+				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+					<Dropdown position={dropdownPosition} minWidth="16rem">
+						<!-- Save current config form -->
+						<div class="border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
+							<div class="mb-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
+								Save Current Settings
+							</div>
+							<form on:submit|preventDefault={handleSaveProfile} class="space-y-2">
+								<input
+									type="text"
+									bind:value={newProfileName}
+									placeholder="Profile name"
+									class="block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+								/>
+								<button
+									type="submit"
+									class="w-full rounded bg-accent-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+									disabled={!newProfileName.trim()}
+								>
+									Save Profile
+								</button>
+							</form>
+						</div>
+
+						<!-- Saved profiles list -->
+						<div class="py-1">
+							<!-- Default profile option -->
+							<div
+								class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
+							>
+								<button
+									type="button"
+									on:click={loadDefaultProfile}
+									class="flex flex-1 items-center justify-between gap-3"
+								>
+									<div class="flex-1 text-left">
+										<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+											Default
+										</div>
+									</div>
+									<IconCheckbox
+										checked={currentProfileId === null}
+										icon={Check}
+										color="blue"
+										shape="circle"
+									/>
+								</button>
+							</div>
+
+							{#if profiles.length > 0}
+								<div class="border-t border-neutral-200 dark:border-neutral-700"></div>
+								{#each profiles as profile}
+									<div
+										class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
+									>
+										<button
+											type="button"
+											on:click={() => loadProfile(profile.id)}
+											class="flex flex-1 items-center justify-between gap-3"
+										>
+											<div class="flex-1 text-left">
+												<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+													{profile.name}
+												</div>
+											</div>
+											<IconCheckbox
+												checked={currentProfileId === profile.id}
+												icon={Check}
+												color="blue"
+												shape="circle"
+											/>
+										</button>
+										<button
+											type="button"
+											on:click|stopPropagation={() => deleteProfile(profile.id)}
+											class="flex h-5 w-5 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+										>
+											<X size={12} />
+										</button>
+									</div>
+								{/each}
+							{/if}
+						</div>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton icon={Info} on:click={() => (showOptionsInfoModal = true)} />
+		</ActionsBar>
+
+		<!-- Custom Format Scores Tables -->
+		{#if searchQuery === 'santiagoisthebest'}
+			<div
+				class="flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900"
+			>
+				<img src="/src/lib/client/assets/thanks.gif" alt="Thanks!" class="max-w-full" />
+			</div>
+		{:else if searchQuery === 'rickroll' || searchQuery === 'nevergonnagiveyouup'}
+			<div
+				class="flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900"
+			>
+				<img
+					src="/src/lib/client/assets/nggyu.gif"
+					alt="Never gonna give you up"
+					class="max-w-full"
+				/>
+			</div>
+		{:else if sortedCustomFormats.length === 0}
+			<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+				<div class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+					{#if scoring.customFormats.length === 0}
+						No custom formats found
+					{:else}
+						No custom formats match your search
+					{/if}
+				</div>
+			</div>
+		{:else}
+			<div
+				class="grid gap-6"
+				class:grid-cols-1={tileColumns === 1}
+				class:grid-cols-2={tileColumns === 2}
+				class:grid-cols-3={tileColumns === 3}
+			>
+				{#each groupedFormats as group}
+					{#if group.formats.length > 0}
+						<div class="min-w-0">
+							<ScoringTable
+								formats={group.formats}
+								arrTypes={scoring.arrTypes}
+								{customFormatScores}
+								{customFormatEnabled}
+								{getArrTypeColor}
+								title={group.name}
+								on:scoreChange={handleScoreChange}
+								on:enabledChange={handleEnabledChange}
+							/>
+						</div>
+					{/if}
+				{/each}
+			</div>
+		{/if}
+	</div>
 {/if}
 
 <InfoModal bind:open={showInfoModal} header="Custom Format Scoring">
@@ -947,8 +1040,8 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Minimum Score</div>
 			<div class="mt-1">
-				The minimum total custom format score required for a release to be downloaded. Releases
-				with scores below this threshold will be rejected.
+				The minimum total custom format score required for a release to be downloaded. Releases with
+				scores below this threshold will be rejected.
 			</div>
 		</div>
 
@@ -961,9 +1054,7 @@
 		</div>
 
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">
-				Upgrade Score Increment
-			</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Upgrade Score Increment</div>
 			<div class="mt-1">
 				The minimum score improvement required to trigger an upgrade. This prevents minor upgrades
 				that don't significantly improve quality.
@@ -971,11 +1062,13 @@
 		</div>
 
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Positive vs Negative Scores</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">
+				Positive vs Negative Scores
+			</div>
 			<div class="mt-1">
-				Positive scores increase preference for releases matching the custom format. Negative
-				scores decrease preference or can block releases entirely when combined with the minimum
-				score setting.
+				Positive scores increase preference for releases matching the custom format. Negative scores
+				decrease preference or can block releases entirely when combined with the minimum score
+				setting.
 			</div>
 		</div>
 	</div>
@@ -986,49 +1079,63 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Search</div>
 			<div class="mt-1">
-				Filter custom formats by name. The search is case-insensitive and matches any part of the format name.
+				Filter custom formats by name. The search is case-insensitive and matches any part of the
+				format name.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Sort</div>
 			<div class="mt-1">
-				Sort custom formats by Name (A-Z), Radarr score, or Sonarr score. Click the same option again to reverse the sort direction (ascending ↑ or descending ↓). Formats with no score are always shown at the end.
+				Sort custom formats by Name (A-Z), Radarr score, or Sonarr score. Click the same option
+				again to reverse the sort direction (ascending ↑ or descending ↓). Formats with no score are
+				always shown at the end.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Grouping</div>
 			<div class="mt-1">
-				Organize custom formats into separate tables based on their tags. You can select multiple groups at once. Available groups include Audio, HDR/Colour, Release Group, Codec, Resolution, and more. Formats that don't match any selected group appear in the "Other" table. If a format matches multiple groups, it appears in the first matching group only.
+				Organize custom formats into separate tables based on their tags. You can select multiple
+				groups at once. Available groups include Audio, HDR/Colour, Release Group, Codec,
+				Resolution, and more. Formats that don't match any selected group appear in the "Other"
+				table. If a format matches multiple groups, it appears in the first matching group only.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Custom Groups</div>
 			<div class="mt-1">
-				Create your own custom groups by entering a name and comma-separated tags at the bottom of the Grouping dropdown. Your custom groups are saved to your browser and can be deleted at any time. Custom groups work the same as built-in groups - formats are assigned to the first matching group based on their tags.
+				Create your own custom groups by entering a name and comma-separated tags at the bottom of
+				the Grouping dropdown. Your custom groups are saved to your browser and can be deleted at
+				any time. Custom groups work the same as built-in groups - formats are assigned to the first
+				matching group based on their tags.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Tiling</div>
 			<div class="mt-1">
-				Display tables in 1, 2, or 3 columns. This is especially useful when using grouping to view multiple format categories side-by-side.
+				Display tables in 1, 2, or 3 columns. This is especially useful when using grouping to view
+				multiple format categories side-by-side.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Hide Unscored Formats</div>
 			<div class="mt-1">
-				Hide custom formats that have no score assigned for any Arr type. This helps focus on formats that are currently being used in your quality profile.
+				Hide custom formats that have no score assigned for any Arr type. This helps focus on
+				formats that are currently being used in your quality profile.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Profiles</div>
 			<div class="mt-1">
-				Save your current display configuration (search, sort, grouping, custom groups, tiling, and options) as a named profile. Load saved profiles to quickly switch between different views. The "Default" profile resets everything to the baseline configuration. Profiles are stored in your browser and automatically uncheck when you modify any settings.
+				Save your current display configuration (search, sort, grouping, custom groups, tiling, and
+				options) as a named profile. Load saved profiles to quickly switch between different views.
+				The "Default" profile resets everything to the baseline configuration. Profiles are stored
+				in your browser and automatically uncheck when you modify any settings.
 			</div>
 		</div>
 	</div>

@@ -9,14 +9,20 @@
 	export let data: unknown;
 
 	// Check if data has a queries array with SQL strings
-	$: hasQueries = data && typeof data === 'object' && 'queries' in data && Array.isArray((data as Record<string, unknown>).queries);
+	$: hasQueries =
+		data &&
+		typeof data === 'object' &&
+		'queries' in data &&
+		Array.isArray((data as Record<string, unknown>).queries);
 
 	// Extract queries separately for SQL highlighting
 	$: queries = hasQueries ? ((data as Record<string, unknown>).queries as string[]) : [];
 
 	// Create data without queries for JSON display
 	$: dataWithoutQueries = hasQueries
-		? Object.fromEntries(Object.entries(data as Record<string, unknown>).filter(([k]) => k !== 'queries'))
+		? Object.fromEntries(
+				Object.entries(data as Record<string, unknown>).filter(([k]) => k !== 'queries')
+			)
 		: data;
 
 	$: jsonString = JSON.stringify(dataWithoutQueries, null, 2);
@@ -29,18 +35,26 @@
 
 <div class="json-view space-y-4">
 	<!-- JSON metadata -->
-	<pre class="!bg-transparent !p-0 !m-0 whitespace-pre-wrap font-mono"><code class="hljs font-mono">{@html highlightedJson}</code></pre>
+	<pre class="!m-0 !bg-transparent !p-0 font-mono whitespace-pre-wrap"><code class="hljs font-mono"
+			>{@html highlightedJson}</code
+		></pre>
 
 	<!-- SQL Queries -->
 	{#if queries.length > 0}
 		<div class="border-t border-neutral-200 pt-4 dark:border-neutral-700">
-			<div class="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+			<div
+				class="mb-2 text-xs font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400"
+			>
 				Queries ({queries.length})
 			</div>
 			<div class="space-y-2">
 				{#each queries as query, i}
-					<div class="rounded border border-neutral-200 bg-neutral-100 p-3 dark:border-neutral-600 dark:bg-neutral-900">
-						<pre class="!bg-transparent !p-0 !m-0 whitespace-pre-wrap text-xs font-mono"><code class="hljs font-mono">{@html highlightSql(query)}</code></pre>
+					<div
+						class="rounded border border-neutral-200 bg-neutral-100 p-3 dark:border-neutral-600 dark:bg-neutral-900"
+					>
+						<pre class="!m-0 !bg-transparent !p-0 font-mono text-xs whitespace-pre-wrap"><code
+								class="hljs font-mono">{@html highlightSql(query)}</code
+							></pre>
 					</div>
 				{/each}
 			</div>

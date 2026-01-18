@@ -34,14 +34,10 @@ export async function create(options: CreateTestEntitiesOptions) {
 		.select(['type', 'tmdb_id'])
 		.execute();
 
-	const existingKeys = new Set(
-		existingEntities.map((e) => `${e.type}-${e.tmdb_id}`)
-	);
+	const existingKeys = new Set(existingEntities.map((e) => `${e.type}-${e.tmdb_id}`));
 
 	// Filter out duplicates
-	const newInputs = inputs.filter(
-		(input) => !existingKeys.has(`${input.type}-${input.tmdbId}`)
-	);
+	const newInputs = inputs.filter((input) => !existingKeys.has(`${input.type}-${input.tmdbId}`));
 
 	const skippedCount = inputs.length - newInputs.length;
 

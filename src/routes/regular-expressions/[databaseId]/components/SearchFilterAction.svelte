@@ -25,9 +25,7 @@
 	}
 
 	function toggleOption(key: string) {
-		options = options.map((opt) =>
-			opt.key === key ? { ...opt, enabled: !opt.enabled } : opt
-		);
+		options = options.map((opt) => (opt.key === key ? { ...opt, enabled: !opt.enabled } : opt));
 		dispatch('change', options);
 	}
 
@@ -47,7 +45,7 @@
 			<Binoculars size={20} class="text-neutral-700 dark:text-neutral-300" />
 			{#if enabledCount < options.length}
 				<div
-					class="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-accent-600 text-[9px] font-bold text-white"
+					class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-accent-600 text-[9px] font-bold text-white"
 				>
 					{enabledCount}
 				</div>
@@ -59,7 +57,7 @@
 		<div class="z-50" transition:fly={{ y: -8, duration: 150 }}>
 			<div class="absolute top-full z-40 h-3 w-full"></div>
 			<div
-				class="absolute right-0 top-full z-50 mt-3 min-w-48 rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+				class="absolute top-full right-0 z-50 mt-3 min-w-48 rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
 			>
 				<div class="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
 					Search in...

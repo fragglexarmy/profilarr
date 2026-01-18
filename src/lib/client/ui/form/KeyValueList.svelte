@@ -10,7 +10,8 @@
 	export let keyPlaceholder: string = 'Enter key';
 	export let valuePlaceholder: string = 'Enter value';
 	export let onchange: ((value: Record<string, string>) => void) | undefined = undefined;
-	export let lockedFirst: { key: string; value?: string; minMajor?: number } | undefined = undefined;
+	export let lockedFirst: { key: string; value?: string; minMajor?: number } | undefined =
+		undefined;
 	export let onLockedDeleteAttempt: (() => void) | undefined = undefined;
 	export let onLockedEditAttempt: (() => void) | undefined = undefined;
 	export let onLockedVersionMinBlocked: (() => void) | undefined = undefined;
@@ -88,8 +89,15 @@
 	// Sync when value changes externally (but preserve entries with empty keys being edited)
 	$: {
 		const externalEntries = Object.entries(value);
-		const currentFilledKeys = entries.filter((e) => e.key.trim()).map((e) => e.key).sort().join(',');
-		const externalKeys = externalEntries.map(([k]) => k).sort().join(',');
+		const currentFilledKeys = entries
+			.filter((e) => e.key.trim())
+			.map((e) => e.key)
+			.sort()
+			.join(',');
+		const externalKeys = externalEntries
+			.map(([k]) => k)
+			.sort()
+			.join(',');
 
 		if (currentFilledKeys !== externalKeys) {
 			const emptyKeyEntries = entries.filter((e) => !e.key.trim());
@@ -108,9 +116,9 @@
 
 <div class="space-y-3">
 	{#if label}
-		<label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+		<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 			{label}
-		</label>
+		</span>
 	{/if}
 
 	{#if description}
@@ -122,7 +130,9 @@
 	<div class="space-y-2">
 		{#if entries.length > 0}
 			<!-- Header -->
-			<div class="grid grid-cols-[1fr_auto_auto] gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+			<div
+				class="grid grid-cols-[1fr_auto_auto] gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400"
+			>
 				<span>{keyLabel}</span>
 				<span>{valueLabel}</span>
 				<span class="w-8"></span>
@@ -153,7 +163,9 @@
 							<NumberInput
 								name="version-major-{index}"
 								value={vMajor}
-								min={isLocked && lockedFirst?.minMajor !== undefined ? lockedFirst.minMajor : versionMinMajor}
+								min={isLocked && lockedFirst?.minMajor !== undefined
+									? lockedFirst.minMajor
+									: versionMinMajor}
 								font="mono"
 								onchange={(v) => updateValue(index, updateVersionPart(entry.value, 0, v))}
 								onMinBlocked={isLocked ? onLockedVersionMinBlocked : undefined}
@@ -191,7 +203,7 @@
 				{/if}
 				<button
 					type="button"
-					onclick={() => isLocked ? onLockedDeleteAttempt?.() : removeEntry(index)}
+					onclick={() => (isLocked ? onLockedDeleteAttempt?.() : removeEntry(index))}
 					class="flex h-[38px] w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
 					aria-label="Remove entry"
 				>

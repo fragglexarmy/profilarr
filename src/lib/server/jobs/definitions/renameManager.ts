@@ -29,13 +29,16 @@ export const renameManagerJob: JobDefinition = {
 			// Log failures only
 			for (const instance of result.instances) {
 				if (!instance.success && instance.error) {
-					await logger.warn(`Rename skipped/failed for "${instance.instanceName}": ${instance.error}`, {
-						source: 'RenameManagerJob',
-						meta: {
-							instanceId: instance.instanceId,
-							error: instance.error
+					await logger.warn(
+						`Rename skipped/failed for "${instance.instanceName}": ${instance.error}`,
+						{
+							source: 'RenameManagerJob',
+							meta: {
+								instanceId: instance.instanceId,
+								error: instance.error
+							}
 						}
-					});
+					);
 				}
 			}
 

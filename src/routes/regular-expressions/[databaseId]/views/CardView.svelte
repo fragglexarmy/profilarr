@@ -24,7 +24,7 @@
 		<button
 			type="button"
 			on:click={() => handleCardClick(expression)}
-			class="group relative flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 cursor-pointer"
+			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name and tags -->
 			<div>
@@ -49,7 +49,7 @@
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each expression.tags as tag}
 							<span
-								class="inline-flex items-center rounded px-1.5 py-0.5 font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+								class="inline-flex items-center rounded bg-accent-100 px-1.5 py-0.5 font-mono text-[10px] text-accent-800 dark:bg-accent-900 dark:text-accent-200"
 							>
 								{tag.name}
 							</span>
@@ -67,7 +67,7 @@
 
 			<!-- Description -->
 			{#if expression.description}
-				<div class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 prose-inline">
+				<div class="prose-inline line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400">
 					{@html parseMarkdown(expression.description)}
 				</div>
 			{/if}

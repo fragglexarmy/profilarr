@@ -167,9 +167,7 @@
 
 <section>
 	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-			Naming
-		</h2>
+		<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Naming</h2>
 		{#if naming && !isEditing}
 			<button
 				type="button"
@@ -253,7 +251,11 @@
 								</div>
 							</div>
 						</button>
-						<input type="hidden" name="replaceIllegalCharacters" value={formReplaceIllegalCharacters ? 'on' : ''} />
+						<input
+							type="hidden"
+							name="replaceIllegalCharacters"
+							value={formReplaceIllegalCharacters ? 'on' : ''}
+						/>
 					</div>
 
 					<!-- Colon Replacement (only if Replace Illegal Characters is on) -->
@@ -267,7 +269,7 @@
 									<button
 										type="button"
 										on:click={() => (formColonReplacement = option.value)}
-										class="flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+										class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 									>
 										<IconCheckbox
 											icon={Check}
@@ -286,7 +288,10 @@
 						<!-- Custom Colon Replacement (only if custom is selected) -->
 						{#if formColonReplacement === 'custom'}
 							<div>
-								<label for="customColonReplacement" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+								<label
+									for="customColonReplacement"
+									class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+								>
 									Custom Colon Replacement
 								</label>
 								<input
@@ -294,7 +299,7 @@
 									id="customColonReplacement"
 									name="customColonReplacement"
 									bind:value={formCustomColonReplacement}
-									class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+									class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 									placeholder="Enter custom replacement"
 								/>
 							</div>
@@ -303,7 +308,10 @@
 
 					<!-- Standard Episode Format -->
 					<div>
-						<label for="standardEpisodeFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="standardEpisodeFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Standard Episode Format
 						</label>
 						<input
@@ -311,13 +319,16 @@
 							id="standardEpisodeFormat"
 							name="standardEpisodeFormat"
 							bind:value={formStandardEpisodeFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 
 					<!-- Daily Episode Format -->
 					<div>
-						<label for="dailyEpisodeFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="dailyEpisodeFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Daily Episode Format
 						</label>
 						<input
@@ -325,13 +336,16 @@
 							id="dailyEpisodeFormat"
 							name="dailyEpisodeFormat"
 							bind:value={formDailyEpisodeFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 
 					<!-- Anime Episode Format -->
 					<div>
-						<label for="animeEpisodeFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="animeEpisodeFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Anime Episode Format
 						</label>
 						<input
@@ -339,13 +353,16 @@
 							id="animeEpisodeFormat"
 							name="animeEpisodeFormat"
 							bind:value={formAnimeEpisodeFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 
 					<!-- Series Folder Format -->
 					<div>
-						<label for="seriesFolderFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="seriesFolderFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Series Folder Format
 						</label>
 						<input
@@ -353,13 +370,16 @@
 							id="seriesFolderFormat"
 							name="seriesFolderFormat"
 							bind:value={formSeriesFolderFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 
 					<!-- Season Folder Format -->
 					<div>
-						<label for="seasonFolderFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="seasonFolderFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Season Folder Format
 						</label>
 						<input
@@ -367,7 +387,7 @@
 							id="seasonFolderFormat"
 							name="seasonFolderFormat"
 							bind:value={formSeasonFolderFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 
@@ -381,7 +401,7 @@
 								<button
 									type="button"
 									on:click={() => (formMultiEpisodeStyle = option.value)}
-									class="flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+									class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 								>
 									<IconCheckbox
 										icon={Check}
@@ -491,7 +511,11 @@
 								</div>
 							</div>
 						</button>
-						<input type="hidden" name="replaceIllegalCharacters" value={formReplaceIllegalCharacters ? 'on' : ''} />
+						<input
+							type="hidden"
+							name="replaceIllegalCharacters"
+							value={formReplaceIllegalCharacters ? 'on' : ''}
+						/>
 					</div>
 
 					<!-- Colon Replacement (only if Replace Illegal Characters is on) -->
@@ -505,7 +529,7 @@
 									<button
 										type="button"
 										on:click={() => (formRadarrColonReplacement = option.value)}
-										class="flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+										class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 									>
 										<IconCheckbox
 											icon={Check}
@@ -524,7 +548,10 @@
 
 					<!-- Movie Format -->
 					<div>
-						<label for="movieFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="movieFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Movie Format
 						</label>
 						<input
@@ -532,13 +559,16 @@
 							id="movieFormat"
 							name="movieFormat"
 							bind:value={formMovieFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 
 					<!-- Movie Folder Format -->
 					<div>
-						<label for="movieFolderFormat" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="movieFolderFormat"
+							class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							Movie Folder Format
 						</label>
 						<input
@@ -546,7 +576,7 @@
 							id="movieFolderFormat"
 							name="movieFolderFormat"
 							bind:value={formMovieFolderFormat}
-							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						/>
 					</div>
 				</div>
@@ -654,7 +684,7 @@
 							Standard Episode Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.standard_episode_format}
 						</code>
@@ -666,7 +696,7 @@
 							Daily Episode Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.daily_episode_format}
 						</code>
@@ -678,7 +708,7 @@
 							Anime Episode Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.anime_episode_format}
 						</code>
@@ -690,7 +720,7 @@
 							Series Folder Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.series_folder_format}
 						</code>
@@ -702,7 +732,7 @@
 							Season Folder Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.season_folder_format}
 						</code>
@@ -750,7 +780,7 @@
 							Movie Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.movie_format}
 						</code>
@@ -761,7 +791,7 @@
 							Movie Folder Format
 						</div>
 						<code
-							class="mt-2 block break-all rounded bg-neutral-100 px-3 py-2 text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+							class="mt-2 block rounded bg-neutral-100 px-3 py-2 text-xs break-all text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{naming.movie_folder_format}
 						</code>

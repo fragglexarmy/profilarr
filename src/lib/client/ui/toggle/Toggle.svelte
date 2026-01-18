@@ -2,6 +2,7 @@
 	export let checked: boolean = false;
 	export let color: 'accent' | 'amber' | 'green' | 'red' = 'accent';
 	export let disabled: boolean = false;
+	export let label: string = 'Toggle';
 
 	const colors = {
 		accent: 'bg-accent-500',
@@ -17,6 +18,7 @@
 	type="button"
 	role="switch"
 	aria-checked={checked}
+	aria-label={label}
 	{disabled}
 	on:click={() => !disabled && (checked = !checked)}
 	class="relative h-5 w-12 flex-shrink-0 cursor-pointer rounded-full p-[3px] transition-colors duration-300 ease-out

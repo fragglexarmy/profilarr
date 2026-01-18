@@ -29,13 +29,16 @@ export const upgradeManagerJob: JobDefinition = {
 			// Log failures only
 			for (const instance of result.instances) {
 				if (!instance.success && instance.error) {
-					await logger.warn(`Upgrade skipped/failed for "${instance.instanceName}": ${instance.error}`, {
-						source: 'UpgradeManagerJob',
-						meta: {
-							instanceId: instance.instanceId,
-							error: instance.error
+					await logger.warn(
+						`Upgrade skipped/failed for "${instance.instanceName}": ${instance.error}`,
+						{
+							source: 'UpgradeManagerJob',
+							meta: {
+								instanceId: instance.instanceId,
+								error: instance.error
+							}
 						}
-					});
+					);
 				}
 			}
 

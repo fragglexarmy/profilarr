@@ -29,8 +29,8 @@
 		{ value: '1440', label: '24 hours' }
 	];
 
-	$: currentScheduleLabel = scheduleOptions.find(o => o.value === schedule)?.label ?? '6 hours';
-	$: currentModeLabel = filterModes.find(m => m.id === filterMode)?.label ?? 'Round Robin';
+	$: currentScheduleLabel = scheduleOptions.find((o) => o.value === schedule)?.label ?? '6 hours';
+	$: currentModeLabel = filterModes.find((m) => m.id === filterMode)?.label ?? 'Round Robin';
 
 	// Cooldown tracking
 	let now = Date.now();
@@ -93,7 +93,9 @@
 	}
 </script>
 
-<div class="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+<div
+	class="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+>
 	<div class="flex flex-wrap items-center justify-between gap-y-3">
 		<!-- Left: Settings -->
 		<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -116,7 +118,7 @@
 			</label>
 
 			<!-- Divider -->
-			<div class="hidden h-6 w-px bg-neutral-200 dark:bg-neutral-700 sm:block"></div>
+			<div class="hidden h-6 w-px bg-neutral-200 sm:block dark:bg-neutral-700"></div>
 
 			<!-- Schedule -->
 			<div class="flex items-center gap-2">
@@ -177,16 +179,28 @@
 		{#if lastRunAt}
 			<div class="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
 				{#if !enabled}
-					<span class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">Paused</span>
+					<span
+						class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
+						>Paused</span
+					>
 				{:else if timeUntilNext !== null && timeUntilNext <= 0}
-					<span class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400">Ready</span>
+					<span
+						class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400"
+						>Ready</span
+					>
 				{:else if timeUntilNext !== null}
 					<span>
-						Next Run: <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{formatTimeRemaining(timeUntilNext)}</span>
+						Next Run: <span
+							class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+							>{formatTimeRemaining(timeUntilNext)}</span
+						>
 					</span>
 				{/if}
 				<span>
-					Last Run: <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{formatLastRun(lastRunAt)}</span>
+					Last Run: <span
+						class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+						>{formatLastRun(lastRunAt)}</span
+					>
 				</span>
 			</div>
 		{/if}

@@ -93,9 +93,15 @@ export const GET: RequestHandler = async ({ url }) => {
 			});
 		}
 	} catch (error) {
-		logger.error(`TMDB search failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { source: 'TMDB' });
-		return json({
-			error: error instanceof Error ? error.message : 'Search failed'
-		}, { status: 500 });
+		logger.error(
+			`TMDB search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			{ source: 'TMDB' }
+		);
+		return json(
+			{
+				error: error instanceof Error ? error.message : 'Search failed'
+			},
+			{ status: 500 }
+		);
 	}
 };

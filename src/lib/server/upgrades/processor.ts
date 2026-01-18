@@ -67,7 +67,9 @@ export function clearDryRunExclusions(instanceId: number): number[] {
 async function sendUpgradeNotification(log: UpgradeJobLog, manual: boolean): Promise<void> {
 	// Only notify if there were items searched
 	if (log.selection.actualCount > 0) {
-		const { DiscordNotifier } = await import('$lib/server/notifications/notifiers/discord/index.ts');
+		const { DiscordNotifier } = await import(
+			'$lib/server/notifications/notifiers/discord/index.ts'
+		);
 
 		// Get all enabled services that have this notification type enabled
 		const services = notificationServicesQueries.getAllEnabled();
@@ -191,10 +193,7 @@ export async function processUpgradeConfig(
 	try {
 		// Step 1: Fetch library data
 		const fetchStart = Date.now();
-		const [movies, profiles] = await Promise.all([
-			client.getMovies(),
-			client.getQualityProfiles()
-		]);
+		const [movies, profiles] = await Promise.all([client.getMovies(), client.getQualityProfiles()]);
 
 		// Get movie files for movies with files
 		const movieIdsWithFiles = movies.filter((m) => m.hasFile).map((m) => m.id);
@@ -206,12 +205,7 @@ export async function processUpgradeConfig(
 		const profileMap = new Map(profiles.map((p) => [p.id, p]));
 
 		// Step 2: Normalize items
-		const normalizedItems = normalizeRadarrItems(
-			movies,
-			movieFileMap,
-			profileMap,
-			filter.cutoff
-		);
+		const normalizedItems = normalizeRadarrItems(movies, movieFileMap, profileMap, filter.cutoff);
 
 		// Step 3: Apply filter rules
 		const matchedItems = normalizedItems.filter((item) =>

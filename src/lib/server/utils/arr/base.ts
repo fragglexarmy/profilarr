@@ -159,10 +159,7 @@ export class BaseArrClient extends BaseHttpClient {
 	 * Note: Must PUT to /{id} endpoint
 	 */
 	updateNamingConfig(config: ArrNamingConfig): Promise<ArrNamingConfig> {
-		return this.put<ArrNamingConfig>(
-			`/api/${this.apiVersion}/config/naming/${config.id}`,
-			config
-		);
+		return this.put<ArrNamingConfig>(`/api/${this.apiVersion}/config/naming/${config.id}`, config);
 	}
 
 	// =========================================================================
@@ -254,7 +251,10 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Update an existing quality profile
 	 */
-	updateQualityProfile(id: number, profile: ArrQualityProfilePayload): Promise<RadarrQualityProfile> {
+	updateQualityProfile(
+		id: number,
+		profile: ArrQualityProfilePayload
+	): Promise<RadarrQualityProfile> {
 		return this.put<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`, profile);
 	}
 

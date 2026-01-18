@@ -83,10 +83,7 @@ export const patternMatchCacheQueries = {
 	 * Call this periodically to clean up stale cache entries
 	 */
 	deleteOldHashes(currentHash: string): number {
-		return db.execute(
-			'DELETE FROM pattern_match_cache WHERE patterns_hash != ?',
-			currentHash
-		);
+		return db.execute('DELETE FROM pattern_match_cache WHERE patterns_hash != ?', currentHash);
 	},
 
 	/**
@@ -100,9 +97,9 @@ export const patternMatchCacheQueries = {
 	 * Get cache stats
 	 */
 	getStats(): { total: number; byHash: Record<string, number> } {
-		const total = db.queryFirst<{ count: number }>(
-			'SELECT COUNT(*) as count FROM pattern_match_cache'
-		)?.count ?? 0;
+		const total =
+			db.queryFirst<{ count: number }>('SELECT COUNT(*) as count FROM pattern_match_cache')
+				?.count ?? 0;
 
 		const hashCounts = db.query<{ patterns_hash: string; count: number }>(
 			'SELECT patterns_hash, COUNT(*) as count FROM pattern_match_cache GROUP BY patterns_hash'

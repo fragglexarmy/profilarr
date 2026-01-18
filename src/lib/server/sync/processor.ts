@@ -166,7 +166,12 @@ export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
 
 			// Process quality profiles if pending
 			if (pending.qualityProfiles.includes(instanceId)) {
-				const syncer = new QualityProfileSyncer(client, instanceId, instance.name, instance.type as SyncArrType);
+				const syncer = new QualityProfileSyncer(
+					client,
+					instanceId,
+					instance.name,
+					instance.type as SyncArrType
+				);
 				instanceResult.qualityProfiles = await syncer.sync();
 				totalSynced += instanceResult.qualityProfiles.itemsSynced;
 
@@ -186,7 +191,12 @@ export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
 
 			// Process media management if pending
 			if (pending.mediaManagement.includes(instanceId)) {
-				const syncer = new MediaManagementSyncer(client, instanceId, instance.name, instance.type as ArrType);
+				const syncer = new MediaManagementSyncer(
+					client,
+					instanceId,
+					instance.name,
+					instance.type as ArrType
+				);
 				instanceResult.mediaManagement = await syncer.sync();
 				totalSynced += instanceResult.mediaManagement.itemsSynced;
 
@@ -241,7 +251,12 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 
 	// Sync quality profiles if configured
 	if (qpConfig.selections.length > 0) {
-		const syncer = new QualityProfileSyncer(client, instanceId, instance.name, instance.type as SyncArrType);
+		const syncer = new QualityProfileSyncer(
+			client,
+			instanceId,
+			instance.name,
+			instance.type as SyncArrType
+		);
 		result.qualityProfiles = await syncer.sync();
 	}
 
@@ -252,8 +267,17 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 	}
 
 	// Sync media management if configured
-	if (mmConfig.namingDatabaseId || mmConfig.qualityDefinitionsDatabaseId || mmConfig.mediaSettingsDatabaseId) {
-		const syncer = new MediaManagementSyncer(client, instanceId, instance.name, instance.type as ArrType);
+	if (
+		mmConfig.namingDatabaseId ||
+		mmConfig.qualityDefinitionsDatabaseId ||
+		mmConfig.mediaSettingsDatabaseId
+	) {
+		const syncer = new MediaManagementSyncer(
+			client,
+			instanceId,
+			instance.name,
+			instance.type as ArrType
+		);
 		result.mediaManagement = await syncer.sync();
 	}
 

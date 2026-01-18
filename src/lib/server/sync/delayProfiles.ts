@@ -51,10 +51,13 @@ export class DelayProfileSyncer extends BaseSyncer {
 		const profiles: DelayProfileTableRow[] = [];
 
 		for (const selection of syncConfig.selections) {
-			await logger.debug(`Fetching profile ${selection.profileId} from database ${selection.databaseId}`, {
-				source: 'Sync:DelayProfiles:fetch',
-				meta: { instanceId: this.instanceId, ...selection }
-			});
+			await logger.debug(
+				`Fetching profile ${selection.profileId} from database ${selection.databaseId}`,
+				{
+					source: 'Sync:DelayProfiles:fetch',
+					meta: { instanceId: this.instanceId, ...selection }
+				}
+			);
 
 			const cache = getCache(selection.databaseId);
 
@@ -85,7 +88,7 @@ export class DelayProfileSyncer extends BaseSyncer {
 					protocol: profile.preferred_protocol,
 					usenetDelay: profile.usenet_delay,
 					torrentDelay: profile.torrent_delay,
-					tags: profile.tags.map(t => t.name)
+					tags: profile.tags.map((t) => t.name)
 				}
 			});
 
@@ -96,7 +99,7 @@ export class DelayProfileSyncer extends BaseSyncer {
 			source: 'Sync:DelayProfiles:fetch',
 			meta: {
 				instanceId: this.instanceId,
-				profiles: profiles.map(p => p.name)
+				profiles: profiles.map((p) => p.name)
 			}
 		});
 
@@ -153,7 +156,7 @@ export class DelayProfileSyncer extends BaseSyncer {
 			source: 'Sync:DelayProfiles:push',
 			meta: {
 				instanceId: this.instanceId,
-				profiles: arrData.map(p => ({
+				profiles: arrData.map((p) => ({
 					name: p.name,
 					enableUsenet: p.enableUsenet,
 					enableTorrent: p.enableTorrent,
@@ -169,22 +172,25 @@ export class DelayProfileSyncer extends BaseSyncer {
 		const existingProfiles = await this.client.getDelayProfiles();
 		const existingTags = await this.client.getTags();
 
-		await logger.debug(`Found ${existingProfiles.length} existing profiles, ${existingTags.length} tags in arr`, {
-			source: 'Sync:DelayProfiles:push',
-			meta: {
-				instanceId: this.instanceId,
-				existingProfiles: existingProfiles.map(p => ({ id: p.id, tags: p.tags })),
-				existingTags: existingTags.map(t => ({ id: t.id, label: t.label }))
+		await logger.debug(
+			`Found ${existingProfiles.length} existing profiles, ${existingTags.length} tags in arr`,
+			{
+				source: 'Sync:DelayProfiles:push',
+				meta: {
+					instanceId: this.instanceId,
+					existingProfiles: existingProfiles.map((p) => ({ id: p.id, tags: p.tags })),
+					existingTags: existingTags.map((t) => ({ id: t.id, label: t.label }))
+				}
 			}
-		});
+		);
 
 		// Delete all non-default delay profiles (id !== 1)
-		const profilesToDelete = existingProfiles.filter(p => p.id !== 1);
+		const profilesToDelete = existingProfiles.filter((p) => p.id !== 1);
 
 		if (profilesToDelete.length > 0) {
 			await logger.debug(`Deleting ${profilesToDelete.length} existing profiles`, {
 				source: 'Sync:DelayProfiles:push',
-				meta: { instanceId: this.instanceId, deletingIds: profilesToDelete.map(p => p.id) }
+				meta: { instanceId: this.instanceId, deletingIds: profilesToDelete.map((p) => p.id) }
 			});
 
 			for (const profile of profilesToDelete) {

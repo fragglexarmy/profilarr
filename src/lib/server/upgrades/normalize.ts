@@ -3,7 +3,11 @@
  * Maps raw API responses to the normalized interface used by filter evaluation
  */
 
-import type { RadarrMovie, RadarrMovieFile, RadarrQualityProfile } from '$lib/server/utils/arr/types.ts';
+import type {
+	RadarrMovie,
+	RadarrMovieFile,
+	RadarrQualityProfile
+} from '$lib/server/utils/arr/types.ts';
 import type { UpgradeItem } from './types.ts';
 
 /**

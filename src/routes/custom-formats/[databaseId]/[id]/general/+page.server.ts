@@ -94,7 +94,7 @@ export const actions: Actions = {
 		if (name.trim().toLowerCase() !== current.name.toLowerCase()) {
 			const existingFormats = await customFormatQueries.list(cache);
 			const duplicate = existingFormats.find(
-				f => f.id !== formatId && f.name.toLowerCase() === name.trim().toLowerCase()
+				(f) => f.id !== formatId && f.name.toLowerCase() === name.trim().toLowerCase()
 			);
 			if (duplicate) {
 				return fail(400, { error: `A custom format named "${name.trim()}" already exists` });

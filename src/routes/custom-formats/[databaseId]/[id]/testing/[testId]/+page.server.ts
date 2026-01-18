@@ -102,6 +102,18 @@ export const actions: Actions = {
 			return fail(403, { error: 'Cannot write to base layer without personal access token' });
 		}
 
+		// Check for duplicate if title or type changed (composite key: formatName + title + type)
+		const newTitle = title.trim();
+		const keyChanged = newTitle !== currentTitle || type !== currentType;
+		if (keyChanged) {
+			const existingTest = await customFormatQueries.getTest(cache, formatName, newTitle, type);
+			if (existingTest) {
+				return fail(400, {
+					error: 'A test with this title and type already exists for this custom format'
+				});
+			}
+		}
+
 		const result = await customFormatQueries.updateTest({
 			databaseId: currentDatabaseId,
 			layer,

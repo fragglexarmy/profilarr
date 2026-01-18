@@ -17,24 +17,42 @@
 	let isLoading = false;
 
 	// Form values
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let name = (form as any)?.values?.name ?? (mode === 'edit' ? instance?.name : data?.formData?.name) ?? '';
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	 
+	let name =
+		(form as any)?.values?.name ?? (mode === 'edit' ? instance?.name : data?.formData?.name) ?? '';
+	 
 	let repositoryUrl =
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(form as any)?.values?.repository_url ??
 		(mode === 'edit' ? instance?.repository_url : '') ??
 		'';
-	let branch = (form as any)?.values?.branch ?? (mode === 'create' ? data?.formData?.branch : '') ?? '';
-	let personalAccessToken = (form as any)?.values?.personal_access_token ?? (mode === 'edit' ? instance?.personal_access_token : data?.formData?.personalAccessToken) ?? '';
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let branch =
+		(form as any)?.values?.branch ?? (mode === 'create' ? data?.formData?.branch : '') ?? '';
+	let personalAccessToken =
+		(form as any)?.values?.personal_access_token ??
+		(mode === 'edit' ? instance?.personal_access_token : data?.formData?.personalAccessToken) ??
+		'';
+	 
 	let syncStrategy =
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(form as any)?.values?.sync_strategy ??
-		(mode === 'edit' ? instance?.sync_strategy : (data?.formData?.syncStrategy ? parseInt(data.formData.syncStrategy) : 60)) ??
+		(mode === 'edit'
+			? instance?.sync_strategy
+			: data?.formData?.syncStrategy
+				? parseInt(data.formData.syncStrategy)
+				: 60) ??
 		60;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let autoPull = (form as any)?.values?.auto_pull ?? (mode === 'edit' ? instance?.auto_pull : (data?.formData?.autoPull === '1' ? 1 : (data?.formData?.autoPull === '0' ? 0 : 1))) ?? 1;
+	 
+	let autoPull =
+		(form as any)?.values?.auto_pull ??
+		(mode === 'edit'
+			? instance?.auto_pull
+			: data?.formData?.autoPull === '1'
+				? 1
+				: data?.formData?.autoPull === '0'
+					? 0
+					: 1) ??
+		1;
 
 	// Delete modal state
 	let showDeleteModal = false;
@@ -127,7 +145,7 @@
 						required
 						disabled={mode === 'edit'}
 						placeholder="https://github.com/username/database"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:focus:border-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:disabled:bg-neutral-900"
 					/>
 					{#if mode === 'edit'}
 						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
@@ -158,7 +176,8 @@
 							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 						/>
 						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Branch to checkout on link. Leave empty to use the default branch. You can change this later.
+							Branch to checkout on link. Leave empty to use the default branch. You can change this
+							later.
 						</p>
 					</div>
 				{/if}

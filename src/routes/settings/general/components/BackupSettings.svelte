@@ -70,7 +70,11 @@
 							checked={settings.compression_enabled}
 							on:click={() => (settings.compression_enabled = !settings.compression_enabled)}
 						/>
-						<input type="hidden" name="compression_enabled" value={settings.compression_enabled ? 'on' : ''} />
+						<input
+							type="hidden"
+							name="compression_enabled"
+							value={settings.compression_enabled ? 'on' : ''}
+						/>
 						<button
 							type="button"
 							class="flex-1 text-left"

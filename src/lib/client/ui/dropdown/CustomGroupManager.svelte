@@ -3,7 +3,8 @@
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { Check } from 'lucide-svelte';
 
-	export let customGroups: Array<{ name: string; key: string; tags: string[]; custom: boolean }> = [];
+	export let customGroups: Array<{ name: string; key: string; tags: string[]; custom: boolean }> =
+		[];
 	export let selectedGroups: Set<string>;
 	export let onAdd: (name: string, tags: string[]) => void;
 	export let onDelete: (key: string) => void;
@@ -14,7 +15,10 @@
 
 	function handleSubmit() {
 		if (newGroupName && newGroupTags) {
-			const tags = newGroupTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+			const tags = newGroupTags
+				.split(',')
+				.map((t) => t.trim())
+				.filter((t) => t.length > 0);
 			if (tags.length > 0) {
 				onAdd(newGroupName, tags);
 				newGroupName = '';
@@ -56,14 +60,18 @@
 {#if customGroups.length > 0}
 	<div class="border-t border-neutral-200 dark:border-neutral-700">
 		{#each customGroups as group}
-			<div class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700">
+			<div
+				class="group flex items-center justify-between gap-2 px-4 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
+			>
 				<button
 					type="button"
 					on:click={() => onToggle(group.key)}
 					class="flex flex-1 items-center justify-between gap-3"
 				>
 					<div class="flex-1 text-left">
-						<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">{group.name}</div>
+						<div class="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+							{group.name}
+						</div>
 						<div class="text-xs text-neutral-500 dark:text-neutral-400">
 							{group.tags.join(', ')}
 						</div>

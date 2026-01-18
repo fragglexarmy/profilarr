@@ -6,9 +6,17 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { pcdManager } from '$pcd/pcd.ts';
-import { parseWithCacheBatch, isParserHealthy, matchPatternsBatch } from '$lib/server/utils/arr/parser/index.ts';
+import {
+	parseWithCacheBatch,
+	isParserHealthy,
+	matchPatternsBatch
+} from '$lib/server/utils/arr/parser/index.ts';
 import { getAllConditionsForEvaluation } from '$pcd/queries/customFormats/allConditions.ts';
-import { evaluateCustomFormat, getParsedInfo, extractAllPatterns } from '$pcd/queries/customFormats/evaluator.ts';
+import {
+	evaluateCustomFormat,
+	getParsedInfo,
+	extractAllPatterns
+} from '$pcd/queries/customFormats/evaluator.ts';
 import type { components } from '$api/v1.d.ts';
 
 type EvaluateRequest = components['schemas']['EvaluateRequest'];

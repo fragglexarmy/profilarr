@@ -110,7 +110,11 @@
 							checked={settings.console_logging}
 							on:click={() => (settings.console_logging = !settings.console_logging)}
 						/>
-						<input type="hidden" name="console_logging" value={settings.console_logging ? 'on' : ''} />
+						<input
+							type="hidden"
+							name="console_logging"
+							value={settings.console_logging ? 'on' : ''}
+						/>
 						<button
 							type="button"
 							class="flex-1 text-left"

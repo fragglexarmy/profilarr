@@ -137,7 +137,9 @@ export async function applySearchTagToMovies(
 			success++;
 		} catch (error) {
 			failed++;
-			errors.push(`Failed to tag "${movie.title}": ${error instanceof Error ? error.message : String(error)}`);
+			errors.push(
+				`Failed to tag "${movie.title}": ${error instanceof Error ? error.message : String(error)}`
+			);
 		}
 	}
 

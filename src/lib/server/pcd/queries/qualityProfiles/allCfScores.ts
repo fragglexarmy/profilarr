@@ -32,10 +32,7 @@ export async function allCfScores(cache: PCDCache): Promise<AllCfScoresResult> {
 		.execute();
 
 	// Get all quality profiles
-	const profiles = await db
-		.selectFrom('quality_profiles')
-		.select(['name'])
-		.execute();
+	const profiles = await db.selectFrom('quality_profiles').select(['name']).execute();
 
 	// Get all CF scores for all profiles
 	const allScores = await db

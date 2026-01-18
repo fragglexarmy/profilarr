@@ -76,10 +76,7 @@
 		// Restore cursor position and resize
 		requestAnimationFrame(() => {
 			element.focus();
-			element.setSelectionRange(
-				start + before.length,
-				start + before.length + selectedText.length
-			);
+			element.setSelectionRange(start + before.length, start + before.length + selectedText.length);
 			resizeTextarea();
 		});
 	}
@@ -143,7 +140,8 @@
 
 	// Markdown to HTML renderer for preview using marked
 	function renderMarkdown(text: string): string {
-		if (!text) return '<p class="text-neutral-400 dark:text-neutral-500 italic">Nothing to preview</p>';
+		if (!text)
+			return '<p class="text-neutral-400 dark:text-neutral-500 italic">Nothing to preview</p>';
 		return marked.parse(text) as string;
 	}
 
@@ -194,7 +192,11 @@
 	<div>
 		{#if markdown}
 			<!-- Toolbar -->
-			<div class="flex items-center justify-between rounded-t-lg border border-neutral-300 bg-neutral-50 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800/50 {showPreview ? 'border-b-0' : ''}">
+			<div
+				class="flex items-center justify-between rounded-t-lg border border-neutral-300 bg-neutral-50 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800/50 {showPreview
+					? 'border-b-0'
+					: ''}"
+			>
 				<div class="flex items-center gap-1">
 					{#each toolbarButtons as btn}
 						<button
@@ -248,7 +250,9 @@
 				{required}
 				oninput={handleInput}
 				onkeydown={handleKeydown}
-				class="{markdown ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} {autoResize ? 'resize-none overflow-hidden' : ''} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+				class="{markdown ? 'rounded-t-none rounded-b-lg border-t-0' : 'rounded-lg'} {autoResize
+					? 'resize-none overflow-hidden'
+					: ''} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
 			></textarea>
 		{:else}
 			<!-- Single-line input -->
@@ -263,7 +267,9 @@
 				{required}
 				oninput={handleInput}
 				onkeydown={handleKeydown}
-				class="{markdown ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+				class="{markdown
+					? 'rounded-t-none rounded-b-lg border-t-0'
+					: 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
 			/>
 		{/if}
 	</div>

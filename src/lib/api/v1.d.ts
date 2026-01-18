@@ -4,532 +4,534 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health check
-         * @description Returns the health status of the application and its components.
-         *
-         *     Status values:
-         *     - `healthy`: All components functioning normally
-         *     - `degraded`: Core functionality works but some components have issues
-         *     - `unhealthy`: Core functionality is broken
-         */
-        get: operations["getHealth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/openapi.json": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * OpenAPI specification
-         * @description Returns the OpenAPI specification for this API
-         */
-        get: operations["getOpenApiSpec"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/entity-testing/evaluate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Evaluate releases against custom formats
-         * @description Parses release titles and evaluates them against all custom formats in the specified database.
-         *
-         *     This endpoint:
-         *     - Parses each release title to extract metadata (resolution, source, languages, etc.)
-         *     - Matches regex patterns using .NET-compatible regex via the parser service
-         *     - Evaluates each release against all custom formats in the database
-         *     - Returns which custom formats match each release
-         *
-         *     Results are cached for performance - repeated requests with the same titles will be faster.
-         */
-        post: operations["evaluateReleases"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/arr/library": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Arr instance library
-         * @description Fetches the movie or series library from an Arr instance.
-         *
-         *     Returns a simplified list suitable for selection/matching.
-         *     - For Radarr: Returns movies with id, title, year, and tmdbId
-         *     - For Sonarr: Returns series with id, title, year, tvdbId, and available seasons
-         */
-        get: operations["getLibrary"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/arr/releases": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Search for releases
-         * @description Triggers an interactive search on an Arr instance and returns grouped/deduplicated results.
-         *
-         *     For Radarr: Searches for releases for the specified movie.
-         *     For Sonarr: Searches for season pack releases for the specified series and season.
-         *
-         *     Results are grouped by title, combining information from multiple indexers.
-         */
-        get: operations["getReleases"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+	'/health': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Health check
+		 * @description Returns the health status of the application and its components.
+		 *
+		 *     Status values:
+		 *     - `healthy`: All components functioning normally
+		 *     - `degraded`: Core functionality works but some components have issues
+		 *     - `unhealthy`: Core functionality is broken
+		 */
+		get: operations['getHealth'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/openapi.json': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * OpenAPI specification
+		 * @description Returns the OpenAPI specification for this API
+		 */
+		get: operations['getOpenApiSpec'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/entity-testing/evaluate': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Evaluate releases against custom formats
+		 * @description Parses release titles and evaluates them against all custom formats in the specified database.
+		 *
+		 *     This endpoint:
+		 *     - Parses each release title to extract metadata (resolution, source, languages, etc.)
+		 *     - Matches regex patterns using .NET-compatible regex via the parser service
+		 *     - Evaluates each release against all custom formats in the database
+		 *     - Returns which custom formats match each release
+		 *
+		 *     Results are cached for performance - repeated requests with the same titles will be faster.
+		 */
+		post: operations['evaluateReleases'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/arr/library': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Arr instance library
+		 * @description Fetches the movie or series library from an Arr instance.
+		 *
+		 *     Returns a simplified list suitable for selection/matching.
+		 *     - For Radarr: Returns movies with id, title, year, and tmdbId
+		 *     - For Sonarr: Returns series with id, title, year, tvdbId, and available seasons
+		 */
+		get: operations['getLibrary'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/arr/releases': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Search for releases
+		 * @description Triggers an interactive search on an Arr instance and returns grouped/deduplicated results.
+		 *
+		 *     For Radarr: Searches for releases for the specified movie.
+		 *     For Sonarr: Searches for season pack releases for the specified series and season.
+		 *
+		 *     Results are grouped by title, combining information from multiple indexers.
+		 */
+		get: operations['getReleases'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /**
-         * @description Individual component health status
-         * @enum {string}
-         */
-        ComponentStatus: "healthy" | "degraded" | "unhealthy";
-        /**
-         * @description Overall health status
-         * @enum {string}
-         */
-        HealthStatus: "healthy" | "degraded" | "unhealthy";
-        HealthResponse: {
-            status: components["schemas"]["HealthStatus"];
-            /**
-             * Format: date-time
-             * @description Current server time
-             */
-            timestamp: string;
-            /** @description Application version */
-            version: string;
-            /** @description Server uptime in seconds */
-            uptime: number;
-            components: {
-                database: components["schemas"]["DatabaseHealth"];
-                databases: components["schemas"]["DatabasesHealth"];
-                jobs: components["schemas"]["JobsHealth"];
-                backups: components["schemas"]["BackupsHealth"];
-                logs: components["schemas"]["LogsHealth"];
-            };
-        };
-        /**
-         * @description Type of media
-         * @enum {string}
-         */
-        MediaType: "movie" | "series";
-        ParsedInfo: {
-            /** @description Detected source (e.g., bluray, webdl, webrip) */
-            source: string;
-            /** @description Detected resolution (e.g., 1080p, 2160p) */
-            resolution: string;
-            /** @description Quality modifier (e.g., remux, none) */
-            modifier: string;
-            /** @description Detected languages */
-            languages: string[];
-            /** @description Detected release group */
-            releaseGroup?: string | null;
-            /** @description Detected year */
-            year: number;
-            /** @description Detected edition (e.g., Director's Cut) */
-            edition?: string | null;
-            /** @description Release type for series (single_episode, season_pack, etc.) */
-            releaseType?: string | null;
-        };
-        ReleaseInput: {
-            /** @description Release ID */
-            id: number;
-            /** @description Release title to parse and evaluate */
-            title: string;
-            type: components["schemas"]["MediaType"];
-        };
-        ReleaseEvaluation: {
-            /** @description Release ID */
-            releaseId: number;
-            /** @description Release title */
-            title: string;
-            /** @description Parsed release info (null if parsing failed) */
-            parsed?: components["schemas"]["ParsedInfo"];
-            /** @description Map of custom format ID to whether it matches */
-            cfMatches: {
-                [key: string]: boolean;
-            };
-        };
-        EvaluateRequest: {
-            /** @description Database ID to use for custom format evaluation */
-            databaseId: number;
-            /** @description Releases to evaluate */
-            releases: components["schemas"]["ReleaseInput"][];
-        };
-        EvaluateResponse: {
-            /** @description Whether the parser service is available */
-            parserAvailable: boolean;
-            /** @description Evaluation results for each release */
-            evaluations: components["schemas"]["ReleaseEvaluation"][];
-        };
-        /**
-         * @description Type of Arr instance
-         * @enum {string}
-         */
-        ArrType: "radarr" | "sonarr";
-        LibraryMovieItem: {
-            /** @description Radarr movie ID */
-            id: number;
-            /** @description Movie title */
-            title: string;
-            /** @description Release year */
-            year: number;
-            /** @description TMDB ID */
-            tmdbId: number;
-        };
-        LibrarySeriesItem: {
-            /** @description Sonarr series ID */
-            id: number;
-            /** @description Series title */
-            title: string;
-            /** @description First air year */
-            year: number;
-            /** @description TVDB ID */
-            tvdbId: number;
-            /** @description Available season numbers (excludes specials) */
-            seasons: number[];
-        };
-        /** @description Library response varies by instance type */
-        LibraryResponse: components["schemas"]["LibraryRadarrResponse"] | components["schemas"]["LibrarySonarrResponse"];
-        GroupedRelease: {
-            /** @description Release title */
-            title: string;
-            /** @description Release size in bytes */
-            size: number;
-            /** @description Languages detected in the release */
-            languages: string[];
-            /** @description Indexers where this release was found */
-            indexers: string[];
-            /** @description Release flags (e.g., freeleech, internal) */
-            flags: string[];
-        };
-        ReleasesResponse: {
-            type: components["schemas"]["ArrType"];
-            /** @description Total number of raw releases before grouping */
-            rawCount: number;
-            /** @description Grouped and deduplicated releases */
-            releases: components["schemas"]["GroupedRelease"][];
-        };
-        ErrorResponse: {
-            /** @description Error message */
-            error: string;
-        };
-        DatabaseHealth: {
-            status: components["schemas"]["ComponentStatus"];
-            /** @description Database query response time in milliseconds */
-            responseTimeMs: number;
-            /** @description Error message if unhealthy */
-            message?: string;
-        };
-        DatabasesHealth: {
-            status: components["schemas"]["ComponentStatus"];
-            /** @description Total number of PCD databases configured */
-            total: number;
-            /** @description Number of enabled databases */
-            enabled: number;
-            /** @description Number of databases with compiled cache */
-            cached: number;
-            /** @description Number of disabled databases (compilation errors) */
-            disabled: number;
-            /** @description Additional status information */
-            message?: string;
-        };
-        JobsHealth: {
-            status: components["schemas"]["ComponentStatus"];
-            /** @description Last run time for each job */
-            lastRun?: {
-                [key: string]: string | null;
-            };
-            /** @description Additional status information */
-            message?: string;
-        };
-        BackupsHealth: {
-            status: components["schemas"]["ComponentStatus"];
-            /** @description Whether backups are enabled */
-            enabled: boolean;
-            /**
-             * Format: date-time
-             * @description Timestamp of last backup
-             */
-            lastBackup?: string | null;
-            /** @description Number of backup files */
-            count?: number;
-            /** @description Total size of all backups in bytes */
-            totalSizeBytes?: number;
-            /** @description Configured retention period in days */
-            retentionDays?: number;
-            /** @description Additional status information */
-            message?: string;
-        };
-        LogsHealth: {
-            status: components["schemas"]["ComponentStatus"];
-            /** @description Total size of log files in bytes */
-            totalSizeBytes?: number;
-            /** @description Number of log files */
-            fileCount?: number;
-            /**
-             * Format: date
-             * @description Date of oldest log file
-             */
-            oldestLog?: string | null;
-            /**
-             * Format: date
-             * @description Date of newest log file
-             */
-            newestLog?: string | null;
-            /** @description Additional status information */
-            message?: string;
-        };
-        LibraryRadarrResponse: {
-            /** @enum {string} */
-            type: "radarr";
-            items: components["schemas"]["LibraryMovieItem"][];
-        };
-        LibrarySonarrResponse: {
-            /** @enum {string} */
-            type: "sonarr";
-            items: components["schemas"]["LibrarySeriesItem"][];
-        };
-    };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+	schemas: {
+		/**
+		 * @description Individual component health status
+		 * @enum {string}
+		 */
+		ComponentStatus: 'healthy' | 'degraded' | 'unhealthy';
+		/**
+		 * @description Overall health status
+		 * @enum {string}
+		 */
+		HealthStatus: 'healthy' | 'degraded' | 'unhealthy';
+		HealthResponse: {
+			status: components['schemas']['HealthStatus'];
+			/**
+			 * Format: date-time
+			 * @description Current server time
+			 */
+			timestamp: string;
+			/** @description Application version */
+			version: string;
+			/** @description Server uptime in seconds */
+			uptime: number;
+			components: {
+				database: components['schemas']['DatabaseHealth'];
+				databases: components['schemas']['DatabasesHealth'];
+				jobs: components['schemas']['JobsHealth'];
+				backups: components['schemas']['BackupsHealth'];
+				logs: components['schemas']['LogsHealth'];
+			};
+		};
+		/**
+		 * @description Type of media
+		 * @enum {string}
+		 */
+		MediaType: 'movie' | 'series';
+		ParsedInfo: {
+			/** @description Detected source (e.g., bluray, webdl, webrip) */
+			source: string;
+			/** @description Detected resolution (e.g., 1080p, 2160p) */
+			resolution: string;
+			/** @description Quality modifier (e.g., remux, none) */
+			modifier: string;
+			/** @description Detected languages */
+			languages: string[];
+			/** @description Detected release group */
+			releaseGroup?: string | null;
+			/** @description Detected year */
+			year: number;
+			/** @description Detected edition (e.g., Director's Cut) */
+			edition?: string | null;
+			/** @description Release type for series (single_episode, season_pack, etc.) */
+			releaseType?: string | null;
+		};
+		ReleaseInput: {
+			/** @description Release ID */
+			id: number;
+			/** @description Release title to parse and evaluate */
+			title: string;
+			type: components['schemas']['MediaType'];
+		};
+		ReleaseEvaluation: {
+			/** @description Release ID */
+			releaseId: number;
+			/** @description Release title */
+			title: string;
+			/** @description Parsed release info (null if parsing failed) */
+			parsed?: components['schemas']['ParsedInfo'];
+			/** @description Map of custom format ID to whether it matches */
+			cfMatches: {
+				[key: string]: boolean;
+			};
+		};
+		EvaluateRequest: {
+			/** @description Database ID to use for custom format evaluation */
+			databaseId: number;
+			/** @description Releases to evaluate */
+			releases: components['schemas']['ReleaseInput'][];
+		};
+		EvaluateResponse: {
+			/** @description Whether the parser service is available */
+			parserAvailable: boolean;
+			/** @description Evaluation results for each release */
+			evaluations: components['schemas']['ReleaseEvaluation'][];
+		};
+		/**
+		 * @description Type of Arr instance
+		 * @enum {string}
+		 */
+		ArrType: 'radarr' | 'sonarr';
+		LibraryMovieItem: {
+			/** @description Radarr movie ID */
+			id: number;
+			/** @description Movie title */
+			title: string;
+			/** @description Release year */
+			year: number;
+			/** @description TMDB ID */
+			tmdbId: number;
+		};
+		LibrarySeriesItem: {
+			/** @description Sonarr series ID */
+			id: number;
+			/** @description Series title */
+			title: string;
+			/** @description First air year */
+			year: number;
+			/** @description TVDB ID */
+			tvdbId: number;
+			/** @description Available season numbers (excludes specials) */
+			seasons: number[];
+		};
+		/** @description Library response varies by instance type */
+		LibraryResponse:
+			| components['schemas']['LibraryRadarrResponse']
+			| components['schemas']['LibrarySonarrResponse'];
+		GroupedRelease: {
+			/** @description Release title */
+			title: string;
+			/** @description Release size in bytes */
+			size: number;
+			/** @description Languages detected in the release */
+			languages: string[];
+			/** @description Indexers where this release was found */
+			indexers: string[];
+			/** @description Release flags (e.g., freeleech, internal) */
+			flags: string[];
+		};
+		ReleasesResponse: {
+			type: components['schemas']['ArrType'];
+			/** @description Total number of raw releases before grouping */
+			rawCount: number;
+			/** @description Grouped and deduplicated releases */
+			releases: components['schemas']['GroupedRelease'][];
+		};
+		ErrorResponse: {
+			/** @description Error message */
+			error: string;
+		};
+		DatabaseHealth: {
+			status: components['schemas']['ComponentStatus'];
+			/** @description Database query response time in milliseconds */
+			responseTimeMs: number;
+			/** @description Error message if unhealthy */
+			message?: string;
+		};
+		DatabasesHealth: {
+			status: components['schemas']['ComponentStatus'];
+			/** @description Total number of PCD databases configured */
+			total: number;
+			/** @description Number of enabled databases */
+			enabled: number;
+			/** @description Number of databases with compiled cache */
+			cached: number;
+			/** @description Number of disabled databases (compilation errors) */
+			disabled: number;
+			/** @description Additional status information */
+			message?: string;
+		};
+		JobsHealth: {
+			status: components['schemas']['ComponentStatus'];
+			/** @description Last run time for each job */
+			lastRun?: {
+				[key: string]: string | null;
+			};
+			/** @description Additional status information */
+			message?: string;
+		};
+		BackupsHealth: {
+			status: components['schemas']['ComponentStatus'];
+			/** @description Whether backups are enabled */
+			enabled: boolean;
+			/**
+			 * Format: date-time
+			 * @description Timestamp of last backup
+			 */
+			lastBackup?: string | null;
+			/** @description Number of backup files */
+			count?: number;
+			/** @description Total size of all backups in bytes */
+			totalSizeBytes?: number;
+			/** @description Configured retention period in days */
+			retentionDays?: number;
+			/** @description Additional status information */
+			message?: string;
+		};
+		LogsHealth: {
+			status: components['schemas']['ComponentStatus'];
+			/** @description Total size of log files in bytes */
+			totalSizeBytes?: number;
+			/** @description Number of log files */
+			fileCount?: number;
+			/**
+			 * Format: date
+			 * @description Date of oldest log file
+			 */
+			oldestLog?: string | null;
+			/**
+			 * Format: date
+			 * @description Date of newest log file
+			 */
+			newestLog?: string | null;
+			/** @description Additional status information */
+			message?: string;
+		};
+		LibraryRadarrResponse: {
+			/** @enum {string} */
+			type: 'radarr';
+			items: components['schemas']['LibraryMovieItem'][];
+		};
+		LibrarySonarrResponse: {
+			/** @enum {string} */
+			type: 'sonarr';
+			items: components['schemas']['LibrarySeriesItem'][];
+		};
+	};
+	responses: never;
+	parameters: never;
+	requestBodies: never;
+	headers: never;
+	pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getHealth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Health check response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
-    };
-    getOpenApiSpec: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OpenAPI specification */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-        };
-    };
-    evaluateReleases: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EvaluateRequest"];
-            };
-        };
-        responses: {
-            /** @description Evaluation results */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluateResponse"];
-                };
-            };
-            /** @description Invalid request (missing databaseId or releases) */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Database cache not available */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getLibrary: {
-        parameters: {
-            query: {
-                /** @description Arr instance ID */
-                instanceId: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Library items */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LibraryResponse"];
-                };
-            };
-            /** @description Invalid or missing instanceId */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Instance not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Failed to fetch library */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    getReleases: {
-        parameters: {
-            query: {
-                /** @description Arr instance ID */
-                instanceId: number;
-                /** @description Movie ID (Radarr) or Series ID (Sonarr) */
-                itemId: number;
-                /** @description Season number for Sonarr searches (defaults to 1) */
-                season?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Release search results */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReleasesResponse"];
-                };
-            };
-            /** @description Invalid or missing parameters */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Instance not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Failed to fetch releases */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
+	getHealth: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Health check response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['HealthResponse'];
+				};
+			};
+		};
+	};
+	getOpenApiSpec: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description OpenAPI specification */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': Record<string, never>;
+				};
+			};
+		};
+	};
+	evaluateReleases: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['EvaluateRequest'];
+			};
+		};
+		responses: {
+			/** @description Evaluation results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['EvaluateResponse'];
+				};
+			};
+			/** @description Invalid request (missing databaseId or releases) */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Database cache not available */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	getLibrary: {
+		parameters: {
+			query: {
+				/** @description Arr instance ID */
+				instanceId: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Library items */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryResponse'];
+				};
+			};
+			/** @description Invalid or missing instanceId */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorResponse'];
+				};
+			};
+			/** @description Instance not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorResponse'];
+				};
+			};
+			/** @description Failed to fetch library */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorResponse'];
+				};
+			};
+		};
+	};
+	getReleases: {
+		parameters: {
+			query: {
+				/** @description Arr instance ID */
+				instanceId: number;
+				/** @description Movie ID (Radarr) or Series ID (Sonarr) */
+				itemId: number;
+				/** @description Season number for Sonarr searches (defaults to 1) */
+				season?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release search results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ReleasesResponse'];
+				};
+			};
+			/** @description Invalid or missing parameters */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorResponse'];
+				};
+			};
+			/** @description Instance not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorResponse'];
+				};
+			};
+			/** @description Failed to fetch releases */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorResponse'];
+				};
+			};
+		};
+	};
 }

@@ -57,9 +57,9 @@ export const actions: Actions = {
 		}
 
 		// Validate name uniqueness (excluding current service)
-		const existingService = notificationServicesQueries.getAll().find(
-			(s) => s.name === name && s.id !== id
-		);
+		const existingService = notificationServicesQueries
+			.getAll()
+			.find((s) => s.name === name && s.id !== id);
 		if (existingService) {
 			return fail(400, { error: 'A service with this name already exists' });
 		}

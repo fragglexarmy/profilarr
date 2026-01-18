@@ -32,7 +32,9 @@
 	{type}
 	{disabled}
 	on:click
-	class="inline-flex items-center justify-center rounded border transition-colors {sizeClasses[size]} {variantClasses[variant]} disabled:opacity-50 disabled:cursor-not-allowed"
+	class="inline-flex items-center justify-center rounded border transition-colors {sizeClasses[
+		size
+	]} {variantClasses[variant]} disabled:cursor-not-allowed disabled:opacity-50"
 	{title}
 >
 	<svelte:component this={icon} size={iconSizes[size]} />

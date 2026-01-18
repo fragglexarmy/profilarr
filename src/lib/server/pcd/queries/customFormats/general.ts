@@ -8,7 +8,10 @@ import type { CustomFormatGeneral } from './types.ts';
 /**
  * Get general information for a single custom format
  */
-export async function general(cache: PCDCache, formatId: number): Promise<CustomFormatGeneral | null> {
+export async function general(
+	cache: PCDCache,
+	formatId: number
+): Promise<CustomFormatGeneral | null> {
 	const db = cache.kb;
 
 	// Get the custom format

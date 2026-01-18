@@ -80,7 +80,7 @@
 		<button
 			type="button"
 			on:click={increment}
-			disabled={disabled}
+			{disabled}
 			class="flex h-4 w-6 items-center justify-center rounded-t border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
 		>
 			<ChevronUp size={12} />
@@ -88,7 +88,7 @@
 		<button
 			type="button"
 			on:click={decrement}
-			disabled={disabled}
+			{disabled}
 			class="flex h-4 w-6 items-center justify-center rounded-b border border-t-0 border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
 		>
 			<ChevronDown size={12} />

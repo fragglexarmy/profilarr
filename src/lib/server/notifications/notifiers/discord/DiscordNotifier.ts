@@ -109,7 +109,10 @@ export class DiscordNotifier {
 		try {
 			await getWebhookClient().sendWebhook(this.config.webhook_url, payload);
 		} catch (error) {
-			const embedCharCounts = payloadObj.embeds?.map((e, i) => `${i}:${getEmbedCharCount(e as DiscordEmbed)}`).join(', ') || 'none';
+			const embedCharCounts =
+				payloadObj.embeds
+					?.map((e, i) => `${i}:${getEmbedCharCount(e as DiscordEmbed)}`)
+					.join(', ') || 'none';
 			await logger.error('Failed to send notification', {
 				source: this.getName(),
 				meta: {
@@ -133,7 +136,11 @@ export class DiscordNotifier {
 		if (lowerType.includes('failed') || lowerType.includes('error')) {
 			return Colors.ERROR;
 		}
-		if (lowerType.includes('warning') || lowerType.includes('warn') || lowerType.includes('partial')) {
+		if (
+			lowerType.includes('warning') ||
+			lowerType.includes('warn') ||
+			lowerType.includes('partial')
+		) {
 			return Colors.WARNING;
 		}
 

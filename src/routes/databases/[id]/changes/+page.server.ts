@@ -98,7 +98,10 @@ export const actions: Actions = {
 			await git.checkout(branch);
 			return { success: true };
 		} catch (err) {
-			return { success: false, error: err instanceof Error ? err.message : 'Failed to switch branch' };
+			return {
+				success: false,
+				error: err instanceof Error ? err.message : 'Failed to switch branch'
+			};
 		}
 	},
 

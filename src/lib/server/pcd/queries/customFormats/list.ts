@@ -27,11 +27,7 @@ export async function list(cache: PCDCache): Promise<CustomFormatTableRow[]> {
 	const allTags = await db
 		.selectFrom('custom_format_tags as cft')
 		.innerJoin('tags as t', 't.name', 'cft.tag_name')
-		.select([
-			'cft.custom_format_name',
-			't.name as tag_name',
-			't.created_at as tag_created_at'
-		])
+		.select(['cft.custom_format_name', 't.name as tag_name', 't.created_at as tag_created_at'])
 		.where('cft.custom_format_name', 'in', formatNames)
 		.orderBy('cft.custom_format_name')
 		.orderBy('t.name')

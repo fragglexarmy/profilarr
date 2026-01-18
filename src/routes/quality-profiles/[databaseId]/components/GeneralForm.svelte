@@ -7,19 +7,14 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
-	import {
-		current,
-		isDirty,
-		initEdit,
-		initCreate,
-		update
-	} from '$lib/client/stores/dirty';
+	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 
 	// Form data shape
 	interface GeneralFormData {
 		name: string;
 		tags: string[];
 		description: string;
+		[key: string]: unknown;
 	}
 
 	// Props
@@ -42,6 +37,9 @@
 	} else {
 		initEdit(initialData);
 	}
+
+	// Typed accessor for current form data
+	$: formData = $current as GeneralFormData;
 
 	// Loading states
 	let saving = false;
@@ -135,9 +133,12 @@
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
 				} else if (result.type === 'redirect') {
-					alertStore.add('success', mode === 'create' ? 'Quality profile created!' : 'Quality profile updated!');
+					alertStore.add(
+						'success',
+						mode === 'create' ? 'Quality profile created!' : 'Quality profile updated!'
+					);
 					// Mark as clean so navigation guard doesn't trigger
-					initEdit($current as GeneralFormData);
+					initEdit(formData);
 				}
 				await formUpdate();
 				saving = false;
@@ -164,7 +165,7 @@
 					value={name}
 					oninput={(e) => update('name', e.currentTarget.value)}
 					placeholder="Enter quality profile name"
-					class="mt-2 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+					class="mt-2 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 				/>
 			</div>
 
@@ -184,10 +185,7 @@
 				<p class="text-xs text-neutral-600 dark:text-neutral-400">
 					Add tags to organize and categorize this quality profile.
 				</p>
-				<TagInput
-					{tags}
-					onchange={(newTags) => update('tags', newTags)}
-				/>
+				<TagInput {tags} onchange={(newTags) => update('tags', newTags)} />
 			</div>
 
 			<!-- Actions -->
@@ -253,7 +251,10 @@
 				deleting = true;
 				return async ({ result, update: formUpdate }) => {
 					if (result.type === 'failure' && result.data) {
-						alertStore.add('error', (result.data as { error?: string }).error || 'Failed to delete');
+						alertStore.add(
+							'error',
+							(result.data as { error?: string }).error || 'Failed to delete'
+						);
 					} else if (result.type === 'redirect') {
 						alertStore.add('success', 'Quality profile deleted');
 					}

@@ -226,23 +226,23 @@ radius. Adding spacing breaks the connected appearance.
 ```svelte
 <!-- Correct -->
 <ActionsBar>
-  <ActionButton icon={Filter} />
-  <SearchAction {searchStore} />
-  <ViewToggle bind:value={viewMode} />
+	<ActionButton icon={Filter} />
+	<SearchAction {searchStore} />
+	<ViewToggle bind:value={viewMode} />
 </ActionsBar>
 
 <!-- Wrong - gap breaks connected styling -->
 <ActionsBar class="gap-2">
-  <ActionButton icon={Filter} />
-  <SearchAction {searchStore} />
+	<ActionButton icon={Filter} />
+	<SearchAction {searchStore} />
 </ActionsBar>
 
 <!-- Wrong - wrapper div breaks border radius -->
 <ActionsBar>
-  <div class="flex">
-    <ActionButton icon={Filter} />
-  </div>
-  <SearchAction {searchStore} />
+	<div class="flex">
+		<ActionButton icon={Filter} />
+	</div>
+	<SearchAction {searchStore} />
 </ActionsBar>
 ```
 
@@ -368,7 +368,7 @@ centralizes all application paths and environment configuration. Import it via
 `$config`.
 
 ```typescript
-import { config } from "$config";
+import { config } from '$config';
 
 // Paths
 config.paths.base; // Application root
@@ -397,12 +397,12 @@ The logger (`logger/logger.ts`) handles console and file output with daily
 rotation. Import via `$logger/logger.ts`.
 
 ```typescript
-import { logger } from "$logger/logger.ts";
+import { logger } from '$logger/logger.ts';
 
-await logger.debug("Cache miss", { source: "PCD", meta: { id: 1 } });
-await logger.info("Sync completed", { source: "Sync" });
-await logger.warn("Rate limited", { source: "GitHub" });
-await logger.error("Connection failed", { source: "Arr", meta: error });
+await logger.debug('Cache miss', { source: 'PCD', meta: { id: 1 } });
+await logger.info('Sync completed', { source: 'Sync' });
+await logger.warn('Rate limited', { source: 'GitHub' });
+await logger.error('Connection failed', { source: 'Arr', meta: error });
 ```
 
 Log levels: DEBUG → INFO → WARN → ERROR. Users configure the minimum level in
@@ -426,13 +426,13 @@ verbose messages or logging the same event multiple times.
 
 ```typescript
 // Good
-await logger.info("Synced 5 profiles to Radarr", { source: "Sync" });
+await logger.info('Synced 5 profiles to Radarr', { source: 'Sync' });
 
 // Bad - too verbose, no source
-await logger.info("Starting to sync profiles now...");
-await logger.info("Found 5 profiles to sync");
-await logger.info("Syncing profile 1...");
-await logger.info("Syncing profile 2...");
+await logger.info('Starting to sync profiles now...');
+await logger.info('Found 5 profiles to sync');
+await logger.info('Syncing profile 1...');
+await logger.info('Syncing profile 2...');
 ```
 
 **HTTP**
@@ -441,21 +441,21 @@ The HTTP client (`http/client.ts`) provides a base class with connection pooling
 and retry logic. Arr clients extend this.
 
 ```typescript
-import { BaseHttpClient } from "$http/client.ts";
+import { BaseHttpClient } from '$http/client.ts';
 
 class MyClient extends BaseHttpClient {
-  constructor(url: string) {
-    super(url, {
-      timeout: 30000, // Request timeout (ms)
-      retries: 3, // Retry count for 5xx errors
-      retryDelay: 500, // Base delay (exponential backoff)
-      headers: { Authorization: "Bearer token" },
-    });
-  }
+	constructor(url: string) {
+		super(url, {
+			timeout: 30000, // Request timeout (ms)
+			retries: 3, // Retry count for 5xx errors
+			retryDelay: 500, // Base delay (exponential backoff)
+			headers: { Authorization: 'Bearer token' }
+		});
+	}
 }
 
-const client = new MyClient("https://api.example.com");
-const data = await client.get<Response>("/endpoint");
+const client = new MyClient('https://api.example.com');
+const data = await client.get<Response>('/endpoint');
 client.close(); // Release connection pool
 ```
 
@@ -476,15 +476,15 @@ Git operations (`git/`) wrap command-line git for PCD repository management.
 The `Git` class (`Git.ts`) provides a clean interface per repository:
 
 ```typescript
-import { Git } from "$utils/git/index.ts";
+import { Git } from '$utils/git/index.ts';
 
-const git = new Git("/path/to/repo");
+const git = new Git('/path/to/repo');
 
 // Repository operations
 await git.fetch();
 await git.pull();
 await git.push();
-await git.checkout("main");
+await git.checkout('main');
 await git.resetToRemote();
 
 // Status queries
@@ -497,7 +497,7 @@ const commits = await git.getCommits(10);
 const uncommitted = await git.getUncommittedOps();
 const maxOp = await git.getMaxOpNumber();
 await git.discardOps(filepaths);
-await git.addOps(filepaths, "commit message");
+await git.addOps(filepaths, 'commit message');
 ```
 
 Key modules:
@@ -515,12 +515,12 @@ cloning, detects private repositories, and handles PAT authentication.
 Simple in-memory cache with TTL (`cache/cache.ts`):
 
 ```typescript
-import { cache } from "$cache/cache.ts";
+import { cache } from '$cache/cache.ts';
 
-cache.set("key", data, 300); // TTL in seconds
-const value = cache.get<Type>("key"); // Returns undefined if expired
-cache.delete("key");
-cache.deleteByPrefix("library:"); // Clear related entries
+cache.set('key', data, 300); // TTL in seconds
+const value = cache.get<Type>('key'); // Returns undefined if expired
+cache.delete('key');
+cache.deleteByPrefix('library:'); // Clear related entries
 cache.clear();
 ```
 
@@ -533,10 +533,10 @@ Optional AI integration (`ai/client.ts`) for generating commit messages from
 diffs. Supports OpenAI-compatible APIs including local models.
 
 ```typescript
-import { isAIEnabled, generateCommitMessage } from "$utils/ai/client.ts";
+import { isAIEnabled, generateCommitMessage } from '$utils/ai/client.ts';
 
 if (isAIEnabled()) {
-  const message = await generateCommitMessage(diffText);
+	const message = await generateCommitMessage(diffText);
 }
 ```
 
@@ -579,13 +579,13 @@ incorrect display.
 Use the shared date utilities in `src/lib/shared/dates.ts`:
 
 ```typescript
-import { parseUTC, toUTC } from "$shared/dates";
+import { parseUTC, toUTC } from '$shared/dates';
 
 // Parse SQLite timestamp to Date object (correctly interpreted as UTC)
-const date = parseUTC("2026-01-17 03:21:52"); // Date in UTC
+const date = parseUTC('2026-01-17 03:21:52'); // Date in UTC
 
 // Normalize to ISO 8601 string with Z suffix
-const iso = toUTC("2026-01-17 03:21:52"); // "2026-01-17T03:21:52Z"
+const iso = toUTC('2026-01-17 03:21:52'); // "2026-01-17T03:21:52Z"
 ```
 
 **Never** manually append `'Z'` or manipulate timestamp strings directly. Always
@@ -659,16 +659,16 @@ Every PCD requires a `pcd.json` manifest:
 
 ```json
 {
-  "name": "my-database",
-  "version": "1.0.0",
-  "description": "Custom Arr configurations",
-  "dependencies": {
-    "https://github.com/Dictionarry-Hub/schema": "main"
-  },
-  "arr_types": ["radarr", "sonarr"],
-  "profilarr": {
-    "minimum_version": "2.0.0"
-  }
+	"name": "my-database",
+	"version": "1.0.0",
+	"description": "Custom Arr configurations",
+	"dependencies": {
+		"https://github.com/Dictionarry-Hub/schema": "main"
+	},
+	"arr_types": ["radarr", "sonarr"],
+	"profilarr": {
+		"minimum_version": "2.0.0"
+	}
 }
 ```
 
@@ -706,15 +706,15 @@ changes appear immediately.
 ```typescript
 // Example: writer converts this Kysely query to a .sql file
 await writeOperation({
-  databaseId: 1,
-  layer: "user",
-  description: "update-profile-score",
-  queries: [compiledKyselyQuery],
-  metadata: {
-    operation: "update",
-    entity: "quality_profile",
-    name: "HD Bluray + WEB",
-  },
+	databaseId: 1,
+	layer: 'user',
+	description: 'update-profile-score',
+	queries: [compiledKyselyQuery],
+	metadata: {
+		operation: 'update',
+		entity: 'quality_profile',
+		name: 'HD Bluray + WEB'
+	}
 });
 ```
 
@@ -813,13 +813,13 @@ name, description, schedule (cron expression), and handler function:
 
 ```typescript
 export const myJob: JobDefinition = {
-  name: "my_job",
-  description: "Does something useful",
-  schedule: "0 * * * *", // Every hour
-  handler: async (): Promise<JobResult> => {
-    // Job logic here
-    return { success: true, output: "Done" };
-  },
+	name: 'my_job',
+	description: 'Does something useful',
+	schedule: '0 * * * *', // Every hour
+	handler: async (): Promise<JobResult> => {
+		// Job logic here
+		return { success: true, output: 'Done' };
+	}
 };
 ```
 
@@ -865,60 +865,58 @@ don't interrupt the calling code.
 For simple notifications, use the builder directly:
 
 ```typescript
-import { notify } from "$notifications/builder.ts";
+import { notify } from '$notifications/builder.ts';
 
-await notify("pcd.sync_success")
-  .generic("Sync Complete", "Synced 5 profiles to Radarr")
-  .send();
+await notify('pcd.sync_success').generic('Sync Complete', 'Synced 5 profiles to Radarr').send();
 ```
 
 For rich Discord notifications with embeds:
 
 ```typescript
-import { notify, createEmbed, Colors } from "$notifications/builder.ts";
+import { notify, createEmbed, Colors } from '$notifications/builder.ts';
 
-await notify("rename.success")
-  .generic("Rename Complete", "Renamed 5 files")
-  .discord((d) =>
-    d.embed(
-      createEmbed()
-        .title("Rename Complete")
-        .description("All files renamed successfully")
-        .field("Files", "5/5", true)
-        .field("Mode", "Live", true)
-        .color(Colors.SUCCESS)
-        .timestamp()
-    )
-  )
-  .send();
+await notify('rename.success')
+	.generic('Rename Complete', 'Renamed 5 files')
+	.discord((d) =>
+		d.embed(
+			createEmbed()
+				.title('Rename Complete')
+				.description('All files renamed successfully')
+				.field('Files', '5/5', true)
+				.field('Mode', 'Live', true)
+				.color(Colors.SUCCESS)
+				.timestamp()
+		)
+	)
+	.send();
 ```
 
 For complex notifications, create a definition in `definitions/`:
 
 ```typescript
 // definitions/myFeature.ts
-import { notify, createEmbed, Colors } from "../builder.ts";
+import { notify, createEmbed, Colors } from '../builder.ts';
 
 interface MyNotificationParams {
-  log: MyJobLog;
-  config: { username?: string };
+	log: MyJobLog;
+	config: { username?: string };
 }
 
 export const myFeature = ({ log, config }: MyNotificationParams) =>
-  notify(`myfeature.${log.status}`)
-    .generic("Feature Complete", `Processed ${log.count} items`)
-    .discord((d) =>
-      d.embed(
-        createEmbed()
-          .title("Feature Complete")
-          .field("Processed", String(log.count), true)
-          .color(log.status === "success" ? Colors.SUCCESS : Colors.ERROR)
-          .timestamp()
-      )
-    );
+	notify(`myfeature.${log.status}`)
+		.generic('Feature Complete', `Processed ${log.count} items`)
+		.discord((d) =>
+			d.embed(
+				createEmbed()
+					.title('Feature Complete')
+					.field('Processed', String(log.count), true)
+					.color(log.status === 'success' ? Colors.SUCCESS : Colors.ERROR)
+					.timestamp()
+			)
+		);
 
 // Usage:
-import { notifications } from "$notifications/definitions/index.ts";
+import { notifications } from '$notifications/definitions/index.ts';
 await notifications.myFeature({ log, config }).send();
 ```
 
@@ -928,15 +926,15 @@ The embed builder (`notifiers/discord/embed.ts`) provides a fluent API:
 
 ```typescript
 createEmbed()
-  .author("Profilarr", iconUrl)
-  .title("Title")
-  .description("Description text")
-  .field("Name", "Value", true) // inline field
-  .fieldIf(condition, "Name", "Value") // conditional field
-  .color(Colors.SUCCESS)
-  .timestamp()
-  .footer("Profilarr")
-  .build();
+	.author('Profilarr', iconUrl)
+	.title('Title')
+	.description('Description text')
+	.field('Name', 'Value', true) // inline field
+	.fieldIf(condition, 'Name', 'Value') // conditional field
+	.color(Colors.SUCCESS)
+	.timestamp()
+	.footer('Profilarr')
+	.build();
 ```
 
 Available colors: `Colors.SUCCESS`, `Colors.ERROR`, `Colors.WARNING`,
@@ -1168,14 +1166,14 @@ list:
     tags:
       - Databases
     responses:
-      "200":
+      '200':
         description: List of databases
         content:
           application/json:
             schema:
               type: array
               items:
-                $ref: "../schemas/database.yaml#/Database"
+                $ref: '../schemas/database.yaml#/Database'
 ```
 
 2. Reference it in `openapi.yaml`:
@@ -1183,7 +1181,7 @@ list:
 ```yaml
 paths:
   /databases:
-    $ref: "./paths/databases.yaml#/list"
+    $ref: './paths/databases.yaml#/list'
 ```
 
 3. Add any new schemas to `schemas/`:

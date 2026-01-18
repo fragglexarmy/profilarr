@@ -94,7 +94,7 @@ export const actions: Actions = {
 		if (name.trim().toLowerCase() !== current.name.toLowerCase()) {
 			const existingProfiles = await qualityProfileQueries.list(cache);
 			const duplicate = existingProfiles.find(
-				p => p.id !== profileId && p.name.toLowerCase() === name.trim().toLowerCase()
+				(p) => p.id !== profileId && p.name.toLowerCase() === name.trim().toLowerCase()
 			);
 			if (duplicate) {
 				return fail(400, { error: `A quality profile named "${name.trim()}" already exists` });

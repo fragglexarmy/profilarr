@@ -4,10 +4,14 @@
 
 import { Database } from '@jsr/db__sqlite';
 import { Kysely } from 'kysely';
+// @ts-ignore - Deno JSR import not recognized by svelte-check
 import { DenoSqlite3Dialect } from '@soapbox/kysely-deno-sqlite';
 import { logger } from '$logger/logger.ts';
 import { loadAllOperations, validateOperations } from './ops.ts';
-import { disableDatabaseInstance, databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+import {
+	disableDatabaseInstance,
+	databaseInstancesQueries
+} from '$db/queries/databaseInstances.ts';
 import type { PCDDatabase } from './schema.ts';
 
 /**
@@ -123,9 +127,9 @@ export class PCDCache {
 
 		// cf(name) - Custom format lookup by name
 		this.db.function('cf', (name: string) => {
-			const result = this.db!.prepare('SELECT id FROM custom_formats WHERE name = ?').get(
-				name
-			) as { id: number } | undefined;
+			const result = this.db!.prepare('SELECT id FROM custom_formats WHERE name = ?').get(name) as
+				| { id: number }
+				| undefined;
 			if (!result) {
 				throw new Error(`Custom format not found: ${name}`);
 			}
@@ -134,9 +138,9 @@ export class PCDCache {
 
 		// dp(name) - Delay profile lookup by name
 		this.db.function('dp', (name: string) => {
-			const result = this.db!.prepare('SELECT id FROM delay_profiles WHERE name = ?').get(
-				name
-			) as { id: number } | undefined;
+			const result = this.db!.prepare('SELECT id FROM delay_profiles WHERE name = ?').get(name) as
+				| { id: number }
+				| undefined;
 			if (!result) {
 				throw new Error(`Delay profile not found: ${name}`);
 			}
@@ -145,9 +149,9 @@ export class PCDCache {
 
 		// tag(name) - Tag lookup by name (creates if not exists)
 		this.db.function('tag', (name: string) => {
-			const result = this.db!.prepare('SELECT id FROM tags WHERE name = ?').get(
-				name
-			) as { id: number } | undefined;
+			const result = this.db!.prepare('SELECT id FROM tags WHERE name = ?').get(name) as
+				| { id: number }
+				| undefined;
 			if (!result) {
 				throw new Error(`Tag not found: ${name}`);
 			}
@@ -196,7 +200,10 @@ export class PCDCache {
 	 * Execute a raw SQL query and return all rows
 	 * Use this in your query functions in pcd/queries/*.ts
 	 */
-	query<T = unknown>(sql: string, ...params: (string | number | null | boolean | Uint8Array)[]): T[] {
+	query<T = unknown>(
+		sql: string,
+		...params: (string | number | null | boolean | Uint8Array)[]
+	): T[] {
 		if (!this.isBuilt()) {
 			throw new Error('Cache not built');
 		}
@@ -208,7 +215,10 @@ export class PCDCache {
 	 * Execute a raw SQL query and return a single row
 	 * Use this in your query functions in pcd/queries/*.ts
 	 */
-	queryOne<T = unknown>(sql: string, ...params: (string | number | null | boolean | Uint8Array)[]): T | undefined {
+	queryOne<T = unknown>(
+		sql: string,
+		...params: (string | number | null | boolean | Uint8Array)[]
+	): T | undefined {
 		if (!this.isBuilt()) {
 			throw new Error('Cache not built');
 		}
@@ -245,7 +255,10 @@ const DEBOUNCE_DELAY = 500;
  * Compile a PCD into an in-memory cache
  * Returns build stats for logging
  */
-export async function compile(pcdPath: string, databaseInstanceId: number): Promise<CacheBuildStats> {
+export async function compile(
+	pcdPath: string,
+	databaseInstanceId: number
+): Promise<CacheBuildStats> {
 	// Stop any existing watchers
 	stopWatch(databaseInstanceId);
 
@@ -465,7 +478,7 @@ function scheduleRebuild(pcdPath: string, databaseInstanceId: number): void {
 		}
 
 		debounceTimers.delete(timerKey);
-	}, DEBOUNCE_DELAY);
+	}, DEBOUNCE_DELAY) as unknown as number;
 
 	debounceTimers.set(timerKey, timer);
 }

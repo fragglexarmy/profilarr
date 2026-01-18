@@ -68,7 +68,11 @@ export const actions: Actions = {
 		const enableMediaInfo = formData.get('enableMediaInfo') === 'on';
 
 		// Validate propers_repacks
-		const validOptions: PropersRepacks[] = ['doNotPrefer', 'preferAndUpgrade', 'doNotUpgradeAutomatically'];
+		const validOptions: PropersRepacks[] = [
+			'doNotPrefer',
+			'preferAndUpgrade',
+			'doNotUpgradeAutomatically'
+		];
 		if (!validOptions.includes(propersRepacks)) {
 			await logger.warn('Invalid propers and repacks option', {
 				source: 'MediaManagement',
@@ -141,7 +145,7 @@ export const actions: Actions = {
 
 		// Validate colon replacement (only if replace illegal characters is on)
 		if (replaceIllegalCharacters) {
-			const validColonOptions = RADARR_COLON_REPLACEMENT_OPTIONS.map(o => o.value);
+			const validColonOptions = RADARR_COLON_REPLACEMENT_OPTIONS.map((o) => o.value);
 			if (!validColonOptions.includes(colonReplacement)) {
 				await logger.warn('Invalid colon replacement option', {
 					source: 'MediaManagement',
@@ -218,7 +222,12 @@ export const actions: Actions = {
 			return fail(400, { error: 'Missing definitions data' });
 		}
 
-		let definitions: { quality_name: string; min_size: number; max_size: number; preferred_size: number }[];
+		let definitions: {
+			quality_name: string;
+			min_size: number;
+			max_size: number;
+			preferred_size: number;
+		}[];
 		try {
 			definitions = JSON.parse(definitionsJson);
 		} catch {

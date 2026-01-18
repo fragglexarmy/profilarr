@@ -15,14 +15,15 @@
 	export let searchStore: SearchStore;
 	export let logFiles: LogFile[];
 	export let selectedFile: string;
-	export let selectedLevel: string;
+	type LogLevel = 'ALL' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+	export let selectedLevel: LogLevel;
 	export let selectedSources: Set<string>;
 	export let uniqueSources: string[];
 
 	export let isRefreshing: boolean = false;
 
 	export let onChangeFile: (filename: string) => void;
-	export let onChangeLevel: (level: string) => void;
+	export let onChangeLevel: (level: LogLevel) => void;
 	export let onToggleSource: (source: string) => void;
 	export let onRefresh: () => void;
 	export let onDownload: () => void;
@@ -60,7 +61,7 @@
 	<!-- Log File Selector -->
 	<ActionButton icon={FileText} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="20rem">
+			<Dropdown position={dropdownPosition} minWidth="20rem">
 				<div class="max-h-64 overflow-y-auto">
 					{#each logFiles as file}
 						<button
@@ -68,8 +69,8 @@
 							on:click={() => onChangeFile(file.filename)}
 							class="flex w-full items-center justify-between gap-4 border-b border-neutral-200 px-4 py-2.5 text-left transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
 								{selectedFile === file.filename
-									? 'bg-neutral-100 dark:bg-neutral-700'
-									: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+								? 'bg-neutral-100 dark:bg-neutral-700'
+								: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
 						>
 							<div class="flex flex-col gap-0.5">
 								<span class="font-mono text-sm text-neutral-900 dark:text-neutral-100">
@@ -92,15 +93,15 @@
 	<!-- Level Filter -->
 	<ActionButton icon={Filter} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="8rem">
+			<Dropdown position={dropdownPosition} minWidth="8rem">
 				{#each logLevels as level}
 					<button
 						type="button"
 						on:click={() => onChangeLevel(level)}
 						class="flex w-full items-center justify-between gap-3 border-b border-neutral-200 px-4 py-2 text-left transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
 							{selectedLevel === level
-								? 'bg-neutral-100 dark:bg-neutral-700'
-								: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+							? 'bg-neutral-100 dark:bg-neutral-700'
+							: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
 					>
 						<span class="font-medium {levelColors[level]}">{level}</span>
 					</button>
@@ -112,7 +113,7 @@
 	<!-- Source Filter -->
 	<ActionButton icon={Layers} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="12rem">
+			<Dropdown position={dropdownPosition} minWidth="12rem">
 				<div class="max-h-64 overflow-y-auto">
 					{#each uniqueSources as source}
 						<button
@@ -120,8 +121,8 @@
 							on:click={() => onToggleSource(source)}
 							class="flex w-full items-center justify-between gap-3 border-b border-neutral-200 px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg last:border-b-0 dark:border-neutral-700
 								{selectedSources.has(source)
-									? 'bg-neutral-100 dark:bg-neutral-700'
-									: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
+								? 'bg-neutral-100 dark:bg-neutral-700'
+								: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}"
 						>
 							<span class="text-neutral-700 dark:text-neutral-300">{source}</span>
 							{#if selectedSources.has(source)}
@@ -141,10 +142,8 @@
 			class="text-neutral-700 dark:text-neutral-300 {isRefreshing ? 'animate-spin' : ''}"
 		/>
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="6rem">
-				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-					Refresh logs
-				</div>
+			<Dropdown position={dropdownPosition} minWidth="6rem">
+				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">Refresh logs</div>
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
@@ -152,7 +151,7 @@
 	<!-- Download -->
 	<ActionButton icon={Download} hasDropdown={true} dropdownPosition="right" on:click={onDownload}>
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} {open} minWidth="8rem">
+			<Dropdown position={dropdownPosition} minWidth="8rem">
 				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
 					Download logs as JSON
 				</div>

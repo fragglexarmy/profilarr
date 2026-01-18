@@ -267,15 +267,14 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		}
 
 		// Get the target directory
-		const targetDir = layer === 'base'
-			? getBaseOpsPath(instance.local_path)
-			: getUserOpsPath(instance.local_path);
+		const targetDir =
+			layer === 'base' ? getBaseOpsPath(instance.local_path) : getUserOpsPath(instance.local_path);
 
 		// Ensure directory exists
 		await ensureDir(targetDir);
 
 		// Optimization: if this is a delete and there's an uncommitted create, just remove the create
-		if (metadata && await cancelOutCreate(targetDir, instance.local_path, metadata)) {
+		if (metadata && (await cancelOutCreate(targetDir, instance.local_path, metadata))) {
 			// Recompile the cache after removing the create file
 			await compile(instance.local_path, instance.id);
 			return { success: true };
@@ -294,9 +293,7 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		const sqlContent = sqlStatements.join(';\n\n') + ';\n';
 
 		// Build final content with optional metadata header
-		const content = metadata
-			? generateMetadataHeader(metadata) + sqlContent
-			: sqlContent;
+		const content = metadata ? generateMetadataHeader(metadata) + sqlContent : sqlContent;
 
 		// Write the file
 		await Deno.writeTextFile(filepath, content);
@@ -317,12 +314,14 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 					layer
 				},
 				filename,
-				operation: metadata ? {
-					type: metadata.operation,
-					entity: metadata.entity,
-					name: metadata.name,
-					...(metadata.previousName && { previousName: metadata.previousName })
-				} : null,
+				operation: metadata
+					? {
+							type: metadata.operation,
+							entity: metadata.entity,
+							name: metadata.name,
+							...(metadata.previousName && { previousName: metadata.previousName })
+						}
+					: null,
 				queries: sqlStatements
 			}
 		});

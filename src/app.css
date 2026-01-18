@@ -394,7 +394,7 @@
 	}
 
 	::-webkit-scrollbar-thumb {
-		@apply bg-neutral-300 dark:bg-neutral-700 rounded;
+		@apply rounded bg-neutral-300 dark:bg-neutral-700;
 	}
 
 	::-webkit-scrollbar-thumb:hover {

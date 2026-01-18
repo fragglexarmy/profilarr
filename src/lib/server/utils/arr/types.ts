@@ -463,7 +463,12 @@ export interface ArrMediaManagementConfig {
 /**
  * Radarr colon replacement format (string enum)
  */
-export type RadarrColonReplacementFormat = 'delete' | 'dash' | 'spaceDash' | 'spaceDashSpace' | 'smart';
+export type RadarrColonReplacementFormat =
+	| 'delete'
+	| 'dash'
+	| 'spaceDash'
+	| 'spaceDashSpace'
+	| 'smart';
 
 /**
  * Radarr naming config from /api/v3/config/naming

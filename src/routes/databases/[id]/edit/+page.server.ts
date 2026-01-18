@@ -53,7 +53,8 @@ export const actions: Actions = {
 		const name = formData.get('name')?.toString().trim();
 		const syncStrategy = parseInt(formData.get('sync_strategy')?.toString() || '0', 10);
 		const autoPull = formData.get('auto_pull') === '1';
-		const personalAccessToken = formData.get('personal_access_token')?.toString().trim() || undefined;
+		const personalAccessToken =
+			formData.get('personal_access_token')?.toString().trim() || undefined;
 
 		// Validation
 		if (!name) {
@@ -69,9 +70,9 @@ export const actions: Actions = {
 		}
 
 		// Check if name already exists (excluding current instance)
-		const existingWithName = databaseInstancesQueries.getAll().find(
-			(db) => db.name === name && db.id !== id
-		);
+		const existingWithName = databaseInstancesQueries
+			.getAll()
+			.find((db) => db.name === name && db.id !== id);
 
 		if (existingWithName) {
 			await logger.warn('Attempted to update database with duplicate name', {

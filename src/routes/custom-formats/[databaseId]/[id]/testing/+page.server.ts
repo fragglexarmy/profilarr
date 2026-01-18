@@ -103,8 +103,7 @@ export const load: ServerLoad = async ({ params }) => {
 
 				// Determine if test passes (actual matches expected)
 				const actual_match = evaluation.matches;
-				const result: TestResult =
-					actual_match === test.should_match ? 'pass' : 'fail';
+				const result: TestResult = actual_match === test.should_match ? 'pass' : 'fail';
 
 				return {
 					...test,

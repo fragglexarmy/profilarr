@@ -32,15 +32,15 @@ export interface QualitiesPageData {
 /**
  * Get quality profile qualities data
  */
-export async function qualities(cache: PCDCache, _databaseId: number, profileName: string): Promise<QualitiesPageData> {
+export async function qualities(
+	cache: PCDCache,
+	_databaseId: number,
+	profileName: string
+): Promise<QualitiesPageData> {
 	const db = cache.kb;
 
 	// 1. Get all qualities
-	const allQualities = await db
-		.selectFrom('qualities')
-		.select(['name'])
-		.orderBy('name')
-		.execute();
+	const allQualities = await db.selectFrom('qualities').select(['name']).orderBy('name').execute();
 
 	// 2. Get all groups for this profile
 	const groups = await db
@@ -54,10 +54,7 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileNam
 		.selectFrom('quality_group_members')
 		.innerJoin('qualities', 'qualities.name', 'quality_group_members.quality_name')
 		.where('quality_group_members.quality_profile_name', '=', profileName)
-		.select([
-			'quality_group_members.quality_group_name',
-			'qualities.name as quality_name'
-		])
+		.select(['quality_group_members.quality_group_name', 'qualities.name as quality_name'])
 		.execute();
 
 	// Build groups with members
@@ -85,7 +82,11 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileNam
 		.leftJoin('quality_groups', (join) =>
 			join
 				.onRef('quality_groups.name', '=', 'quality_profile_qualities.quality_group_name')
-				.onRef('quality_groups.quality_profile_name', '=', 'quality_profile_qualities.quality_profile_name')
+				.onRef(
+					'quality_groups.quality_profile_name',
+					'=',
+					'quality_profile_qualities.quality_profile_name'
+				)
 		)
 		.where('quality_profile_qualities.quality_profile_name', '=', profileName)
 		.select([
@@ -101,7 +102,7 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileNam
 		.execute();
 
 	// Build ordered items
-	const orderedItems: OrderedItem[] = orderedList.map(item => {
+	const orderedItems: OrderedItem[] = orderedList.map((item) => {
 		const isGroup = item.quality_group_name !== null;
 		const name = isGroup ? item.group_name! : item.quality_name!;
 
@@ -131,18 +132,18 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileNam
 			usedQualityNames.add(item.name);
 		} else {
 			// Mark all members of groups as used
-			item.members?.forEach(member => usedQualityNames.add(member.name));
+			item.members?.forEach((member) => usedQualityNames.add(member.name));
 		}
 	}
 
 	const availableQualities = allQualities
-		.filter(q => !usedQualityNames.has(q.name))
-		.map(q => ({ name: q.name }));
+		.filter((q) => !usedQualityNames.has(q.name))
+		.map((q) => ({ name: q.name }));
 
 	return {
 		orderedItems,
 		availableQualities,
-		allQualities: allQualities.map(q => ({ name: q.name })),
+		allQualities: allQualities.map((q) => ({ name: q.name })),
 		groups: Array.from(groupsMap.values())
 	};
 }

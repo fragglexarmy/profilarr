@@ -84,10 +84,7 @@ export const databaseInstancesQueries = {
 	 * Get a database instance by UUID
 	 */
 	getByUuid(uuid: string): DatabaseInstance | undefined {
-		return db.queryFirst<DatabaseInstance>(
-			'SELECT * FROM database_instances WHERE uuid = ?',
-			uuid
-		);
+		return db.queryFirst<DatabaseInstance>('SELECT * FROM database_instances WHERE uuid = ?', uuid);
 	},
 
 	/**

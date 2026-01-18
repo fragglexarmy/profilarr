@@ -23,7 +23,13 @@ export interface QualityDefinitionsData {
 // ============================================================================
 
 // Re-export naming types from shared
-export type { RadarrNaming, SonarrNaming, ColonReplacementFormat, MultiEpisodeStyle, RadarrColonReplacementFormat } from '$lib/shared/mediaManagement.ts';
+export type {
+	RadarrNaming,
+	SonarrNaming,
+	ColonReplacementFormat,
+	MultiEpisodeStyle,
+	RadarrColonReplacementFormat
+} from '$lib/shared/mediaManagement.ts';
 export {
 	COLON_REPLACEMENT_OPTIONS,
 	getColonReplacementLabel,

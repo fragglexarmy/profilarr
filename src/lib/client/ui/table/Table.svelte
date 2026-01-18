@@ -106,7 +106,7 @@
 	}
 
 	$: sortedData = sortKey ? sortData(data) : data;
-	$: sortKey, sortDirection, sortedData = sortData(data);
+	$: (sortKey, sortDirection, (sortedData = sortData(data)));
 </script>
 
 <div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
@@ -118,23 +118,27 @@
 			<tr>
 				{#each columns as column}
 					<th
-						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ${getAlignClass(column.align)} ${column.width || ''}`}
+						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300 ${getAlignClass(column.align)} ${column.width || ''}`}
 					>
 						{#if column.sortable}
 							<button
 								type="button"
-								class={`group flex w-full items-center gap-1.5 text-xs font-medium uppercase tracking-wider ${column.align === 'center'
-									? 'justify-center'
-									: column.align === 'right'
-										? 'justify-end'
-										: 'justify-start'}`}
+								class={`group flex w-full items-center gap-1.5 text-xs font-medium tracking-wider uppercase ${
+									column.align === 'center'
+										? 'justify-center'
+										: column.align === 'right'
+											? 'justify-end'
+											: 'justify-start'
+								}`}
 								on:click={() => toggleSort(column)}
 							>
 								{#if column.headerIcon}
 									<svelte:component this={column.headerIcon} size={14} />
 								{/if}
 								<span>{column.header}</span>
-								<span class="text-[0.6rem] text-neutral-400 transition-opacity group-hover:text-neutral-600 group-hover:dark:text-neutral-200">
+								<span
+									class="text-[0.6rem] text-neutral-400 transition-opacity group-hover:text-neutral-600 group-hover:dark:text-neutral-200"
+								>
 									{#if sortKey === column.key}
 										{sortDirection === 'asc' ? '▲' : '▼'}
 									{:else}
@@ -143,11 +147,15 @@
 								</span>
 							</button>
 						{:else}
-							<div class={`flex items-center gap-1.5 ${column.align === 'center'
-								? 'justify-center'
-								: column.align === 'right'
-									? 'justify-end'
-									: ''}`}>
+							<div
+								class={`flex items-center gap-1.5 ${
+									column.align === 'center'
+										? 'justify-center'
+										: column.align === 'right'
+											? 'justify-end'
+											: ''
+								}`}
+							>
 								{#if column.headerIcon}
 									<svelte:component this={column.headerIcon} size={14} />
 								{/if}
@@ -159,7 +167,7 @@
 				<!-- Actions column slot -->
 				{#if $$slots.actions}
 					<th
-						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 text-right`}
+						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300`}
 					>
 						Actions
 					</th>
@@ -209,7 +217,7 @@
 
 						<!-- Actions slot -->
 						{#if $$slots.actions}
-							<td class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-right`}>
+							<td class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-right text-sm`}>
 								<slot name="actions" {row} {rowIndex} />
 							</td>
 						{/if}

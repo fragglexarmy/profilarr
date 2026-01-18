@@ -131,7 +131,14 @@
 	];
 </script>
 
-<Table data={expressions} {columns} emptyMessage="No regular expressions found" hoverable={true} compact={false} onRowClick={handleRowClick} />
+<Table
+	data={expressions}
+	{columns}
+	emptyMessage="No regular expressions found"
+	hoverable={true}
+	compact={false}
+	onRowClick={handleRowClick}
+/>
 
 <style>
 	/* Inline prose styles for markdown content */

@@ -192,20 +192,19 @@
 	</div>
 
 	<!-- Log Table -->
-	<Table data={filteredLogs} {columns} emptyMessage="No logs found" hoverable={true} compact={true} initialSort={{ key: 'timestamp', direction: 'desc' }}>
+	<Table
+		data={filteredLogs}
+		{columns}
+		emptyMessage="No logs found"
+		hoverable={true}
+		compact={true}
+		initialSort={{ key: 'timestamp', direction: 'desc' }}
+	>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
-				<TableActionButton
-					icon={Copy}
-					title="Copy log entry"
-					on:click={() => copyLog(row)}
-				/>
+				<TableActionButton icon={Copy} title="Copy log entry" on:click={() => copyLog(row)} />
 				{#if row.meta}
-					<TableActionButton
-						icon={Eye}
-						title="View metadata"
-						on:click={() => viewMeta(row.meta)}
-					/>
+					<TableActionButton icon={Eye} title="View metadata" on:click={() => viewMeta(row.meta)} />
 				{/if}
 			</div>
 		</svelte:fragment>

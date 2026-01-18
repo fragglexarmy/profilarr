@@ -108,11 +108,15 @@
 				{:else if column.key === 'enabled'}
 					<div class="flex justify-center">
 						{#if row.enabled}
-							<span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+							<span
+								class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+							>
 								<Check size={14} />
 							</span>
 						{:else}
-							<span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500">
+							<span
+								class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500"
+							>
 								<X size={14} />
 							</span>
 						{/if}
@@ -125,7 +129,12 @@
 					<a href="/arr/{row.id}/edit" on:click={(e) => e.stopPropagation()}>
 						<TableActionButton icon={Pencil} title="Edit instance" />
 					</a>
-					<a href={row.url} target="_blank" rel="noopener noreferrer" on:click={(e) => e.stopPropagation()}>
+					<a
+						href={row.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						on:click={(e) => e.stopPropagation()}
+					>
 						<TableActionButton icon={ExternalLink} title="Open in {formatType(row.type)}" />
 					</a>
 					<TableActionButton
@@ -190,16 +199,16 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">What are Arr Instances?</div>
 			<div class="mt-1">
-				Arr instances are your Radarr and Sonarr applications. Profilarr connects to these
-				instances to sync quality profiles, custom formats, and other configurations.
+				Arr instances are your Radarr and Sonarr applications. Profilarr connects to these instances
+				to sync quality profiles, custom formats, and other configurations.
 			</div>
 		</div>
 
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Adding an Instance</div>
 			<div class="mt-1">
-				To add an instance, you'll need the URL and API key from your Radarr or Sonarr
-				application. You can find the API key in Settings → General → Security.
+				To add an instance, you'll need the URL and API key from your Radarr or Sonarr application.
+				You can find the API key in Settings → General → Security.
 			</div>
 		</div>
 
@@ -215,8 +224,8 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Enabled/Disabled</div>
 			<div class="mt-1">
-				Disabled instances are excluded from sync operations but remain configured. This is
-				useful for temporarily pausing sync without removing the instance.
+				Disabled instances are excluded from sync operations but remain configured. This is useful
+				for temporarily pausing sync without removing the instance.
 			</div>
 		</div>
 	</div>

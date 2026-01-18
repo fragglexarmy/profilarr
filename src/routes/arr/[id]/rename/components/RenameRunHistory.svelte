@@ -139,7 +139,7 @@
 	}
 </script>
 
-<div class="-mx-8 bg-neutral-50 px-8 pb-6 pt-2 dark:bg-neutral-900">
+<div class="-mx-8 bg-neutral-50 px-8 pt-2 pb-6 dark:bg-neutral-900">
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search runs..." />
@@ -147,13 +147,7 @@
 			<!-- Date Filter -->
 			<ActionButton icon={Calendar} hasDropdown square title="Filter by date">
 				<Dropdown slot="dropdown" position="right">
-					{#each [
-						{ value: 'all', label: 'All time' },
-						{ value: 'today', label: 'Today' },
-						{ value: 'yesterday', label: 'Yesterday' },
-						{ value: 'week', label: 'Last 7 days' },
-						{ value: 'month', label: 'Last 30 days' }
-					] as option}
+					{#each [{ value: 'all', label: 'All time' }, { value: 'today', label: 'Today' }, { value: 'yesterday', label: 'Yesterday' }, { value: 'week', label: 'Last 7 days' }, { value: 'month', label: 'Last 30 days' }] as const as option}
 						<DropdownItem
 							label={option.label}
 							selected={dateFilter === option.value}
@@ -166,13 +160,7 @@
 			<!-- Status Filter -->
 			<ActionButton icon={CircleDot} hasDropdown square title="Filter by status">
 				<Dropdown slot="dropdown" position="right">
-					{#each [
-						{ value: 'all', label: 'All' },
-						{ value: 'success', label: 'Success' },
-						{ value: 'partial', label: 'Partial' },
-						{ value: 'failed', label: 'Failed' },
-						{ value: 'skipped', label: 'Skipped' }
-					] as option}
+					{#each [{ value: 'all', label: 'All' }, { value: 'success', label: 'Success' }, { value: 'partial', label: 'Partial' }, { value: 'failed', label: 'Failed' }, { value: 'skipped', label: 'Skipped' }] as const as option}
 						<DropdownItem
 							label={option.label}
 							selected={statusFilter === option.value}
@@ -292,7 +280,8 @@
 						{:else}
 							<span class="font-mono">{row.results.filesRenamed}</span>/<span class="font-mono"
 								>{row.results.filesNeedingRename}</span
-							> files renamed
+							>
+							files renamed
 							{#if row.results.foldersRenamed > 0}
 								, <span class="font-mono">{row.results.foldersRenamed}</span> folders
 							{/if}

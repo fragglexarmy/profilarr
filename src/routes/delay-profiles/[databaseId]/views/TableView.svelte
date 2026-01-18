@@ -61,15 +61,23 @@
 				html: `
 					<div>
 						<div class="font-medium">${row.name}</div>
-						${row.tags.length > 0 ? `
+						${
+							row.tags.length > 0
+								? `
 							<div class="mt-1 flex flex-wrap gap-1">
-								${row.tags.map(tag => `
+								${row.tags
+									.map(
+										(tag) => `
 									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 										${tag.name}
 									</span>
-								`).join('')}
+								`
+									)
+									.join('')}
 							</div>
-						` : ''}
+						`
+								: ''
+						}
 					</div>
 				`
 			})
@@ -121,7 +129,7 @@
 				return {
 					html: `
 						<div class="text-xs space-y-0.5">
-							${bypasses.map(b => `<div class="font-mono text-[10px] bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded inline-block">${b}</div>`).join('')}
+							${bypasses.map((b) => `<div class="font-mono text-[10px] bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded inline-block">${b}</div>`).join('')}
 						</div>
 					`
 				};

@@ -54,11 +54,11 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	queries.push(updateProfile);
 
 	// 2. Handle tag changes
-	const currentTagNames = current.tags.map(t => t.name);
+	const currentTagNames = current.tags.map((t) => t.name);
 	const newTagNames = input.tags;
 
 	// Tags to remove
-	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
+	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
 			sql: `DELETE FROM quality_profile_tags WHERE quality_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
@@ -69,7 +69,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	}
 
 	// Tags to add
-	const tagsToAdd = newTagNames.filter(t => !currentTagNames.includes(t));
+	const tagsToAdd = newTagNames.filter((t) => !currentTagNames.includes(t));
 	for (const tagName of tagsToAdd) {
 		// Insert tag if not exists
 		const insertTag = db

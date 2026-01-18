@@ -13,16 +13,7 @@ export async function list(cache: PCDCache) {
 	// 1. Get all test entities
 	const entities = await db
 		.selectFrom('test_entities')
-		.select([
-			'id',
-			'type',
-			'tmdb_id',
-			'title',
-			'year',
-			'poster_path',
-			'created_at',
-			'updated_at'
-		])
+		.select(['id', 'type', 'tmdb_id', 'title', 'year', 'poster_path', 'created_at', 'updated_at'])
 		.orderBy('title')
 		.execute();
 

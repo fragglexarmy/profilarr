@@ -204,7 +204,7 @@
 						aria-checked={enabled}
 						aria-label="Toggle enabled status"
 						on:click={() => (enabled = !enabled)}
-						class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {enabled
+						class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {enabled
 							? 'bg-blue-600 dark:bg-blue-500'
 							: 'bg-neutral-200 dark:bg-neutral-700'}"
 					>
@@ -230,10 +230,7 @@
 			<div class="space-y-4">
 				<!-- URL -->
 				<div>
-					<label
-						for="url"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
+					<label for="url" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 						URL <span class="text-red-500">*</span>
 					</label>
 					<input
@@ -264,7 +261,7 @@
 						on:input={resetConnectionStatus}
 						required
 						placeholder={mode === 'edit' ? 'Enter API key to test connection' : 'Enter API key'}
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
+						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
 					/>
 					{#if mode === 'edit'}
 						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
@@ -320,9 +317,7 @@
 		<div
 			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
 		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-				Tags
-			</h2>
+			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Tags</h2>
 
 			<label
 				for="tags-input"

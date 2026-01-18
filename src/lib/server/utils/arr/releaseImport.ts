@@ -15,9 +15,7 @@ import type { SonarrSeries, SonarrSeason, RadarrRelease, SonarrRelease } from '.
  * A season is considered finished when episodeCount === totalEpisodeCount
  */
 export function getFinishedSeasons(series: SonarrSeries): SonarrSeason[] {
-	return series.seasons.filter(
-		(s) => s.statistics.episodeCount === s.statistics.totalEpisodeCount
-	);
+	return series.seasons.filter((s) => s.statistics.episodeCount === s.statistics.totalEpisodeCount);
 }
 
 /**
@@ -84,11 +82,7 @@ export function sanitizeIndexerName(name: string): string {
  * - Trim
  */
 export function normalizeTitle(title: string): string {
-	return title
-		.toLowerCase()
-		.replace(/[._]/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim();
+	return title.toLowerCase().replace(/[._]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /**

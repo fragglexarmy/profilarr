@@ -101,9 +101,15 @@
 	}
 </script>
 
-<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 {flushBottom ? 'rounded-b-none border-b-0' : ''}">
+<div
+	class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 {flushBottom
+		? 'rounded-b-none border-b-0'
+		: ''}"
+>
 	<table class="w-full">
-		<thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800">
+		<thead
+			class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
+		>
 			<tr>
 				<!-- Expand column (left) -->
 				{#if chevronPosition === 'left'}
@@ -111,13 +117,20 @@
 				{/if}
 				{#each columns as column}
 					<th
-						class="{compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 {getAlignClass(column.align)} {column.width || ''}"
+						class="{compact
+							? 'px-4 py-2'
+							: 'px-6 py-3'} text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300 {getAlignClass(
+							column.align
+						)} {column.width || ''}"
 					>
 						{#if column.sortable}
 							<button
 								type="button"
 								on:click={() => handleSort(column)}
-								class="inline-flex items-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors {column.align === 'right' ? 'flex-row-reverse' : ''}"
+								class="inline-flex items-center gap-1 transition-colors hover:text-neutral-900 dark:hover:text-neutral-100 {column.align ===
+								'right'
+									? 'flex-row-reverse'
+									: ''}"
 							>
 								{column.header}
 								{#if sortState?.key === column.key}
@@ -136,7 +149,11 @@
 					</th>
 				{/each}
 				{#if $$slots.actions}
-					<th class="{compact ? 'px-4 py-2' : 'px-6 py-3'} w-20 text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300 text-right">
+					<th
+						class="{compact
+							? 'px-4 py-2'
+							: 'px-6 py-3'} w-20 text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300"
+					>
 						Actions
 					</th>
 				{/if}
@@ -178,7 +195,11 @@
 
 						{#each columns as column}
 							<td
-								class="{compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 {getAlignClass(column.align)} {column.width || ''}"
+								class="{compact
+									? 'px-4 py-2'
+									: 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 {getAlignClass(
+									column.align
+								)} {column.width || ''}"
 							>
 								<slot name="cell" {row} {column} {index} expanded={expandedRows.has(rowId)}>
 									{getCellValue(row, column.key)}
@@ -186,14 +207,17 @@
 							</td>
 						{/each}
 						{#if $$slots.actions}
-							<td class="{compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-right" on:click|stopPropagation>
+							<td
+								class="{compact ? 'px-4 py-2' : 'px-6 py-4'} text-right text-sm"
+								on:click|stopPropagation
+							>
 								<slot name="actions" {row} />
 							</td>
 						{/if}
 
 						<!-- Expand Icon (right) -->
 						{#if chevronPosition === 'right'}
-							<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400 text-right">
+							<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-right text-neutral-400">
 								{#if expandedRows.has(rowId)}
 									<ChevronUp size={16} class="inline-block" />
 								{:else}
@@ -206,8 +230,11 @@
 					<!-- Expanded Row -->
 					{#if expandedRows.has(rowId)}
 						<tr class="bg-neutral-50 dark:bg-neutral-800/30">
-							<td colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)} class="{flushExpanded ? '' : compact ? 'px-4 py-3' : 'px-6 py-4'}">
-								<div class="{flushExpanded ? '' : 'ml-6'}">
+							<td
+								colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)}
+								class={flushExpanded ? '' : compact ? 'px-4 py-3' : 'px-6 py-4'}
+							>
+								<div class={flushExpanded ? '' : 'ml-6'}>
 									<slot name="expanded" {row}>
 										<!-- Default expanded content -->
 										<div class="text-sm text-neutral-500 dark:text-neutral-400">

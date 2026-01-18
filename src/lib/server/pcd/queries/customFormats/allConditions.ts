@@ -43,64 +43,73 @@ export async function getAllConditionsForEvaluation(
 	const conditionKeys = conditions.map((c) => `${c.custom_format_name}|${c.name}`);
 
 	// Get all related data in parallel
-	const [patterns, languages, sources, resolutions, qualityModifiers, releaseTypes, indexerFlags, sizes, years] =
-		await Promise.all([
-			// Patterns with regex
-			db
-				.selectFrom('condition_patterns as cp')
-				.innerJoin('regular_expressions as re', 're.name', 'cp.regular_expression_name')
-				.select(['cp.custom_format_name', 'cp.condition_name', 're.name', 're.pattern'])
-				.execute(),
+	const [
+		patterns,
+		languages,
+		sources,
+		resolutions,
+		qualityModifiers,
+		releaseTypes,
+		indexerFlags,
+		sizes,
+		years
+	] = await Promise.all([
+		// Patterns with regex
+		db
+			.selectFrom('condition_patterns as cp')
+			.innerJoin('regular_expressions as re', 're.name', 'cp.regular_expression_name')
+			.select(['cp.custom_format_name', 'cp.condition_name', 're.name', 're.pattern'])
+			.execute(),
 
-			// Languages
-			db
-				.selectFrom('condition_languages as cl')
-				.innerJoin('languages as l', 'l.name', 'cl.language_name')
-				.select(['cl.custom_format_name', 'cl.condition_name', 'l.name', 'cl.except_language'])
-				.execute(),
+		// Languages
+		db
+			.selectFrom('condition_languages as cl')
+			.innerJoin('languages as l', 'l.name', 'cl.language_name')
+			.select(['cl.custom_format_name', 'cl.condition_name', 'l.name', 'cl.except_language'])
+			.execute(),
 
-			// Sources
-			db
-				.selectFrom('condition_sources')
-				.select(['custom_format_name', 'condition_name', 'source'])
-				.execute(),
+		// Sources
+		db
+			.selectFrom('condition_sources')
+			.select(['custom_format_name', 'condition_name', 'source'])
+			.execute(),
 
-			// Resolutions
-			db
-				.selectFrom('condition_resolutions')
-				.select(['custom_format_name', 'condition_name', 'resolution'])
-				.execute(),
+		// Resolutions
+		db
+			.selectFrom('condition_resolutions')
+			.select(['custom_format_name', 'condition_name', 'resolution'])
+			.execute(),
 
-			// Quality modifiers
-			db
-				.selectFrom('condition_quality_modifiers')
-				.select(['custom_format_name', 'condition_name', 'quality_modifier'])
-				.execute(),
+		// Quality modifiers
+		db
+			.selectFrom('condition_quality_modifiers')
+			.select(['custom_format_name', 'condition_name', 'quality_modifier'])
+			.execute(),
 
-			// Release types
-			db
-				.selectFrom('condition_release_types')
-				.select(['custom_format_name', 'condition_name', 'release_type'])
-				.execute(),
+		// Release types
+		db
+			.selectFrom('condition_release_types')
+			.select(['custom_format_name', 'condition_name', 'release_type'])
+			.execute(),
 
-			// Indexer flags
-			db
-				.selectFrom('condition_indexer_flags')
-				.select(['custom_format_name', 'condition_name', 'flag'])
-				.execute(),
+		// Indexer flags
+		db
+			.selectFrom('condition_indexer_flags')
+			.select(['custom_format_name', 'condition_name', 'flag'])
+			.execute(),
 
-			// Sizes
-			db
-				.selectFrom('condition_sizes')
-				.select(['custom_format_name', 'condition_name', 'min_bytes', 'max_bytes'])
-				.execute(),
+		// Sizes
+		db
+			.selectFrom('condition_sizes')
+			.select(['custom_format_name', 'condition_name', 'min_bytes', 'max_bytes'])
+			.execute(),
 
-			// Years
-			db
-				.selectFrom('condition_years')
-				.select(['custom_format_name', 'condition_name', 'min_year', 'max_year'])
-				.execute()
-		]);
+		// Years
+		db
+			.selectFrom('condition_years')
+			.select(['custom_format_name', 'condition_name', 'min_year', 'max_year'])
+			.execute()
+	]);
 
 	// Build lookup maps using composite key (custom_format_name|condition_name)
 	const patternsMap = new Map<string, { name: string; pattern: string }[]>();

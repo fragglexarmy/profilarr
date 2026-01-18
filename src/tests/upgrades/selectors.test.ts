@@ -5,7 +5,12 @@
 
 import { BaseTest } from '../base/BaseTest.ts';
 import { assertEquals, assert } from '@std/assert';
-import { selectors, getSelector, isValidSelector, getAllSelectorIds } from '../../lib/shared/selectors.ts';
+import {
+	selectors,
+	getSelector,
+	isValidSelector,
+	getAllSelectorIds
+} from '../../lib/shared/selectors.ts';
 
 interface MockItem {
 	id: number;
@@ -335,7 +340,11 @@ class SelectorsTest extends BaseTest {
 			const items = this.createMockItems();
 			for (const selector of selectors) {
 				const selected = selector.select(items, -5);
-				assertEquals(selected.length, 0, `${selector.id} should return empty array for negative count`);
+				assertEquals(
+					selected.length,
+					0,
+					`${selector.id} should return empty array for negative count`
+				);
 			}
 		});
 
@@ -358,9 +367,27 @@ class SelectorsTest extends BaseTest {
 		this.test('scenario: upgrade workflow with lowest score selector', () => {
 			// Simulate items that passed filter evaluation
 			const filteredItems: MockItem[] = [
-				{ id: 10, title: 'Needs Upgrade', dateAdded: '2023-01-01T00:00:00Z', score: 30, popularity: 100 },
-				{ id: 20, title: 'Almost There', dateAdded: '2023-02-01T00:00:00Z', score: 70, popularity: 200 },
-				{ id: 30, title: 'Very Low', dateAdded: '2023-03-01T00:00:00Z', score: 10, popularity: 150 },
+				{
+					id: 10,
+					title: 'Needs Upgrade',
+					dateAdded: '2023-01-01T00:00:00Z',
+					score: 30,
+					popularity: 100
+				},
+				{
+					id: 20,
+					title: 'Almost There',
+					dateAdded: '2023-02-01T00:00:00Z',
+					score: 70,
+					popularity: 200
+				},
+				{
+					id: 30,
+					title: 'Very Low',
+					dateAdded: '2023-03-01T00:00:00Z',
+					score: 10,
+					popularity: 150
+				},
 				{ id: 40, title: 'Medium', dateAdded: '2023-04-01T00:00:00Z', score: 50, popularity: 80 }
 			];
 

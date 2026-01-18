@@ -27,7 +27,7 @@ class JobScheduler {
 		// Then check periodically
 		this.intervalId = setInterval(async () => {
 			await this.checkAndRunJobs();
-		}, this.checkIntervalMs);
+		}, this.checkIntervalMs) as unknown as number;
 	}
 
 	/**

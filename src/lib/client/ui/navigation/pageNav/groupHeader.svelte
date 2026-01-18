@@ -1,20 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import type { Component } from 'svelte';
-	import type { IconProps } from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
 
-	interface Props {
-		label: string;
-		href: string;
-		icon?: Component<IconProps>;
-		isOpen: boolean;
-		hasItems: boolean;
-		onToggle: () => void;
-	}
+	export let label: string;
+	export let href: string;
+	export let icon: ComponentType | undefined = undefined;
+	export let isOpen: boolean;
+	export let hasItems: boolean;
+	export let onToggle: () => void;
 
-	let { label, href, icon, isOpen, hasItems, onToggle }: Props = $props();
-
-	const isActive = $derived($page.url.pathname === href || $page.url.pathname.startsWith(href + '/'));
+	$: isActive = $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
 </script>
 
 <div class="group/header flex items-center">

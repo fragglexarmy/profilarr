@@ -72,7 +72,9 @@
 	>
 		<!-- Modal -->
 		<div
-			class="relative flex w-full flex-col {sizeClasses[size]} {heightClasses[height]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
+			class="relative flex w-full flex-col {sizeClasses[size]} {heightClasses[
+				height
+			]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
 		>
 			<!-- Header -->
 			<div class="flex-shrink-0 border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
@@ -104,7 +106,9 @@
 					disabled={confirmDisabled}
 					class="{confirmDanger
 						? 'border border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
-						: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled ? 'cursor-not-allowed opacity-50' : ''}"
+						: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled
+						? 'cursor-not-allowed opacity-50'
+						: ''}"
 				>
 					<Check size={16} />
 					{confirmText}

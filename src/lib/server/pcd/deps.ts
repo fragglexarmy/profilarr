@@ -25,11 +25,7 @@ function getDependencyPath(pcdPath: string, repoName: string): string {
 /**
  * Clone and checkout a single dependency
  */
-async function cloneDependency(
-	pcdPath: string,
-	repoUrl: string,
-	version: string
-): Promise<void> {
+async function cloneDependency(pcdPath: string, repoUrl: string, version: string): Promise<void> {
 	const repoName = getRepoName(repoUrl);
 	const depPath = getDependencyPath(pcdPath, repoName);
 

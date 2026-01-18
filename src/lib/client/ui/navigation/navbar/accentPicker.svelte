@@ -28,10 +28,7 @@
 		class="flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-800"
 		aria-label="Select accent color"
 	>
-		<span
-			class="h-4 w-4 rounded-full"
-			style="background-color: {currentColor.color}"
-		></span>
+		<span class="h-4 w-4 rounded-full" style="background-color: {currentColor.color}"></span>
 	</button>
 
 	{#if open}

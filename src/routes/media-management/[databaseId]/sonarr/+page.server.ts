@@ -4,8 +4,15 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import * as mediaManagementQueries from '$pcd/queries/mediaManagement/index.ts';
-import type { PropersRepacks, ColonReplacementFormat, MultiEpisodeStyle } from '$lib/shared/mediaManagement.ts';
-import { COLON_REPLACEMENT_OPTIONS, MULTI_EPISODE_STYLE_OPTIONS } from '$lib/shared/mediaManagement.ts';
+import type {
+	PropersRepacks,
+	ColonReplacementFormat,
+	MultiEpisodeStyle
+} from '$lib/shared/mediaManagement.ts';
+import {
+	COLON_REPLACEMENT_OPTIONS,
+	MULTI_EPISODE_STYLE_OPTIONS
+} from '$lib/shared/mediaManagement.ts';
 import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = async ({ params }) => {
@@ -68,7 +75,11 @@ export const actions: Actions = {
 		const enableMediaInfo = formData.get('enableMediaInfo') === 'on';
 
 		// Validate propers_repacks
-		const validOptions: PropersRepacks[] = ['doNotPrefer', 'preferAndUpgrade', 'doNotUpgradeAutomatically'];
+		const validOptions: PropersRepacks[] = [
+			'doNotPrefer',
+			'preferAndUpgrade',
+			'doNotUpgradeAutomatically'
+		];
 		if (!validOptions.includes(propersRepacks)) {
 			await logger.warn('Invalid propers and repacks option', {
 				source: 'MediaManagement',
@@ -146,7 +157,7 @@ export const actions: Actions = {
 
 		// Validate colon replacement (only if replace illegal characters is on)
 		if (replaceIllegalCharacters) {
-			const validColonOptions = COLON_REPLACEMENT_OPTIONS.map(o => o.value);
+			const validColonOptions = COLON_REPLACEMENT_OPTIONS.map((o) => o.value);
 			if (!validColonOptions.includes(colonReplacement)) {
 				await logger.warn('Invalid colon replacement option', {
 					source: 'MediaManagement',
@@ -157,7 +168,7 @@ export const actions: Actions = {
 		}
 
 		// Validate multi-episode style
-		const validMultiEpisodeOptions = MULTI_EPISODE_STYLE_OPTIONS.map(o => o.value);
+		const validMultiEpisodeOptions = MULTI_EPISODE_STYLE_OPTIONS.map((o) => o.value);
 		if (!validMultiEpisodeOptions.includes(multiEpisodeStyle)) {
 			await logger.warn('Invalid multi-episode style option', {
 				source: 'MediaManagement',
@@ -178,7 +189,8 @@ export const actions: Actions = {
 				rename,
 				replace_illegal_characters: replaceIllegalCharacters,
 				colon_replacement_format: effectiveColonReplacement,
-				custom_colon_replacement_format: effectiveColonReplacement === 'custom' ? customColonReplacement : null,
+				custom_colon_replacement_format:
+					effectiveColonReplacement === 'custom' ? customColonReplacement : null,
 				standard_episode_format: standardEpisodeFormat,
 				daily_episode_format: dailyEpisodeFormat,
 				anime_episode_format: animeEpisodeFormat,
@@ -238,7 +250,12 @@ export const actions: Actions = {
 			return fail(400, { error: 'Missing definitions data' });
 		}
 
-		let definitions: { quality_name: string; min_size: number; max_size: number; preferred_size: number }[];
+		let definitions: {
+			quality_name: string;
+			min_size: number;
+			max_size: number;
+			preferred_size: number;
+		}[];
 		try {
 			definitions = JSON.parse(definitionsJson);
 		} catch {

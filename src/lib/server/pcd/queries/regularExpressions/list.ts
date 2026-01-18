@@ -27,11 +27,7 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 	const allTags = await db
 		.selectFrom('regular_expression_tags as ret')
 		.innerJoin('tags as t', 't.name', 'ret.tag_name')
-		.select([
-			'ret.regular_expression_name',
-			't.name as tag_name',
-			't.created_at as tag_created_at'
-		])
+		.select(['ret.regular_expression_name', 't.name as tag_name', 't.created_at as tag_created_at'])
 		.where('ret.regular_expression_name', 'in', expressionNames)
 		.orderBy('ret.regular_expression_name')
 		.orderBy('t.name')

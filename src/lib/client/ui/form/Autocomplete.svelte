@@ -141,7 +141,9 @@
 				on:blur={handleBlur}
 				on:keydown={handleKeydown}
 				{placeholder}
-				class="min-w-[120px] flex-1 border-0 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0 dark:text-neutral-100 dark:placeholder:text-neutral-500 {mono ? 'font-mono' : ''}"
+				class="min-w-[120px] flex-1 border-0 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0 dark:text-neutral-100 dark:placeholder:text-neutral-500 {mono
+					? 'font-mono'
+					: ''}"
 			/>
 		{/if}
 	</div>
@@ -156,7 +158,9 @@
 					type="button"
 					on:mousedown|preventDefault={() => selectOption(option)}
 					on:mouseenter={() => (highlightedIndex = index)}
-					class="w-full px-3 py-2 text-left text-sm transition-colors {mono ? 'font-mono' : ''} {highlightedIndex === index
+					class="w-full px-3 py-2 text-left text-sm transition-colors {mono
+						? 'font-mono'
+						: ''} {highlightedIndex === index
 						? 'bg-accent-100 text-accent-900 dark:bg-accent-900/30 dark:text-accent-100'
 						: 'text-neutral-900 hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700'}"
 				>

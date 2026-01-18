@@ -49,13 +49,13 @@
 		>
 			<tr>
 				<th
-					class="sticky left-0 z-10 bg-neutral-50 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+					class="sticky left-0 z-10 bg-neutral-50 px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-700 uppercase dark:bg-neutral-800 dark:text-neutral-300"
 				>
 					Custom Format
 				</th>
 				{#each arrTypes as arrType}
 					<th
-						class="w-64 px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300"
+						class="w-64 px-6 py-3 text-center text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300"
 					>
 						{arrType}
 					</th>
@@ -64,9 +64,7 @@
 		</thead>
 
 		<!-- Body -->
-		<tbody
-			class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900"
-		>
+		<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
 			{#if formats.length === 0}
 				<tr>
 					<td
@@ -83,7 +81,7 @@
 					)}
 					<tr
 						class="transition-colors {rowDisabled
-							? 'bg-neutral-100 dark:bg-neutral-800 opacity-60'
+							? 'bg-neutral-100 opacity-60 dark:bg-neutral-800'
 							: 'hover:bg-neutral-50 dark:hover:bg-neutral-900'}"
 					>
 						<td

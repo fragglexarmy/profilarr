@@ -60,11 +60,11 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	queries.push(updateRegex);
 
 	// 2. Handle tag changes
-	const currentTagNames = current.tags.map(t => t.name);
+	const currentTagNames = current.tags.map((t) => t.name);
 	const newTagNames = input.tags;
 
 	// Tags to remove
-	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
+	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
 			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
@@ -75,7 +75,7 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	}
 
 	// Tags to add
-	const tagsToAdd = newTagNames.filter(t => !currentTagNames.includes(t));
+	const tagsToAdd = newTagNames.filter((t) => !currentTagNames.includes(t));
 	for (const tagName of tagsToAdd) {
 		// Insert tag if not exists
 		const insertTag = db

@@ -52,7 +52,11 @@
 		on:click
 	>
 		{#if icon}
-			<svelte:component this={icon} size={20} class="text-neutral-700 dark:text-neutral-300 {iconClass}" />
+			<svelte:component
+				this={icon}
+				size={20}
+				class="text-neutral-700 dark:text-neutral-300 {iconClass}"
+			/>
 		{/if}
 		<slot />
 	</button>

@@ -31,7 +31,6 @@ function getTitle(log: UpgradeJobLog, manual: boolean = false): string {
 	return `${prefix} Upgrade ${statusMap[log.status] || 'Complete'}`;
 }
 
-
 /**
  * Format selector method for display
  */

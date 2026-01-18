@@ -42,15 +42,21 @@ export const load: ServerLoad = async ({ params }) => {
 
 	let t = performance.now();
 	const testEntities = await entityTestQueries.list(cache);
-	await logger.debug(`entityTestQueries.list: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
+	await logger.debug(`entityTestQueries.list: ${(performance.now() - t).toFixed(0)}ms`, {
+		source: 'EntityTesting'
+	});
 
 	t = performance.now();
 	const qualityProfiles = await qualityProfileQueries.select(cache);
-	await logger.debug(`qualityProfileQueries.select: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
+	await logger.debug(`qualityProfileQueries.select: ${(performance.now() - t).toFixed(0)}ms`, {
+		source: 'EntityTesting'
+	});
 
 	t = performance.now();
 	const cfScoresData = await qualityProfileQueries.allCfScores(cache);
-	await logger.debug(`qualityProfileQueries.allCfScores: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
+	await logger.debug(`qualityProfileQueries.allCfScores: ${(performance.now() - t).toFixed(0)}ms`, {
+		source: 'EntityTesting'
+	});
 
 	// Check if TMDB API key is configured
 	const tmdbSettings = tmdbSettingsQueries.get();
@@ -59,7 +65,9 @@ export const load: ServerLoad = async ({ params }) => {
 	// Check parser availability
 	t = performance.now();
 	const parserAvailable = await isParserHealthy();
-	await logger.debug(`isParserHealthy: ${(performance.now() - t).toFixed(0)}ms`, { source: 'EntityTesting' });
+	await logger.debug(`isParserHealthy: ${(performance.now() - t).toFixed(0)}ms`, {
+		source: 'EntityTesting'
+	});
 
 	// Get enabled Arr instances for release import
 	const arrInstances = arrInstancesQueries.getEnabled().map((instance) => ({
@@ -68,7 +76,9 @@ export const load: ServerLoad = async ({ params }) => {
 		type: instance.type as 'radarr' | 'sonarr'
 	}));
 
-	await logger.debug(`Total load time: ${(performance.now() - loadStart).toFixed(0)}ms`, { source: 'EntityTesting' });
+	await logger.debug(`Total load time: ${(performance.now() - loadStart).toFixed(0)}ms`, {
+		source: 'EntityTesting'
+	});
 
 	return {
 		databases,

@@ -1,50 +1,50 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { tick } from 'svelte';
+	import { tick, onMount } from 'svelte';
 	import { alertStore } from '$alerts/store';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { Trash2, Loader2, Check, X } from 'lucide-svelte';
-	import {
-		current,
-		isDirty,
-		initEdit,
-		initCreate,
-		update
-	} from '$lib/client/stores/dirty';
-
-	// Form data shape
-	interface TestFormData {
-		title: string;
-		type: 'movie' | 'series';
-		shouldMatch: boolean;
-		description: string;
-	}
+	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
 
 	// Props
 	export let mode: 'create' | 'edit';
 	export let formatName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
-	export let initialData: TestFormData;
+	export let initialData: {
+		title: string;
+		type: 'movie' | 'series';
+		shouldMatch: boolean;
+		description: string;
+	};
 
 	// Event handlers
 	export let onCancel: () => void;
 
-	// Initialize dirty tracking
-	const defaults: TestFormData = {
-		title: '',
-		type: 'movie',
-		shouldMatch: true,
-		description: ''
-	};
+	// Local form state
+	let title = initialData.title;
+	let type = initialData.type;
+	let shouldMatch = initialData.shouldMatch;
+	let description = initialData.description;
 
-	if (mode === 'create') {
-		initCreate(initialData ?? defaults);
-	} else {
-		initEdit(initialData);
-	}
+	// Initialize dirty tracking
+	onMount(() => {
+		const formData = { title, type, shouldMatch, description };
+		if (mode === 'create') {
+			initCreate(formData);
+		} else {
+			initEdit(formData);
+		}
+		return () => clear();
+	});
+
+	// Update dirty store when fields change
+	$: update('title', title);
+	$: update('type', type);
+	$: update('shouldMatch', shouldMatch);
+	$: update('description', description);
 
 	// Loading states
 	let saving = false;
@@ -62,17 +62,10 @@
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
 
-	// Reactive getters for current values
-	$: title = ($current.title ?? '') as string;
-	$: type = ($current.type ?? 'movie') as 'movie' | 'series';
-	$: shouldMatch = ($current.shouldMatch ?? true) as boolean;
-	$: description = ($current.description ?? '') as string;
-
 	// Display text based on mode
 	$: pageTitle = mode === 'create' ? 'New Test Case' : 'Edit Test Case';
-	$: pageDescription = mode === 'create'
-		? `Add a test case for ${formatName}`
-		: `Update test case settings`;
+	$: pageDescription =
+		mode === 'create' ? `Add a test case for ${formatName}` : `Update test case settings`;
 	$: submitButtonText = mode === 'create' ? 'Create' : 'Save Changes';
 
 	$: isValid = title.trim() !== '';
@@ -118,8 +111,16 @@
 	];
 
 	const matchOptions = [
-		{ value: true, label: 'Should Match', description: 'This title should match the custom format' },
-		{ value: false, label: 'Should NOT Match', description: 'This title should not match the custom format' }
+		{
+			value: true,
+			label: 'Should Match',
+			description: 'This title should match the custom format'
+		},
+		{
+			value: false,
+			label: 'Should NOT Match',
+			description: 'This title should not match the custom format'
+		}
 	];
 </script>
 
@@ -142,9 +143,12 @@
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
 				} else if (result.type === 'redirect') {
-					alertStore.add('success', mode === 'create' ? 'Test case created!' : 'Test case updated!');
-					// Mark as clean so navigation guard doesn't trigger
-					initEdit($current as TestFormData);
+					alertStore.add(
+						'success',
+						mode === 'create' ? 'Test case created!' : 'Test case updated!'
+					);
+					// Clear dirty state before redirect so navigation guard doesn't trigger
+					clear();
 				}
 				await formUpdate();
 				saving = false;
@@ -158,11 +162,16 @@
 		<input type="hidden" name="layer" value={selectedLayer} />
 		<input type="hidden" name="description" value={description} />
 
-		<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+		<div
+			class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+		>
 			<div class="space-y-6 p-4">
 				<!-- Title -->
 				<div>
-					<label for="title" class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+					<label
+						for="title"
+						class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+					>
 						Release Title <span class="text-red-500">*</span>
 					</label>
 					<input
@@ -170,9 +179,9 @@
 						id="title"
 						name="title"
 						value={title}
-						oninput={(e) => update('title', e.currentTarget.value)}
+						oninput={(e) => (title = e.currentTarget.value)}
 						placeholder="e.g., Movie.Name.2024.1080p.BluRay.x264-GROUP"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 					/>
 				</div>
 
@@ -185,14 +194,10 @@
 						{#each typeOptions as option}
 							<button
 								type="button"
-								onclick={() => update('type', option.value)}
-								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+								onclick={() => (type = option.value)}
+								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 							>
-								<IconCheckbox
-									icon={Check}
-									checked={type === option.value}
-									shape="circle"
-								/>
+								<IconCheckbox icon={Check} checked={type === option.value} shape="circle" />
 								<div>
 									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
 										{option.label}
@@ -215,8 +220,8 @@
 						{#each matchOptions as option}
 							<button
 								type="button"
-								onclick={() => update('shouldMatch', option.value)}
-								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+								onclick={() => (shouldMatch = option.value)}
+								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 							>
 								<IconCheckbox
 									icon={option.value ? Check : X}
@@ -242,13 +247,15 @@
 					label="Description"
 					placeholder="Why this test exists or what edge case it covers"
 					value={description}
-					onchange={(v) => update('description', v)}
+					onchange={(v) => (description = v)}
 					minRows={2}
 				/>
 			</div>
 
 			<!-- Actions -->
-			<div class="flex justify-between gap-2 border-t border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-800/50">
+			<div
+				class="flex justify-between gap-2 border-t border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-800/50"
+			>
 				<div>
 					{#if mode === 'edit'}
 						<button
@@ -305,7 +312,10 @@
 				deleting = true;
 				return async ({ result, update: formUpdate }) => {
 					if (result.type === 'failure' && result.data) {
-						alertStore.add('error', (result.data as { error?: string }).error || 'Failed to delete');
+						alertStore.add(
+							'error',
+							(result.data as { error?: string }).error || 'Failed to delete'
+						);
 					} else if (result.type === 'redirect') {
 						alertStore.add('success', 'Test case deleted');
 					}

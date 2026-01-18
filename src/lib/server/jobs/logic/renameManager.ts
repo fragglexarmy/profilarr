@@ -151,10 +151,7 @@ export async function runRenameManager(): Promise<RenameManagerResult> {
 
 		if (status.success) {
 			successCount++;
-		} else if (
-			status.error?.includes('disabled') ||
-			status.error?.includes('not yet supported')
-		) {
+		} else if (status.error?.includes('disabled') || status.error?.includes('not yet supported')) {
 			skippedCount++;
 		} else {
 			failureCount++;

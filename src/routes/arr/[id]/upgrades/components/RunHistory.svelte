@@ -111,7 +111,7 @@
 	};
 
 	function getRunNumber(row: UpgradeJobLog): number {
-		const originalIndex = runs.findIndex(r => r.id === row.id);
+		const originalIndex = runs.findIndex((r) => r.id === row.id);
 		return runs.length - originalIndex;
 	}
 
@@ -168,7 +168,7 @@
 	}
 </script>
 
-<div class="-mx-8 bg-neutral-50 px-8 pb-6 pt-2 dark:bg-neutral-900">
+<div class="-mx-8 bg-neutral-50 px-8 pt-2 pb-6 dark:bg-neutral-900">
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search runs..." />
@@ -176,13 +176,7 @@
 			<!-- Date Filter -->
 			<ActionButton icon={Calendar} hasDropdown square title="Filter by date">
 				<Dropdown slot="dropdown" position="right">
-					{#each [
-						{ value: 'all', label: 'All time' },
-						{ value: 'today', label: 'Today' },
-						{ value: 'yesterday', label: 'Yesterday' },
-						{ value: 'week', label: 'Last 7 days' },
-						{ value: 'month', label: 'Last 30 days' }
-					] as option}
+					{#each [{ value: 'all', label: 'All time' }, { value: 'today', label: 'Today' }, { value: 'yesterday', label: 'Yesterday' }, { value: 'week', label: 'Last 7 days' }, { value: 'month', label: 'Last 30 days' }] as const as option}
 						<DropdownItem
 							label={option.label}
 							selected={dateFilter === option.value}
@@ -213,13 +207,7 @@
 			<!-- Status Filter -->
 			<ActionButton icon={CircleDot} hasDropdown square title="Filter by status">
 				<Dropdown slot="dropdown" position="right">
-					{#each [
-						{ value: 'all', label: 'All' },
-						{ value: 'success', label: 'Success' },
-						{ value: 'partial', label: 'Partial' },
-						{ value: 'failed', label: 'Failed' },
-						{ value: 'skipped', label: 'Skipped' }
-					] as option}
+					{#each [{ value: 'all', label: 'All' }, { value: 'success', label: 'Success' }, { value: 'partial', label: 'Partial' }, { value: 'failed', label: 'Failed' }, { value: 'skipped', label: 'Skipped' }] as const as option}
 						<DropdownItem
 							label={option.label}
 							selected={statusFilter === option.value}
@@ -251,7 +239,9 @@
 						{row.config.selectedFilter || 'Unknown'}
 					</span>
 					{#if row.config.dryRun}
-						<span class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
+						<span
+							class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
+						>
 							DRY
 						</span>
 					{/if}
@@ -284,15 +274,21 @@
 			<div class="space-y-3 p-6">
 				<!-- Config -->
 				<div class="flex">
-					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400">Config</span>
+					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400"
+						>Config</span
+					>
 					<span class="text-sm text-neutral-900 dark:text-neutral-100">
-						Schedule: {formatSchedule(row.config.schedule)} | Mode: {formatFilterMode(row.config.filterMode)}
+						Schedule: {formatSchedule(row.config.schedule)} | Mode: {formatFilterMode(
+							row.config.filterMode
+						)}
 					</span>
 				</div>
 
 				<!-- Library -->
 				<div class="flex">
-					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400">Library</span>
+					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400"
+						>Library</span
+					>
 					<span class="text-sm text-neutral-900 dark:text-neutral-100">
 						<span class="font-mono">{row.library.totalItems.toLocaleString()}</span> items
 						{#if row.library.fetchedFromCache}
@@ -306,7 +302,9 @@
 
 				<!-- Filter -->
 				<div class="flex">
-					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400">Filter</span>
+					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400"
+						>Filter</span
+					>
 					<span class="text-sm text-neutral-900 dark:text-neutral-100">
 						"{row.filter.name}"
 						<span class="mx-1 text-neutral-400">&rarr;</span>
@@ -318,26 +316,41 @@
 
 				<!-- Selection -->
 				<div class="flex">
-					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400">Selection</span>
+					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400"
+						>Selection</span
+					>
 					<span class="text-sm text-neutral-900 dark:text-neutral-100">
 						{formatMethod(row.selection.method)}
-						<span class="font-mono font-medium">{row.selection.actualCount}</span> of <span class="font-mono">{row.selection.requestedCount}</span>
+						<span class="font-mono font-medium">{row.selection.actualCount}</span> of
+						<span class="font-mono">{row.selection.requestedCount}</span>
 					</span>
 				</div>
 
 				<!-- Results -->
 				<div class="flex">
-					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400">Results</span>
+					<span class="w-24 shrink-0 text-sm font-medium text-neutral-500 dark:text-neutral-400"
+						>Results</span
+					>
 					<span class="text-sm text-neutral-900 dark:text-neutral-100">
 						{#if row.config.dryRun}
 							<span class="font-mono">{row.results.searchesTriggered}</span> previewed,
-							<span class="{row.results.successful > 0 ? 'text-green-600 dark:text-green-400' : ''} font-mono">{row.results.successful}</span> upgrades found
+							<span
+								class="{row.results.successful > 0
+									? 'text-green-600 dark:text-green-400'
+									: ''} font-mono">{row.results.successful}</span
+							> upgrades found
 						{:else}
 							<span class="font-mono">{row.results.searchesTriggered}</span> searches triggered,
-							<span class="{row.results.successful > 0 ? 'text-green-600 dark:text-green-400' : ''} font-mono">{row.results.successful}</span> grabbed
+							<span
+								class="{row.results.successful > 0
+									? 'text-green-600 dark:text-green-400'
+									: ''} font-mono">{row.results.successful}</span
+							> grabbed
 						{/if}
 						{#if row.results.failed > 0}
-							<span class="font-mono text-red-600 dark:text-red-400">, {row.results.failed} failed</span>
+							<span class="font-mono text-red-600 dark:text-red-400"
+								>, {row.results.failed} failed</span
+							>
 						{/if}
 					</span>
 				</div>
@@ -352,7 +365,9 @@
 						{ key: 'formats', header: 'Formats', sortable: false }
 					]}
 					<div class="mt-4 border-t border-neutral-200 pt-4 dark:border-neutral-700">
-						<div class="mb-3 flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<div
+							class="mb-3 flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
 							<Search size={14} />
 							Items Searched
 						</div>
@@ -375,8 +390,8 @@
 										<span class="text-neutral-400">—</span>
 									{/if}
 								{:else if column.key === 'delta'}
-									{#if item.upgrade}
-										<Badge variant={item.scoreDelta && item.scoreDelta >= 0 ? 'success' : 'danger'} mono>
+									{#if item.upgrade && item.scoreDelta !== null}
+										<Badge variant={item.scoreDelta >= 0 ? 'success' : 'danger'} mono>
 											{item.scoreDelta >= 0 ? '+' : ''}{item.scoreDelta.toLocaleString()}
 										</Badge>
 									{:else}
@@ -398,20 +413,34 @@
 							<svelte:fragment slot="expanded" let:row={item}>
 								<div class="space-y-2 py-2 pl-2">
 									<div class="flex gap-2">
-										<span class="w-16 shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">Current:</span>
-										<span class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300" title={item.original.fileName}>
+										<span
+											class="w-16 shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400"
+											>Current:</span
+										>
+										<span
+											class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
+											title={item.original.fileName}
+										>
 											{item.original.fileName}
 										</span>
 									</div>
 									{#if item.upgrade}
 										<div class="flex gap-2">
-											<span class="w-16 shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">Upgrade:</span>
-											<span class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300" title={item.upgrade.release}>
+											<span
+												class="w-16 shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+												>Upgrade:</span
+											>
+											<span
+												class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
+												title={item.upgrade.release}
+											>
 												{item.upgrade.release}
 											</span>
 										</div>
 									{:else}
-										<div class="text-xs italic text-neutral-500 dark:text-neutral-400">No upgrade available</div>
+										<div class="text-xs text-neutral-500 italic dark:text-neutral-400">
+											No upgrade available
+										</div>
 									{/if}
 								</div>
 							</svelte:fragment>

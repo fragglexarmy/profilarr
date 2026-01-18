@@ -126,7 +126,8 @@
 					<DropdownItem
 						icon={Users}
 						label="Release Group"
-						on:click={() => goto(`/regular-expressions/${data.currentDatabase.id}/new?preset=release-group`)}
+						on:click={() =>
+							goto(`/regular-expressions/${data.currentDatabase.id}/new?preset=release-group`)}
 					/>
 				</Dropdown>
 			</svelte:fragment>
@@ -169,7 +170,8 @@
 			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">How It Works</h3>
 			<p>
 				Regular expressions in Profilarr are separated from custom formats to make them reusable.
-				When multiple custom formats share the same pattern, you only need to update it in one place.
+				When multiple custom formats share the same pattern, you only need to update it in one
+				place.
 			</p>
 			<p class="mt-2">
 				When custom formats are synced to your Arr instances, Profilarr compiles the referenced
@@ -181,8 +183,8 @@
 		<section>
 			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Regex Flavor</h3>
 			<p>
-				Radarr and Sonarr use the <strong>.NET regex engine</strong> (specifically .NET 6+).
-				Patterns are matched case-insensitively by default.
+				Radarr and Sonarr use the <strong>.NET regex engine</strong> (specifically .NET 6+). Patterns
+				are matched case-insensitively by default.
 			</p>
 		</section>
 
@@ -194,12 +196,14 @@
 					target="_blank"
 					rel="noopener noreferrer"
 					class="text-accent-600 hover:underline dark:text-accent-400">regex101.com</a
-				> to test your patterns. Make sure to select the <strong>.NET</strong> flavor from the dropdown
+				>
+				to test your patterns. Make sure to select the <strong>.NET</strong> flavor from the dropdown
 				for accurate results.
 			</p>
 			<p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-				Tip: When saving a regex101 link, include the version number (e.g., <code class="rounded bg-neutral-100 px-1 dark:bg-neutral-800">ABC123/1</code>)
-				to ensure it always points to your specific version.
+				Tip: When saving a regex101 link, include the version number (e.g., <code
+					class="rounded bg-neutral-100 px-1 dark:bg-neutral-800">ABC123/1</code
+				>) to ensure it always points to your specific version.
 			</p>
 		</section>
 	</div>

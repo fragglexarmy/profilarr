@@ -47,7 +47,7 @@
 	{#each profiles as profile}
 		<button
 			on:click={() => handleCardClick(profile)}
-			class="group relative flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 cursor-pointer"
+			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name and tags -->
 			<div>
@@ -55,7 +55,9 @@
 				{#if profile.tags.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each profile.tags as tag}
-							<span class="inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
+							<span
+								class="inline-flex items-center rounded bg-accent-100 px-1.5 py-0.5 font-mono text-[10px] text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+							>
 								{tag.name}
 							</span>
 						{/each}
@@ -65,7 +67,11 @@
 
 			<!-- Protocol badge -->
 			<div>
-				<span class="inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium {getProtocolColor(profile.preferred_protocol)}">
+				<span
+					class="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium {getProtocolColor(
+						profile.preferred_protocol
+					)}"
+				>
 					<Zap size={12} />
 					{formatProtocol(profile.preferred_protocol)}
 				</span>
@@ -76,29 +82,45 @@
 				{#if profile.usenet_delay !== null}
 					<div class="flex items-center gap-1">
 						<Clock size={12} />
-						<span>Usenet: <span class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 rounded text-neutral-900 dark:text-neutral-100">{formatDelay(profile.usenet_delay)}</span></span>
+						<span
+							>Usenet: <span
+								class="rounded bg-neutral-100 px-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+								>{formatDelay(profile.usenet_delay)}</span
+							></span
+						>
 					</div>
 				{/if}
 				{#if profile.torrent_delay !== null}
 					<div class="flex items-center gap-1">
 						<Clock size={12} />
-						<span>Torrent: <span class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 rounded text-neutral-900 dark:text-neutral-100">{formatDelay(profile.torrent_delay)}</span></span>
+						<span
+							>Torrent: <span
+								class="rounded bg-neutral-100 px-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+								>{formatDelay(profile.torrent_delay)}</span
+							></span
+						>
 					</div>
 				{/if}
 			</div>
 
 			<!-- Bypass conditions -->
 			{#if profile.bypass_if_highest_quality || profile.bypass_if_above_custom_format_score}
-				<div class="flex items-center gap-2 border-t border-neutral-100 pt-3 text-xs dark:border-neutral-800">
+				<div
+					class="flex items-center gap-2 border-t border-neutral-100 pt-3 text-xs dark:border-neutral-800"
+				>
 					<Shield size={12} class="text-neutral-400" />
 					<div class="flex flex-wrap gap-1">
 						{#if profile.bypass_if_highest_quality}
-							<span class="font-mono text-[10px] bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">
+							<span
+								class="rounded bg-green-100 px-1.5 py-0.5 font-mono text-[10px] text-green-800 dark:bg-green-900 dark:text-green-200"
+							>
 								Highest Quality
 							</span>
 						{/if}
 						{#if profile.bypass_if_above_custom_format_score && profile.minimum_custom_format_score !== null}
-							<span class="font-mono text-[10px] bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">
+							<span
+								class="rounded bg-green-100 px-1.5 py-0.5 font-mono text-[10px] text-green-800 dark:bg-green-900 dark:text-green-200"
+							>
 								CF ≥ {profile.minimum_custom_format_score}
 							</span>
 						{/if}

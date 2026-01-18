@@ -155,12 +155,19 @@ export class QualityProfileSyncer extends BaseSyncer {
 			}
 
 			// Fetch the quality profile
-			const pcdProfile = await fetchQualityProfileFromPcd(cache, selection.profileId, this.instanceType);
+			const pcdProfile = await fetchQualityProfileFromPcd(
+				cache,
+				selection.profileId,
+				this.instanceType
+			);
 			if (!pcdProfile) {
-				await logger.warn(`Quality profile ${selection.profileId} not found in database ${selection.databaseId}`, {
-					source: 'Sync:QualityProfiles',
-					meta: { instanceId: this.instanceId }
-				});
+				await logger.warn(
+					`Quality profile ${selection.profileId} not found in database ${selection.databaseId}`,
+					{
+						source: 'Sync:QualityProfiles',
+						meta: { instanceId: this.instanceId }
+					}
+				);
 				continue;
 			}
 

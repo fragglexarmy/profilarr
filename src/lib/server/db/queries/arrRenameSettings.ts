@@ -92,9 +92,7 @@ export const arrRenameSettingsQueries = {
 	 * Get all enabled rename settings
 	 */
 	getEnabled(): RenameSettings[] {
-		const rows = db.query<RenameSettingsRow>(
-			'SELECT * FROM arr_rename_settings WHERE enabled = 1'
-		);
+		const rows = db.query<RenameSettingsRow>('SELECT * FROM arr_rename_settings WHERE enabled = 1');
 		return rows.map(rowToSettings);
 	},
 
@@ -114,7 +112,8 @@ export const arrRenameSettingsQueries = {
 		const dryRun = input.dryRun !== undefined ? (input.dryRun ? 1 : 0) : 1;
 		const renameFolders = input.renameFolders !== undefined ? (input.renameFolders ? 1 : 0) : 0;
 		const ignoreTag = input.ignoreTag ?? null;
-		const summaryNotifications = input.summaryNotifications !== undefined ? (input.summaryNotifications ? 1 : 0) : 1;
+		const summaryNotifications =
+			input.summaryNotifications !== undefined ? (input.summaryNotifications ? 1 : 0) : 1;
 		const enabled = input.enabled !== undefined ? (input.enabled ? 1 : 0) : 0;
 		const schedule = input.schedule ?? 1440;
 

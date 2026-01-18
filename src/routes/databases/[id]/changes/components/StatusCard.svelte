@@ -78,11 +78,7 @@
 		<!-- Left: Repo info -->
 		<div class="flex items-center gap-4">
 			{#if repoInfo}
-				<img
-					src={repoInfo.ownerAvatarUrl}
-					alt={repoInfo.owner}
-					class="h-8 w-8 rounded-lg"
-				/>
+				<img src={repoInfo.ownerAvatarUrl} alt={repoInfo.owner} class="h-8 w-8 rounded-lg" />
 				<div class="flex flex-col gap-1">
 					<div class="flex items-center gap-2">
 						<code class="font-mono text-sm text-neutral-700 dark:text-neutral-300">
@@ -113,7 +109,9 @@
 					</div>
 				</div>
 			{:else}
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-700">
+				<div
+					class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-700"
+				>
 					<Database size={16} class="text-neutral-500 dark:text-neutral-400" />
 				</div>
 				<div class="flex flex-col gap-1">
@@ -166,15 +164,13 @@
 					<code class="font-mono text-neutral-700 dark:text-neutral-300">{status.branch}</code>
 					<ChevronDown
 						size={14}
-						class="text-neutral-400 transition-transform {branchDropdownOpen
-							? 'rotate-180'
-							: ''}"
+						class="text-neutral-400 transition-transform {branchDropdownOpen ? 'rotate-180' : ''}"
 					/>
 				</button>
 
 				{#if branchDropdownOpen}
 					<div
-						class="absolute right-0 top-full z-50 mt-1 max-h-60 w-48 overflow-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+						class="absolute top-full right-0 z-50 mt-1 max-h-60 w-48 overflow-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
 					>
 						{#each branches as branch}
 							<button
@@ -182,9 +178,11 @@
 								on:click={() => handleBranchSwitch(branch)}
 								class="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
 							>
-								<code class="font-mono {branch === status.branch
-									? 'text-blue-600 dark:text-blue-400'
-									: 'text-neutral-700 dark:text-neutral-300'}">{branch}</code>
+								<code
+									class="font-mono {branch === status.branch
+										? 'text-blue-600 dark:text-blue-400'
+										: 'text-neutral-700 dark:text-neutral-300'}">{branch}</code
+								>
 								{#if branch === status.branch}
 									<Check size={14} class="text-blue-600 dark:text-blue-400" />
 								{/if}

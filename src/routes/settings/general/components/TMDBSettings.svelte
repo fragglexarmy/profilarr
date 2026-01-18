@@ -51,9 +51,7 @@
 >
 	<!-- Header -->
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-			TMDB Configuration
-		</h2>
+		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">TMDB Configuration</h2>
 		<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 			Configure TMDB API access for searching movies and TV series.
 		</p>
@@ -91,12 +89,12 @@
 						name="api_key"
 						bind:value={settings.api_key}
 						placeholder="eyJhbGciOiJIUzI1NiJ9..."
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:focus:border-neutral-500 dark:focus:ring-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 					/>
 					<button
 						type="button"
 						on:click={() => (showApiKey = !showApiKey)}
-						class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+						class="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
 					>
 						{#if showApiKey}
 							<EyeOff size={16} />
@@ -106,7 +104,12 @@
 					</button>
 				</div>
 				<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-					Use the API Read Access Token (not API Key) from <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" class="text-accent-600 hover:underline dark:text-accent-400">themoviedb.org</a>
+					Use the API Read Access Token (not API Key) from <a
+						href="https://www.themoviedb.org/settings/api"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="text-accent-600 hover:underline dark:text-accent-400">themoviedb.org</a
+					>
 				</p>
 			</div>
 		</div>

@@ -76,11 +76,11 @@ export async function update(options: UpdateDelayProfileOptions) {
 	queries.push(updateProfile);
 
 	// 2. Handle tag changes
-	const currentTagNames = current.tags.map(t => t.name);
+	const currentTagNames = current.tags.map((t) => t.name);
 	const newTagNames = input.tags;
 
 	// Tags to remove
-	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
+	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
 			sql: `DELETE FROM delay_profile_tags WHERE delay_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
@@ -91,7 +91,7 @@ export async function update(options: UpdateDelayProfileOptions) {
 	}
 
 	// Tags to add
-	const tagsToAdd = newTagNames.filter(t => !currentTagNames.includes(t));
+	const tagsToAdd = newTagNames.filter((t) => !currentTagNames.includes(t));
 	for (const tagName of tagsToAdd) {
 		// Insert tag if not exists
 		const insertTag = db
@@ -130,10 +130,16 @@ export async function update(options: UpdateDelayProfileOptions) {
 		changes.torrentDelay = { from: current.torrent_delay, to: torrentDelay };
 	}
 	if (current.bypass_if_highest_quality !== input.bypassIfHighestQuality) {
-		changes.bypassIfHighestQuality = { from: current.bypass_if_highest_quality, to: input.bypassIfHighestQuality };
+		changes.bypassIfHighestQuality = {
+			from: current.bypass_if_highest_quality,
+			to: input.bypassIfHighestQuality
+		};
 	}
 	if (current.bypass_if_above_custom_format_score !== input.bypassIfAboveCfScore) {
-		changes.bypassIfAboveCfScore = { from: current.bypass_if_above_custom_format_score, to: input.bypassIfAboveCfScore };
+		changes.bypassIfAboveCfScore = {
+			from: current.bypass_if_above_custom_format_score,
+			to: input.bypassIfAboveCfScore
+		};
 	}
 	if (current.minimum_custom_format_score !== minimumCfScore) {
 		changes.minimumCfScore = { from: current.minimum_custom_format_score, to: minimumCfScore };

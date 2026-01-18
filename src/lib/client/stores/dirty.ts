@@ -91,11 +91,13 @@ export function resetFromServer<T extends FormData>(newServerData: T) {
 
 /**
  * Clear all state (call on unmount/navigation away)
+ * Sets both stores to same empty object so isDirty = false
  */
 export function clear() {
 	isNewMode.set(false);
-	originalSnapshot.set(null);
-	currentData.set({});
+	const empty = {};
+	originalSnapshot.set(empty);
+	currentData.set(empty);
 }
 
 /**

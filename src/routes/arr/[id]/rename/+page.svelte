@@ -85,11 +85,7 @@
 		</p>
 	</div>
 	<div slot="right" class="flex items-center gap-2">
-		<Button
-			text="How it works"
-			icon={Info}
-			on:click={() => (showInfoModal = true)}
-		/>
+		<Button text="How it works" icon={Info} on:click={() => (showInfoModal = true)} />
 		{#if !isNewConfig && data.settings?.dryRun}
 			<Button
 				text={running ? 'Running...' : 'Test Run'}
@@ -121,7 +117,9 @@
 
 <div class="mt-6 space-y-6">
 	<section>
-		<h2 class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+		<h2
+			class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+		>
 			<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
 			Settings
 		</h2>
@@ -138,7 +136,9 @@
 </div>
 
 <section class="mt-6">
-	<h2 class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+	<h2
+		class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+	>
 		<History size={18} class="text-neutral-500 dark:text-neutral-400" />
 		Run History
 	</h2>

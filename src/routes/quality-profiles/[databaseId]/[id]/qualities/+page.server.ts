@@ -42,7 +42,11 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(404, 'Quality profile not found');
 	}
 
-	const qualitiesData = await qualityProfileQueries.qualities(cache, currentDatabaseId, profile.name);
+	const qualitiesData = await qualityProfileQueries.qualities(
+		cache,
+		currentDatabaseId,
+		profile.name
+	);
 
 	return {
 		qualities: qualitiesData,
@@ -100,7 +104,7 @@ export const actions: Actions = {
 		}
 
 		// Validate: only one item can have upgradeUntil set to true
-		const upgradeUntilCount = orderedItems.filter(item => item.upgradeUntil).length;
+		const upgradeUntilCount = orderedItems.filter((item) => item.upgradeUntil).length;
 		if (upgradeUntilCount > 1) {
 			return fail(400, { error: 'Only one quality can be marked as "upgrade until"' });
 		}

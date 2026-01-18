@@ -1,5 +1,3 @@
-
-
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
@@ -225,10 +223,7 @@
 											? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200'
 											: 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200'}"
 									>
-										<svelte:component
-											this={service.enabled ? Bell : BellOff}
-											size={12}
-										/>
+										<svelte:component this={service.enabled ? Bell : BellOff} size={12} />
 										{service.enabled ? 'Enabled' : 'Disabled'}
 									</button>
 								</form>
@@ -255,7 +250,9 @@
 							>
 								{#if service.successCount + service.failedCount > 0}
 									<div class="text-xs">
-										<span class="text-green-600 dark:text-green-400">{service.successCount} sent</span>
+										<span class="text-green-600 dark:text-green-400"
+											>{service.successCount} sent</span
+										>
 										•
 										<span class="text-red-600 dark:text-red-400">{service.failedCount} failed</span>
 										•
@@ -279,7 +276,8 @@
 												if (result.type === 'failure' && result.data) {
 													alertStore.add(
 														'error',
-														(result.data as { error?: string }).error || 'Failed to send test notification'
+														(result.data as { error?: string }).error ||
+															'Failed to send test notification'
 													);
 												} else if (result.type === 'success') {
 													alertStore.add('success', 'Test notification sent successfully');

@@ -123,8 +123,14 @@
 	// ==========================================================================
 
 	const STORAGE_KEY = 'profilarr-library-columns';
-	const TOGGLEABLE_COLUMNS = ['qualityName', 'customFormatScore', 'progress', 'popularity', 'dateAdded'] as const;
-	type ToggleableColumn = typeof TOGGLEABLE_COLUMNS[number];
+	const TOGGLEABLE_COLUMNS = [
+		'qualityName',
+		'customFormatScore',
+		'progress',
+		'popularity',
+		'dateAdded'
+	] as const;
+	type ToggleableColumn = (typeof TOGGLEABLE_COLUMNS)[number];
 
 	function loadColumnVisibility(): Set<ToggleableColumn> {
 		if (!browser) return new Set(TOGGLEABLE_COLUMNS);
@@ -180,11 +186,18 @@
 
 	let activeFilters: ActiveFilter[] = [];
 
-	$: uniqueQualities = [...new Set(library.filter(m => m.qualityName).map(m => m.qualityName!))].sort();
-	$: uniqueProfiles = [...new Set(library.map(m => m.qualityProfileName))].sort();
+	$: uniqueQualities = [
+		...new Set(library.filter((m) => m.qualityName).map((m) => m.qualityName!))
+	].sort();
+	$: uniqueProfiles = [...new Set(library.map((m) => m.qualityProfileName))].sort();
 
-	function toggleFilter(field: FilterField, operator: FilterOperator, value: string | number | boolean, label: string) {
-		const existingIndex = activeFilters.findIndex(f => f.field === field && f.value === value);
+	function toggleFilter(
+		field: FilterField,
+		operator: FilterOperator,
+		value: string | number | boolean,
+		label: string
+	) {
+		const existingIndex = activeFilters.findIndex((f) => f.field === field && f.value === value);
 		if (existingIndex >= 0) {
 			activeFilters = activeFilters.filter((_, i) => i !== existingIndex);
 		} else {
@@ -202,10 +215,10 @@
 			filtersByField.set(filter.field, existing);
 		}
 
-		return items.filter(item => {
+		return items.filter((item) => {
 			return [...filtersByField.entries()].every(([field, filters]) => {
 				const itemValue = item[field];
-				return filters.some(filter => {
+				return filters.some((filter) => {
 					if (filter.operator === 'eq') return itemValue === filter.value;
 					if (filter.operator === 'neq') return itemValue !== filter.value;
 					return true;
@@ -224,8 +237,9 @@
 
 	$: moviesWithFiles = (() => {
 		const filters = activeFilters;
-		let result = allMoviesWithFiles
-			.filter((m) => !debouncedQuery || m.title.toLowerCase().includes(debouncedQuery.toLowerCase()));
+		let result = allMoviesWithFiles.filter(
+			(m) => !debouncedQuery || m.title.toLowerCase().includes(debouncedQuery.toLowerCase())
+		);
 		return applyFilters(result);
 	})();
 
@@ -233,18 +247,49 @@
 		{ key: 'title', header: 'Title', align: 'left', sortable: true },
 		{ key: 'qualityProfileName', header: 'Profile', align: 'left', width: 'w-40', sortable: true },
 		{ key: 'qualityName', header: 'Quality', align: 'left', width: 'w-32', sortable: true },
-		{ key: 'customFormatScore', header: 'Score', align: 'right', width: 'w-28', sortable: true, defaultSortDirection: 'desc' },
-		{ key: 'progress', header: 'Progress', align: 'center', width: 'w-40', sortable: true, sortAccessor: (row) => row.progress, defaultSortDirection: 'desc' },
-		{ key: 'popularity', header: 'Popularity', align: 'right', width: 'w-24', sortable: true, defaultSortDirection: 'desc' },
-		{ key: 'dateAdded', header: 'Added', align: 'right', width: 'w-28', sortable: true, sortAccessor: (row) => row.dateAdded ? new Date(row.dateAdded).getTime() : 0, defaultSortDirection: 'desc' },
+		{
+			key: 'customFormatScore',
+			header: 'Score',
+			align: 'right',
+			width: 'w-28',
+			sortable: true,
+			defaultSortDirection: 'desc'
+		},
+		{
+			key: 'progress',
+			header: 'Progress',
+			align: 'center',
+			width: 'w-40',
+			sortable: true,
+			sortAccessor: (row) => row.progress,
+			defaultSortDirection: 'desc'
+		},
+		{
+			key: 'popularity',
+			header: 'Popularity',
+			align: 'right',
+			width: 'w-24',
+			sortable: true,
+			defaultSortDirection: 'desc'
+		},
+		{
+			key: 'dateAdded',
+			header: 'Added',
+			align: 'right',
+			width: 'w-28',
+			sortable: true,
+			sortAccessor: (row) => (row.dateAdded ? new Date(row.dateAdded).getTime() : 0),
+			defaultSortDirection: 'desc'
+		},
 		{ key: 'actions', header: '', align: 'center', width: 'w-12' }
 	];
 
-	$: columns = allColumns.filter(col =>
-		col.key === 'title' ||
-		col.key === 'qualityProfileName' ||
-		col.key === 'actions' ||
-		visibleColumns.has(col.key as ToggleableColumn)
+	$: columns = allColumns.filter(
+		(col) =>
+			col.key === 'title' ||
+			col.key === 'qualityProfileName' ||
+			col.key === 'actions' ||
+			visibleColumns.has(col.key as ToggleableColumn)
 	);
 
 	const defaultSort: SortState = { key: 'title', direction: 'asc' };
@@ -277,7 +322,9 @@
 
 <div class="mt-6 space-y-6">
 	{#if libraryError && !loading}
-		<div class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/40">
+		<div
+			class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/40"
+		>
 			<div class="flex items-center gap-3">
 				<AlertTriangle class="h-5 w-5 text-red-600 dark:text-red-400" />
 				<div>
@@ -287,11 +334,15 @@
 			</div>
 		</div>
 	{:else if data.instance.type !== 'radarr'}
-		<div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+		<div
+			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
+		>
 			<div class="flex items-center gap-3">
 				<Film class="h-5 w-5 text-neutral-400" />
 				<div>
-					<h3 class="font-medium text-neutral-900 dark:text-neutral-50">Library view not yet available</h3>
+					<h3 class="font-medium text-neutral-900 dark:text-neutral-50">
+						Library view not yet available
+					</h3>
 					<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 						Library view is currently only supported for Radarr instances.
 					</p>
@@ -318,7 +369,9 @@
 		/>
 
 		{#if allMoviesWithFiles.length === 0 && !loading}
-			<div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+			<div
+				class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
+			>
 				<div class="flex items-center gap-3">
 					<Film class="h-5 w-5 text-neutral-400" />
 					<div>
@@ -337,7 +390,9 @@
 					getRowId={(row) => row.id}
 					compact={true}
 					{defaultSort}
-					emptyMessage={activeFilters.length > 0 || debouncedQuery ? 'No movies match the current filters' : 'No movies with files'}
+					emptyMessage={activeFilters.length > 0 || debouncedQuery
+						? 'No movies match the current filters'
+						: 'No movies with files'}
 				>
 					<svelte:fragment slot="cell" let:row let:column>
 						{#if loading}

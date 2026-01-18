@@ -148,10 +148,7 @@ export const upgradeRunsQueries = {
 	 * Get a single upgrade run by ID
 	 */
 	getById(id: string): UpgradeJobLog | undefined {
-		const row = db.queryFirst<UpgradeRunRow>(
-			'SELECT * FROM upgrade_runs WHERE id = ?',
-			id
-		);
+		const row = db.queryFirst<UpgradeRunRow>('SELECT * FROM upgrade_runs WHERE id = ?', id);
 		return row ? rowToLog(row) : undefined;
 	},
 
@@ -200,10 +197,7 @@ export const upgradeRunsQueries = {
 	 * Delete all runs for an instance
 	 */
 	deleteByInstanceId(instanceId: number): number {
-		return db.execute(
-			'DELETE FROM upgrade_runs WHERE instance_id = ?',
-			instanceId
-		);
+		return db.execute('DELETE FROM upgrade_runs WHERE instance_id = ?', instanceId);
 	},
 
 	/**

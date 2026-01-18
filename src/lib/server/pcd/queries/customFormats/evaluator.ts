@@ -5,7 +5,13 @@
 
 import { logger } from '$logger/logger.ts';
 import type { ParseResult } from '$lib/server/utils/arr/parser/types.ts';
-import { QualitySource, QualityModifier, Resolution, ReleaseType, Language } from '$lib/server/utils/arr/parser/types.ts';
+import {
+	QualitySource,
+	QualityModifier,
+	Resolution,
+	ReleaseType,
+	Language
+} from '$lib/server/utils/arr/parser/types.ts';
 import type { ConditionData } from './conditions.ts';
 
 export interface ConditionResult {
@@ -360,7 +366,10 @@ function evaluateResolution(condition: ConditionData, parsed: ParseResult): Cond
 /**
  * Evaluate quality modifier condition (Remux, etc.)
  */
-function evaluateQualityModifier(condition: ConditionData, parsed: ParseResult): ConditionEvalResult {
+function evaluateQualityModifier(
+	condition: ConditionData,
+	parsed: ParseResult
+): ConditionEvalResult {
 	if (!condition.qualityModifiers || condition.qualityModifiers.length === 0) {
 		return { matched: false, expected: 'No modifiers defined', actual: 'N/A' };
 	}
@@ -423,10 +432,7 @@ function evaluateYear(condition: ConditionData, parsed: ParseResult): ConditionE
  * Evaluate edition condition
  * Matches patterns against the PARSED edition only (not full title)
  */
-function evaluateEdition(
-	condition: ConditionData,
-	parsed: ParseResult
-): ConditionEvalResult {
+function evaluateEdition(condition: ConditionData, parsed: ParseResult): ConditionEvalResult {
 	if (!condition.patterns || condition.patterns.length === 0) {
 		return { matched: false, expected: 'No patterns defined', actual: 'N/A' };
 	}
@@ -458,10 +464,7 @@ function evaluateEdition(
  * Evaluate release group condition
  * Matches patterns against the PARSED release group only (not full title)
  */
-function evaluateReleaseGroup(
-	condition: ConditionData,
-	parsed: ParseResult
-): ConditionEvalResult {
+function evaluateReleaseGroup(condition: ConditionData, parsed: ParseResult): ConditionEvalResult {
 	if (!condition.patterns || condition.patterns.length === 0) {
 		return { matched: false, expected: 'No patterns defined', actual: 'N/A' };
 	}

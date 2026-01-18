@@ -81,9 +81,13 @@
 				<Badge variant="neutral" mono>{formatDuration(row.duration_ms)}</Badge>
 			{:else if column.key === 'output'}
 				{#if row.error}
-					<span class="line-clamp-1 text-xs font-mono text-red-600 dark:text-red-400">{row.error}</span>
+					<span class="line-clamp-1 font-mono text-xs text-red-600 dark:text-red-400"
+						>{row.error}</span
+					>
 				{:else if row.output}
-					<span class="line-clamp-1 text-xs font-mono text-neutral-600 dark:text-neutral-400">{row.output}</span>
+					<span class="line-clamp-1 font-mono text-xs text-neutral-600 dark:text-neutral-400"
+						>{row.output}</span
+					>
 				{:else}
 					<span class="text-neutral-400 dark:text-neutral-600">-</span>
 				{/if}

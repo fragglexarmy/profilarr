@@ -306,7 +306,7 @@
 						variant="danger"
 						size="sm"
 						on:click={(e) => {
-							const form = e.currentTarget.closest('form');
+							const form = (e.currentTarget as HTMLElement)?.closest('form');
 							if (form) openDeleteModal(row.filename, form);
 						}}
 					/>

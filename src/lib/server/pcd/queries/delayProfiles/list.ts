@@ -38,11 +38,7 @@ export async function list(cache: PCDCache): Promise<DelayProfileTableRow[]> {
 	const allTags = await db
 		.selectFrom('delay_profile_tags as dpt')
 		.innerJoin('tags as t', 't.name', 'dpt.tag_name')
-		.select([
-			'dpt.delay_profile_name',
-			't.name as tag_name',
-			't.created_at as tag_created_at'
-		])
+		.select(['dpt.delay_profile_name', 't.name as tag_name', 't.created_at as tag_created_at'])
 		.where('dpt.delay_profile_name', 'in', profileNames)
 		.orderBy('dpt.delay_profile_name')
 		.orderBy('t.name')

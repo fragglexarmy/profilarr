@@ -1,7 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import { Film, Tv, Loader2, Check, Server, CircuitBoard, ArrowDownAZ, ArrowUpAZ } from 'lucide-svelte';
+	import {
+		Film,
+		Tv,
+		Loader2,
+		Check,
+		Server,
+		CircuitBoard,
+		ArrowDownAZ,
+		ArrowUpAZ
+	} from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -187,7 +196,8 @@
 		selectedReleases = selectedReleases;
 	}
 
-	$: allFilteredSelected = filteredReleases.length > 0 && filteredReleases.every((r) => selectedReleases.has(r.title));
+	$: allFilteredSelected =
+		filteredReleases.length > 0 && filteredReleases.every((r) => selectedReleases.has(r.title));
 
 	// Find potential matches based on tmdbId or title
 	$: potentialMatches = entity
@@ -205,12 +215,14 @@
 	$: matchIds = new Set(potentialMatches.map((m) => m.id));
 
 	// Filter and sort library items (excluding matches)
-	$: filteredLibrary = ($searchStore.query
-		? libraryItems.filter((item) =>
-				!matchIds.has(item.id) &&
-				item.title.toLowerCase().includes($searchStore.query.toLowerCase())
-			)
-		: libraryItems.filter((item) => !matchIds.has(item.id))
+	$: filteredLibrary = (
+		$searchStore.query
+			? libraryItems.filter(
+					(item) =>
+						!matchIds.has(item.id) &&
+						item.title.toLowerCase().includes($searchStore.query.toLowerCase())
+				)
+			: libraryItems.filter((item) => !matchIds.has(item.id))
 	).sort((a, b) => a.title.localeCompare(b.title));
 
 	// Filter and sort releases
@@ -301,17 +313,19 @@
 		selectedSeason = null;
 	}
 
-	$: canConfirm = step === 1
-		? selectedItem !== null
-		: entity?.type === 'series' && selectedSeason === null
-			? false
-			: selectedReleases.size > 0;
+	$: canConfirm =
+		step === 1
+			? selectedItem !== null
+			: entity?.type === 'series' && selectedSeason === null
+				? false
+				: selectedReleases.size > 0;
 	$: confirmText = step === 1 ? 'Next' : `Import (${selectedReleases.size})`;
-	$: headerText = step === 1
-		? 'Import Releases'
-		: entity?.type === 'series' && selectedSeason === null
-			? 'Select Season'
-			: 'Select Releases';
+	$: headerText =
+		step === 1
+			? 'Import Releases'
+			: entity?.type === 'series' && selectedSeason === null
+				? 'Select Season'
+				: 'Select Releases';
 
 	// Build the releases JSON for form submission
 	$: releasesJson = JSON.stringify(
@@ -350,7 +364,9 @@
 						class="h-16 w-11 rounded object-cover"
 					/>
 				{:else}
-					<div class="flex h-16 w-11 items-center justify-center rounded bg-neutral-200 dark:bg-neutral-700">
+					<div
+						class="flex h-16 w-11 items-center justify-center rounded bg-neutral-200 dark:bg-neutral-700"
+					>
 						{#if entity.type === 'movie'}
 							<Film size={20} class="text-neutral-400" />
 						{:else}
@@ -373,10 +389,15 @@
 		{#if step === 1}
 			<!-- Step 1: Select Library Item -->
 			{#if filteredInstances.length === 0}
-				<div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
+				<div
+					class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800"
+				>
 					<p class="text-sm text-neutral-600 dark:text-neutral-300">
 						No {entity?.type === 'movie' ? 'Radarr' : 'Sonarr'} instances configured.
-						<a href="/settings/arr" class="font-medium text-accent-600 hover:underline dark:text-accent-400">
+						<a
+							href="/settings/arr"
+							class="font-medium text-accent-600 hover:underline dark:text-accent-400"
+						>
 							Configure in Settings
 						</a>
 					</p>
@@ -384,9 +405,16 @@
 			{:else}
 				<ActionsBar>
 					<SearchAction {searchStore} placeholder="Search library..." />
-					<ActionButton icon={Server} hasDropdown={true} dropdownPosition="right" square={!selectedInstance}>
+					<ActionButton
+						icon={Server}
+						hasDropdown={true}
+						dropdownPosition="right"
+						square={!selectedInstance}
+					>
 						{#if selectedInstance}
-							<span class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">{selectedInstance.name}</span>
+							<span class="ml-2 text-sm text-neutral-700 dark:text-neutral-300"
+								>{selectedInstance.name}</span
+							>
 						{/if}
 						<svelte:fragment slot="dropdown" let:dropdownPosition>
 							<Dropdown position={dropdownPosition}>
@@ -409,15 +437,21 @@
 							<Loader2 size={24} class="animate-spin text-neutral-400" />
 						</div>
 					{:else if libraryItems.length === 0}
-						<div class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700">
+						<div
+							class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700"
+						>
 							<p class="text-neutral-500 dark:text-neutral-400">No items found in library.</p>
 						</div>
 					{:else}
 						<!-- Potential Matches -->
 						{#if potentialMatches.length > 0}
 							<div class="space-y-2">
-								<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">Suggested Match</p>
-								<div class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
+								<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+									Suggested Match
+								</p>
+								<div
+									class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700"
+								>
 									<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 										{#each potentialMatches as item}
 											<button
@@ -426,7 +460,9 @@
 												on:click={() => (selectedItem = selectedItem?.id === item.id ? null : item)}
 											>
 												<div class="min-w-0 flex-1">
-													<p class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+													<p
+														class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
+													>
 														{item.title}
 													</p>
 													{#if item.year}
@@ -442,7 +478,9 @@
 								</div>
 							</div>
 						{:else}
-							<p class="text-xs text-neutral-500 dark:text-neutral-400 italic">This item might not be in your library. Select manually below.</p>
+							<p class="text-xs text-neutral-500 italic dark:text-neutral-400">
+								This item might not be in your library. Select manually below.
+							</p>
 						{/if}
 
 						<!-- All Items -->
@@ -450,7 +488,9 @@
 							{#if potentialMatches.length > 0}
 								<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">All Items</p>
 							{/if}
-							<div class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
+							<div
+								class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700"
+							>
 								<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 									{#each filteredLibrary as item}
 										<button
@@ -459,7 +499,9 @@
 											on:click={() => (selectedItem = selectedItem?.id === item.id ? null : item)}
 										>
 											<div class="min-w-0 flex-1">
-												<p class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+												<p
+													class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
+												>
 													{item.title}
 												</p>
 												{#if item.year}
@@ -477,7 +519,9 @@
 					{/if}
 				{:else}
 					<div class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700">
-						<p class="text-neutral-500 dark:text-neutral-400">Select an instance to load library.</p>
+						<p class="text-neutral-500 dark:text-neutral-400">
+							Select an instance to load library.
+						</p>
 					</div>
 				{/if}
 			{/if}
@@ -486,7 +530,9 @@
 			{#if entity?.type === 'series' && selectedSeason === null}
 				<!-- Season Selection for TV Series -->
 				<div class="space-y-3">
-					<p class="text-sm text-neutral-600 dark:text-neutral-400">Select a season to search for releases:</p>
+					<p class="text-sm text-neutral-600 dark:text-neutral-400">
+						Select a season to search for releases:
+					</p>
 					<div class="flex flex-wrap gap-2">
 						{#each selectedItem?.seasons || [] as season}
 							<button
@@ -502,7 +548,9 @@
 			{:else if loadingReleases}
 				<div class="flex flex-col items-center justify-center gap-2 p-8">
 					<Loader2 size={24} class="animate-spin text-neutral-400" />
-					<p class="text-sm text-neutral-500 dark:text-neutral-400">Searching indexers{entity?.type === 'series' ? ` for season ${selectedSeason}` : ''}...</p>
+					<p class="text-sm text-neutral-500 dark:text-neutral-400">
+						Searching indexers{entity?.type === 'series' ? ` for season ${selectedSeason}` : ''}...
+					</p>
 				</div>
 			{:else}
 				<!-- Season buttons for switching (TV series only) -->
@@ -511,7 +559,8 @@
 						{#each selectedItem.seasons as season}
 							<button
 								type="button"
-								class="rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors {selectedSeason === season
+								class="rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors {selectedSeason ===
+								season
 									? 'border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300'
 									: 'border-neutral-200 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800'}"
 								on:click={() => changeSeason(season)}
@@ -524,7 +573,11 @@
 
 				<ActionsBar>
 					<SearchAction searchStore={releaseSearchStore} placeholder="Search releases..." />
-					<ActionButton icon={sortDirection === 'asc' ? ArrowUpAZ : ArrowDownAZ} hasDropdown={true} dropdownPosition="right">
+					<ActionButton
+						icon={sortDirection === 'asc' ? ArrowUpAZ : ArrowDownAZ}
+						hasDropdown={true}
+						dropdownPosition="right"
+					>
 						<svelte:fragment slot="dropdown" let:dropdownPosition>
 							<Dropdown position={dropdownPosition}>
 								<DropdownItem
@@ -559,7 +612,9 @@
 
 				{#if releases.length === 0}
 					<div class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700">
-						<p class="text-neutral-500 dark:text-neutral-400">No releases found{entity?.type === 'series' ? ` for season ${selectedSeason}` : ''}.</p>
+						<p class="text-neutral-500 dark:text-neutral-400">
+							No releases found{entity?.type === 'series' ? ` for season ${selectedSeason}` : ''}.
+						</p>
 					</div>
 				{:else}
 					<div class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
@@ -575,10 +630,14 @@
 											{release.title}
 										</p>
 										<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-											<span class="font-mono text-xs text-neutral-500 dark:text-neutral-400">{formatSize(release.size)}</span>
+											<span class="font-mono text-xs text-neutral-500 dark:text-neutral-400"
+												>{formatSize(release.size)}</span
+											>
 											{#if release.languages.length > 0}
 												<span class="text-xs text-neutral-400">•</span>
-												<span class="text-xs text-neutral-500 dark:text-neutral-400">{release.languages.join(', ')}</span>
+												<span class="text-xs text-neutral-500 dark:text-neutral-400"
+													>{release.languages.join(', ')}</span
+												>
 											{/if}
 											{#each release.indexers as indexer}
 												<Badge variant="neutral">{indexer}</Badge>
@@ -607,18 +666,30 @@
 				saving = true;
 				return async ({ result, update }) => {
 					if (result.type === 'failure' && result.data) {
-						alertStore.add('error', (result.data as { error?: string }).error || 'Failed to import releases');
+						alertStore.add(
+							'error',
+							(result.data as { error?: string }).error || 'Failed to import releases'
+						);
 					} else if (result.type === 'success') {
 						const data = result.data as { added?: number; skipped?: number };
 						const added = data?.added ?? 0;
 						const skipped = data?.skipped ?? 0;
 
 						if (added === 0 && skipped > 0) {
-							alertStore.add('info', `All ${skipped} ${skipped === 1 ? 'release already exists' : 'releases already exist'}`);
+							alertStore.add(
+								'info',
+								`All ${skipped} ${skipped === 1 ? 'release already exists' : 'releases already exist'}`
+							);
 						} else if (skipped > 0) {
-							alertStore.add('success', `Imported ${added} ${added === 1 ? 'release' : 'releases'}, skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}`);
+							alertStore.add(
+								'success',
+								`Imported ${added} ${added === 1 ? 'release' : 'releases'}, skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}`
+							);
 						} else {
-							alertStore.add('success', `Imported ${added} ${added === 1 ? 'release' : 'releases'}`);
+							alertStore.add(
+								'success',
+								`Imported ${added} ${added === 1 ? 'release' : 'releases'}`
+							);
 						}
 						open = false;
 						resetState();

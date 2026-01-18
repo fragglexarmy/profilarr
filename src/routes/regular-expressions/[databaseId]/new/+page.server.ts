@@ -102,7 +102,7 @@ export const actions: Actions = {
 		// Check for duplicate name
 		const existingExpressions = await regularExpressionQueries.list(cache);
 		const duplicate = existingExpressions.find(
-			e => e.name.toLowerCase() === name.trim().toLowerCase()
+			(e) => e.name.toLowerCase() === name.trim().toLowerCase()
 		);
 		if (duplicate) {
 			return fail(400, { error: `A regular expression named "${name.trim()}" already exists` });

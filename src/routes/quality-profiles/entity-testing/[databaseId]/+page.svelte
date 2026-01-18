@@ -92,7 +92,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					databaseId: data.currentDatabase.id,
-					releases: entity.releases.map(r => ({
+					releases: entity.releases.map((r) => ({
 						id: r.id,
 						title: r.title,
 						type: entity.type
@@ -288,7 +288,9 @@
 	}
 
 	// Release modal handlers
-	function handleAddRelease(e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number }>) {
+	function handleAddRelease(
+		e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number }>
+	) {
 		releaseEntityType = e.detail.entityType;
 		releaseEntityTmdbId = e.detail.entityTmdbId;
 		releaseModalMode = 'create';
@@ -296,7 +298,9 @@
 		showReleaseModal = true;
 	}
 
-	function handleEditRelease(e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number; release: TestRelease }>) {
+	function handleEditRelease(
+		e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number; release: TestRelease }>
+	) {
 		releaseEntityType = e.detail.entityType;
 		releaseEntityTmdbId = e.detail.entityTmdbId;
 		releaseModalMode = 'edit';
@@ -305,7 +309,9 @@
 	}
 
 	// Release delete handlers
-	function handleConfirmDeleteRelease(e: CustomEvent<{ release: TestRelease; formRef: HTMLFormElement }>) {
+	function handleConfirmDeleteRelease(
+		e: CustomEvent<{ release: TestRelease; formRef: HTMLFormElement }>
+	) {
 		releaseToDelete = e.detail.release;
 		deleteReleaseFormRef = e.detail.formRef;
 		showDeleteReleaseModal = true;
@@ -368,9 +374,16 @@
 	<ActionsBar>
 		<SearchAction searchStore={search} placeholder={searchPlaceholder} />
 		<ActionButton icon={Plus} on:click={() => (showAddModal = true)} />
-		<ActionButton icon={Sliders} hasDropdown={true} dropdownPosition="right" square={!selectedProfile}>
+		<ActionButton
+			icon={Sliders}
+			hasDropdown={true}
+			dropdownPosition="right"
+			square={!selectedProfile}
+		>
 			{#if selectedProfile}
-				<span class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">{selectedProfile.name}</span>
+				<span class="ml-2 text-sm text-neutral-700 dark:text-neutral-300"
+					>{selectedProfile.name}</span
+				>
 			{/if}
 			<Dropdown slot="dropdown" position="right">
 				<DropdownItem
@@ -439,7 +452,7 @@
 				cfScoresData={data.cfScoresData}
 				{calculateScore}
 				{deleteLayer}
-				deleteReleaseLayer={deleteReleaseLayer}
+				{deleteReleaseLayer}
 				bind:expandedRows
 				on:expand={handleExpand}
 				on:confirmDelete={handleConfirmDelete}
@@ -457,31 +470,42 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Adding Entities</div>
 			<p class="mt-1">
-				Add movies or TV series from TMDB to use as test cases. These represent the media you want to simulate release matching for.
+				Add movies or TV series from TMDB to use as test cases. These represent the media you want
+				to simulate release matching for.
 			</p>
 		</div>
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Test Releases</div>
 			<p class="mt-1">
-				For each entity, add test releases with realistic release titles (e.g., "Movie.2024.1080p.BluRay.REMUX-GROUP"). You can also specify size, languages, indexers, and flags.
+				For each entity, add test releases with realistic release titles (e.g.,
+				"Movie.2024.1080p.BluRay.REMUX-GROUP"). You can also specify size, languages, indexers, and
+				flags.
 			</p>
 		</div>
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Quality Profile Scoring</div>
 			<p class="mt-1">
-				Select a quality profile from the dropdown to see how each release would score. The score is calculated by matching custom formats and summing their configured point values.
+				Select a quality profile from the dropdown to see how each release would score. The score is
+				calculated by matching custom formats and summing their configured point values.
 			</p>
 		</div>
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Custom Format Matching</div>
 			<p class="mt-1">
-				Expand a release row to see parsed metadata and which custom formats matched. Each matched format shows its score contribution, helping you understand why a release scored the way it did.
+				Expand a release row to see parsed metadata and which custom formats matched. Each matched
+				format shows its score contribution, helping you understand why a release scored the way it
+				did.
 			</p>
 		</div>
 	</div>
 </InfoModal>
 
-<AddEntityModal bind:open={showAddModal} existingEntities={data.testEntities} canWriteToBase={data.canWriteToBase} tmdbConfigured={data.tmdbConfigured} />
+<AddEntityModal
+	bind:open={showAddModal}
+	existingEntities={data.testEntities}
+	canWriteToBase={data.canWriteToBase}
+	tmdbConfigured={data.tmdbConfigured}
+/>
 
 <Modal
 	bind:open={showDeleteModal}
@@ -532,4 +556,9 @@
 	/>
 {/if}
 
-<ImportReleasesModal bind:open={showImportModal} entity={importEntity} arrInstances={data.arrInstances} canWriteToBase={data.canWriteToBase} />
+<ImportReleasesModal
+	bind:open={showImportModal}
+	entity={importEntity}
+	arrInstances={data.arrInstances}
+	canWriteToBase={data.canWriteToBase}
+/>

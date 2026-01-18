@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Plus, Pencil, Check, Info, Power, Copy, ClipboardCopy, ClipboardPaste, Trash2 } from 'lucide-svelte';
+	import {
+		Plus,
+		Pencil,
+		Check,
+		Info,
+		Power,
+		Copy,
+		ClipboardCopy,
+		ClipboardPaste,
+		Trash2
+	} from 'lucide-svelte';
 	import { createEmptyFilterConfig, type FilterConfig } from '$lib/shared/filters';
 	import { selectors } from '$lib/shared/selectors';
 	import { createSearchStore } from '$lib/client/stores/search';
@@ -33,9 +43,7 @@
 
 	let expandedIds: Set<string> = new Set();
 
-	const columns: Column<FilterConfig>[] = [
-		{ key: 'name', header: 'Name', sortable: true }
-	];
+	const columns: Column<FilterConfig>[] = [{ key: 'name', header: 'Name', sortable: true }];
 	let editingId: string | null = null;
 	let editingName: string = '';
 
@@ -160,7 +168,7 @@
 	}
 </script>
 
-<div class="-mx-8 bg-neutral-50 px-8 pb-6 pt-2 dark:bg-neutral-900">
+<div class="-mx-8 bg-neutral-50 px-8 pt-2 pb-6 dark:bg-neutral-900">
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search filters..." />
@@ -192,11 +200,17 @@
 						autofocus
 					/>
 				{:else}
-					<span class="{row.enabled ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-500'}">
+					<span
+						class={row.enabled
+							? 'text-neutral-900 dark:text-neutral-100'
+							: 'text-neutral-400 dark:text-neutral-500'}
+					>
 						{row.name}
 					</span>
 					{#if !row.enabled}
-						<span class="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400">
+						<span
+							class="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"
+						>
 							Disabled
 						</span>
 					{/if}
@@ -217,7 +231,9 @@
 					<Button
 						text={row.enabled ? 'Disable' : 'Enable'}
 						icon={Power}
-						iconColor={row.enabled ? 'text-green-600 dark:text-green-400' : 'text-neutral-400 dark:text-neutral-500'}
+						iconColor={row.enabled
+							? 'text-green-600 dark:text-green-400'
+							: 'text-neutral-400 dark:text-neutral-500'}
 						on:click={() => toggleEnabled(row.id)}
 					/>
 					<Button
@@ -259,7 +275,9 @@
 				<FilterGroupComponent group={row.group} on:change={handleChange} />
 
 				<!-- Selection Settings -->
-				<div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+				<div
+					class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+				>
 					<h3 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Settings</h3>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 						<div>
@@ -270,7 +288,14 @@
 								Cutoff %
 							</label>
 							<div class="mt-1">
-								<NumberInput name="cutoff-{row.id}" bind:value={row.cutoff} min={0} max={100} font="mono" on:change={handleChange} />
+								<NumberInput
+									name="cutoff-{row.id}"
+									bind:value={row.cutoff}
+									min={0}
+									max={100}
+									font="mono"
+									on:change={handleChange}
+								/>
 							</div>
 							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 								Score threshold for "cutoff met"
@@ -284,7 +309,13 @@
 								Cooldown (hours)
 							</label>
 							<div class="mt-1">
-								<NumberInput name="cooldown-{row.id}" bind:value={row.searchCooldown} min={24} font="mono" on:change={handleChange} />
+								<NumberInput
+									name="cooldown-{row.id}"
+									bind:value={row.searchCooldown}
+									min={24}
+									font="mono"
+									on:change={handleChange}
+								/>
 							</div>
 							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 								Skip if searched recently
@@ -301,7 +332,7 @@
 								id="selector-{row.id}"
 								bind:value={row.selector}
 								on:change={handleChange}
-								class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+								class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 							>
 								{#each selectors as s}
 									<option value={s.id}>{s.label} - {s.description}</option>
@@ -316,7 +347,14 @@
 								Count
 							</label>
 							<div class="mt-1">
-								<NumberInput name="count-{row.id}" bind:value={row.count} min={1} max={5} font="mono" on:change={handleChange} />
+								<NumberInput
+									name="count-{row.id}"
+									bind:value={row.count}
+									min={1}
+									max={5}
+									font="mono"
+									on:change={handleChange}
+								/>
 							</div>
 							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 								Items to select per run

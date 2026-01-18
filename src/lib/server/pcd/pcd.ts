@@ -49,7 +49,12 @@ class PCDManager {
 
 		try {
 			// Clone the repository and detect if it's private
-			const isPrivate = await clone(options.repositoryUrl, localPath, options.branch, options.personalAccessToken);
+			const isPrivate = await clone(
+				options.repositoryUrl,
+				localPath,
+				options.branch,
+				options.personalAccessToken
+			);
 
 			// Validate manifest (loadManifest throws if invalid)
 			await loadManifest(localPath);

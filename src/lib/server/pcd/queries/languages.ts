@@ -27,7 +27,7 @@ export function list(cache: PCDCache): Language[] {
     ORDER BY name
   `);
 
-	return languages.map(lang => ({
+	return languages.map((lang) => ({
 		id: lang.id,
 		name: lang.name
 	}));

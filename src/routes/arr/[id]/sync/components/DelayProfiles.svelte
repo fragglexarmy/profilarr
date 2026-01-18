@@ -99,7 +99,9 @@
 	}
 </script>
 
-<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+<div
+	class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+>
 	<!-- Header -->
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
 		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Delay Profiles</h2>
@@ -134,7 +136,9 @@
 												state[database.id][profile.id] = !state[database.id][profile.id];
 											}}
 										/>
-										<code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-sm text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">
+										<code
+											class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-sm text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
+										>
 											{profile.name}
 										</code>
 									</div>
@@ -147,5 +151,13 @@
 		{/if}
 	</div>
 
-	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} {isDirty} on:save={handleSave} on:sync={handleSync} />
+	<SyncFooter
+		bind:syncTrigger
+		bind:cronExpression
+		{saving}
+		{syncing}
+		{isDirty}
+		on:save={handleSave}
+		on:sync={handleSync}
+	/>
 </div>

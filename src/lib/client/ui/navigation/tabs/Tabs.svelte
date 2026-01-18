@@ -53,7 +53,7 @@
 			<div class="flex items-center gap-2 text-sm">
 				<a
 					href={breadcrumb.parent.href}
-					class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+					class="text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
 				>
 					{breadcrumb.parent.label}
 				</a>

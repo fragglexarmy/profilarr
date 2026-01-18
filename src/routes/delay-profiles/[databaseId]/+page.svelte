@@ -46,7 +46,10 @@
 		<SearchAction searchStore={search} placeholder="Search delay profiles..." />
 		<ViewToggle bind:value={$view} />
 		<ActionButton icon={Info} on:click={() => (showInfoModal = true)} />
-		<ActionButton icon={Plus} on:click={() => goto(`/delay-profiles/${data.currentDatabase.id}/new`)} />
+		<ActionButton
+			icon={Plus}
+			on:click={() => goto(`/delay-profiles/${data.currentDatabase.id}/new`)}
+		/>
 	</ActionsBar>
 
 	<!-- Delay Profiles Content -->
@@ -63,9 +66,7 @@
 			<div
 				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 			>
-				<p class="text-neutral-600 dark:text-neutral-400">
-					No delay profiles match your search
-				</p>
+				<p class="text-neutral-600 dark:text-neutral-400">No delay profiles match your search</p>
 			</div>
 		{:else if $view === 'table'}
 			<TableView profiles={$filtered} />
@@ -78,21 +79,28 @@
 <InfoModal bind:open={showInfoModal} header="How Delay Profile Sync Works">
 	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Replaces Existing Profiles</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">
+				Replaces Existing Profiles
+			</div>
 			<p class="mt-1">
-				When syncing, all existing delay profiles on the arr instance are deleted and replaced with the ones you've selected. The default profile (which cannot be deleted) is preserved.
+				When syncing, all existing delay profiles on the arr instance are deleted and replaced with
+				the ones you've selected. The default profile (which cannot be deleted) is preserved.
 			</p>
 		</div>
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Selection Order = Priority</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">
+				Selection Order = Priority
+			</div>
 			<p class="mt-1">
-				The order you select profiles determines their priority. The first profile in your selection list gets the highest priority (order 1), the second gets order 2, and so on.
+				The order you select profiles determines their priority. The first profile in your selection
+				list gets the highest priority (order 1), the second gets order 2, and so on.
 			</p>
 		</div>
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Tag-Based Matching</div>
 			<p class="mt-1">
-				Delay profiles use tags to apply to specific series/movies. When multiple profiles match (via tags), the one with the lowest order number takes precedence.
+				Delay profiles use tags to apply to specific series/movies. When multiple profiles match
+				(via tags), the one with the lowest order number takes precedence.
 			</p>
 		</div>
 	</div>

@@ -62,7 +62,9 @@ export const actions: Actions = {
 
 		// Check for duplicate name
 		const existingFormats = await customFormatQueries.list(cache);
-		const duplicate = existingFormats.find(f => f.name.toLowerCase() === name.trim().toLowerCase());
+		const duplicate = existingFormats.find(
+			(f) => f.name.toLowerCase() === name.trim().toLowerCase()
+		);
 		if (duplicate) {
 			return fail(400, { error: `A custom format named "${name.trim()}" already exists` });
 		}
@@ -105,7 +107,7 @@ export const actions: Actions = {
 
 		// Get the new format ID by looking it up by name
 		const formats = await customFormatQueries.list(freshCache);
-		const newFormat = formats.find(f => f.name === name.trim());
+		const newFormat = formats.find((f) => f.name === name.trim());
 
 		if (newFormat) {
 			// Redirect to conditions page so user can add conditions

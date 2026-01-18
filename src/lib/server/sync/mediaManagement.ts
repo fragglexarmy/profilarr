@@ -21,7 +21,12 @@ import { getRadarr, getSonarr } from '$pcd/queries/mediaManagement/get.ts';
 import type { MediaSettings, RadarrNaming, SonarrNaming } from '$lib/shared/mediaManagement.ts';
 import type { QualityDefinition } from '$pcd/queries/mediaManagement/types.ts';
 import { colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
-import type { ArrType, ArrPropersAndRepacks, RadarrNamingConfig, SonarrNamingConfig } from '$arr/types.ts';
+import type {
+	ArrType,
+	ArrPropersAndRepacks,
+	RadarrNamingConfig,
+	SonarrNamingConfig
+} from '$arr/types.ts';
 import { logger } from '$logger/logger.ts';
 
 export class MediaManagementSyncer extends BaseSyncer {
@@ -208,7 +213,10 @@ export class MediaManagementSyncer extends BaseSyncer {
 		return false;
 	}
 
-	private async syncRadarrNaming(cache: ReturnType<typeof getCache>, databaseId: number): Promise<boolean> {
+	private async syncRadarrNaming(
+		cache: ReturnType<typeof getCache>,
+		databaseId: number
+	): Promise<boolean> {
 		if (!cache) return false;
 
 		const naming = (await getRadarr(cache)).naming;
@@ -221,7 +229,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 		}
 
 		// GET existing config
-		const existingConfig = await this.client.getNamingConfig() as RadarrNamingConfig;
+		const existingConfig = (await this.client.getNamingConfig()) as RadarrNamingConfig;
 
 		// Transform and update
 		const updatedConfig: RadarrNamingConfig = {
@@ -246,7 +254,10 @@ export class MediaManagementSyncer extends BaseSyncer {
 		return true;
 	}
 
-	private async syncSonarrNaming(cache: ReturnType<typeof getCache>, databaseId: number): Promise<boolean> {
+	private async syncSonarrNaming(
+		cache: ReturnType<typeof getCache>,
+		databaseId: number
+	): Promise<boolean> {
 		if (!cache) return false;
 
 		const naming = (await getSonarr(cache)).naming;
@@ -259,7 +270,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 		}
 
 		// GET existing config
-		const existingConfig = await this.client.getNamingConfig() as SonarrNamingConfig;
+		const existingConfig = (await this.client.getNamingConfig()) as SonarrNamingConfig;
 
 		// Transform and update - Sonarr uses integers for enums
 		const updatedConfig: SonarrNamingConfig = {
@@ -327,7 +338,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 		const arrDefinitions = await this.client.getQualityDefinitions();
 
 		// Build map of ARR quality name (lowercase) -> definition
-		const arrDefMap = new Map<string, typeof arrDefinitions[0]>();
+		const arrDefMap = new Map<string, (typeof arrDefinitions)[0]>();
 		for (const def of arrDefinitions) {
 			if (def.quality.name) {
 				arrDefMap.set(def.quality.name.toLowerCase(), def);

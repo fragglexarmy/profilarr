@@ -24,7 +24,9 @@
 </script>
 
 <span
-	class="inline-flex items-center gap-1 rounded font-medium {variantClasses[variant]} {sizeClasses[size]} {mono ? 'font-mono' : ''}"
+	class="inline-flex items-center gap-1 rounded font-medium {variantClasses[variant]} {sizeClasses[
+		size
+	]} {mono ? 'font-mono' : ''}"
 >
 	{#if icon}
 		<svelte:component this={icon} size={iconSize} />

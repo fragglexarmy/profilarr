@@ -10,12 +10,7 @@
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { CONDITION_TYPES } from '$lib/shared/conditionTypes';
-	import {
-		current,
-		isDirty,
-		initEdit,
-		update
-	} from '$lib/client/stores/dirty';
+	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 	import type { ConditionData } from '$pcd/queries/customFormats/index';
 
@@ -32,7 +27,10 @@
 
 	// Build initial data from server, adding stable keys
 	$: initialData = {
-		conditions: data.conditions.map((c) => ({ ...structuredClone(c), _key: genKey() })) as KeyedCondition[],
+		conditions: data.conditions.map((c) => ({
+			...structuredClone(c),
+			_key: genKey()
+		})) as KeyedCondition[],
 		draftConditions: [] as KeyedCondition[]
 	};
 
@@ -114,7 +112,7 @@
 			acc[type].push(condition);
 			return acc;
 		},
-		{} as Record<string, ConditionData[]>
+		{} as Record<string, KeyedCondition[]>
 	);
 
 	// Get ordered types (only those that have conditions)
@@ -125,11 +123,17 @@
 	}));
 
 	function handleRemove(key: string) {
-		update('conditions', conditions.filter((c) => c._key !== key));
+		update(
+			'conditions',
+			conditions.filter((c) => c._key !== key)
+		);
 	}
 
 	function handleConditionChange(updatedCondition: ConditionData, key: string) {
-		update('conditions', conditions.map((c) => c._key === key ? { ...updatedCondition, _key: key } : c));
+		update(
+			'conditions',
+			conditions.map((c) => (c._key === key ? { ...updatedCondition, _key: key } : c))
+		);
 	}
 
 	function addDraftCondition() {
@@ -145,17 +149,26 @@
 	}
 
 	function handleDraftChange(updatedDraft: ConditionData, key: string) {
-		update('draftConditions', draftConditions.map((d) => d._key === key ? { ...updatedDraft, _key: key } : d));
+		update(
+			'draftConditions',
+			draftConditions.map((d) => (d._key === key ? { ...updatedDraft, _key: key } : d))
+		);
 	}
 
 	function confirmDraft(draft: KeyedCondition) {
 		// Remove from drafts and add to main conditions
-		update('draftConditions', draftConditions.filter((d) => d._key !== draft._key));
+		update(
+			'draftConditions',
+			draftConditions.filter((d) => d._key !== draft._key)
+		);
 		update('conditions', [...conditions, draft]);
 	}
 
 	function discardDraft(key: string) {
-		update('draftConditions', draftConditions.filter((d) => d._key !== key));
+		update(
+			'draftConditions',
+			draftConditions.filter((d) => d._key !== key)
+		);
 	}
 
 	async function handleSaveClick() {
@@ -230,12 +243,7 @@
 						Missing required values
 					</span>
 				{/if}
-				<Button
-					text="Add Condition"
-					icon={Plus}
-					variant="secondary"
-					on:click={addDraftCondition}
-				/>
+				<Button text="Add Condition" icon={Plus} variant="secondary" on:click={addDraftCondition} />
 				<Button
 					text={saving ? 'Saving...' : 'Save Changes'}
 					icon={saving ? Loader2 : Save}
@@ -248,7 +256,6 @@
 	</StickyCard>
 
 	<div class="mt-6 space-y-6 px-4 pb-12">
-
 		<!-- Draft conditions -->
 		{#if draftConditions.length > 0}
 			<div class="space-y-2">

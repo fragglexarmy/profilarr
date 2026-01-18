@@ -15,7 +15,11 @@ import type {
 	RadarrNaming,
 	RadarrColonReplacementFormat
 } from '$lib/shared/mediaManagement.ts';
-import { colonReplacementToDb, multiEpisodeStyleToDb, radarrColonReplacementToDb } from '$lib/shared/mediaManagement.ts';
+import {
+	colonReplacementToDb,
+	multiEpisodeStyleToDb,
+	radarrColonReplacementToDb
+} from '$lib/shared/mediaManagement.ts';
 
 // ============================================================================
 // MEDIA SETTINGS
@@ -184,31 +188,58 @@ export async function updateSonarrNaming(options: UpdateSonarrNamingOptions) {
 		changes.rename = { from: current.rename, to: input.rename };
 	}
 	if (current.replace_illegal_characters !== input.replace_illegal_characters) {
-		changes.replace_illegal_characters = { from: current.replace_illegal_characters, to: input.replace_illegal_characters };
+		changes.replace_illegal_characters = {
+			from: current.replace_illegal_characters,
+			to: input.replace_illegal_characters
+		};
 	}
 	if (current.colon_replacement_format !== input.colon_replacement_format) {
-		changes.colon_replacement_format = { from: current.colon_replacement_format, to: input.colon_replacement_format };
+		changes.colon_replacement_format = {
+			from: current.colon_replacement_format,
+			to: input.colon_replacement_format
+		};
 	}
 	if (current.custom_colon_replacement_format !== input.custom_colon_replacement_format) {
-		changes.custom_colon_replacement_format = { from: current.custom_colon_replacement_format, to: input.custom_colon_replacement_format };
+		changes.custom_colon_replacement_format = {
+			from: current.custom_colon_replacement_format,
+			to: input.custom_colon_replacement_format
+		};
 	}
 	if (current.standard_episode_format !== input.standard_episode_format) {
-		changes.standard_episode_format = { from: current.standard_episode_format, to: input.standard_episode_format };
+		changes.standard_episode_format = {
+			from: current.standard_episode_format,
+			to: input.standard_episode_format
+		};
 	}
 	if (current.daily_episode_format !== input.daily_episode_format) {
-		changes.daily_episode_format = { from: current.daily_episode_format, to: input.daily_episode_format };
+		changes.daily_episode_format = {
+			from: current.daily_episode_format,
+			to: input.daily_episode_format
+		};
 	}
 	if (current.anime_episode_format !== input.anime_episode_format) {
-		changes.anime_episode_format = { from: current.anime_episode_format, to: input.anime_episode_format };
+		changes.anime_episode_format = {
+			from: current.anime_episode_format,
+			to: input.anime_episode_format
+		};
 	}
 	if (current.series_folder_format !== input.series_folder_format) {
-		changes.series_folder_format = { from: current.series_folder_format, to: input.series_folder_format };
+		changes.series_folder_format = {
+			from: current.series_folder_format,
+			to: input.series_folder_format
+		};
 	}
 	if (current.season_folder_format !== input.season_folder_format) {
-		changes.season_folder_format = { from: current.season_folder_format, to: input.season_folder_format };
+		changes.season_folder_format = {
+			from: current.season_folder_format,
+			to: input.season_folder_format
+		};
 	}
 	if (current.multi_episode_style !== input.multi_episode_style) {
-		changes.multi_episode_style = { from: current.multi_episode_style, to: input.multi_episode_style };
+		changes.multi_episode_style = {
+			from: current.multi_episode_style,
+			to: input.multi_episode_style
+		};
 	}
 
 	await logger.info('Save sonarr naming settings', {
@@ -277,16 +308,25 @@ export async function updateRadarrNaming(options: UpdateRadarrNamingOptions) {
 		changes.rename = { from: current.rename, to: input.rename };
 	}
 	if (current.replace_illegal_characters !== input.replace_illegal_characters) {
-		changes.replace_illegal_characters = { from: current.replace_illegal_characters, to: input.replace_illegal_characters };
+		changes.replace_illegal_characters = {
+			from: current.replace_illegal_characters,
+			to: input.replace_illegal_characters
+		};
 	}
 	if (current.colon_replacement_format !== input.colon_replacement_format) {
-		changes.colon_replacement_format = { from: current.colon_replacement_format, to: input.colon_replacement_format };
+		changes.colon_replacement_format = {
+			from: current.colon_replacement_format,
+			to: input.colon_replacement_format
+		};
 	}
 	if (current.movie_format !== input.movie_format) {
 		changes.movie_format = { from: current.movie_format, to: input.movie_format };
 	}
 	if (current.movie_folder_format !== input.movie_folder_format) {
-		changes.movie_folder_format = { from: current.movie_folder_format, to: input.movie_folder_format };
+		changes.movie_folder_format = {
+			from: current.movie_folder_format,
+			to: input.movie_folder_format
+		};
 	}
 
 	await logger.info('Save radarr naming settings', {
@@ -360,19 +400,21 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 			changes[currentDef.quality_name] = defChanges as { from: unknown; to: unknown };
 		}
 
-		return db
-			.updateTable('radarr_quality_definitions')
-			.set({
-				min_size: def.min_size,
-				max_size: def.max_size,
-				preferred_size: def.preferred_size
-			})
-			.where('quality_name', '=', def.quality_name)
-			// Value guards
-			.where('min_size', '=', currentDef.min_size)
-			.where('max_size', '=', currentDef.max_size)
-			.where('preferred_size', '=', currentDef.preferred_size)
-			.compile();
+		return (
+			db
+				.updateTable('radarr_quality_definitions')
+				.set({
+					min_size: def.min_size,
+					max_size: def.max_size,
+					preferred_size: def.preferred_size
+				})
+				.where('quality_name', '=', def.quality_name)
+				// Value guards
+				.where('min_size', '=', currentDef.min_size)
+				.where('max_size', '=', currentDef.max_size)
+				.where('preferred_size', '=', currentDef.preferred_size)
+				.compile()
+		);
 	});
 
 	await logger.info('Save radarr quality definitions', {
@@ -425,19 +467,21 @@ export async function updateSonarrQualityDefinitions(options: UpdateQualityDefin
 			changes[currentDef.quality_name] = defChanges as { from: unknown; to: unknown };
 		}
 
-		return db
-			.updateTable('sonarr_quality_definitions')
-			.set({
-				min_size: def.min_size,
-				max_size: def.max_size,
-				preferred_size: def.preferred_size
-			})
-			.where('quality_name', '=', def.quality_name)
-			// Value guards
-			.where('min_size', '=', currentDef.min_size)
-			.where('max_size', '=', currentDef.max_size)
-			.where('preferred_size', '=', currentDef.preferred_size)
-			.compile();
+		return (
+			db
+				.updateTable('sonarr_quality_definitions')
+				.set({
+					min_size: def.min_size,
+					max_size: def.max_size,
+					preferred_size: def.preferred_size
+				})
+				.where('quality_name', '=', def.quality_name)
+				// Value guards
+				.where('min_size', '=', currentDef.min_size)
+				.where('max_size', '=', currentDef.max_size)
+				.where('preferred_size', '=', currentDef.preferred_size)
+				.compile()
+		);
 	});
 
 	await logger.info('Save sonarr quality definitions', {

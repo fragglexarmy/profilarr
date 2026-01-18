@@ -15,7 +15,8 @@
 		enabledTypes?: string[];
 	} = {};
 
-	let selectedType: 'discord' | 'slack' | 'email' = (initialData.serviceType as 'discord') || 'discord';
+	let selectedType: 'discord' | 'slack' | 'email' =
+		(initialData.serviceType as 'discord') || 'discord';
 	let serviceName = initialData.name || '';
 
 	// Group notification types by category
@@ -47,7 +48,10 @@
 					(result.data as { error?: string }).error || `Failed to ${mode} service`
 				);
 			} else if (result.type === 'redirect') {
-				alertStore.add('success', `Notification service ${mode === 'create' ? 'created' : 'updated'} successfully`);
+				alertStore.add(
+					'success',
+					`Notification service ${mode === 'create' ? 'created' : 'updated'} successfully`
+				);
 			}
 			await update();
 		};
@@ -58,17 +62,12 @@
 	<div
 		class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
 	>
-		<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-			Basic Settings
-		</h2>
+		<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Basic Settings</h2>
 
 		<div class="space-y-4">
 			<!-- Service Type -->
 			<div>
-				<label
-					for="type"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
+				<label for="type" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 					Service Type
 					<span class="text-red-500">*</span>
 				</label>
@@ -91,7 +90,7 @@
 						bind:value={selectedType}
 						required
 						disabled={mode === 'edit'}
-						class="block w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
+						class="block w-full rounded-lg border border-neutral-300 bg-white py-2 pr-3 pl-10 text-sm text-neutral-900 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 					>
 						<option value="discord">Discord</option>
 					</select>
@@ -105,10 +104,7 @@
 
 			<!-- Service Name -->
 			<div>
-				<label
-					for="name"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
+				<label for="name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 					Service Name
 					<span class="text-red-500">*</span>
 				</label>
@@ -119,7 +115,7 @@
 					bind:value={serviceName}
 					required
 					placeholder="e.g., Main Discord Server"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
+					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-500"
 				/>
 				<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 					A friendly name to identify this notification service
@@ -130,7 +126,7 @@
 
 	<!-- Service Configuration -->
 	{#if selectedType === 'discord'}
-		<DiscordConfiguration config={initialData.config} mode={mode} />
+		<DiscordConfiguration config={initialData.config} {mode} />
 	{/if}
 
 	<!-- Notification Types -->
@@ -158,7 +154,11 @@
 									checked={enabledTypesState[type.id]}
 									on:click={() => (enabledTypesState[type.id] = !enabledTypesState[type.id])}
 								/>
-								<input type="hidden" name={type.id} value={enabledTypesState[type.id] ? 'on' : ''} />
+								<input
+									type="hidden"
+									name={type.id}
+									value={enabledTypesState[type.id] ? 'on' : ''}
+								/>
 								<button
 									type="button"
 									class="text-sm text-neutral-700 dark:text-neutral-300"

@@ -45,7 +45,9 @@
 			class="relative w-full max-w-lg rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
 		>
 			<!-- Header -->
-			<div class="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
+			<div
+				class="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800"
+			>
 				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{header}</h2>
 				<button
 					type="button"

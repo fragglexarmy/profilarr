@@ -369,9 +369,21 @@ export const arrSyncQueries = {
 		);
 
 		return {
-			qualityProfiles: qp.map((r) => ({ instanceId: r.instance_id, cron: r.cron, nextRunAt: r.next_run_at })),
-			delayProfiles: dp.map((r) => ({ instanceId: r.instance_id, cron: r.cron, nextRunAt: r.next_run_at })),
-			mediaManagement: mm.map((r) => ({ instanceId: r.instance_id, cron: r.cron, nextRunAt: r.next_run_at }))
+			qualityProfiles: qp.map((r) => ({
+				instanceId: r.instance_id,
+				cron: r.cron,
+				nextRunAt: r.next_run_at
+			})),
+			delayProfiles: dp.map((r) => ({
+				instanceId: r.instance_id,
+				cron: r.cron,
+				nextRunAt: r.next_run_at
+			})),
+			mediaManagement: mm.map((r) => ({
+				instanceId: r.instance_id,
+				cron: r.cron,
+				nextRunAt: r.next_run_at
+			}))
 		};
 	},
 

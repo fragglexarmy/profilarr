@@ -1,55 +1,58 @@
 {
-  "imports": {
-    "$lib/": "./src/lib/",
-    "$api/": "./src/lib/api/",
-    "$config": "./src/lib/server/utils/config/config.ts",
-    "$logger/": "./src/lib/server/utils/logger/",
-    "$shared/": "./src/lib/shared/",
-    "$stores/": "./src/lib/client/stores/",
-    "$ui/": "./src/lib/client/ui/",
-    "$assets/": "./src/lib/client/assets/",
-    "$alerts/": "./src/lib/client/alerts/",
-    "$server/": "./src/server/",
-    "$db/": "./src/lib/server/db/",
-    "$jobs/": "./src/lib/server/jobs/",
-    "$pcd/": "./src/lib/server/pcd/",
-    "$arr/": "./src/lib/server/utils/arr/",
-    "$http/": "./src/lib/server/utils/http/",
-    "$utils/": "./src/lib/server/utils/",
-    "$notifications/": "./src/lib/server/notifications/",
-    "$cache/": "./src/lib/server/utils/cache/",
-    "@soapbox/kysely-deno-sqlite": "jsr:@soapbox/kysely-deno-sqlite@^2.2.0",
-    "@std/assert": "jsr:@std/assert@^1.0.0",
-    "marked": "npm:marked@^15.0.6",
-    "simple-icons": "npm:simple-icons@^15.17.0",
-    "highlight.js": "npm:highlight.js@^11.11.1",
-    "croner": "npm:croner@^8.1.2",
-    "@std/yaml": "jsr:@std/yaml@^1.0.10"
-  },
-  "tasks": {
-    "dev": "deno run -A scripts/dev.ts",
-    "dev:vite": "DENO_ENV=development PORT=6969 HOST=0.0.0.0 APP_BASE_PATH=./dist/dev PARSER_HOST=localhost PARSER_PORT=5000 deno run -A npm:vite dev",
-    "dev:parser": "cd src/services/parser && dotnet watch run --urls http://localhost:5000",
-    "build": "APP_BASE_PATH=./dist/build deno run -A npm:vite build && deno compile --no-check --allow-net --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-sys --target x86_64-unknown-linux-gnu --output dist/build/profilarr dist/build/mod.ts",
-    "build:windows": "APP_BASE_PATH=./dist/build deno run -A npm:vite build && deno compile --no-check --allow-net --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-sys --target x86_64-pc-windows-msvc --output dist/windows/profilarr.exe dist/build/mod.ts",
-    "preview": "PORT=6868 HOST=0.0.0.0 APP_BASE_PATH=./dist/dev PARSER_HOST=localhost PARSER_PORT=5000 ./dist/build/profilarr",
-    "format": "prettier --write .",
-    "lint": "prettier --check . && eslint .",
-    "test": "APP_BASE_PATH=./dist/test deno test src/tests --allow-read --allow-write --allow-env",
-    "test:watch": "APP_BASE_PATH=./dist/test deno test src/tests --allow-read --allow-write --allow-env --watch",
-    "generate:api-types": "npx openapi-typescript docs/api/v1/openapi.yaml -o src/lib/api/v1.d.ts"
-  },
-  "compilerOptions": {
-    "lib": ["deno.window", "dom"],
-    "strict": true
-  },
-  "exclude": ["dist/", "node_modules/"],
-  "fmt": {
-    "exclude": ["dist/", "node_modules/"],
-    "indentWidth": 2,
-    "useTabs": false
-  },
-  "lint": {
-    "exclude": ["dist/", "node_modules/"]
-  }
+	"imports": {
+		"$lib/": "./src/lib/",
+		"$api/": "./src/lib/api/",
+		"$config": "./src/lib/server/utils/config/config.ts",
+		"$logger/": "./src/lib/server/utils/logger/",
+		"$shared/": "./src/lib/shared/",
+		"$stores/": "./src/lib/client/stores/",
+		"$ui/": "./src/lib/client/ui/",
+		"$assets/": "./src/lib/client/assets/",
+		"$alerts/": "./src/lib/client/alerts/",
+		"$server/": "./src/server/",
+		"$db/": "./src/lib/server/db/",
+		"$jobs/": "./src/lib/server/jobs/",
+		"$pcd/": "./src/lib/server/pcd/",
+		"$arr/": "./src/lib/server/utils/arr/",
+		"$http/": "./src/lib/server/utils/http/",
+		"$utils/": "./src/lib/server/utils/",
+		"$notifications/": "./src/lib/server/notifications/",
+		"$cache/": "./src/lib/server/utils/cache/",
+		"@soapbox/kysely-deno-sqlite": "jsr:@soapbox/kysely-deno-sqlite@^2.2.0",
+		"@std/assert": "jsr:@std/assert@^1.0.0",
+		"marked": "npm:marked@^15.0.6",
+		"simple-icons": "npm:simple-icons@^15.17.0",
+		"highlight.js": "npm:highlight.js@^11.11.1",
+		"croner": "npm:croner@^8.1.2",
+		"@std/yaml": "jsr:@std/yaml@^1.0.10"
+	},
+	"tasks": {
+		"dev": "deno run -A scripts/dev.ts",
+		"dev:vite": "DENO_ENV=development PORT=6969 HOST=0.0.0.0 APP_BASE_PATH=./dist/dev PARSER_HOST=localhost PARSER_PORT=5000 deno run -A npm:vite dev",
+		"dev:parser": "cd src/services/parser && dotnet watch run --urls http://localhost:5000",
+		"build": "APP_BASE_PATH=./dist/build deno run -A npm:vite build && deno compile --no-check --allow-net --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-sys --target x86_64-unknown-linux-gnu --output dist/build/profilarr dist/build/mod.ts",
+		"build:windows": "APP_BASE_PATH=./dist/build deno run -A npm:vite build && deno compile --no-check --allow-net --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-sys --target x86_64-pc-windows-msvc --output dist/windows/profilarr.exe dist/build/mod.ts",
+		"preview": "PORT=6868 HOST=0.0.0.0 APP_BASE_PATH=./dist/dev PARSER_HOST=localhost PARSER_PORT=5000 ./dist/build/profilarr",
+		"format": "prettier --write .",
+		"lint": "prettier --check . && eslint .",
+		"check": "deno task check:server && deno task check:client",
+		"check:server": "deno check src/lib/server/**/*.ts",
+		"check:client": "npx svelte-check --tsconfig ./tsconfig.json",
+		"test": "APP_BASE_PATH=./dist/test deno test src/tests --allow-read --allow-write --allow-env",
+		"test:watch": "APP_BASE_PATH=./dist/test deno test src/tests --allow-read --allow-write --allow-env --watch",
+		"generate:api-types": "npx openapi-typescript docs/api/v1/openapi.yaml -o src/lib/api/v1.d.ts"
+	},
+	"compilerOptions": {
+		"lib": ["deno.window", "dom"],
+		"strict": true
+	},
+	"exclude": ["dist/", "node_modules/", "src/routes/"],
+	"fmt": {
+		"exclude": ["dist/", "node_modules/"],
+		"indentWidth": 2,
+		"useTabs": false
+	},
+	"lint": {
+		"exclude": ["dist/", "node_modules/"]
+	}
 }

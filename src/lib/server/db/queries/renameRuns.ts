@@ -143,10 +143,7 @@ export const renameRunsQueries = {
 	 * Get a single rename run by ID
 	 */
 	getById(id: string): RenameJobLog | undefined {
-		const row = db.queryFirst<RenameRunRow>(
-			'SELECT * FROM rename_runs WHERE id = ?',
-			id
-		);
+		const row = db.queryFirst<RenameRunRow>('SELECT * FROM rename_runs WHERE id = ?', id);
 		return row ? rowToLog(row) : undefined;
 	},
 
@@ -195,10 +192,7 @@ export const renameRunsQueries = {
 	 * Delete all runs for an instance
 	 */
 	deleteByInstanceId(instanceId: number): number {
-		return db.execute(
-			'DELETE FROM rename_runs WHERE instance_id = ?',
-			instanceId
-		);
+		return db.execute('DELETE FROM rename_runs WHERE instance_id = ?', instanceId);
 	},
 
 	/**

@@ -78,9 +78,7 @@
 
 <section>
 	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-			Media Settings
-		</h2>
+		<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Media Settings</h2>
 		{#if settings && !isEditing}
 			<button
 				type="button"
@@ -138,7 +136,7 @@
 								<button
 									type="button"
 									on:click={() => (formPropersRepacks = option.value)}
-									class="flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+									class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 								>
 									<IconCheckbox
 										icon={Check}
@@ -166,11 +164,7 @@
 							on:click={() => (formEnableMediaInfo = !formEnableMediaInfo)}
 							class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
 						>
-							<IconCheckbox
-								icon={Check}
-								checked={formEnableMediaInfo}
-								shape="rounded"
-							/>
+							<IconCheckbox icon={Check} checked={formEnableMediaInfo} shape="rounded" />
 							<div>
 								<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
 									Analyse video files

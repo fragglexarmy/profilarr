@@ -94,7 +94,11 @@
 	}
 </script>
 
-<div class="{draggedItemIndex !== null ? dragGap : normalGap} transition-all duration-100" on:dragover={handleDragOver} role="list">
+<div
+	class="{draggedItemIndex !== null ? dragGap : normalGap} transition-all duration-100"
+	on:dragover={handleDragOver}
+	role="list"
+>
 	{#each items as item, index (getKey(item))}
 		<div
 			draggable={true}
@@ -102,7 +106,10 @@
 			on:dragover={(e) => handleItemDragOver(e, index)}
 			on:drop={(e) => handleItemDrop(e, index)}
 			on:dragend={handleDragEnd}
-			class="cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {draggedItemIndex === index ? 'opacity-50 scale-95' : ''}"
+			class="cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {draggedItemIndex ===
+			index
+				? 'scale-95 opacity-50'
+				: ''}"
 			style="transition: opacity 100ms, transform 100ms;"
 			role="listitem"
 		>

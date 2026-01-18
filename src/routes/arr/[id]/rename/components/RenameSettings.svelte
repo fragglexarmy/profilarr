@@ -137,7 +137,7 @@
 			</label>
 
 			<!-- Divider -->
-			<div class="hidden h-6 w-px bg-neutral-200 dark:bg-neutral-700 sm:block"></div>
+			<div class="hidden h-6 w-px bg-neutral-200 sm:block dark:bg-neutral-700"></div>
 
 			<!-- Schedule -->
 			<div class="flex items-center gap-2">
