@@ -83,12 +83,10 @@ export async function getLogFilesList(): Promise<
 /**
  * Read logs from a specific file
  * @param filename Name of the log file to read
- * @param count Number of lines to read (default: 1000)
  * @returns Array of log entries sorted by timestamp (oldest first)
  */
 export async function readLogsFromFile(
   filename: string,
-  count: number = 1000,
 ): Promise<LogEntry[]> {
   try {
     const logsDir = config.paths.logs;
@@ -113,8 +111,7 @@ export async function readLogsFromFile(
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
-    // Return last N entries
-    return logs.slice(-count);
+    return logs;
   } catch (_error) {
     // If anything fails, return empty array
     return [];
@@ -122,16 +119,15 @@ export async function readLogsFromFile(
 }
 
 /**
- * Read the last N lines from all log files
- * @param count Number of lines to read (default: 1000)
+ * Read all logs from all log files
  * @returns Array of log entries sorted by timestamp (oldest first)
  */
-export async function readLastLogs(count: number = 1000): Promise<LogEntry[]> {
+export async function readLastLogs(): Promise<LogEntry[]> {
   try {
     const logFiles = await getLogFiles();
     const logs: LogEntry[] = [];
 
-    // Read from newest files first until we have enough logs
+    // Read from all log files
     for (const filePath of logFiles) {
       try {
         const content = await Deno.readTextFile(filePath);
@@ -146,11 +142,6 @@ export async function readLastLogs(count: number = 1000): Promise<LogEntry[]> {
             // Skip invalid JSON lines
           }
         }
-
-        // Stop if we have enough logs
-        if (logs.length >= count) {
-          break;
-        }
       } catch {
         // Skip files we can't read
       }
@@ -161,8 +152,7 @@ export async function readLastLogs(count: number = 1000): Promise<LogEntry[]> {
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
-    // Return last N entries
-    return logs.slice(-count);
+    return logs;
   } catch (_error) {
     // If anything fails, return empty array
     return [];
@@ -190,7 +180,6 @@ export function parseLogLine(line: string): LogEntry | null {
 export interface LogFilterOptions {
   source?: string;
   instanceId?: number;
-  count?: number;
 }
 
 /**
@@ -201,13 +190,13 @@ export interface LogFilterOptions {
 export async function readFilteredLogs(
   options: LogFilterOptions = {}
 ): Promise<LogEntry[]> {
-  const { source, instanceId, count = 500 } = options;
+  const { source, instanceId } = options;
 
   try {
     const logFiles = await getLogFiles();
     const logs: LogEntry[] = [];
 
-    // Read from newest files first
+    // Read from all log files
     for (const filePath of logFiles) {
       try {
         const content = await Deno.readTextFile(filePath);
@@ -245,8 +234,7 @@ export async function readFilteredLogs(
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
 
-    // Return first N entries
-    return logs.slice(0, count);
+    return logs;
   } catch (_error) {
     // If anything fails, return empty array
     return [];

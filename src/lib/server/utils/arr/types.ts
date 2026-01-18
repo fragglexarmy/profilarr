@@ -162,6 +162,26 @@ export interface ArrCommand {
 export type RadarrCommand = ArrCommand;
 
 /**
+ * Queue item from /api/v3/queue
+ * Represents a download in progress or completed
+ */
+export interface RadarrQueueItem {
+	id: number;
+	movieId: number;
+	title: string;
+	status: string;
+	quality: {
+		quality: { id: number; name: string; source?: string; resolution?: number };
+		revision?: { version: number; real: number; isRepack?: boolean };
+	};
+	customFormats: CustomFormatRef[];
+	customFormatScore: number;
+	downloadId: string;
+	protocol: 'torrent' | 'usenet' | 'unknown';
+	indexer: string;
+}
+
+/**
  * Rename preview item from /api/v3/rename
  * Shows what would be renamed before executing
  */

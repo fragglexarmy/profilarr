@@ -2,6 +2,8 @@
 	import { ChevronDown, Check, AlertTriangle, X, Zap } from 'lucide-svelte';
 	import { slide } from 'svelte/transition';
 	import type { UpgradeJobLog } from '$lib/server/upgrades/types.ts';
+	import Score from '$ui/arr/Score.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
 
 	export let run: UpgradeJobLog;
 	export let runNumber: number;
@@ -199,15 +201,75 @@
 				<!-- Items Searched -->
 				{#if run.selection.items.length > 0}
 					<div class="mt-4 border-t border-neutral-200 pt-4 dark:border-neutral-700">
-						<div class="mb-2 flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+						<div class="mb-3 flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
 							<Zap size={14} />
 							Items Searched
 						</div>
-						<ul class="space-y-1 pl-5 text-sm text-neutral-600 dark:text-neutral-400">
+						<div class="space-y-3">
 							{#each run.selection.items as item}
-								<li class="list-disc">{item.title}</li>
+								<div class="rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800/50">
+									<!-- Title and Score Delta -->
+									<div class="flex items-center justify-between">
+										<span class="font-medium text-neutral-900 dark:text-neutral-100">{item.title}</span>
+										{#if item.upgrade}
+											<Badge variant={item.scoreDelta && item.scoreDelta >= 0 ? 'success' : 'danger'}>
+												<Score score={item.scoreDelta} size="sm" />
+											</Badge>
+										{:else}
+											<Badge variant="neutral">No upgrade</Badge>
+										{/if}
+									</div>
+
+									<!-- Original File -->
+									<div class="mt-3">
+										<div class="mb-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">Current File</div>
+										<div class="rounded-md border border-neutral-200 bg-neutral-50 p-2 dark:border-neutral-700 dark:bg-neutral-900">
+											<div class="truncate font-mono text-[11px] text-neutral-700 dark:text-neutral-300" title={item.original.fileName}>
+												{item.original.fileName}
+											</div>
+											<div class="mt-2 flex flex-wrap items-center gap-2">
+												<span class="inline-flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+													Score: <Score score={item.original.score} size="sm" showSign={false} colored={false} />
+												</span>
+												{#if item.original.formats.length > 0}
+													<span class="text-neutral-300 dark:text-neutral-600">|</span>
+													<div class="flex flex-wrap gap-1">
+														{#each item.original.formats as format}
+															<Badge variant="neutral" size="sm">{format}</Badge>
+														{/each}
+													</div>
+												{/if}
+											</div>
+										</div>
+									</div>
+
+									<!-- Upgrade (if found) -->
+									{#if item.upgrade}
+										<div class="mt-3">
+											<div class="mb-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">Upgrade Available</div>
+											<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2 dark:border-emerald-800 dark:bg-emerald-900/20">
+												<div class="truncate font-mono text-[11px] text-neutral-700 dark:text-neutral-300" title={item.upgrade.release}>
+													{item.upgrade.release}
+												</div>
+												<div class="mt-2 flex flex-wrap items-center gap-2">
+													<span class="inline-flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+														Score: <Score score={item.upgrade.score} size="sm" showSign={false} colored={false} />
+													</span>
+													{#if item.upgrade.formats.length > 0}
+														<span class="text-neutral-300 dark:text-neutral-600">|</span>
+														<div class="flex flex-wrap gap-1">
+															{#each item.upgrade.formats as format}
+																<Badge variant="success" size="sm">{format}</Badge>
+															{/each}
+														</div>
+													{/if}
+												</div>
+											</div>
+										</div>
+									{/if}
+								</div>
 							{/each}
-						</ul>
+						</div>
 					</div>
 				{/if}
 			</div>

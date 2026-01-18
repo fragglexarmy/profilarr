@@ -43,6 +43,35 @@ export interface UpgradeItem {
 }
 
 /**
+ * Original file info for upgrade comparison
+ */
+export interface UpgradeOriginalFile {
+	fileName: string;
+	formats: string[];
+	score: number;
+}
+
+/**
+ * Upgrade/new release info
+ */
+export interface UpgradeNewRelease {
+	release: string; // release title
+	formats: string[];
+	score: number;
+}
+
+/**
+ * Selection item with score comparison details
+ */
+export interface UpgradeSelectionItem {
+	id: number;
+	title: string;
+	original: UpgradeOriginalFile;
+	upgrade: UpgradeNewRelease | null; // null = no upgrade found
+	scoreDelta: number | null;
+}
+
+/**
  * Structured log for each upgrade run
  * Contains all metrics and details about what happened
  */
@@ -73,13 +102,15 @@ export interface UpgradeJobLog {
 		rules: FilterGroup;
 		matchedCount: number;
 		afterCooldown: number;
+		cooldownHours: number;
+		dryRunExcluded: number;
 	};
 
 	selection: {
 		method: string;
 		requestedCount: number;
 		actualCount: number;
-		items: { id: number; title: string }[];
+		items: UpgradeSelectionItem[];
 	};
 
 	results: {

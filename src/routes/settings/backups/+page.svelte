@@ -163,7 +163,7 @@
 				await update();
 			};
 		}}
-	/>
+	></form>
 
 	<!-- Actions Bar -->
 	<div class="mb-4">

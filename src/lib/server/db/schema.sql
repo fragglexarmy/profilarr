@@ -494,3 +494,64 @@ CREATE TABLE arr_rename_settings (
 
 -- Arr rename settings indexes (Migration: 024_create_arr_rename_settings.ts)
 CREATE INDEX idx_arr_rename_settings_arr_instance ON arr_rename_settings(arr_instance_id);
+
+-- ==============================================================================
+-- TABLE: upgrade_runs
+-- Purpose: Store upgrade run history for each arr instance
+-- Migration: 026_create_upgrade_runs.ts
+-- ==============================================================================
+
+CREATE TABLE upgrade_runs (
+    id TEXT PRIMARY KEY,                        -- UUID
+
+    -- Relationship
+    instance_id INTEGER NOT NULL,               -- Foreign key to arr_instances
+
+    -- Timing
+    started_at TEXT NOT NULL,                   -- ISO timestamp when run started
+    completed_at TEXT NOT NULL,                 -- ISO timestamp when run completed
+
+    -- Status
+    status TEXT NOT NULL CHECK (status IN ('success', 'partial', 'failed', 'skipped')),
+    dry_run INTEGER NOT NULL DEFAULT 0,         -- 1=dry run, 0=live
+
+    -- Config snapshot (flat for queryability)
+    schedule INTEGER NOT NULL,                  -- Schedule interval in minutes
+    filter_mode TEXT NOT NULL,                  -- 'round_robin' or 'random'
+    filter_name TEXT NOT NULL,                  -- Name of the filter used
+
+    -- Library stats
+    library_total INTEGER NOT NULL,             -- Total items in library
+    library_cached INTEGER NOT NULL DEFAULT 0,  -- 1=fetched from cache
+    library_fetch_ms INTEGER NOT NULL,          -- Time to fetch library in ms
+
+    -- Filter stats
+    matched_count INTEGER NOT NULL,             -- Items matching filter rules
+    after_cooldown INTEGER NOT NULL,            -- Items after cooldown applied
+    cooldown_hours INTEGER NOT NULL,            -- Cooldown hours setting
+    dry_run_excluded INTEGER NOT NULL DEFAULT 0,-- Items excluded by dry run cache
+
+    -- Selection stats
+    selection_method TEXT NOT NULL,             -- Selector method used
+    selection_requested INTEGER NOT NULL,       -- Items requested to select
+    selected_count INTEGER NOT NULL,            -- Items actually selected
+
+    -- Results stats
+    searches_triggered INTEGER NOT NULL,        -- Number of searches triggered
+    successful INTEGER NOT NULL,                -- Successful upgrades found
+    failed INTEGER NOT NULL,                    -- Failed searches
+
+    -- Complex data as JSON
+    items TEXT NOT NULL DEFAULT '[]',           -- JSON array of UpgradeSelectionItem
+    errors TEXT NOT NULL DEFAULT '[]',          -- JSON array of error strings
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- Upgrade runs indexes (Migration: 026_create_upgrade_runs.ts)
+CREATE INDEX idx_upgrade_runs_instance ON upgrade_runs(instance_id);
+CREATE INDEX idx_upgrade_runs_started_at ON upgrade_runs(started_at DESC);
+CREATE INDEX idx_upgrade_runs_status ON upgrade_runs(status);

@@ -66,6 +66,7 @@
 			<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Match</span>
 			<select
 				bind:value={group.match}
+				on:change={notifyChange}
 				class="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 			>
 				<option value="all">All (AND)</option>
@@ -109,6 +110,7 @@
 						<!-- Operator -->
 						<select
 							bind:value={child.operator}
+							on:change={notifyChange}
 							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 						>
 							{#if field}
@@ -122,6 +124,7 @@
 						{#if field?.valueType === 'boolean' || field?.valueType === 'select'}
 							<select
 								bind:value={child.value}
+								on:change={notifyChange}
 								class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 							>
 								{#if field.values}
@@ -134,17 +137,18 @@
 							<input
 								type="text"
 								bind:value={child.value}
+								on:input={notifyChange}
 								class="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 							/>
 						{:else if field?.valueType === 'number'}
 							<div class="w-32">
-								<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => child.value = e.detail} font="mono" />
+								<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => { child.value = e.detail; notifyChange(); }} font="mono" />
 							</div>
 						{:else if field?.valueType === 'date'}
 							{#if child.operator === 'in_last' || child.operator === 'not_in_last'}
 								<div class="flex items-center gap-2">
 									<div class="w-24">
-										<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => child.value = e.detail} min={1} font="mono" />
+										<NumberInput name="value-{childIndex}" value={child.value as number} on:change={(e) => { child.value = e.detail; notifyChange(); }} min={1} font="mono" />
 									</div>
 									<span class="text-sm text-neutral-500 dark:text-neutral-400">days</span>
 								</div>
@@ -152,6 +156,7 @@
 								<input
 									type="date"
 									bind:value={child.value}
+									on:change={notifyChange}
 									class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 								/>
 							{/if}

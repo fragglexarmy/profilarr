@@ -10,6 +10,7 @@ import type {
 	RadarrTag,
 	ArrCommand,
 	RadarrRelease,
+	RadarrQueueItem,
 	RenamePreviewItem
 } from '../types.ts';
 
@@ -151,6 +152,25 @@ export class RadarrClient extends BaseArrClient {
 	 */
 	getReleases(movieId: number): Promise<RadarrRelease[]> {
 		return this.get<RadarrRelease[]>(`/api/${this.apiVersion}/release?movieId=${movieId}`);
+	}
+
+	/**
+	 * Get queue items (downloads in progress)
+	 * @param movieIds - Optional filter by movie IDs
+	 */
+	async getQueue(movieIds?: number[]): Promise<RadarrQueueItem[]> {
+		const response = await this.get<{ records: RadarrQueueItem[] }>(
+			`/api/${this.apiVersion}/queue?page=1&pageSize=200&includeMovie=true`
+		);
+
+		const records = response.records;
+
+		if (movieIds && movieIds.length > 0) {
+			const movieIdSet = new Set(movieIds);
+			return records.filter((item) => movieIdSet.has(item.movieId));
+		}
+
+		return records;
 	}
 
 	// =========================================================================

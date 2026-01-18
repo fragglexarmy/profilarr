@@ -6,6 +6,7 @@
 	export let variant: 'neutral' | 'danger' | 'accent' = 'neutral';
 	export let size: 'sm' | 'md' = 'md';
 	export let type: 'button' | 'submit' = 'button';
+	export let disabled: boolean = false;
 
 	const sizeClasses = {
 		sm: 'h-6 w-6',
@@ -29,8 +30,9 @@
 
 <button
 	{type}
+	{disabled}
 	on:click
-	class="inline-flex items-center justify-center rounded border transition-colors {sizeClasses[size]} {variantClasses[variant]}"
+	class="inline-flex items-center justify-center rounded border transition-colors {sizeClasses[size]} {variantClasses[variant]} disabled:opacity-50 disabled:cursor-not-allowed"
 	{title}
 >
 	<svelte:component this={icon} size={iconSizes[size]} />

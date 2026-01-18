@@ -46,8 +46,7 @@ export const load: ServerLoad = async ({ params }) => {
 	// Load upgrade job logs for this instance
 	const logs = await readFilteredLogs({
 		source: 'UpgradeJob',
-		instanceId: id,
-		count: 500
+		instanceId: id
 	});
 
 	// Extract full UpgradeJobLog objects from DEBUG entries

@@ -144,9 +144,7 @@
 						}}
 					>
 						<input type="hidden" name="job_name" value={row.name} />
-						<button type="submit" disabled={!row.enabled} class="disabled:opacity-50 disabled:cursor-not-allowed">
-							<TableActionButton icon={Play} title="Run now" variant="accent" size="sm" />
-						</button>
+						<TableActionButton icon={Play} title="Run now" variant="accent" size="sm" type="submit" disabled={!row.enabled} />
 					</form>
 
 					<!-- Enable/Disable Button -->

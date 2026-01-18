@@ -157,7 +157,7 @@
 					</td>
 				</tr>
 			{:else}
-				{#each sortedData as row}
+				{#each sortedData as row, index}
 					{@const rowId = getRowId(row)}
 
 					<!-- Main Row -->
@@ -180,7 +180,7 @@
 							<td
 								class="{compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 {getAlignClass(column.align)} {column.width || ''}"
 							>
-								<slot name="cell" {row} {column} expanded={expandedRows.has(rowId)}>
+								<slot name="cell" {row} {column} {index} expanded={expandedRows.has(rowId)}>
 									{getCellValue(row, column.key)}
 								</slot>
 							</td>
