@@ -9,7 +9,10 @@ import type {
 	ArrCustomFormat,
 	ArrQualityProfilePayload,
 	RadarrQualityProfile,
-	ArrCommand
+	ArrCommand,
+	ArrLogResponse,
+	ArrLogFile,
+	ArrLogParams
 } from './types.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -305,5 +308,46 @@ export class BaseArrClient extends BaseHttpClient {
 			// Wait before next poll
 			await new Promise((resolve) => setTimeout(resolve, pollInterval));
 		}
+	}
+
+	// =========================================================================
+	// Log Methods
+	// =========================================================================
+
+	/**
+	 * Get paginated logs from the arr instance
+	 * @param params - Query parameters for filtering and pagination
+	 */
+	getLogs(params: ArrLogParams = {}): Promise<ArrLogResponse> {
+		const queryParams = new URLSearchParams();
+
+		if (params.page !== undefined) queryParams.set('page', String(params.page));
+		if (params.pageSize !== undefined) queryParams.set('pageSize', String(params.pageSize));
+		if (params.sortKey) queryParams.set('sortKey', params.sortKey);
+		if (params.sortDirection) queryParams.set('sortDirection', params.sortDirection);
+		if (params.level) queryParams.set('level', params.level);
+
+		const queryString = queryParams.toString();
+		const url = `/api/${this.apiVersion}/log${queryString ? `?${queryString}` : ''}`;
+
+		return this.get<ArrLogResponse>(url);
+	}
+
+	/**
+	 * Get list of available log files
+	 */
+	getLogFiles(): Promise<ArrLogFile[]> {
+		return this.get<ArrLogFile[]>(`/api/${this.apiVersion}/log/file`);
+	}
+
+	/**
+	 * Get raw content of a specific log file
+	 * @param filename - The log filename (e.g., "radarr.txt", "sonarr.debug.0.txt")
+	 * @returns Raw log file content as text
+	 */
+	getLogFileContent(filename: string): Promise<string> {
+		return this.get<string>(`/api/${this.apiVersion}/log/file/${filename}`, {
+			responseType: 'text'
+		});
 	}
 }

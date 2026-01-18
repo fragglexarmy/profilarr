@@ -648,3 +648,66 @@ export interface ArrSystemStatus {
 	packageUpdateMechanism: 'builtIn' | string;
 	packageUpdateMechanismMessage: string;
 }
+
+// =============================================================================
+// Log Types
+// =============================================================================
+
+/**
+ * Log level for filtering
+ * API accepts: Trace, Debug, Info, Warn, Error, Fatal
+ */
+export type ArrLogLevel = 'Trace' | 'Debug' | 'Info' | 'Warn' | 'Error' | 'Fatal';
+
+/**
+ * Sort direction for log queries
+ */
+export type ArrSortDirection = 'ascending' | 'descending' | 'default';
+
+/**
+ * Log entry from /api/v3/log
+ */
+export interface ArrLogEntry {
+	id: number;
+	time: string; // ISO 8601 UTC
+	level: string; // lowercase: "info", "warn", "error", "debug", "trace", "fatal"
+	logger: string; // source/component: "RssSyncService", "DiskScanService"
+	message: string;
+	exception?: string | null;
+	exceptionType?: string | null;
+	method?: string | null;
+}
+
+/**
+ * Paginated log response from /api/v3/log
+ */
+export interface ArrLogResponse {
+	page: number;
+	pageSize: number;
+	sortKey: string;
+	sortDirection: string;
+	totalRecords: number;
+	records: ArrLogEntry[];
+}
+
+/**
+ * Log file metadata from /api/v3/log/file
+ */
+export interface ArrLogFile {
+	id: number;
+	filename: string;
+	lastWriteTime: string; // ISO 8601
+	contentsUrl: string;
+	downloadUrl: string;
+}
+
+/**
+ * Parameters for fetching logs
+ */
+export interface ArrLogParams {
+	page?: number;
+	pageSize?: number;
+	sortKey?: string;
+	sortDirection?: ArrSortDirection;
+	level?: ArrLogLevel;
+}
