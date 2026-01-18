@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
-	import { Info, Save, Play, RotateCcw, SlidersHorizontal, History } from 'lucide-svelte';
+	import { Info, Save, Play, RotateCcw, Settings, SlidersHorizontal, History } from 'lucide-svelte';
 	import CoreSettings from './components/CoreSettings.svelte';
 	import FilterSettings from './components/FilterSettings.svelte';
 	import RunHistory from './components/RunHistory.svelte';
@@ -133,13 +133,19 @@
 </StickyCard>
 
 <div class="mt-6 space-y-6">
-	<CoreSettings
-		bind:enabled
-		bind:dryRun
-		bind:schedule
-		bind:filterMode
-		lastRunAt={data.config?.lastRunAt ?? null}
-	/>
+	<section>
+		<h2 class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+			<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
+			Settings
+		</h2>
+		<CoreSettings
+			bind:enabled
+			bind:dryRun
+			bind:schedule
+			bind:filterMode
+			lastRunAt={data.config?.lastRunAt ?? null}
+		/>
+	</section>
 
 	<section>
 		<h2 class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">

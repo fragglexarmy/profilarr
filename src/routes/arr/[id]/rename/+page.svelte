@@ -4,11 +4,12 @@
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
-	import { Info, Save, Play } from 'lucide-svelte';
+	import { Info, Save, Play, Settings } from 'lucide-svelte';
 	import RenameSettings from './components/RenameSettings.svelte';
 	import RenameInfoModal from './components/RenameInfoModal.svelte';
-	import CooldownTracker from './components/CooldownTracker.svelte';
 	import DirtyModal from '$lib/client/ui/modal/DirtyModal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -75,9 +76,72 @@
 	<title>{data.instance.name} - Rename - Profilarr</title>
 </svelte:head>
 
+<StickyCard position="top">
+	<div slot="left">
+		<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Rename</h1>
+		<p class="text-sm text-neutral-500 dark:text-neutral-400">
+			Automatically rename files and folders to match your naming format.
+		</p>
+	</div>
+	<div slot="right" class="flex items-center gap-2">
+		<Button
+			text="How it works"
+			icon={Info}
+			on:click={() => (showInfoModal = true)}
+		/>
+		{#if !isNewConfig && data.settings?.dryRun}
+			<Button
+				text={running ? 'Running...' : 'Test Run'}
+				icon={Play}
+				iconColor="text-amber-600 dark:text-amber-400"
+				disabled={running || saving || $isDirty}
+				on:click={() => {
+					const runForm = document.getElementById('run-form');
+					if (runForm instanceof HTMLFormElement) {
+						runForm.requestSubmit();
+					}
+				}}
+			/>
+		{/if}
+		<Button
+			text={saving ? 'Saving...' : 'Save'}
+			icon={Save}
+			iconColor="text-blue-600 dark:text-blue-400"
+			disabled={saving || running || !$isDirty}
+			on:click={() => {
+				const saveForm = document.getElementById('save-form');
+				if (saveForm instanceof HTMLFormElement) {
+					saveForm.requestSubmit();
+				}
+			}}
+		/>
+	</div>
+</StickyCard>
+
+<div class="mt-6 space-y-6">
+	<section>
+		<h2 class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+			<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
+			Settings
+		</h2>
+		<RenameSettings
+			bind:enabled
+			bind:dryRun
+			bind:renameFolders
+			bind:ignoreTag
+			bind:schedule
+			bind:summaryNotifications
+			lastRunAt={data.settings?.lastRunAt ?? null}
+		/>
+	</section>
+</div>
+
+<!-- Hidden forms -->
 <form
+	id="save-form"
 	method="POST"
 	action={isNewConfig ? '?/save' : '?/update'}
+	class="hidden"
 	use:enhance={() => {
 		saving = true;
 		return async ({ update }) => {
@@ -92,70 +156,7 @@
 	<input type="hidden" name="ignoreTag" value={ignoreTag} />
 	<input type="hidden" name="schedule" value={schedule} />
 	<input type="hidden" name="summaryNotifications" value={summaryNotifications} />
-
-	<div class="mt-6 space-y-6">
-		<!-- Header -->
-		<div class="flex items-start justify-between">
-			<div>
-				<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-					Rename Configuration
-				</h1>
-				<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-					Automatically rename files and folders to match your naming format.
-				</p>
-			</div>
-			<button
-				type="button"
-				on:click={() => (showInfoModal = true)}
-				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<Info size={14} />
-				How it works
-			</button>
-		</div>
-
-		{#if !isNewConfig && data.settings?.lastRunAt}
-			<CooldownTracker
-				enabled={data.settings.enabled}
-				schedule={data.settings.schedule}
-				lastRunAt={data.settings.lastRunAt}
-			/>
-		{/if}
-
-		<RenameSettings bind:enabled bind:dryRun bind:renameFolders bind:ignoreTag bind:schedule bind:summaryNotifications />
-
-		<!-- Action Buttons -->
-		<div class="flex justify-end gap-3">
-			{#if !isNewConfig}
-				<button
-					type="button"
-					disabled={running || saving || $isDirty}
-					title={$isDirty ? 'Save changes before running' : undefined}
-					on:click={() => {
-						const runForm = document.getElementById('run-form');
-						if (runForm instanceof HTMLFormElement) {
-							runForm.requestSubmit();
-						}
-					}}
-					class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					<Play size={16} class="text-amber-600 dark:text-amber-400" />
-					{running ? 'Running...' : 'Run Now'}
-				</button>
-			{/if}
-			<button
-				type="submit"
-				disabled={saving || running || !$isDirty}
-				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<Save size={16} class="text-blue-600 dark:text-blue-400" />
-				{saving ? 'Saving...' : 'Save'}
-			</button>
-		</div>
-	</div>
 </form>
-
-<!-- Hidden form for run now -->
 {#if !isNewConfig}
 	<form
 		id="run-form"
@@ -169,8 +170,7 @@
 				running = false;
 			};
 		}}
-	>
-	</form>
+	></form>
 {/if}
 
 <RenameInfoModal bind:open={showInfoModal} />

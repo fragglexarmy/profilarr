@@ -100,13 +100,19 @@
 			<!-- Enabled Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
 				<Toggle bind:checked={enabled} />
-				<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Enabled</span>
+				<div>
+					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Enabled</span>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">Run on schedule</p>
+				</div>
 			</label>
 
 			<!-- Dry Run Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
 				<Toggle bind:checked={dryRun} color="amber" />
-				<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dry Run</span>
+				<div>
+					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dry Run</span>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">Preview only</p>
+				</div>
 			</label>
 
 			<!-- Divider -->
@@ -176,11 +182,11 @@
 					<span class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400">Ready</span>
 				{:else if timeUntilNext !== null}
 					<span>
-						Next: <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{formatTimeRemaining(timeUntilNext)}</span>
+						Next Run: <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{formatTimeRemaining(timeUntilNext)}</span>
 					</span>
 				{/if}
 				<span>
-					Last: <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{formatLastRun(lastRunAt)}</span>
+					Last Run: <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{formatLastRun(lastRunAt)}</span>
 				</span>
 			</div>
 		{/if}
