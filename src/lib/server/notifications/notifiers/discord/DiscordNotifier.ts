@@ -1,6 +1,7 @@
 import { logger } from '$logger/logger.ts';
 import type { DiscordConfig, Notification } from '../../types.ts';
 import { Colors, type DiscordEmbed } from './embed.ts';
+import { getWebhookClient } from '../../base/webhookClient.ts';
 
 const RATE_LIMIT_DELAY = 1000; // 1 second between messages
 
@@ -104,30 +105,10 @@ export class DiscordNotifier {
 	 */
 	private async sendWebhook(payload: unknown): Promise<void> {
 		const payloadObj = payload as { embeds?: unknown[] };
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 		try {
-			const response = await fetch(this.config.webhook_url, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
-				signal: controller.signal
-			});
-
-			clearTimeout(timeoutId);
-
-			if (!response.ok) {
-				const errorText = await response.text().catch(() => 'Unknown error');
-				throw new Error(`HTTP ${response.status}: ${errorText}`);
-			}
+			await getWebhookClient().sendWebhook(this.config.webhook_url, payload);
 		} catch (error) {
-			clearTimeout(timeoutId);
-
-			if (error instanceof Error && error.name === 'AbortError') {
-				throw new Error('Request timeout');
-			}
-
 			const embedCharCounts = payloadObj.embeds?.map((e, i) => `${i}:${getEmbedCharCount(e as DiscordEmbed)}`).join(', ') || 'none';
 			await logger.error('Failed to send notification', {
 				source: this.getName(),

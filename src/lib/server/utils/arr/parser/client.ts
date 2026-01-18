@@ -5,6 +5,7 @@
 
 import { config } from '$config';
 import { logger } from '$logger/logger.ts';
+import { BaseHttpClient } from '../../http/client.ts';
 import { parsedReleaseCacheQueries } from '$db/queries/parsedReleaseCache.ts';
 import { patternMatchCacheQueries } from '$db/queries/patternMatchCache.ts';
 import {
@@ -14,7 +15,6 @@ import {
 	ReleaseType,
 	type QualityInfo,
 	type ParseResult,
-	type EpisodeInfo,
 	type Resolution,
 	type MediaType
 } from './types.ts';
@@ -59,23 +59,78 @@ interface ParseResponse {
 	episode: EpisodeResponse | null;
 }
 
+interface HealthResponse {
+	status: string;
+	version: string;
+}
+
+interface MatchResponse {
+	results: Record<string, boolean>;
+}
+
+interface BatchMatchResponse {
+	results: Record<string, Record<string, boolean>>;
+}
+
+/**
+ * Parser service HTTP client
+ * Extends BaseHttpClient with parser-specific methods
+ */
+class ParserClient extends BaseHttpClient {
+	constructor(baseUrl: string) {
+		super(baseUrl, {
+			timeout: 30000,
+			retries: 2,
+			retryDelay: 500
+		});
+	}
+
+	/**
+	 * Parse a release title
+	 */
+	async parse(title: string, type: MediaType): Promise<ParseResponse> {
+		return this.post<ParseResponse>('/parse', { title, type });
+	}
+
+	/**
+	 * Check health and get version
+	 */
+	async health(): Promise<HealthResponse> {
+		return this.get<HealthResponse>('/health');
+	}
+
+	/**
+	 * Match patterns against text
+	 */
+	async match(text: string, patterns: string[]): Promise<MatchResponse> {
+		return this.post<MatchResponse>('/match', { text, patterns });
+	}
+
+	/**
+	 * Match patterns against multiple texts (batch)
+	 */
+	async matchBatch(texts: string[], patterns: string[]): Promise<BatchMatchResponse> {
+		return this.post<BatchMatchResponse>('/match/batch', { texts, patterns });
+	}
+}
+
+// Singleton client instance - lazy initialized
+let parserClient: ParserClient | null = null;
+
+function getClient(): ParserClient {
+	if (!parserClient) {
+		parserClient = new ParserClient(config.parserUrl);
+	}
+	return parserClient;
+}
+
 /**
  * Parse a release title - returns quality, resolution, modifier, revision, and languages
  * @param title - The release title to parse
  * @param type - The media type: 'movie' or 'series'
  */
 export async function parse(title: string, type: MediaType): Promise<ParseResult> {
-	const res = await fetch(`${config.parserUrl}/parse`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ title, type })
-	});
-
-	if (!res.ok) {
-		throw new Error(`Parser error: ${res.status}`);
-	}
-
-	const data: ParseResponse = await res.json();
+	const data = await getClient().parse(title, type);
 
 	return {
 		title: data.title,
@@ -134,8 +189,8 @@ export async function parseQuality(title: string, type: MediaType): Promise<Qual
  */
 export async function isParserHealthy(): Promise<boolean> {
 	try {
-		const res = await fetch(`${config.parserUrl}/health`);
-		return res.ok;
+		await getClient().health();
+		return true;
 	} catch {
 		return false;
 	}
@@ -151,16 +206,7 @@ export async function getParserVersion(): Promise<string | null> {
 	}
 
 	try {
-		const res = await fetch(`${config.parserUrl}/health`);
-		if (!res.ok) {
-			await logger.warn('Parser health check failed', {
-				source: 'ParserClient',
-				meta: { status: res.status }
-			});
-			return null;
-		}
-
-		const data: { status: string; version: string } = await res.json();
+		const data = await getClient().health();
 		cachedParserVersion = data.version;
 		await logger.debug(`Parser version: ${data.version}`, { source: 'ParserClient' });
 		return cachedParserVersion;
@@ -333,21 +379,7 @@ export async function matchPatterns(
 	}
 
 	try {
-		const res = await fetch(`${config.parserUrl}/match`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ text, patterns })
-		});
-
-		if (!res.ok) {
-			await logger.warn('Pattern match request failed', {
-				source: 'ParserClient',
-				meta: { status: res.status }
-			});
-			return null;
-		}
-
-		const data: { results: Record<string, boolean> } = await res.json();
+		const data = await getClient().match(text, patterns);
 		return new Map(Object.entries(data.results));
 	} catch (err) {
 		await logger.warn('Failed to connect to parser for pattern matching', {
@@ -378,21 +410,7 @@ async function fetchPatternMatches(
 	patterns: string[]
 ): Promise<Map<string, Map<string, boolean>> | null> {
 	try {
-		const res = await fetch(`${config.parserUrl}/match/batch`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ texts, patterns })
-		});
-
-		if (!res.ok) {
-			await logger.warn('Batch pattern match request failed', {
-				source: 'ParserClient',
-				meta: { status: res.status }
-			});
-			return null;
-		}
-
-		const data: { results: Record<string, Record<string, boolean>> } = await res.json();
+		const data = await getClient().matchBatch(texts, patterns);
 
 		const result = new Map<string, Map<string, boolean>>();
 		for (const [text, patternResults] of Object.entries(data.results)) {

@@ -1,6 +1,7 @@
 import { logger } from '$logger/logger.ts';
 import type { Notification } from '../types.ts';
 import type { Notifier } from './Notifier.ts';
+import { getWebhookClient } from './webhookClient.ts';
 
 /**
  * Base class for HTTP-based notification services (webhooks)
@@ -9,7 +10,6 @@ import type { Notifier } from './Notifier.ts';
 export abstract class BaseHttpNotifier implements Notifier {
 	private lastSentAt: Date | null = null;
 	private readonly minInterval: number = 1000; // 1 second between notifications
-	private readonly timeout: number = 10000; // 10 second timeout
 
 	/**
 	 * Get the webhook URL for this service
@@ -47,43 +47,14 @@ export abstract class BaseHttpNotifier implements Notifier {
 			const payload = this.formatPayload(notification);
 			const url = this.getWebhookUrl();
 
-			// Create abort controller for timeout
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+			await getWebhookClient().sendWebhook(url, payload);
 
-			try {
-				const response = await fetch(url, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(payload),
-					signal: controller.signal
-				});
+			await logger.debug(`Notification sent`, {
+				source: this.getName(),
+				meta: { type: notification.type }
+			});
 
-				clearTimeout(timeoutId);
-
-				if (!response.ok) {
-					const errorText = await response.text().catch(() => 'Unknown error');
-					throw new Error(`HTTP ${response.status}: ${errorText}`);
-				}
-
-				await logger.debug(`Notification sent`, {
-					source: this.getName(),
-					meta: { type: notification.type }
-				});
-
-				this.lastSentAt = new Date();
-			} catch (error) {
-				clearTimeout(timeoutId);
-
-				// Handle timeout
-				if (error instanceof Error && error.name === 'AbortError') {
-					throw new Error('Request timeout');
-				}
-
-				throw error;
-			}
+			this.lastSentAt = new Date();
 		} catch (error) {
 			// Log error but don't throw (fire-and-forget)
 			await logger.error(`Failed to send notification`, {
