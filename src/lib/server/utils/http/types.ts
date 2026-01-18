@@ -16,6 +16,7 @@ export interface RequestOptions {
 	headers?: Record<string, string>; // Additional headers for this request
 	timeout?: number; // Override timeout for this request
 	signal?: AbortSignal; // Abort signal for cancellation
+	responseType?: 'json' | 'text'; // Response parsing type (default: 'json')
 }
 
 export class HttpError extends Error {

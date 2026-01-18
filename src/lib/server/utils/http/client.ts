@@ -75,16 +75,17 @@ export class BaseHttpClient {
 
 					clearTimeout(timeoutId);
 
-					// Parse response - handle empty body (common for DELETE)
+					// Parse response based on responseType
 					const text = await response.text();
-					const data = text ? JSON.parse(text) : null;
+					const responseType = options?.responseType ?? 'json';
+					const data = responseType === 'text' ? text : (text ? JSON.parse(text) : null);
 
 					// Check for HTTP errors
 					if (!response.ok) {
 						const error = new HttpError(
 							`HTTP ${response.status}: ${response.statusText}`,
 							response.status,
-							data
+							responseType === 'json' ? data : text
 						);
 
 						// Retry on specific status codes
