@@ -9,8 +9,12 @@
 	import type { Column } from '$ui/table/types';
 	import type { PageData } from './$types';
 	import type { TestWithResult } from './+page.server';
+	import { clear } from '$lib/client/stores/dirty';
 
 	export let data: PageData;
+
+	// Clear dirty state - this is a read-only listing page
+	clear();
 
 	type Test = TestWithResult;
 	type Condition = Test['conditions'][number];
