@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
 	import { Info } from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
@@ -7,7 +8,7 @@
 	import DelayProfiles from './components/DelayProfiles.svelte';
 	import MediaManagement from './components/MediaManagement.svelte';
 	import type { SyncTrigger } from '$db/queries/arrSync.ts';
-	import { initEdit, initCreate } from '$lib/client/stores/dirty';
+	import { initEdit, update, clear } from '$lib/client/stores/dirty';
 
 	export let data: PageData;
 
@@ -48,13 +49,15 @@
 	let delayProfilesDirty = false;
 	let mediaManagementDirty = false;
 
+	// Initialize dirty tracking on mount
+	onMount(() => {
+		initEdit({ anyDirty: false });
+		return () => clear();
+	});
+
 	// Sync combined dirty state to global dirty store for DirtyModal
 	$: anyDirty = qualityProfilesDirty || delayProfilesDirty || mediaManagementDirty;
-	$: if (anyDirty) {
-		initCreate({});
-	} else {
-		initEdit({});
-	}
+	$: update('anyDirty', anyDirty);
 
 	// Validation: Quality profiles require media management settings (saved, not dirty)
 	$: hasQualityProfilesSelected = Object.values(qualityProfileState).some((db) =>
