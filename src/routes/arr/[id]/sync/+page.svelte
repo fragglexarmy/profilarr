@@ -55,6 +55,27 @@
 	} else {
 		initEdit({});
 	}
+
+	// Validation: Quality profiles require media management settings (saved, not dirty)
+	$: hasQualityProfilesSelected = Object.values(qualityProfileState).some((db) =>
+		Object.values(db).some((selected) => selected)
+	);
+
+	$: hasMediaManagement =
+		mediaManagementState.namingDatabaseId !== null &&
+		mediaManagementState.qualityDefinitionsDatabaseId !== null &&
+		mediaManagementState.mediaSettingsDatabaseId !== null;
+
+	$: qualityProfilesCanSave =
+		!hasQualityProfilesSelected || (hasMediaManagement && !mediaManagementDirty);
+
+	$: qualityProfilesWarning = !hasQualityProfilesSelected
+		? null
+		: !hasMediaManagement
+			? 'Quality profiles require media management settings. Configure media management settings above.'
+			: mediaManagementDirty
+				? 'Save your media management settings before saving quality profiles.'
+				: null;
 </script>
 
 <svelte:head>
@@ -82,12 +103,21 @@
 		</button>
 	</div>
 
+	<MediaManagement
+		databases={data.databases}
+		bind:state={mediaManagementState}
+		bind:syncTrigger={mediaManagementTrigger}
+		bind:cronExpression={mediaManagementCron}
+		bind:isDirty={mediaManagementDirty}
+	/>
 	<QualityProfiles
 		databases={data.databases}
 		bind:state={qualityProfileState}
 		bind:syncTrigger={qualityProfileTrigger}
 		bind:cronExpression={qualityProfileCron}
 		bind:isDirty={qualityProfilesDirty}
+		canSave={qualityProfilesCanSave}
+		warning={qualityProfilesWarning}
 	/>
 	<DelayProfiles
 		databases={data.databases}
@@ -95,13 +125,6 @@
 		bind:syncTrigger={delayProfileTrigger}
 		bind:cronExpression={delayProfileCron}
 		bind:isDirty={delayProfilesDirty}
-	/>
-	<MediaManagement
-		databases={data.databases}
-		bind:state={mediaManagementState}
-		bind:syncTrigger={mediaManagementTrigger}
-		bind:cronExpression={mediaManagementCron}
-		bind:isDirty={mediaManagementDirty}
 	/>
 </div>
 
@@ -118,6 +141,13 @@
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Namespacing</div>
 			<p class="mt-1">
 				Similarly named items from different databases will include invisible namespaces to ensure they don't override each other.
+			</p>
+		</div>
+
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Media Management First</div>
+			<p class="mt-1">
+				Quality profiles require all media management settings (naming, quality definitions, and media settings) to be configured and saved first. This ensures your files are named consistently with what the profile expects.
 			</p>
 		</div>
 

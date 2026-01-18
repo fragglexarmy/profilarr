@@ -15,6 +15,8 @@
 	export let state: Record<number, Record<number, boolean>> = {};
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
+	export let canSave: boolean = true;
+	export let warning: string | null = null;
 
 	let saving = false;
 	let syncing = false;
@@ -147,5 +149,5 @@
 		{/if}
 	</div>
 
-	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} {isDirty} on:save={handleSave} on:sync={handleSync} />
+	<SyncFooter bind:syncTrigger bind:cronExpression {saving} {syncing} {isDirty} {canSave} {warning} on:save={handleSave} on:sync={handleSync} />
 </div>

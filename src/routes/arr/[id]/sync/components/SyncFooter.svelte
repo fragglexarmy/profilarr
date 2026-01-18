@@ -1,6 +1,6 @@
 <script lang="ts">
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import { Check, RefreshCw, Save, Loader2 } from 'lucide-svelte';
+	import { Check, RefreshCw, Save, Loader2, AlertTriangle } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
@@ -8,6 +8,8 @@
 	export let saving: boolean = false;
 	export let syncing: boolean = false;
 	export let isDirty: boolean = false;
+	export let canSave: boolean = true;
+	export let warning: string | null = null;
 
 	const dispatch = createEventDispatcher<{ save: void; sync: void }>();
 
@@ -18,8 +20,8 @@
 		{ value: 'schedule', label: 'Schedule' }
 	] as const;
 
-	// Save disabled when not dirty, Sync disabled when dirty (unsaved changes)
-	$: saveDisabled = saving || !isDirty;
+	// Save disabled when not dirty or can't save, Sync disabled when dirty (unsaved changes)
+	$: saveDisabled = saving || !isDirty || !canSave;
 	$: syncDisabled = syncing || isDirty;
 </script>
 
@@ -49,7 +51,13 @@
 			{/if}
 		</div>
 
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-3">
+			{#if warning}
+				<div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+					<AlertTriangle size={14} class="flex-shrink-0" />
+					<span>{warning}</span>
+				</div>
+			{/if}
 			<button
 				type="button"
 				disabled={syncDisabled}
