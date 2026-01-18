@@ -1,11 +1,34 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
-	import { Download, FolderArchive, Trash2, RotateCcw, Database, Upload } from 'lucide-svelte';
+	import { Download, Trash2, RotateCcw, Upload, FolderArchive } from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import type { PageData } from './$types';
+	import type { Column } from '$lib/client/ui/table/types';
+	import Table from '$lib/client/ui/table/Table.svelte';
+	import TableActionButton from '$lib/client/ui/table/TableActionButton.svelte';
+	import Badge from '$lib/client/ui/badge/Badge.svelte';
+	import ActionsBar from '$lib/client/ui/actions/ActionsBar.svelte';
+	import ActionButton from '$lib/client/ui/actions/ActionButton.svelte';
+	import SearchAction from '$lib/client/ui/actions/SearchAction.svelte';
+	import Dropdown from '$lib/client/ui/dropdown/Dropdown.svelte';
+	import { createSearchStore } from '$lib/client/stores/search';
 
 	export let data: PageData;
+
+	type Backup = (typeof data.backups)[0];
+
+	// Search store
+	const searchStore = createSearchStore();
+
+	// Filtered backups
+	$: filteredBackups = searchStore.filterItems(data.backups, ['filename']);
+
+	const columns: Column<Backup>[] = [
+		{ key: 'filename', header: 'Filename', sortable: true },
+		{ key: 'created', header: 'Created', sortable: true },
+		{ key: 'sizeFormatted', header: 'Size', sortable: true, width: 'w-32' }
+	];
 
 	// Modal state
 	let showDeleteModal = false;
@@ -16,6 +39,8 @@
 
 	// File upload
 	let fileInput: HTMLInputElement;
+	let uploadFormRef: HTMLFormElement;
+	let createFormRef: HTMLFormElement;
 
 	function downloadBackup(filename: string) {
 		window.location.href = `/api/backups/download/${filename}`;
@@ -23,6 +48,10 @@
 
 	function triggerFileUpload() {
 		fileInput?.click();
+	}
+
+	function triggerCreateBackup() {
+		createFormRef?.requestSubmit();
 	}
 
 	function formatDateTime(date: Date): string {
@@ -75,251 +104,216 @@
 <div class="p-8">
 	<!-- Header -->
 	<div class="mb-8">
-		<div class="flex items-center justify-between">
-			<div>
-				<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Backups</h1>
-				<p class="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
-					Manage database and configuration backups
-				</p>
-			</div>
+		<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Backups</h1>
+		<p class="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
+			Manage database and configuration backups
+		</p>
+	</div>
 
-			<!-- Create Backup Button -->
-			<div class="flex gap-2">
-				<!-- Upload Backup Button -->
+	<!-- Hidden forms for upload and create -->
+	<form
+		bind:this={uploadFormRef}
+		method="POST"
+		action="?/uploadBackup"
+		enctype="multipart/form-data"
+		class="hidden"
+		use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'failure' && result.data) {
+					alertStore.add(
+						'error',
+						(result.data as { error?: string }).error || 'Failed to upload backup'
+					);
+				} else if (result.type === 'success') {
+					alertStore.add('success', 'Backup uploaded successfully');
+					fileInput.value = '';
+				}
+				await update();
+			};
+		}}
+	>
+		<input
+			type="file"
+			name="file"
+			accept=".tar.gz"
+			bind:this={fileInput}
+			on:change={(e) => {
+				if (e.currentTarget.files?.length) {
+					uploadFormRef.requestSubmit();
+				}
+			}}
+		/>
+	</form>
+
+	<form
+		bind:this={createFormRef}
+		method="POST"
+		action="?/createBackup"
+		class="hidden"
+		use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'failure' && result.data) {
+					alertStore.add(
+						'error',
+						(result.data as { error?: string }).error || 'Failed to create backup'
+					);
+				} else if (result.type === 'success') {
+					alertStore.add('success', 'Backup created successfully');
+				}
+				await update();
+			};
+		}}
+	/>
+
+	<!-- Actions Bar -->
+	<div class="mb-4">
+		<ActionsBar>
+			<SearchAction {searchStore} placeholder="Search backups..." />
+			<ActionButton icon={Upload} hasDropdown dropdownPosition="right">
+				<svelte:fragment slot="dropdown">
+					<Dropdown position="right" minWidth="16rem">
+						<button
+							type="button"
+							on:click={triggerFileUpload}
+							class="w-full cursor-pointer px-4 py-3 text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700/70"
+						>
+							<div class="flex items-center gap-3">
+								<Upload size={18} class="text-neutral-500" />
+								<div>
+									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+										Upload Backup
+									</div>
+									<div class="text-xs text-neutral-500 dark:text-neutral-400">
+										Restore from a .tar.gz backup file
+									</div>
+								</div>
+							</div>
+						</button>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton icon={FolderArchive} hasDropdown dropdownPosition="right">
+				<svelte:fragment slot="dropdown">
+					<Dropdown position="right" minWidth="16rem">
+						<button
+							type="button"
+							on:click={triggerCreateBackup}
+							class="w-full cursor-pointer px-4 py-3 text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700/70"
+						>
+							<div class="flex items-center gap-3">
+								<FolderArchive size={18} class="text-neutral-500" />
+								<div>
+									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+										Create Backup
+									</div>
+									<div class="text-xs text-neutral-500 dark:text-neutral-400">
+										Create a new backup of database and configs
+									</div>
+								</div>
+							</div>
+						</button>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+		</ActionsBar>
+	</div>
+
+	<!-- Backups Table -->
+	<Table
+		{columns}
+		data={filteredBackups}
+		emptyMessage="No backups found. Create your first backup to get started."
+		compact
+	>
+		<svelte:fragment slot="cell" let:row let:column>
+			{#if column.key === 'filename'}
+				<Badge variant="neutral" mono>{row.filename}</Badge>
+			{:else if column.key === 'created'}
+				<Badge variant="neutral" mono>{formatDateTime(row.created)}</Badge>
+			{:else if column.key === 'sizeFormatted'}
+				<Badge variant="neutral" mono>{row.sizeFormatted}</Badge>
+			{/if}
+		</svelte:fragment>
+
+		<svelte:fragment slot="actions" let:row>
+			<div class="flex items-center justify-end gap-1">
+				<!-- Download Button -->
+				<TableActionButton
+					icon={Download}
+					title="Download backup"
+					variant="neutral"
+					size="sm"
+					on:click={() => downloadBackup(row.filename)}
+				/>
+
+				<!-- Restore Button -->
 				<form
 					method="POST"
-					action="?/uploadBackup"
-					enctype="multipart/form-data"
+					action="?/restoreBackup"
 					use:enhance={() => {
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data) {
 								alertStore.add(
 									'error',
-									(result.data as { error?: string }).error || 'Failed to upload backup'
+									(result.data as { error?: string }).error || 'Failed to restore backup'
 								);
 							} else if (result.type === 'success') {
-								alertStore.add('success', 'Backup uploaded successfully');
-								fileInput.value = ''; // Reset file input
+								alertStore.add(
+									'success',
+									'Backup restored successfully. Please restart the application.'
+								);
 							}
 							await update();
 						};
 					}}
 				>
-					<input
-						type="file"
-						name="file"
-						accept=".tar.gz"
-						bind:this={fileInput}
-						on:change={(e) => {
-							const form = e.currentTarget.form;
-							if (form && e.currentTarget.files?.length) {
-								form.requestSubmit();
-							}
-						}}
-						class="hidden"
-					/>
+					<input type="hidden" name="filename" value={row.filename} />
 					<button
 						type="button"
-						on:click={triggerFileUpload}
-						class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+						on:click={(e) => {
+							const form = e.currentTarget.closest('form');
+							if (form) openRestoreModal(row.filename, form);
+						}}
+						class="inline-flex h-6 w-6 items-center justify-center rounded border border-neutral-300 bg-white text-amber-600 transition-colors hover:border-amber-300 hover:bg-amber-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-amber-400 dark:hover:border-amber-700 dark:hover:bg-amber-900/20"
+						title="Restore from backup"
 					>
-						<Upload size={16} />
-						Upload Backup
+						<RotateCcw size={12} />
 					</button>
 				</form>
 
-				<!-- Create Backup Button -->
+				<!-- Delete Button -->
 				<form
 					method="POST"
-					action="?/createBackup"
+					action="?/deleteBackup"
 					use:enhance={() => {
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data) {
 								alertStore.add(
 									'error',
-									(result.data as { error?: string }).error || 'Failed to create backup'
+									(result.data as { error?: string }).error || 'Failed to delete backup'
 								);
 							} else if (result.type === 'success') {
-								alertStore.add('success', 'Backup created successfully');
+								alertStore.add('success', 'Backup deleted successfully');
 							}
 							await update();
 						};
 					}}
 				>
-					<button
-						type="submit"
-						class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
-					>
-						<FolderArchive size={16} />
-						Create Backup
-					</button>
+					<input type="hidden" name="filename" value={row.filename} />
+					<TableActionButton
+						icon={Trash2}
+						title="Delete backup"
+						variant="danger"
+						size="sm"
+						on:click={(e) => {
+							const form = e.currentTarget.closest('form');
+							if (form) openDeleteModal(row.filename, form);
+						}}
+					/>
 				</form>
 			</div>
-		</div>
-	</div>
-
-	<!-- Backups List -->
-	<div
-		class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
-	>
-		<!-- Header -->
-		<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-			<div class="flex items-center gap-2">
-				<Database size={18} class="text-neutral-600 dark:text-neutral-400" />
-				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-					Available Backups
-				</h2>
-			</div>
-		</div>
-
-		<!-- Table -->
-		<div class="overflow-x-auto">
-			<table class="w-full text-xs">
-				<thead>
-					<tr>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Filename
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Created
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Size
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody class="[&_tr:last-child_td]:border-b-0">
-					{#each data.backups as backup (backup.filename)}
-						<tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-							<!-- Filename -->
-							<td
-								class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-							>
-								<code
-									class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-								>
-									{backup.filename}
-								</code>
-							</td>
-
-							<!-- Created -->
-							<td
-								class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-							>
-								{formatDateTime(backup.created)}
-							</td>
-
-							<!-- Size -->
-							<td
-								class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-							>
-								{backup.sizeFormatted}
-							</td>
-
-							<!-- Actions -->
-							<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
-								<div class="flex items-center gap-2">
-									<!-- Download Button -->
-									<button
-										type="button"
-										on:click={() => downloadBackup(backup.filename)}
-										class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-										title="Download backup"
-									>
-										<Download size={14} />
-									</button>
-
-									<!-- Restore Button -->
-									<form
-										method="POST"
-										action="?/restoreBackup"
-										use:enhance={() => {
-											return async ({ result, update }) => {
-												if (result.type === 'failure' && result.data) {
-													alertStore.add(
-														'error',
-														(result.data as { error?: string }).error || 'Failed to restore backup'
-													);
-												} else if (result.type === 'success') {
-													alertStore.add(
-														'success',
-														'Backup restored successfully. Please restart the application.'
-													);
-												}
-												await update();
-											};
-										}}
-									>
-										<input type="hidden" name="filename" value={backup.filename} />
-										<button
-											type="button"
-											on:click={(e) => {
-												const form = e.currentTarget.closest('form');
-												if (form) openRestoreModal(backup.filename, form);
-											}}
-											class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-300 bg-white text-yellow-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-yellow-400 dark:hover:bg-neutral-700"
-											title="Restore from backup"
-										>
-											<RotateCcw size={14} />
-										</button>
-									</form>
-
-									<!-- Delete Button -->
-									<form
-										method="POST"
-										action="?/deleteBackup"
-										use:enhance={() => {
-											return async ({ result, update }) => {
-												if (result.type === 'failure' && result.data) {
-													alertStore.add(
-														'error',
-														(result.data as { error?: string }).error || 'Failed to delete backup'
-													);
-												} else if (result.type === 'success') {
-													alertStore.add('success', 'Backup deleted successfully');
-												}
-												await update();
-											};
-										}}
-									>
-										<input type="hidden" name="filename" value={backup.filename} />
-										<button
-											type="button"
-											on:click={(e) => {
-												const form = e.currentTarget.closest('form');
-												if (form) openDeleteModal(backup.filename, form);
-											}}
-											class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-300 bg-white text-red-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:bg-neutral-700"
-											title="Delete backup"
-										>
-											<Trash2 size={14} />
-										</button>
-									</form>
-								</div>
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="4" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-								No backups found. Create your first backup to get started.
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	</div>
+		</svelte:fragment>
+	</Table>
 </div>
 
 <!-- Delete Confirmation Modal -->
