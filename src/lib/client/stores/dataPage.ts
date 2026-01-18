@@ -5,7 +5,7 @@
 
 import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
-import { createSearchStore, type SearchStore } from './search';
+import { createSearchStore, type SearchStore } from './search.ts';
 
 export type ViewMode = 'table' | 'cards';
 

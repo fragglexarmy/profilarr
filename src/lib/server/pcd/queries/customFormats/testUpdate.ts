@@ -41,7 +41,7 @@ export async function updateTest(options: UpdateTestOptions) {
 	// Update with value guards on the current values
 	// We match on id AND verify the current values haven't changed
 	const updateTest = {
-		sql: `UPDATE custom_format_tests SET title = '${esc(input.title)}', type = '${esc(input.type)}', should_match = ${input.should_match ? 1 : 0}, description = ${descriptionValue} WHERE custom_format_id = cf('${esc(formatName)}') AND title = '${esc(current.title)}' AND type = '${esc(current.type)}'`,
+		sql: `UPDATE custom_format_tests SET title = '${esc(input.title)}', type = '${esc(input.type)}', should_match = ${input.should_match ? 1 : 0}, description = ${descriptionValue} WHERE custom_format_name = '${esc(formatName)}' AND title = '${esc(current.title)}' AND type = '${esc(current.type)}'`,
 		parameters: [],
 		query: {} as never
 	};

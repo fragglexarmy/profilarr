@@ -12,14 +12,12 @@ import type { Tag } from '../../types.ts';
 export interface QualityItem {
   position: number;
   type: 'quality' | 'group';
-  id: number;
   name: string;
   is_upgrade_until: boolean;
 }
 
 /** Language configuration */
 export interface ProfileLanguage {
-  id: number;
   name: string;
   type: 'must' | 'only' | 'not' | 'simple';
 }
@@ -46,7 +44,6 @@ export interface QualityProfileGeneral {
 
 /** Language configuration for a quality profile */
 export interface QualityProfileLanguage {
-  id: number;
   name: string;
   type: 'must' | 'only' | 'not' | 'simple';
 }
@@ -58,7 +55,6 @@ export interface QualityProfileLanguages {
 
 /** Single quality item */
 export interface QualitySingle {
-  id: number;
   name: string;
   position: number;
   enabled: boolean;
@@ -67,13 +63,11 @@ export interface QualitySingle {
 
 /** Quality group with members */
 export interface QualityGroup {
-  id: number;
   name: string;
   position: number;
   enabled: boolean;
   isUpgradeUntil: boolean;
   members: {
-    id: number;
     name: string;
   }[];
 }

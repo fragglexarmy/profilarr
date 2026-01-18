@@ -10,7 +10,7 @@ import type { MediaType } from '$lib/server/utils/arr/parser/types.ts';
 export type TestResult = 'pass' | 'fail' | 'unknown';
 
 export interface TestWithResult {
-	id: number;
+	custom_format_name: string;
 	title: string;
 	type: string;
 	should_match: boolean;
@@ -58,7 +58,7 @@ export const load: ServerLoad = async ({ params }) => {
 	}
 
 	// Get tests for this custom format
-	const tests = await customFormatQueries.listTests(cache, formatId);
+	const tests = await customFormatQueries.listTests(cache, format.name);
 
 	// Check if parser is available
 	const parserAvailable = await isParserHealthy();
@@ -82,7 +82,7 @@ export const load: ServerLoad = async ({ params }) => {
 	}
 
 	// Get conditions for evaluation
-	const conditions = await customFormatQueries.getConditionsForEvaluation(cache, formatId);
+	const conditions = await customFormatQueries.getConditionsForEvaluation(cache, format.name);
 
 	// Evaluate each test
 	const testsWithResults: TestWithResult[] = await Promise.all(
@@ -114,7 +114,7 @@ export const load: ServerLoad = async ({ params }) => {
 					conditions: evaluation.conditions
 				};
 			} catch (e) {
-				console.error(`Failed to evaluate test ${test.id}:`, e);
+				console.error(`Failed to evaluate test "${test.title}":`, e);
 				return {
 					...test,
 					actual_match: null,
@@ -153,20 +153,21 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const testId = parseInt(formData.get('testId') as string, 10);
 		const formatName = formData.get('formatName') as string;
+		const testTitle = formData.get('testTitle') as string;
+		const testType = formData.get('testType') as string;
 		const layer = (formData.get('layer') as OperationLayer) || 'user';
-
-		if (isNaN(testId)) {
-			return fail(400, { error: 'Invalid test ID' });
-		}
 
 		if (!formatName) {
 			return fail(400, { error: 'Format name is required' });
 		}
 
+		if (!testTitle || !testType) {
+			return fail(400, { error: 'Test title and type are required' });
+		}
+
 		// Get current test for value guards
-		const current = await customFormatQueries.getTestById(cache, testId);
+		const current = await customFormatQueries.getTest(cache, formatName, testTitle, testType);
 		if (!current) {
 			return fail(404, { error: 'Test not found' });
 		}

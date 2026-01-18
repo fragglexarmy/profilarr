@@ -16,9 +16,7 @@ export interface UpdateConditionsOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
-	/** The custom format ID */
-	formatId: number;
-	/** The custom format name (for metadata) */
+	/** The custom format name */
 	formatName: string;
 	/** Current conditions from the database (for comparison) */
 	originalConditions: ConditionData[];
@@ -34,10 +32,9 @@ function esc(value: string): string {
 }
 
 /**
- * Generate SQL to insert a condition's type-specific data
+ * Generate SQL to insert a condition's type-specific data using name-based FKs
  */
-function generateConditionValueSql(conditionName: string, formatName: string, condition: ConditionData): string[] {
-	const conditionIdLookup = `(SELECT id FROM custom_format_conditions WHERE name = '${esc(conditionName)}' AND custom_format_id = (SELECT id FROM custom_formats WHERE name = '${esc(formatName)}'))`;
+function generateConditionValueSql(formatName: string, conditionName: string, condition: ConditionData): string[] {
 	const sqls: string[] = [];
 
 	switch (condition.type) {
@@ -46,7 +43,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'edition':
 			if (condition.patterns && condition.patterns.length > 0) {
 				for (const pattern of condition.patterns) {
-					sqls.push(`INSERT INTO condition_patterns (custom_format_condition_id, regular_expression_id) VALUES (${conditionIdLookup}, ${pattern.id})`);
+					sqls.push(`INSERT INTO condition_patterns (custom_format_name, condition_name, regular_expression_name) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(pattern.name)}')`);
 				}
 			}
 			break;
@@ -54,7 +51,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'language':
 			if (condition.languages && condition.languages.length > 0) {
 				for (const lang of condition.languages) {
-					sqls.push(`INSERT INTO condition_languages (custom_format_condition_id, language_id, except_language) VALUES (${conditionIdLookup}, ${lang.id}, ${lang.except ? 1 : 0})`);
+					sqls.push(`INSERT INTO condition_languages (custom_format_name, condition_name, language_name, except_language) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(lang.name)}', ${lang.except ? 1 : 0})`);
 				}
 			}
 			break;
@@ -62,7 +59,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'source':
 			if (condition.sources && condition.sources.length > 0) {
 				for (const source of condition.sources) {
-					sqls.push(`INSERT INTO condition_sources (custom_format_condition_id, source) VALUES (${conditionIdLookup}, '${esc(source)}')`);
+					sqls.push(`INSERT INTO condition_sources (custom_format_name, condition_name, source) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(source)}')`);
 				}
 			}
 			break;
@@ -70,7 +67,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'resolution':
 			if (condition.resolutions && condition.resolutions.length > 0) {
 				for (const res of condition.resolutions) {
-					sqls.push(`INSERT INTO condition_resolutions (custom_format_condition_id, resolution) VALUES (${conditionIdLookup}, '${esc(res)}')`);
+					sqls.push(`INSERT INTO condition_resolutions (custom_format_name, condition_name, resolution) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(res)}')`);
 				}
 			}
 			break;
@@ -78,7 +75,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'quality_modifier':
 			if (condition.qualityModifiers && condition.qualityModifiers.length > 0) {
 				for (const qm of condition.qualityModifiers) {
-					sqls.push(`INSERT INTO condition_quality_modifiers (custom_format_condition_id, quality_modifier) VALUES (${conditionIdLookup}, '${esc(qm)}')`);
+					sqls.push(`INSERT INTO condition_quality_modifiers (custom_format_name, condition_name, quality_modifier) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(qm)}')`);
 				}
 			}
 			break;
@@ -86,7 +83,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'release_type':
 			if (condition.releaseTypes && condition.releaseTypes.length > 0) {
 				for (const rt of condition.releaseTypes) {
-					sqls.push(`INSERT INTO condition_release_types (custom_format_condition_id, release_type) VALUES (${conditionIdLookup}, '${esc(rt)}')`);
+					sqls.push(`INSERT INTO condition_release_types (custom_format_name, condition_name, release_type) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(rt)}')`);
 				}
 			}
 			break;
@@ -94,7 +91,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 		case 'indexer_flag':
 			if (condition.indexerFlags && condition.indexerFlags.length > 0) {
 				for (const flag of condition.indexerFlags) {
-					sqls.push(`INSERT INTO condition_indexer_flags (custom_format_condition_id, flag) VALUES (${conditionIdLookup}, '${esc(flag)}')`);
+					sqls.push(`INSERT INTO condition_indexer_flags (custom_format_name, condition_name, flag) VALUES ('${esc(formatName)}', '${esc(conditionName)}', '${esc(flag)}')`);
 				}
 			}
 			break;
@@ -103,7 +100,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 			if (condition.size) {
 				const minBytes = condition.size.minBytes ?? 'NULL';
 				const maxBytes = condition.size.maxBytes ?? 'NULL';
-				sqls.push(`INSERT INTO condition_sizes (custom_format_condition_id, min_bytes, max_bytes) VALUES (${conditionIdLookup}, ${minBytes}, ${maxBytes})`);
+				sqls.push(`INSERT INTO condition_sizes (custom_format_name, condition_name, min_bytes, max_bytes) VALUES ('${esc(formatName)}', '${esc(conditionName)}', ${minBytes}, ${maxBytes})`);
 			}
 			break;
 
@@ -111,7 +108,7 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
 			if (condition.years) {
 				const minYear = condition.years.minYear ?? 'NULL';
 				const maxYear = condition.years.maxYear ?? 'NULL';
-				sqls.push(`INSERT INTO condition_years (custom_format_condition_id, min_year, max_year) VALUES (${conditionIdLookup}, ${minYear}, ${maxYear})`);
+				sqls.push(`INSERT INTO condition_years (custom_format_name, condition_name, min_year, max_year) VALUES ('${esc(formatName)}', '${esc(conditionName)}', ${minYear}, ${maxYear})`);
 			}
 			break;
 	}
@@ -124,40 +121,41 @@ function generateConditionValueSql(conditionName: string, formatName: string, co
  *
  * Strategy:
  * 1. Find conditions to delete (in original but not in new)
- * 2. Find conditions to add (new with negative IDs, these are drafts)
- * 3. Find conditions to update (positive IDs that exist in both)
+ * 2. Find conditions to add (new conditions not in original)
+ * 3. Find conditions to update (names that exist in both)
  */
 export async function updateConditions(options: UpdateConditionsOptions) {
-	const { databaseId, layer, formatId, formatName, originalConditions, conditions } = options;
+	const { databaseId, layer, formatName, originalConditions, conditions } = options;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const queries: any[] = [];
 
-	// Get IDs of conditions to keep
-	const newConditionIds = new Set(conditions.filter(c => c.id > 0).map(c => c.id));
+	// Get names of conditions to keep
+	const newConditionNames = new Set(conditions.map(c => c.name));
+	const originalConditionNames = new Set(originalConditions.map(c => c.name));
 
 	// 1. Delete removed conditions (cascade will handle type-specific tables)
-	const conditionsToDelete = originalConditions.filter(c => !newConditionIds.has(c.id));
+	const conditionsToDelete = originalConditions.filter(c => !newConditionNames.has(c.name));
 	for (const condition of conditionsToDelete) {
 		queries.push({
-			sql: `DELETE FROM custom_format_conditions WHERE id = ${condition.id}`,
+			sql: `DELETE FROM custom_format_conditions WHERE custom_format_name = '${esc(formatName)}' AND name = '${esc(condition.name)}'`,
 			parameters: [],
 			query: {} as never
 		});
 	}
 
-	// 2. Handle new conditions (negative IDs from drafts)
-	const newConditions = conditions.filter(c => c.id < 0);
+	// 2. Handle new conditions (names not in original)
+	const newConditions = conditions.filter(c => !originalConditionNames.has(c.name));
 	for (const condition of newConditions) {
 		// Insert the base condition
 		queries.push({
-			sql: `INSERT INTO custom_format_conditions (custom_format_id, name, type, arr_type, negate, required) VALUES (${formatId}, '${esc(condition.name)}', '${esc(condition.type)}', '${condition.arrType ?? 'all'}', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
+			sql: `INSERT INTO custom_format_conditions (custom_format_name, name, type, arr_type, negate, required) VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}', '${condition.arrType ?? 'all'}', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
 			parameters: [],
 			query: {} as never
 		});
 
 		// Insert type-specific data
-		const valueSqls = generateConditionValueSql(condition.name, formatName, condition);
+		const valueSqls = generateConditionValueSql(formatName, condition.name, condition);
 		for (const sql of valueSqls) {
 			queries.push({
 				sql,
@@ -167,15 +165,14 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		}
 	}
 
-	// 3. Handle updated conditions (positive IDs)
-	const existingConditions = conditions.filter(c => c.id > 0);
+	// 3. Handle updated conditions (names that exist in both)
+	const existingConditions = conditions.filter(c => originalConditionNames.has(c.name));
 	for (const condition of existingConditions) {
-		const original = originalConditions.find(c => c.id === condition.id);
+		const original = originalConditions.find(c => c.name === condition.name);
 		if (!original) continue;
 
 		// Check if base condition changed
 		const baseChanged =
-			original.name !== condition.name ||
 			original.type !== condition.type ||
 			original.arrType !== condition.arrType ||
 			original.negate !== condition.negate ||
@@ -184,7 +181,7 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		if (baseChanged) {
 			// Update base condition
 			queries.push({
-				sql: `UPDATE custom_format_conditions SET name = '${esc(condition.name)}', type = '${esc(condition.type)}', arr_type = '${condition.arrType ?? 'all'}', negate = ${condition.negate ? 1 : 0}, required = ${condition.required ? 1 : 0} WHERE id = ${condition.id}`,
+				sql: `UPDATE custom_format_conditions SET type = '${esc(condition.type)}', arr_type = '${condition.arrType ?? 'all'}', negate = ${condition.negate ? 1 : 0}, required = ${condition.required ? 1 : 0} WHERE custom_format_name = '${esc(formatName)}' AND name = '${esc(condition.name)}'`,
 				parameters: [],
 				query: {} as never
 			});
@@ -203,15 +200,14 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 			const deleteTable = getTypeTable(original.type);
 			if (deleteTable) {
 				queries.push({
-					sql: `DELETE FROM ${deleteTable} WHERE custom_format_condition_id = ${condition.id}`,
+					sql: `DELETE FROM ${deleteTable} WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(condition.name)}'`,
 					parameters: [],
 					query: {} as never
 				});
 			}
 
 			// Insert new type-specific data
-			// Use a direct ID lookup since this is an existing condition
-			const valueSqls = generateConditionValueSqlById(condition.id, condition);
+			const valueSqls = generateConditionValueSql(formatName, condition.name, condition);
 			for (const sql of valueSqls) {
 				queries.push({
 					sql,
@@ -231,7 +227,7 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 	await logger.info(`Save conditions for custom format "${formatName}"`, {
 		source: 'CustomFormat',
 		meta: {
-			formatId,
+			formatName,
 			deleted: conditionsToDelete.length,
 			added: newConditions.length,
 			updated: existingConditions.length
@@ -299,91 +295,6 @@ function getConditionValues(condition: ConditionData): unknown {
 		size: condition.size,
 		years: condition.years
 	};
-}
-
-/**
- * Generate SQL for condition values using direct ID (for existing conditions)
- */
-function generateConditionValueSqlById(conditionId: number, condition: ConditionData): string[] {
-	const sqls: string[] = [];
-
-	switch (condition.type) {
-		case 'release_title':
-		case 'release_group':
-		case 'edition':
-			if (condition.patterns && condition.patterns.length > 0) {
-				for (const pattern of condition.patterns) {
-					sqls.push(`INSERT INTO condition_patterns (custom_format_condition_id, regular_expression_id) VALUES (${conditionId}, ${pattern.id})`);
-				}
-			}
-			break;
-
-		case 'language':
-			if (condition.languages && condition.languages.length > 0) {
-				for (const lang of condition.languages) {
-					sqls.push(`INSERT INTO condition_languages (custom_format_condition_id, language_id, except_language) VALUES (${conditionId}, ${lang.id}, ${lang.except ? 1 : 0})`);
-				}
-			}
-			break;
-
-		case 'source':
-			if (condition.sources && condition.sources.length > 0) {
-				for (const source of condition.sources) {
-					sqls.push(`INSERT INTO condition_sources (custom_format_condition_id, source) VALUES (${conditionId}, '${esc(source)}')`);
-				}
-			}
-			break;
-
-		case 'resolution':
-			if (condition.resolutions && condition.resolutions.length > 0) {
-				for (const res of condition.resolutions) {
-					sqls.push(`INSERT INTO condition_resolutions (custom_format_condition_id, resolution) VALUES (${conditionId}, '${esc(res)}')`);
-				}
-			}
-			break;
-
-		case 'quality_modifier':
-			if (condition.qualityModifiers && condition.qualityModifiers.length > 0) {
-				for (const qm of condition.qualityModifiers) {
-					sqls.push(`INSERT INTO condition_quality_modifiers (custom_format_condition_id, quality_modifier) VALUES (${conditionId}, '${esc(qm)}')`);
-				}
-			}
-			break;
-
-		case 'release_type':
-			if (condition.releaseTypes && condition.releaseTypes.length > 0) {
-				for (const rt of condition.releaseTypes) {
-					sqls.push(`INSERT INTO condition_release_types (custom_format_condition_id, release_type) VALUES (${conditionId}, '${esc(rt)}')`);
-				}
-			}
-			break;
-
-		case 'indexer_flag':
-			if (condition.indexerFlags && condition.indexerFlags.length > 0) {
-				for (const flag of condition.indexerFlags) {
-					sqls.push(`INSERT INTO condition_indexer_flags (custom_format_condition_id, flag) VALUES (${conditionId}, '${esc(flag)}')`);
-				}
-			}
-			break;
-
-		case 'size':
-			if (condition.size) {
-				const minBytes = condition.size.minBytes ?? 'NULL';
-				const maxBytes = condition.size.maxBytes ?? 'NULL';
-				sqls.push(`INSERT INTO condition_sizes (custom_format_condition_id, min_bytes, max_bytes) VALUES (${conditionId}, ${minBytes}, ${maxBytes})`);
-			}
-			break;
-
-		case 'year':
-			if (condition.years) {
-				const minYear = condition.years.minYear ?? 'NULL';
-				const maxYear = condition.years.maxYear ?? 'NULL';
-				sqls.push(`INSERT INTO condition_years (custom_format_condition_id, min_year, max_year) VALUES (${conditionId}, ${minYear}, ${maxYear})`);
-			}
-			break;
-	}
-
-	return sqls;
 }
 
 /**

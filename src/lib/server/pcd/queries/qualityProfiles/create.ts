@@ -60,9 +60,9 @@ export async function create(options: CreateQualityProfileOptions) {
 
 		queries.push(insertTag);
 
-		// Link tag to quality profile
+		// Link tag to quality profile using name-based FKs
 		const linkTag = {
-			sql: `INSERT INTO quality_profile_tags (quality_profile_id, tag_id) VALUES ((SELECT id FROM quality_profiles WHERE name = '${esc(input.name)}'), tag('${esc(tagName)}'))`,
+			sql: `INSERT INTO quality_profile_tags (quality_profile_name, tag_name) VALUES ('${esc(input.name)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};
@@ -78,11 +78,11 @@ export async function create(options: CreateQualityProfileOptions) {
 		.execute();
 
 	// Insert each quality into quality_profile_qualities
-	// quality_group_id is NULL since these are individual qualities, not groups
+	// quality_group_name is NULL since these are individual qualities, not groups
 	for (let i = 0; i < allQualities.length; i++) {
 		const quality = allQualities[i];
 		const insertQuality = {
-			sql: `INSERT INTO quality_profile_qualities (quality_profile_id, quality_id, quality_group_id, position, enabled, upgrade_until) VALUES ((SELECT id FROM quality_profiles WHERE name = '${esc(input.name)}'), ${quality.id}, NULL, ${i + 1}, 1, 0)`,
+			sql: `INSERT INTO quality_profile_qualities (quality_profile_name, quality_name, quality_group_name, position, enabled, upgrade_until) VALUES ('${esc(input.name)}', '${esc(quality.name)}', NULL, ${i + 1}, 1, 0)`,
 			parameters: [],
 			query: {} as never
 		};

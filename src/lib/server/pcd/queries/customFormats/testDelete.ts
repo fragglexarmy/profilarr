@@ -29,7 +29,7 @@ export async function deleteTest(options: DeleteTestOptions) {
 
 	// Delete with value guards to ensure we're deleting the expected record
 	const deleteTestQuery = {
-		sql: `DELETE FROM custom_format_tests WHERE custom_format_id = cf('${esc(formatName)}') AND title = '${esc(current.title)}' AND type = '${esc(current.type)}'`,
+		sql: `DELETE FROM custom_format_tests WHERE custom_format_name = '${esc(formatName)}' AND title = '${esc(current.title)}' AND type = '${esc(current.type)}'`,
 		parameters: [],
 		query: {} as never
 	};

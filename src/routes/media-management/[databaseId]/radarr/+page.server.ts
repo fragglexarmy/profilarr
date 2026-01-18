@@ -218,7 +218,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Missing definitions data' });
 		}
 
-		let definitions: { quality_id: number; min_size: number; max_size: number; preferred_size: number }[];
+		let definitions: { quality_name: string; min_size: number; max_size: number; preferred_size: number }[];
 		try {
 			definitions = JSON.parse(definitionsJson);
 		} catch {

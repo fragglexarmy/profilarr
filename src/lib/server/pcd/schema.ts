@@ -72,16 +72,14 @@ export interface QualityProfilesTable {
 }
 
 export interface QualityGroupsTable {
-	id: Generated<number>;
-	quality_profile_id: number;
+	quality_profile_name: string;
 	name: string;
 	created_at: Generated<string>;
 	updated_at: Generated<string>;
 }
 
 export interface CustomFormatConditionsTable {
-	id: Generated<number>;
-	custom_format_id: number;
+	custom_format_name: string;
 	name: string;
 	type: string;
 	arr_type: string;
@@ -96,44 +94,44 @@ export interface CustomFormatConditionsTable {
 // ============================================================================
 
 export interface RegularExpressionTagsTable {
-	regular_expression_id: number;
-	tag_id: number;
+	regular_expression_name: string;
+	tag_name: string;
 }
 
 export interface CustomFormatTagsTable {
-	custom_format_id: number;
-	tag_id: number;
+	custom_format_name: string;
+	tag_name: string;
 }
 
 export interface QualityProfileTagsTable {
-	quality_profile_id: number;
-	tag_id: number;
+	quality_profile_name: string;
+	tag_name: string;
 }
 
 export interface QualityProfileLanguagesTable {
-	quality_profile_id: number;
-	language_id: number;
+	quality_profile_name: string;
+	language_name: string;
 	type: string;
 }
 
 export interface QualityGroupMembersTable {
-	quality_group_id: number;
-	quality_id: number;
+	quality_profile_name: string;
+	quality_group_name: string;
+	quality_name: string;
 }
 
 export interface QualityProfileQualitiesTable {
-	id: Generated<number>;
-	quality_profile_id: number;
-	quality_id: number | null;
-	quality_group_id: number | null;
+	quality_profile_name: string;
+	quality_name: string | null;
+	quality_group_name: string | null;
 	position: number;
 	enabled: number;
 	upgrade_until: number;
 }
 
 export interface QualityProfileCustomFormatsTable {
-	quality_profile_id: number;
-	custom_format_id: number;
+	quality_profile_name: string;
+	custom_format_name: string;
 	arr_type: string;
 	score: number;
 }
@@ -143,49 +141,58 @@ export interface QualityProfileCustomFormatsTable {
 // ============================================================================
 
 export interface ConditionPatternsTable {
-	custom_format_condition_id: number;
-	regular_expression_id: number;
+	custom_format_name: string;
+	condition_name: string;
+	regular_expression_name: string;
 }
 
 export interface ConditionLanguagesTable {
-	custom_format_condition_id: number;
-	language_id: number;
+	custom_format_name: string;
+	condition_name: string;
+	language_name: string;
 	except_language: number;
 }
 
 export interface ConditionIndexerFlagsTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	flag: string;
 }
 
 export interface ConditionSourcesTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	source: string;
 }
 
 export interface ConditionResolutionsTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	resolution: string;
 }
 
 export interface ConditionQualityModifiersTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	quality_modifier: string;
 }
 
 export interface ConditionSizesTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	min_bytes: number | null;
 	max_bytes: number | null;
 }
 
 export interface ConditionReleaseTypesTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	release_type: string;
 }
 
 export interface ConditionYearsTable {
-	custom_format_condition_id: number;
+	custom_format_name: string;
+	condition_name: string;
 	min_year: number | null;
 	max_year: number | null;
 }
@@ -195,8 +202,7 @@ export interface ConditionYearsTable {
 // ============================================================================
 
 export interface CustomFormatTestsTable {
-	id: Generated<number>;
-	custom_format_id: number;
+	custom_format_name: string;
 	title: string;
 	type: string;
 	should_match: number;
@@ -250,8 +256,8 @@ export interface DelayProfilesTable {
 }
 
 export interface DelayProfileTagsTable {
-	delay_profile_id: number;
-	tag_id: number;
+	delay_profile_name: string;
+	tag_name: string;
 }
 
 // ============================================================================
@@ -259,7 +265,7 @@ export interface DelayProfileTagsTable {
 // ============================================================================
 
 export interface RadarrQualityDefinitionsTable {
-	quality_id: number;
+	quality_name: string;
 	min_size: number;
 	max_size: number;
 	preferred_size: number;
@@ -268,7 +274,7 @@ export interface RadarrQualityDefinitionsTable {
 }
 
 export interface SonarrQualityDefinitionsTable {
-	quality_id: number;
+	quality_name: string;
 	min_size: number;
 	max_size: number;
 	preferred_size: number;

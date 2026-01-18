@@ -32,31 +32,29 @@ export async function list(cache: PCDCache): Promise<DelayProfileTableRow[]> {
 
 	if (profiles.length === 0) return [];
 
-	const profileIds = profiles.map((p) => p.id);
+	const profileNames = profiles.map((p) => p.name);
 
 	// 2. Get all tags for all profiles
 	const allTags = await db
 		.selectFrom('delay_profile_tags as dpt')
-		.innerJoin('tags as t', 't.id', 'dpt.tag_id')
+		.innerJoin('tags as t', 't.name', 'dpt.tag_name')
 		.select([
-			'dpt.delay_profile_id',
-			't.id as tag_id',
+			'dpt.delay_profile_name',
 			't.name as tag_name',
 			't.created_at as tag_created_at'
 		])
-		.where('dpt.delay_profile_id', 'in', profileIds)
-		.orderBy('dpt.delay_profile_id')
+		.where('dpt.delay_profile_name', 'in', profileNames)
+		.orderBy('dpt.delay_profile_name')
 		.orderBy('t.name')
 		.execute();
 
 	// Build tags map
-	const tagsMap = new Map<number, Tag[]>();
+	const tagsMap = new Map<string, Tag[]>();
 	for (const tag of allTags) {
-		if (!tagsMap.has(tag.delay_profile_id)) {
-			tagsMap.set(tag.delay_profile_id, []);
+		if (!tagsMap.has(tag.delay_profile_name)) {
+			tagsMap.set(tag.delay_profile_name, []);
 		}
-		tagsMap.get(tag.delay_profile_id)!.push({
-			id: tag.tag_id,
+		tagsMap.get(tag.delay_profile_name)!.push({
 			name: tag.tag_name,
 			created_at: tag.tag_created_at
 		});
@@ -72,7 +70,7 @@ export async function list(cache: PCDCache): Promise<DelayProfileTableRow[]> {
 		bypass_if_highest_quality: profile.bypass_if_highest_quality === 1,
 		bypass_if_above_custom_format_score: profile.bypass_if_above_custom_format_score === 1,
 		minimum_custom_format_score: profile.minimum_custom_format_score,
-		tags: tagsMap.get(profile.id) || [],
+		tags: tagsMap.get(profile.name) || [],
 		created_at: profile.created_at,
 		updated_at: profile.updated_at
 	}));

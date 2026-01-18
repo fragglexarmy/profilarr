@@ -8,7 +8,6 @@
 // ============================================================================
 
 export interface Tag {
-	id: number;
 	name: string;
 	created_at: string;
 }
@@ -69,8 +68,7 @@ export interface QualityProfile {
 }
 
 export interface QualityGroup {
-	id: number;
-	quality_profile_id: number;
+	quality_profile_name: string;
 	name: string;
 	created_at: string;
 	updated_at: string;
@@ -83,11 +81,11 @@ export interface QualityProfileLanguage {
 }
 
 export interface QualityProfileQuality {
-	id: number;
-	quality_profile_id: number;
-	quality_id: number | null;
-	quality_group_id: number | null;
+	quality_profile_name: string;
+	quality_name: string | null;
+	quality_group_name: string | null;
 	position: number;
+	enabled: number; // 0 or 1 (boolean)
 	upgrade_until: number; // 0 or 1 (boolean)
 	// Populated fields
 	quality?: Quality;
@@ -120,8 +118,7 @@ export type ConditionType =
 	| 'year';
 
 export interface CustomFormatCondition {
-	id: number;
-	custom_format_id: number;
+	custom_format_name: string;
 	name: string;
 	type: ConditionType;
 	arr_type: ArrType;
@@ -144,12 +141,12 @@ export interface CustomFormatCondition {
 // Condition type-specific data structures
 
 export interface ConditionPattern {
-	regular_expression_id: number;
+	regular_expression_name: string;
 	regularExpression?: RegularExpression;
 }
 
 export interface ConditionLanguage {
-	language_id: number;
+	language_name: string;
 	except_language: number; // 0 or 1 (boolean)
 	language?: Language;
 }
@@ -209,8 +206,7 @@ export interface CustomFormatRow {
 }
 
 export interface CustomFormatConditionRow {
-	id: number;
-	custom_format_id: number;
+	custom_format_name: string;
 	name: string;
 	type: string;
 	arr_type: string;
@@ -221,38 +217,38 @@ export interface CustomFormatConditionRow {
 }
 
 export interface QualityProfileCustomFormatRow {
-	quality_profile_id: number;
-	custom_format_id: number;
+	quality_profile_name: string;
+	custom_format_name: string;
 	arr_type: string;
 	score: number;
 }
 
 export interface QualityProfileLanguageRow {
-	quality_profile_id: number;
-	language_id: number;
+	quality_profile_name: string;
+	language_name: string;
 	type: string;
 }
 
 export interface QualityProfileQualityRow {
-	id: number;
-	quality_profile_id: number;
-	quality_id: number | null;
-	quality_group_id: number | null;
+	quality_profile_name: string;
+	quality_name: string | null;
+	quality_group_name: string | null;
 	position: number;
+	enabled: number;
 	upgrade_until: number;
 }
 
 export interface QualityGroupRow {
-	id: number;
-	quality_profile_id: number;
+	quality_profile_name: string;
 	name: string;
 	created_at: string;
 	updated_at: string;
 }
 
 export interface QualityGroupMemberRow {
-	quality_group_id: number;
-	quality_id: number;
+	quality_profile_name: string;
+	quality_group_name: string;
+	quality_name: string;
 }
 
 // ============================================================================
@@ -260,8 +256,8 @@ export interface QualityGroupMemberRow {
 // ============================================================================
 
 export interface CustomFormatScoring {
-	id: number; // custom format ID
 	name: string; // custom format name
+	tags: string[]; // tag names for filtering
 	scores: Record<string, number | null>; // arr_type -> score mapping
 }
 

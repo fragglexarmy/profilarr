@@ -35,7 +35,7 @@ export async function createTest(options: CreateTestOptions) {
 	const descriptionValue = input.description ? `'${esc(input.description)}'` : 'NULL';
 
 	const insertTest = {
-		sql: `INSERT INTO custom_format_tests (custom_format_id, title, type, should_match, description) VALUES (cf('${esc(formatName)}'), '${esc(input.title)}', '${esc(input.type)}', ${input.should_match ? 1 : 0}, ${descriptionValue})`,
+		sql: `INSERT INTO custom_format_tests (custom_format_name, title, type, should_match, description) VALUES ('${esc(formatName)}', '${esc(input.title)}', '${esc(input.type)}', ${input.should_match ? 1 : 0}, ${descriptionValue})`,
 		parameters: [],
 		query: {} as never
 	};

@@ -40,17 +40,18 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	// Get custom format basic info, conditions, and available options
-	const [format, conditions, patterns, languages] = await Promise.all([
-		customFormatQueries.getById(cache, formatId),
-		customFormatQueries.getConditionsForEvaluation(cache, formatId),
-		regularExpressionQueries.list(cache),
-		languageQueries.list(cache)
-	]);
-
+	// Get custom format basic info first
+	const format = await customFormatQueries.getById(cache, formatId);
 	if (!format) {
 		throw error(404, 'Custom format not found');
 	}
+
+	// Get conditions and available options
+	const [conditions, patterns, languages] = await Promise.all([
+		customFormatQueries.getConditionsForEvaluation(cache, format.name),
+		regularExpressionQueries.list(cache),
+		languageQueries.list(cache)
+	]);
 
 	return {
 		currentDatabase,
@@ -88,7 +89,7 @@ export const actions: Actions = {
 			return fail(404, { error: 'Custom format not found' });
 		}
 
-		const originalConditions = await customFormatQueries.getConditionsForEvaluation(cache, formatId);
+		const originalConditions = await customFormatQueries.getConditionsForEvaluation(cache, format.name);
 
 		const formData = await request.formData();
 
@@ -103,6 +104,13 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid conditions format' });
 		}
 
+		// Validate unique condition names
+		const names = conditions.map((c) => c.name.trim().toLowerCase());
+		const uniqueNames = new Set(names);
+		if (uniqueNames.size !== names.length) {
+			return fail(400, { error: 'Condition names must be unique' });
+		}
+
 		// Check layer permission
 		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
 			return fail(403, { error: 'Cannot write to base layer without personal access token' });
@@ -113,7 +121,6 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			formatId,
 			formatName: format.name,
 			originalConditions,
 			conditions

@@ -5,15 +5,12 @@
 import type { PCDCache } from '../../cache.ts';
 
 export interface QualityMember {
-	id: number;
 	name: string;
 }
 
 export interface OrderedItem {
-	id: number; // quality_profile_qualities.id
 	type: 'quality' | 'group';
-	referenceId: number; // quality_id or quality_group_id
-	name: string;
+	name: string; // quality_name or quality_group_name
 	position: number;
 	enabled: boolean;
 	upgradeUntil: boolean;
@@ -21,7 +18,6 @@ export interface OrderedItem {
 }
 
 export interface QualityGroup {
-	id: number;
 	name: string;
 	members: QualityMember[];
 }
@@ -36,51 +32,47 @@ export interface QualitiesPageData {
 /**
  * Get quality profile qualities data
  */
-export async function qualities(cache: PCDCache, _databaseId: number, profileId: number): Promise<QualitiesPageData> {
+export async function qualities(cache: PCDCache, _databaseId: number, profileName: string): Promise<QualitiesPageData> {
 	const db = cache.kb;
 
 	// 1. Get all qualities
 	const allQualities = await db
 		.selectFrom('qualities')
-		.select(['id', 'name'])
+		.select(['name'])
 		.orderBy('name')
 		.execute();
 
 	// 2. Get all groups for this profile
 	const groups = await db
 		.selectFrom('quality_groups')
-		.select(['id', 'name'])
-		.where('quality_profile_id', '=', profileId)
+		.select(['name'])
+		.where('quality_profile_name', '=', profileName)
 		.execute();
 
 	// 3. Get group members
 	const groupMembers = await db
 		.selectFrom('quality_group_members')
-		.innerJoin('qualities', 'qualities.id', 'quality_group_members.quality_id')
-		.innerJoin('quality_groups', 'quality_groups.id', 'quality_group_members.quality_group_id')
-		.where('quality_groups.quality_profile_id', '=', profileId)
+		.innerJoin('qualities', 'qualities.name', 'quality_group_members.quality_name')
+		.where('quality_group_members.quality_profile_name', '=', profileName)
 		.select([
-			'quality_group_members.quality_group_id',
-			'qualities.id as quality_id',
+			'quality_group_members.quality_group_name',
 			'qualities.name as quality_name'
 		])
 		.execute();
 
 	// Build groups with members
-	const groupsMap = new Map<number, QualityGroup>();
+	const groupsMap = new Map<string, QualityGroup>();
 	for (const group of groups) {
-		groupsMap.set(group.id, {
-			id: group.id,
+		groupsMap.set(group.name, {
 			name: group.name,
 			members: []
 		});
 	}
 
 	for (const member of groupMembers) {
-		const group = groupsMap.get(member.quality_group_id);
+		const group = groupsMap.get(member.quality_group_name);
 		if (group) {
 			group.members.push({
-				id: member.quality_id,
 				name: member.quality_name
 			});
 		}
@@ -89,17 +81,20 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileId:
 	// 4. Get ordered list (quality_profile_qualities)
 	const orderedList = await db
 		.selectFrom('quality_profile_qualities')
-		.leftJoin('qualities', 'qualities.id', 'quality_profile_qualities.quality_id')
-		.leftJoin('quality_groups', 'quality_groups.id', 'quality_profile_qualities.quality_group_id')
-		.where('quality_profile_qualities.quality_profile_id', '=', profileId)
+		.leftJoin('qualities', 'qualities.name', 'quality_profile_qualities.quality_name')
+		.leftJoin('quality_groups', (join) =>
+			join
+				.onRef('quality_groups.name', '=', 'quality_profile_qualities.quality_group_name')
+				.onRef('quality_groups.quality_profile_name', '=', 'quality_profile_qualities.quality_profile_name')
+		)
+		.where('quality_profile_qualities.quality_profile_name', '=', profileName)
 		.select([
-			'quality_profile_qualities.id',
-			'quality_profile_qualities.quality_id',
-			'quality_profile_qualities.quality_group_id',
+			'quality_profile_qualities.quality_name',
+			'quality_profile_qualities.quality_group_name',
 			'quality_profile_qualities.position',
 			'quality_profile_qualities.enabled',
 			'quality_profile_qualities.upgrade_until',
-			'qualities.name as quality_name',
+			'qualities.name as resolved_quality_name',
 			'quality_groups.name as group_name'
 		])
 		.orderBy('quality_profile_qualities.position')
@@ -107,14 +102,11 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileId:
 
 	// Build ordered items
 	const orderedItems: OrderedItem[] = orderedList.map(item => {
-		const isGroup = item.quality_group_id !== null;
-		const referenceId = isGroup ? item.quality_group_id! : item.quality_id!;
+		const isGroup = item.quality_group_name !== null;
 		const name = isGroup ? item.group_name! : item.quality_name!;
 
 		const orderedItem: OrderedItem = {
-			id: item.id,
 			type: isGroup ? 'group' : 'quality',
-			referenceId,
 			name,
 			position: item.position,
 			enabled: item.enabled === 1,
@@ -123,7 +115,7 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileId:
 
 		// Add members if it's a group
 		if (isGroup) {
-			const group = groupsMap.get(referenceId);
+			const group = groupsMap.get(name);
 			orderedItem.members = group?.members || [];
 		}
 
@@ -131,26 +123,26 @@ export async function qualities(cache: PCDCache, _databaseId: number, profileId:
 	});
 
 	// 5. Find available qualities (not in ordered list and not in any group)
-	const usedQualityIds = new Set<number>();
+	const usedQualityNames = new Set<string>();
 
 	// Mark qualities in ordered list
 	for (const item of orderedItems) {
 		if (item.type === 'quality') {
-			usedQualityIds.add(item.referenceId);
+			usedQualityNames.add(item.name);
 		} else {
 			// Mark all members of groups as used
-			item.members?.forEach(member => usedQualityIds.add(member.id));
+			item.members?.forEach(member => usedQualityNames.add(member.name));
 		}
 	}
 
 	const availableQualities = allQualities
-		.filter(q => !usedQualityIds.has(q.id))
-		.map(q => ({ id: q.id, name: q.name }));
+		.filter(q => !usedQualityNames.has(q.name))
+		.map(q => ({ name: q.name }));
 
 	return {
 		orderedItems,
 		availableQualities,
-		allQualities: allQualities.map(q => ({ id: q.id, name: q.name })),
+		allQualities: allQualities.map(q => ({ name: q.name })),
 		groups: Array.from(groupsMap.values())
 	};
 }

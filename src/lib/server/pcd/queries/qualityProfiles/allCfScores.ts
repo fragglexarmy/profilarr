@@ -6,14 +6,14 @@
 import type { PCDCache } from '../../cache.ts';
 
 export interface ProfileCfScores {
-	profileId: number;
-	/** Map of custom format ID to score (by arr type) */
-	scores: Record<number, { radarr: number | null; sonarr: number | null }>;
+	profileName: string;
+	/** Map of custom format name to score (by arr type) */
+	scores: Record<string, { radarr: number | null; sonarr: number | null }>;
 }
 
 export interface AllCfScoresResult {
 	/** All custom formats with their names */
-	customFormats: Array<{ id: number; name: string }>;
+	customFormats: Array<{ name: string }>;
 	/** CF scores per profile */
 	profiles: ProfileCfScores[];
 }
@@ -27,54 +27,54 @@ export async function allCfScores(cache: PCDCache): Promise<AllCfScoresResult> {
 	// Get all custom formats
 	const customFormats = await db
 		.selectFrom('custom_formats')
-		.select(['id', 'name'])
+		.select(['name'])
 		.orderBy('name')
 		.execute();
 
 	// Get all quality profiles
 	const profiles = await db
 		.selectFrom('quality_profiles')
-		.select(['id'])
+		.select(['name'])
 		.execute();
 
 	// Get all CF scores for all profiles
 	const allScores = await db
 		.selectFrom('quality_profile_custom_formats')
-		.select(['quality_profile_id', 'custom_format_id', 'arr_type', 'score'])
+		.select(['quality_profile_name', 'custom_format_name', 'arr_type', 'score'])
 		.execute();
 
-	// Build scores map: profileId -> cfId -> arrType -> score
-	const scoresMap = new Map<number, Map<number, Map<string, number>>>();
+	// Build scores map: profileName -> cfName -> arrType -> score
+	const scoresMap = new Map<string, Map<string, Map<string, number>>>();
 
 	for (const score of allScores) {
-		if (!scoresMap.has(score.quality_profile_id)) {
-			scoresMap.set(score.quality_profile_id, new Map());
+		if (!scoresMap.has(score.quality_profile_name)) {
+			scoresMap.set(score.quality_profile_name, new Map());
 		}
-		const profileScores = scoresMap.get(score.quality_profile_id)!;
+		const profileScores = scoresMap.get(score.quality_profile_name)!;
 
-		if (!profileScores.has(score.custom_format_id)) {
-			profileScores.set(score.custom_format_id, new Map());
+		if (!profileScores.has(score.custom_format_name)) {
+			profileScores.set(score.custom_format_name, new Map());
 		}
-		profileScores.get(score.custom_format_id)!.set(score.arr_type, score.score);
+		profileScores.get(score.custom_format_name)!.set(score.arr_type, score.score);
 	}
 
 	// Build result
 	const profilesResult: ProfileCfScores[] = profiles.map((profile) => {
-		const profileScores = scoresMap.get(profile.id);
-		const scores: Record<number, { radarr: number | null; sonarr: number | null }> = {};
+		const profileScores = scoresMap.get(profile.name);
+		const scores: Record<string, { radarr: number | null; sonarr: number | null }> = {};
 
 		for (const cf of customFormats) {
-			const cfScores = profileScores?.get(cf.id);
+			const cfScores = profileScores?.get(cf.name);
 			const allScore = cfScores?.get('all') ?? null;
 
-			scores[cf.id] = {
+			scores[cf.name] = {
 				radarr: cfScores?.get('radarr') ?? allScore,
 				sonarr: cfScores?.get('sonarr') ?? allScore
 			};
 		}
 
 		return {
-			profileId: profile.id,
+			profileName: profile.name,
 			scores
 		};
 	});

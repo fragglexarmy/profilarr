@@ -83,7 +83,7 @@ export async function update(options: UpdateDelayProfileOptions) {
 	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
-			sql: `DELETE FROM delay_profile_tags WHERE delay_profile_id = dp('${esc(current.name)}') AND tag_id = tag('${esc(tagName)}')`,
+			sql: `DELETE FROM delay_profile_tags WHERE delay_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
@@ -103,10 +103,10 @@ export async function update(options: UpdateDelayProfileOptions) {
 		queries.push(insertTag);
 
 		// Link tag to delay profile
-		// Use current.name for lookup since the profile might have been renamed
+		// Use input.name since the profile might have been renamed
 		const profileName = input.name !== current.name ? input.name : current.name;
 		const linkTag = {
-			sql: `INSERT INTO delay_profile_tags (delay_profile_id, tag_id) VALUES (dp('${esc(profileName)}'), tag('${esc(tagName)}'))`,
+			sql: `INSERT INTO delay_profile_tags (delay_profile_name, tag_name) VALUES ('${esc(profileName)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};

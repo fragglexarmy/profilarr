@@ -4,19 +4,26 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase, type OperationLayer } from '$pcd/writer.ts';
 import * as customFormatQueries from '$pcd/queries/customFormats/index.ts';
 
-export const load: ServerLoad = async ({ params }) => {
-	const { databaseId, id, testId } = params;
+export const load: ServerLoad = async ({ params, url }) => {
+	const { databaseId, id } = params;
 
-	if (!databaseId || !id || !testId) {
+	if (!databaseId || !id) {
 		throw error(400, 'Missing required parameters');
 	}
 
 	const currentDatabaseId = parseInt(databaseId, 10);
 	const formatId = parseInt(id, 10);
-	const currentTestId = parseInt(testId, 10);
 
-	if (isNaN(currentDatabaseId) || isNaN(formatId) || isNaN(currentTestId)) {
+	if (isNaN(currentDatabaseId) || isNaN(formatId)) {
 		throw error(400, 'Invalid parameters');
+	}
+
+	// Test is identified by title and type query params
+	const testTitle = url.searchParams.get('title');
+	const testType = url.searchParams.get('type');
+
+	if (!testTitle || !testType) {
+		throw error(400, 'Missing test title or type');
 	}
 
 	const cache = pcdManager.getCache(currentDatabaseId);
@@ -29,7 +36,7 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(404, 'Custom format not found');
 	}
 
-	const test = await customFormatQueries.getTestById(cache, currentTestId);
+	const test = await customFormatQueries.getTest(cache, format.name, testTitle, testType);
 	if (!test) {
 		throw error(404, 'Test not found');
 	}
@@ -43,16 +50,15 @@ export const load: ServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	update: async ({ request, params }) => {
-		const { databaseId, id, testId } = params;
+		const { databaseId, id } = params;
 
-		if (!databaseId || !id || !testId) {
+		if (!databaseId || !id) {
 			return fail(400, { error: 'Missing required parameters' });
 		}
 
 		const currentDatabaseId = parseInt(databaseId, 10);
-		const currentTestId = parseInt(testId, 10);
 
-		if (isNaN(currentDatabaseId) || isNaN(currentTestId)) {
+		if (isNaN(currentDatabaseId)) {
 			return fail(400, { error: 'Invalid parameters' });
 		}
 
@@ -61,20 +67,27 @@ export const actions: Actions = {
 			return fail(500, { error: 'Database cache not available' });
 		}
 
+		const formData = await request.formData();
+
+		const formatName = formData.get('formatName') as string;
+		const currentTitle = formData.get('currentTitle') as string;
+		const currentType = formData.get('currentType') as string;
+		const layer = (formData.get('layer') as OperationLayer) || 'user';
+
+		if (!formatName || !currentTitle || !currentType) {
+			return fail(400, { error: 'Format name, current title and type are required' });
+		}
+
 		// Get current test for value guards
-		const current = await customFormatQueries.getTestById(cache, currentTestId);
+		const current = await customFormatQueries.getTest(cache, formatName, currentTitle, currentType);
 		if (!current) {
 			return fail(404, { error: 'Test not found' });
 		}
-
-		const formData = await request.formData();
 
 		const title = formData.get('title') as string;
 		const type = formData.get('type') as 'movie' | 'series';
 		const shouldMatch = formData.get('shouldMatch') === '1';
 		const description = (formData.get('description') as string) || null;
-		const formatName = formData.get('formatName') as string;
-		const layer = (formData.get('layer') as OperationLayer) || 'user';
 
 		if (!title?.trim()) {
 			return fail(400, { error: 'Title is required' });
@@ -82,10 +95,6 @@ export const actions: Actions = {
 
 		if (type !== 'movie' && type !== 'series') {
 			return fail(400, { error: 'Invalid type' });
-		}
-
-		if (!formatName) {
-			return fail(400, { error: 'Format name is required' });
 		}
 
 		// Check layer permission
@@ -114,16 +123,15 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ request, params }) => {
-		const { databaseId, id, testId } = params;
+		const { databaseId, id } = params;
 
-		if (!databaseId || !id || !testId) {
+		if (!databaseId || !id) {
 			return fail(400, { error: 'Missing required parameters' });
 		}
 
 		const currentDatabaseId = parseInt(databaseId, 10);
-		const currentTestId = parseInt(testId, 10);
 
-		if (isNaN(currentDatabaseId) || isNaN(currentTestId)) {
+		if (isNaN(currentDatabaseId)) {
 			return fail(400, { error: 'Invalid parameters' });
 		}
 
@@ -132,18 +140,20 @@ export const actions: Actions = {
 			return fail(500, { error: 'Database cache not available' });
 		}
 
-		// Get current test for value guards
-		const current = await customFormatQueries.getTestById(cache, currentTestId);
-		if (!current) {
-			return fail(404, { error: 'Test not found' });
-		}
-
 		const formData = await request.formData();
 		const formatName = formData.get('formatName') as string;
+		const testTitle = formData.get('testTitle') as string;
+		const testType = formData.get('testType') as string;
 		const layer = (formData.get('layer') as OperationLayer) || 'user';
 
-		if (!formatName) {
-			return fail(400, { error: 'Format name is required' });
+		if (!formatName || !testTitle || !testType) {
+			return fail(400, { error: 'Format name, test title and type are required' });
+		}
+
+		// Get current test for value guards
+		const current = await customFormatQueries.getTest(cache, formatName, testTitle, testType);
+		if (!current) {
+			return fail(404, { error: 'Test not found' });
 		}
 
 		// Check layer permission

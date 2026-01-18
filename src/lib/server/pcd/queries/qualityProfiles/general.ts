@@ -23,9 +23,9 @@ export async function general(cache: PCDCache, profileId: number): Promise<Quali
   // Get tags for this profile
   const tags = await db
     .selectFrom('quality_profile_tags as qpt')
-    .innerJoin('tags as t', 't.id', 'qpt.tag_id')
-    .select(['t.id as tag_id', 't.name as tag_name', 't.created_at as tag_created_at'])
-    .where('qpt.quality_profile_id', '=', profileId)
+    .innerJoin('tags as t', 't.name', 'qpt.tag_name')
+    .select(['t.name as tag_name', 't.created_at as tag_created_at'])
+    .where('qpt.quality_profile_name', '=', profile.name)
     .orderBy('t.name')
     .execute();
 
@@ -34,7 +34,6 @@ export async function general(cache: PCDCache, profileId: number): Promise<Quali
     name: profile.name,
     description: profile.description || '',
     tags: tags.map((tag) => ({
-      id: tag.tag_id,
       name: tag.tag_name,
       created_at: tag.tag_created_at
     }))

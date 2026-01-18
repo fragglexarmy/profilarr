@@ -17,7 +17,7 @@ export {
 	transformQualityProfile,
 	fetchQualityProfileFromPcd,
 	getQualityApiMappings,
-	getReferencedCustomFormatIds,
+	getReferencedCustomFormatNames,
 	type ArrQualityProfile,
 	type ArrQualityItem,
 	type ArrFormatItem,

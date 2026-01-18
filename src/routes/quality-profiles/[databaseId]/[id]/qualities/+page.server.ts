@@ -31,7 +31,18 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	const qualitiesData = await qualityProfileQueries.qualities(cache, currentDatabaseId, profileId);
+	// Get profile name from ID
+	const profile = await cache.kb
+		.selectFrom('quality_profiles')
+		.select('name')
+		.where('id', '=', profileId)
+		.executeTakeFirst();
+
+	if (!profile) {
+		throw error(404, 'Quality profile not found');
+	}
+
+	const qualitiesData = await qualityProfileQueries.qualities(cache, currentDatabaseId, profile.name);
 
 	return {
 		qualities: qualitiesData,
@@ -75,14 +86,12 @@ export const actions: Actions = {
 
 		// Parse ordered items
 		let orderedItems: Array<{
-			id: number;
 			type: 'quality' | 'group';
-			referenceId: number;
 			name: string;
 			position: number;
 			enabled: boolean;
 			upgradeUntil: boolean;
-			members?: Array<{ id: number; name: string }>;
+			members?: Array<{ name: string }>;
 		}> = [];
 		try {
 			orderedItems = JSON.parse(orderedItemsJson || '[]');
@@ -112,7 +121,6 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			profileId,
 			profileName: profile.name,
 			input: {
 				orderedItems

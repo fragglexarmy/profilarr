@@ -35,8 +35,8 @@
 		minimumScore: number;
 		upgradeUntilScore: number;
 		upgradeScoreIncrement: number;
-		customFormatScores: Record<number, Record<string, number | null>>;
-		customFormatEnabled: Record<number, Record<string, boolean>>;
+		customFormatScores: Record<string, Record<string, number | null>>;
+		customFormatEnabled: Record<string, Record<string, boolean>>;
 	}
 
 	// Build initial data from server
@@ -53,14 +53,14 @@
 			};
 		}
 
-		const scores: Record<number, Record<string, number | null>> = {};
-		const enabled: Record<number, Record<string, boolean>> = {};
+		const scores: Record<string, Record<string, number | null>> = {};
+		const enabled: Record<string, Record<string, boolean>> = {};
 
 		scoring.customFormats.forEach((cf: any) => {
-			scores[cf.id] = { ...cf.scores };
-			enabled[cf.id] = {};
+			scores[cf.name] = { ...cf.scores };
+			enabled[cf.name] = {};
 			scoring.arrTypes.forEach((arrType: string) => {
-				enabled[cf.id][arrType] = cf.scores[arrType] !== null;
+				enabled[cf.name][arrType] = cf.scores[arrType] !== null;
 			});
 		});
 
@@ -80,8 +80,8 @@
 	$: minimumScore = ($current.minimumScore ?? 0) as number;
 	$: upgradeUntilScore = ($current.upgradeUntilScore ?? 0) as number;
 	$: upgradeScoreIncrement = ($current.upgradeScoreIncrement ?? 1) as number;
-	$: customFormatScores = ($current.customFormatScores ?? {}) as Record<number, Record<string, number | null>>;
-	$: customFormatEnabled = ($current.customFormatEnabled ?? {}) as Record<number, Record<string, boolean>>;
+	$: customFormatScores = ($current.customFormatScores ?? {}) as Record<string, Record<string, number | null>>;
+	$: customFormatEnabled = ($current.customFormatEnabled ?? {}) as Record<string, Record<string, boolean>>;
 
 	// Save state
 	let isSaving = false;
@@ -386,18 +386,17 @@
 	}
 
 	// Build custom format scores array for form submission
-	function buildCustomFormatScoresArray(): Array<{ customFormatId: number; arrType: string; score: number | null }> {
-		const result: Array<{ customFormatId: number; arrType: string; score: number | null }> = [];
+	function buildCustomFormatScoresArray(): Array<{ customFormatName: string; arrType: string; score: number | null }> {
+		const result: Array<{ customFormatName: string; arrType: string; score: number | null }> = [];
 		const initial = initialData.customFormatScores;
 
-		for (const [cfIdStr, arrTypeScores] of Object.entries(customFormatScores)) {
-			const cfId = Number(cfIdStr);
-			const initialScores = initial[cfId] || {};
+		for (const [cfName, arrTypeScores] of Object.entries(customFormatScores)) {
+			const initialScores = initial[cfName] || {};
 
 			for (const [arrType, score] of Object.entries(arrTypeScores)) {
 				// Only include if different from initial
 				if (score !== initialScores[arrType]) {
-					result.push({ customFormatId: cfId, arrType, score });
+					result.push({ customFormatName: cfName, arrType, score });
 				}
 			}
 		}
@@ -406,19 +405,19 @@
 	}
 
 	// Handlers for score changes from ScoringTable
-	function handleScoreChange(event: CustomEvent<{ formatId: number; arrType: string; score: number | null }>) {
-		const { formatId, arrType, score } = event.detail;
+	function handleScoreChange(event: CustomEvent<{ formatName: string; arrType: string; score: number | null }>) {
+		const { formatName, arrType, score } = event.detail;
 		const newScores = { ...customFormatScores };
-		if (!newScores[formatId]) newScores[formatId] = {};
-		newScores[formatId][arrType] = score;
+		if (!newScores[formatName]) newScores[formatName] = {};
+		newScores[formatName][arrType] = score;
 		update('customFormatScores', newScores);
 	}
 
-	function handleEnabledChange(event: CustomEvent<{ formatId: number; arrType: string; enabled: boolean }>) {
-		const { formatId, arrType, enabled } = event.detail;
+	function handleEnabledChange(event: CustomEvent<{ formatName: string; arrType: string; enabled: boolean }>) {
+		const { formatName, arrType, enabled } = event.detail;
 		const newEnabled = { ...customFormatEnabled };
-		if (!newEnabled[formatId]) newEnabled[formatId] = {};
-		newEnabled[formatId][arrType] = enabled;
+		if (!newEnabled[formatName]) newEnabled[formatName] = {};
+		newEnabled[formatName][arrType] = enabled;
 		update('customFormatEnabled', newEnabled);
 	}
 
@@ -449,7 +448,7 @@
 		}
 	}
 
-	function sortFormats(formats: any[], scores: Record<number, Record<string, number | null>>, sortState: { key: SortKey; direction: SortDirection } | null) {
+	function sortFormats(formats: any[], scores: Record<string, Record<string, number | null>>, sortState: { key: SortKey; direction: SortDirection } | null) {
 		if (!sortState) return formats;
 
 		const sorted = [...formats].sort((a, b) => {
@@ -464,8 +463,8 @@
 					: bVal.localeCompare(aVal);
 			} else {
 				// Sort by score (radarr or sonarr)
-				aVal = scores[a.id]?.[sortState.key] ?? null;
-				bVal = scores[b.id]?.[sortState.key] ?? null;
+				aVal = scores[a.name]?.[sortState.key] ?? null;
+				bVal = scores[b.name]?.[sortState.key] ?? null;
 
 				// Handle nulls - always put them at the end
 				if (aVal === null && bVal === null) return 0;
@@ -488,7 +487,7 @@
 		}
 
 		const result: { name: string | null; formats: any[] }[] = [];
-		const assigned = new Set<number>();
+		const assigned = new Set<string>();
 
 		// Process each group in order
 		for (const group of groups) {
@@ -496,20 +495,20 @@
 
 			const groupFormats = formats.filter((format) => {
 				// Skip if already assigned
-				if (assigned.has(format.id)) return false;
+				if (assigned.has(format.name)) return false;
 
 				// Check if format has any of the group's tags
 				return format.tags?.some((tag: string) => group.tags.includes(tag.toLowerCase()));
 			});
 
 			// Mark as assigned
-			groupFormats.forEach((f) => assigned.add(f.id));
+			groupFormats.forEach((f) => assigned.add(f.name));
 
 			result.push({ name: group.name, formats: groupFormats });
 		}
 
 		// Add remaining formats to "Other" group
-		const otherFormats = formats.filter((f) => !assigned.has(f.id));
+		const otherFormats = formats.filter((f) => !assigned.has(f.name));
 		if (otherFormats.length > 0) {
 			result.push({ name: 'Other', formats: otherFormats });
 		}

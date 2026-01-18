@@ -6,7 +6,6 @@ import type { PCDCache } from '../../cache.ts';
 
 /** Condition item for list display */
 export interface ConditionListItem {
-	id: number;
 	name: string;
 	type: string;
 	negate: boolean;
@@ -18,19 +17,18 @@ export interface ConditionListItem {
  */
 export async function listConditions(
 	cache: PCDCache,
-	formatId: number
+	formatName: string
 ): Promise<ConditionListItem[]> {
 	const db = cache.kb;
 
 	const conditions = await db
 		.selectFrom('custom_format_conditions')
-		.select(['id', 'name', 'type', 'negate', 'required'])
-		.where('custom_format_id', '=', formatId)
-		.orderBy('id')
+		.select(['name', 'type', 'negate', 'required'])
+		.where('custom_format_name', '=', formatName)
+		.orderBy('name')
 		.execute();
 
 	return conditions.map((c) => ({
-		id: c.id,
 		name: c.name,
 		type: c.type,
 		negate: c.negate === 1,

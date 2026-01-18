@@ -61,7 +61,7 @@ function rowToLog(row: UpgradeRunRow): UpgradeJobLog {
 
 		filter: {
 			name: row.filter_name,
-			rules: { operator: 'and', conditions: [], groups: [] }, // Not stored, too complex
+			rules: { type: 'group', match: 'all', children: [] }, // Not stored, too complex
 			matchedCount: row.matched_count,
 			afterCooldown: row.after_cooldown,
 			cooldownHours: row.cooldown_hours,

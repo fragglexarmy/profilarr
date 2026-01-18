@@ -9,7 +9,6 @@ import { QualitySource, QualityModifier, Resolution, ReleaseType, Language } fro
 import type { ConditionData } from './conditions.ts';
 
 export interface ConditionResult {
-	conditionId: number;
 	conditionName: string;
 	conditionType: string;
 	matched: boolean;
@@ -44,7 +43,6 @@ export interface ParsedInfo {
 
 /** Custom format with conditions for evaluation */
 export interface CustomFormatWithConditions {
-	id: number;
 	name: string;
 	conditions: ConditionData[];
 }
@@ -519,7 +517,6 @@ export function evaluateCustomFormat(
 		const passes = condition.negate ? !evalResult.matched : evalResult.matched;
 
 		results.push({
-			conditionId: condition.id,
 			conditionName: condition.name,
 			conditionType: condition.type,
 			matched: evalResult.matched,

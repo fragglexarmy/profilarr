@@ -69,10 +69,9 @@ export async function create(options: CreateDelayProfileOptions) {
 
 		queries.push(insertTag);
 
-		// Link tag to delay profile using helper functions
-		// We use raw SQL here since we need the dp() and tag() helper functions
+		// Link tag to delay profile using direct name values
 		const linkTag = {
-			sql: `INSERT INTO delay_profile_tags (delay_profile_id, tag_id) VALUES (dp('${input.name.replace(/'/g, "''")}'), tag('${tagName.replace(/'/g, "''")}'))`,
+			sql: `INSERT INTO delay_profile_tags (delay_profile_name, tag_name) VALUES ('${input.name.replace(/'/g, "''")}', '${tagName.replace(/'/g, "''")}')`,
 			parameters: [],
 			query: {} as never
 		};

@@ -92,19 +92,17 @@ async function getRadarrQualityDefinitions(
 ): Promise<QualityDefinition[]> {
 	const rows = await db
 		.selectFrom('radarr_quality_definitions as rqd')
-		.innerJoin('qualities as q', 'q.id', 'rqd.quality_id')
+		.innerJoin('qualities as q', 'q.name', 'rqd.quality_name')
 		.select([
-			'rqd.quality_id',
-			'q.name as quality_name',
+			'rqd.quality_name',
 			'rqd.min_size',
 			'rqd.max_size',
 			'rqd.preferred_size'
 		])
-		.orderBy('q.name')
+		.orderBy('rqd.quality_name')
 		.execute();
 
 	return rows.map((row) => ({
-		quality_id: row.quality_id,
 		quality_name: row.quality_name,
 		min_size: row.min_size,
 		max_size: row.max_size,
@@ -120,19 +118,17 @@ async function getSonarrQualityDefinitions(
 ): Promise<QualityDefinition[]> {
 	const rows = await db
 		.selectFrom('sonarr_quality_definitions as sqd')
-		.innerJoin('qualities as q', 'q.id', 'sqd.quality_id')
+		.innerJoin('qualities as q', 'q.name', 'sqd.quality_name')
 		.select([
-			'sqd.quality_id',
-			'q.name as quality_name',
+			'sqd.quality_name',
 			'sqd.min_size',
 			'sqd.max_size',
 			'sqd.preferred_size'
 		])
-		.orderBy('q.name')
+		.orderBy('sqd.quality_name')
 		.execute();
 
 	return rows.map((row) => ({
-		quality_id: row.quality_id,
 		quality_name: row.quality_name,
 		min_size: row.min_size,
 		max_size: row.max_size,

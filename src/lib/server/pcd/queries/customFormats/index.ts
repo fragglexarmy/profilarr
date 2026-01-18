@@ -18,7 +18,7 @@ export type { DeleteCustomFormatOptions } from './delete.ts';
 // Export query functions (reads)
 export { list } from './list.ts';
 export { general } from './general.ts';
-export { getById, listTests, getTestById } from './tests.ts';
+export { getById, listTests, getTest } from './tests.ts';
 export { getConditionsForEvaluation } from './conditions.ts';
 export { listConditions } from './listConditions.ts';
 export { evaluateCustomFormat, getParsedInfo } from './evaluator.ts';

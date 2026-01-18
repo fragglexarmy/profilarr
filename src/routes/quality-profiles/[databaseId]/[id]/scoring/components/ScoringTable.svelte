@@ -6,32 +6,32 @@
 
 	export let formats: any[];
 	export let arrTypes: string[];
-	export let customFormatScores: Record<number, Record<string, number | null>>;
-	export let customFormatEnabled: Record<number, Record<string, boolean>>;
+	export let customFormatScores: Record<string, Record<string, number | null>>;
+	export let customFormatEnabled: Record<string, Record<string, boolean>>;
 	export let getArrTypeColor: (arrType: string) => string;
 	export let title: string | null = null;
 
 	const dispatch = createEventDispatcher<{
-		scoreChange: { formatId: number; arrType: string; score: number | null };
-		enabledChange: { formatId: number; arrType: string; enabled: boolean };
+		scoreChange: { formatName: string; arrType: string; score: number | null };
+		enabledChange: { formatName: string; arrType: string; enabled: boolean };
 	}>();
 
-	function handleScoreChange(formatId: number, arrType: string, score: number | null) {
-		dispatch('scoreChange', { formatId, arrType, score });
+	function handleScoreChange(formatName: string, arrType: string, score: number | null) {
+		dispatch('scoreChange', { formatName, arrType, score });
 	}
 
-	function handleToggleEnabled(formatId: number, arrType: string) {
-		const isEnabled = customFormatEnabled[formatId]?.[arrType] ?? false;
+	function handleToggleEnabled(formatName: string, arrType: string) {
+		const isEnabled = customFormatEnabled[formatName]?.[arrType] ?? false;
 		if (isEnabled) {
 			// Disabling - set score to null
-			dispatch('scoreChange', { formatId, arrType, score: null });
+			dispatch('scoreChange', { formatName, arrType, score: null });
 		} else {
 			// Enabling - set score to 0 if it was null
-			if (customFormatScores[formatId]?.[arrType] === null) {
-				dispatch('scoreChange', { formatId, arrType, score: 0 });
+			if (customFormatScores[formatName]?.[arrType] === null) {
+				dispatch('scoreChange', { formatName, arrType, score: 0 });
 			}
 		}
-		dispatch('enabledChange', { formatId, arrType, enabled: !isEnabled });
+		dispatch('enabledChange', { formatName, arrType, enabled: !isEnabled });
 	}
 </script>
 
@@ -79,7 +79,7 @@
 			{:else}
 				{#each formats as format}
 					{@const rowDisabled = arrTypes.every(
-						(arrType) => !customFormatEnabled[format.id]?.[arrType]
+						(arrType) => !customFormatEnabled[format.name]?.[arrType]
 					)}
 					<tr
 						class="transition-colors {rowDisabled
@@ -97,20 +97,20 @@
 							<td class="px-6 py-4">
 								<div class="flex items-center justify-center gap-2">
 									<IconCheckbox
-										checked={customFormatEnabled[format.id]?.[arrType] ?? false}
+										checked={customFormatEnabled[format.name]?.[arrType] ?? false}
 										icon={Check}
 										color={getArrTypeColor(arrType)}
 										shape="circle"
-										on:click={() => handleToggleEnabled(format.id, arrType)}
+										on:click={() => handleToggleEnabled(format.name, arrType)}
 									/>
-									{#if customFormatScores[format.id]}
+									{#if customFormatScores[format.name]}
 										<div class="w-48">
 											<NumberInput
-												name="score-{format.id}-{arrType}"
-												value={customFormatScores[format.id][arrType] ?? 0}
-												onchange={(newValue) => handleScoreChange(format.id, arrType, newValue)}
+												name="score-{format.name}-{arrType}"
+												value={customFormatScores[format.name][arrType] ?? 0}
+												onchange={(newValue) => handleScoreChange(format.name, arrType, newValue)}
 												step={1}
-												disabled={!customFormatEnabled[format.id]?.[arrType]}
+												disabled={!customFormatEnabled[format.name]?.[arrType]}
 												font="mono"
 											/>
 										</div>

@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { logger } from '$logger/logger';
+import { logger } from '$logger/logger.ts';
 import { regex101CacheQueries } from '$db/queries/regex101Cache.ts';
 
 export interface Regex101UnitTest {

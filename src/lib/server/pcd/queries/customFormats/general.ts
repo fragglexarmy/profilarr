@@ -23,9 +23,9 @@ export async function general(cache: PCDCache, formatId: number): Promise<Custom
 	// Get tags for this format
 	const tags = await db
 		.selectFrom('custom_format_tags as cft')
-		.innerJoin('tags as t', 't.id', 'cft.tag_id')
-		.select(['t.id as tag_id', 't.name as tag_name', 't.created_at as tag_created_at'])
-		.where('cft.custom_format_id', '=', formatId)
+		.innerJoin('tags as t', 't.name', 'cft.tag_name')
+		.select(['t.name as tag_name', 't.created_at as tag_created_at'])
+		.where('cft.custom_format_name', '=', format.name)
 		.orderBy('t.name')
 		.execute();
 
@@ -35,7 +35,6 @@ export async function general(cache: PCDCache, formatId: number): Promise<Custom
 		description: format.description || '',
 		include_in_rename: format.include_in_rename === 1,
 		tags: tags.map((tag) => ({
-			id: tag.tag_id,
 			name: tag.tag_name,
 			created_at: tag.tag_created_at
 		}))

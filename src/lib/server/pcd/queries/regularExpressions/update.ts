@@ -67,7 +67,7 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
-			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_id = (SELECT id FROM regular_expressions WHERE name = '${esc(current.name)}') AND tag_id = tag('${esc(tagName)}')`,
+			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
@@ -87,10 +87,10 @@ export async function update(options: UpdateRegularExpressionOptions) {
 		queries.push(insertTag);
 
 		// Link tag to regular expression
-		// Use input.name for lookup since the regex might have been renamed
+		// Use input.name since the regex might have been renamed
 		const regexName = input.name !== current.name ? input.name : current.name;
 		const linkTag = {
-			sql: `INSERT INTO regular_expression_tags (regular_expression_id, tag_id) VALUES ((SELECT id FROM regular_expressions WHERE name = '${esc(regexName)}'), tag('${esc(tagName)}'))`,
+			sql: `INSERT INTO regular_expression_tags (regular_expression_name, tag_name) VALUES ('${esc(regexName)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};

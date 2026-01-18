@@ -1,5 +1,5 @@
 import { db } from '../db.ts';
-import type { FilterConfig, FilterMode, UpgradeConfig } from '$lib/shared/filters';
+import type { FilterConfig, FilterMode, UpgradeConfig } from '$lib/shared/filters.ts';
 
 /**
  * Database row type for upgrade_configs table

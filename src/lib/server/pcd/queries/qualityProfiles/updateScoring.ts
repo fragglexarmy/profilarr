@@ -7,7 +7,7 @@ import { writeOperation, type OperationLayer } from '../../writer.ts';
 import { logger } from '$logger/logger.ts';
 
 export interface CustomFormatScore {
-	customFormatId: number;
+	customFormatName: string;
 	arrType: string;
 	score: number | null;
 }
@@ -23,7 +23,6 @@ export interface UpdateScoringOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
-	profileId: number;
 	profileName: string;
 	input: UpdateScoringInput;
 }
@@ -32,7 +31,7 @@ export interface UpdateScoringOptions {
  * Update quality profile scoring settings
  */
 export async function updateScoring(options: UpdateScoringOptions) {
-	const { databaseId, cache, layer, profileId, profileName, input } = options;
+	const { databaseId, cache, layer, profileName, input } = options;
 	const db = cache.kb;
 
 	const queries = [];
@@ -45,30 +44,30 @@ export async function updateScoring(options: UpdateScoringOptions) {
 			upgrade_until_score: input.upgradeUntilScore,
 			upgrade_score_increment: input.upgradeScoreIncrement
 		})
-		.where('id', '=', profileId)
+		.where('name', '=', profileName)
 		.compile();
 
 	queries.push(updateProfile);
 
 	// 2. Handle custom format scores
 	// Group scores by custom format for easier processing
-	const scoresByFormat = new Map<number, Map<string, number | null>>();
+	const scoresByFormat = new Map<string, Map<string, number | null>>();
 	for (const score of input.customFormatScores) {
-		if (!scoresByFormat.has(score.customFormatId)) {
-			scoresByFormat.set(score.customFormatId, new Map());
+		if (!scoresByFormat.has(score.customFormatName)) {
+			scoresByFormat.set(score.customFormatName, new Map());
 		}
-		scoresByFormat.get(score.customFormatId)!.set(score.arrType, score.score);
+		scoresByFormat.get(score.customFormatName)!.set(score.arrType, score.score);
 	}
 
 	// For each custom format, update or insert scores
-	for (const [customFormatId, arrTypeScores] of scoresByFormat) {
+	for (const [customFormatName, arrTypeScores] of scoresByFormat) {
 		for (const [arrType, score] of arrTypeScores) {
 			if (score === null) {
 				// Delete the score if it exists
 				const deleteScore = db
 					.deleteFrom('quality_profile_custom_formats')
-					.where('quality_profile_id', '=', profileId)
-					.where('custom_format_id', '=', customFormatId)
+					.where('quality_profile_name', '=', profileName)
+					.where('custom_format_name', '=', customFormatName)
 					.where('arr_type', '=', arrType)
 					.compile();
 
@@ -76,7 +75,7 @@ export async function updateScoring(options: UpdateScoringOptions) {
 			} else {
 				// Insert or update the score using INSERT OR REPLACE
 				const upsertScore = {
-					sql: `INSERT OR REPLACE INTO quality_profile_custom_formats (quality_profile_id, custom_format_id, arr_type, score) VALUES (${profileId}, ${customFormatId}, '${arrType}', ${score})`,
+					sql: `INSERT OR REPLACE INTO quality_profile_custom_formats (quality_profile_name, custom_format_name, arr_type, score) VALUES ('${profileName.replace(/'/g, "''")}', '${customFormatName.replace(/'/g, "''")}', '${arrType}', ${score})`,
 					parameters: [],
 					query: {} as never
 				};
@@ -89,7 +88,7 @@ export async function updateScoring(options: UpdateScoringOptions) {
 	await logger.info(`Save quality profile scoring "${profileName}"`, {
 		source: 'QualityProfile',
 		meta: {
-			profileId,
+			profileName,
 			minimumScore: input.minimumScore,
 			upgradeUntilScore: input.upgradeUntilScore,
 			upgradeScoreIncrement: input.upgradeScoreIncrement,

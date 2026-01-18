@@ -314,7 +314,7 @@ export async function updateRadarrNaming(options: UpdateRadarrNamingOptions) {
 import type { QualityDefinition } from './types.ts';
 
 export interface UpdateQualityDefinitionInput {
-	quality_id: number;
+	quality_name: string;
 	min_size: number;
 	max_size: number;
 	preferred_size: number;
@@ -340,9 +340,9 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 
 	// Build queries for each changed definition
 	const queries = input.map((def) => {
-		const currentDef = current.find((c) => c.quality_id === def.quality_id);
+		const currentDef = current.find((c) => c.quality_name === def.quality_name);
 		if (!currentDef) {
-			throw new Error(`Quality definition not found for quality_id: ${def.quality_id}`);
+			throw new Error(`Quality definition not found for quality_name: ${def.quality_name}`);
 		}
 
 		// Track changes for this definition
@@ -367,7 +367,7 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 				max_size: def.max_size,
 				preferred_size: def.preferred_size
 			})
-			.where('quality_id', '=', def.quality_id)
+			.where('quality_name', '=', def.quality_name)
 			// Value guards
 			.where('min_size', '=', currentDef.min_size)
 			.where('max_size', '=', currentDef.max_size)
@@ -405,9 +405,9 @@ export async function updateSonarrQualityDefinitions(options: UpdateQualityDefin
 
 	// Build queries for each changed definition
 	const queries = input.map((def) => {
-		const currentDef = current.find((c) => c.quality_id === def.quality_id);
+		const currentDef = current.find((c) => c.quality_name === def.quality_name);
 		if (!currentDef) {
-			throw new Error(`Quality definition not found for quality_id: ${def.quality_id}`);
+			throw new Error(`Quality definition not found for quality_name: ${def.quality_name}`);
 		}
 
 		// Track changes for this definition
@@ -432,7 +432,7 @@ export async function updateSonarrQualityDefinitions(options: UpdateQualityDefin
 				max_size: def.max_size,
 				preferred_size: def.preferred_size
 			})
-			.where('quality_id', '=', def.quality_id)
+			.where('quality_name', '=', def.quality_name)
 			// Value guards
 			.where('min_size', '=', currentDef.min_size)
 			.where('max_size', '=', currentDef.max_size)

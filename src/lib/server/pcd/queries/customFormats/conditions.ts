@@ -6,15 +6,14 @@ import type { PCDCache } from '../../cache.ts';
 
 /** Full condition data for evaluation */
 export interface ConditionData {
-	id: number;
 	name: string;
 	type: string;
 	arrType: 'all' | 'radarr' | 'sonarr';
 	negate: boolean;
 	required: boolean;
 	// Type-specific data
-	patterns?: { id: number; pattern: string }[];
-	languages?: { id: number; name: string; except: boolean }[];
+	patterns?: { name: string; pattern: string }[];
+	languages?: { name: string; except: boolean }[];
 	sources?: string[];
 	resolutions?: string[];
 	qualityModifiers?: string[];
@@ -29,20 +28,20 @@ export interface ConditionData {
  */
 export async function getConditionsForEvaluation(
 	cache: PCDCache,
-	formatId: number
+	formatName: string
 ): Promise<ConditionData[]> {
 	const db = cache.kb;
 
 	// Get base conditions
 	const conditions = await db
 		.selectFrom('custom_format_conditions')
-		.select(['id', 'name', 'type', 'arr_type', 'negate', 'required'])
-		.where('custom_format_id', '=', formatId)
+		.select(['custom_format_name', 'name', 'type', 'arr_type', 'negate', 'required'])
+		.where('custom_format_name', '=', formatName)
 		.execute();
 
 	if (conditions.length === 0) return [];
 
-	const conditionIds = conditions.map((c) => c.id);
+	const conditionNames = conditions.map((c) => c.name);
 
 	// Get all related data in parallel
 	const [patterns, languages, sources, resolutions, qualityModifiers, releaseTypes, indexerFlags, sizes, years] =
@@ -50,141 +49,149 @@ export async function getConditionsForEvaluation(
 			// Patterns with regex
 			db
 				.selectFrom('condition_patterns as cp')
-				.innerJoin('regular_expressions as re', 're.id', 'cp.regular_expression_id')
-				.select(['cp.custom_format_condition_id', 're.id', 're.pattern'])
-				.where('cp.custom_format_condition_id', 'in', conditionIds)
+				.innerJoin('regular_expressions as re', 're.name', 'cp.regular_expression_name')
+				.select(['cp.condition_name', 're.name', 're.pattern'])
+				.where('cp.custom_format_name', '=', formatName)
+				.where('cp.condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Languages
 			db
 				.selectFrom('condition_languages as cl')
-				.innerJoin('languages as l', 'l.id', 'cl.language_id')
-				.select(['cl.custom_format_condition_id', 'l.id', 'l.name', 'cl.except_language'])
-				.where('cl.custom_format_condition_id', 'in', conditionIds)
+				.innerJoin('languages as l', 'l.name', 'cl.language_name')
+				.select(['cl.condition_name', 'l.name', 'cl.except_language'])
+				.where('cl.custom_format_name', '=', formatName)
+				.where('cl.condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Sources
 			db
 				.selectFrom('condition_sources')
-				.select(['custom_format_condition_id', 'source'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'source'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Resolutions
 			db
 				.selectFrom('condition_resolutions')
-				.select(['custom_format_condition_id', 'resolution'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'resolution'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Quality modifiers
 			db
 				.selectFrom('condition_quality_modifiers')
-				.select(['custom_format_condition_id', 'quality_modifier'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'quality_modifier'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Release types
 			db
 				.selectFrom('condition_release_types')
-				.select(['custom_format_condition_id', 'release_type'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'release_type'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Indexer flags
 			db
 				.selectFrom('condition_indexer_flags')
-				.select(['custom_format_condition_id', 'flag'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'flag'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Sizes
 			db
 				.selectFrom('condition_sizes')
-				.select(['custom_format_condition_id', 'min_bytes', 'max_bytes'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'min_bytes', 'max_bytes'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute(),
 
 			// Years
 			db
 				.selectFrom('condition_years')
-				.select(['custom_format_condition_id', 'min_year', 'max_year'])
-				.where('custom_format_condition_id', 'in', conditionIds)
+				.select(['condition_name', 'min_year', 'max_year'])
+				.where('custom_format_name', '=', formatName)
+				.where('condition_name', 'in', conditionNames)
 				.execute()
 		]);
 
-	// Build lookup maps
-	const patternsMap = new Map<number, { id: number; pattern: string }[]>();
+	// Build lookup maps using condition_name as key
+	const patternsMap = new Map<string, { name: string; pattern: string }[]>();
 	for (const p of patterns) {
-		if (!patternsMap.has(p.custom_format_condition_id)) {
-			patternsMap.set(p.custom_format_condition_id, []);
+		if (!patternsMap.has(p.condition_name)) {
+			patternsMap.set(p.condition_name, []);
 		}
-		patternsMap.get(p.custom_format_condition_id)!.push({ id: p.id, pattern: p.pattern });
+		patternsMap.get(p.condition_name)!.push({ name: p.name, pattern: p.pattern });
 	}
 
-	const languagesMap = new Map<number, { id: number; name: string; except: boolean }[]>();
+	const languagesMap = new Map<string, { name: string; except: boolean }[]>();
 	for (const l of languages) {
-		if (!languagesMap.has(l.custom_format_condition_id)) {
-			languagesMap.set(l.custom_format_condition_id, []);
+		if (!languagesMap.has(l.condition_name)) {
+			languagesMap.set(l.condition_name, []);
 		}
-		languagesMap.get(l.custom_format_condition_id)!.push({
-			id: l.id,
+		languagesMap.get(l.condition_name)!.push({
 			name: l.name,
 			except: l.except_language === 1
 		});
 	}
 
-	const sourcesMap = new Map<number, string[]>();
+	const sourcesMap = new Map<string, string[]>();
 	for (const s of sources) {
-		if (!sourcesMap.has(s.custom_format_condition_id)) {
-			sourcesMap.set(s.custom_format_condition_id, []);
+		if (!sourcesMap.has(s.condition_name)) {
+			sourcesMap.set(s.condition_name, []);
 		}
-		sourcesMap.get(s.custom_format_condition_id)!.push(s.source);
+		sourcesMap.get(s.condition_name)!.push(s.source);
 	}
 
-	const resolutionsMap = new Map<number, string[]>();
+	const resolutionsMap = new Map<string, string[]>();
 	for (const r of resolutions) {
-		if (!resolutionsMap.has(r.custom_format_condition_id)) {
-			resolutionsMap.set(r.custom_format_condition_id, []);
+		if (!resolutionsMap.has(r.condition_name)) {
+			resolutionsMap.set(r.condition_name, []);
 		}
-		resolutionsMap.get(r.custom_format_condition_id)!.push(r.resolution);
+		resolutionsMap.get(r.condition_name)!.push(r.resolution);
 	}
 
-	const qualityModifiersMap = new Map<number, string[]>();
+	const qualityModifiersMap = new Map<string, string[]>();
 	for (const q of qualityModifiers) {
-		if (!qualityModifiersMap.has(q.custom_format_condition_id)) {
-			qualityModifiersMap.set(q.custom_format_condition_id, []);
+		if (!qualityModifiersMap.has(q.condition_name)) {
+			qualityModifiersMap.set(q.condition_name, []);
 		}
-		qualityModifiersMap.get(q.custom_format_condition_id)!.push(q.quality_modifier);
+		qualityModifiersMap.get(q.condition_name)!.push(q.quality_modifier);
 	}
 
-	const releaseTypesMap = new Map<number, string[]>();
+	const releaseTypesMap = new Map<string, string[]>();
 	for (const r of releaseTypes) {
-		if (!releaseTypesMap.has(r.custom_format_condition_id)) {
-			releaseTypesMap.set(r.custom_format_condition_id, []);
+		if (!releaseTypesMap.has(r.condition_name)) {
+			releaseTypesMap.set(r.condition_name, []);
 		}
-		releaseTypesMap.get(r.custom_format_condition_id)!.push(r.release_type);
+		releaseTypesMap.get(r.condition_name)!.push(r.release_type);
 	}
 
-	const indexerFlagsMap = new Map<number, string[]>();
+	const indexerFlagsMap = new Map<string, string[]>();
 	for (const f of indexerFlags) {
-		if (!indexerFlagsMap.has(f.custom_format_condition_id)) {
-			indexerFlagsMap.set(f.custom_format_condition_id, []);
+		if (!indexerFlagsMap.has(f.condition_name)) {
+			indexerFlagsMap.set(f.condition_name, []);
 		}
-		indexerFlagsMap.get(f.custom_format_condition_id)!.push(f.flag);
+		indexerFlagsMap.get(f.condition_name)!.push(f.flag);
 	}
 
-	const sizesMap = new Map<number, { minBytes: number | null; maxBytes: number | null }>();
+	const sizesMap = new Map<string, { minBytes: number | null; maxBytes: number | null }>();
 	for (const s of sizes) {
-		sizesMap.set(s.custom_format_condition_id, {
+		sizesMap.set(s.condition_name, {
 			minBytes: s.min_bytes,
 			maxBytes: s.max_bytes
 		});
 	}
 
-	const yearsMap = new Map<number, { minYear: number | null; maxYear: number | null }>();
+	const yearsMap = new Map<string, { minYear: number | null; maxYear: number | null }>();
 	for (const y of years) {
-		yearsMap.set(y.custom_format_condition_id, {
+		yearsMap.set(y.condition_name, {
 			minYear: y.min_year,
 			maxYear: y.max_year
 		});
@@ -192,20 +199,19 @@ export async function getConditionsForEvaluation(
 
 	// Build final result
 	return conditions.map((c) => ({
-		id: c.id,
 		name: c.name,
 		type: c.type,
 		arrType: c.arr_type as 'all' | 'radarr' | 'sonarr',
 		negate: c.negate === 1,
 		required: c.required === 1,
-		patterns: patternsMap.get(c.id),
-		languages: languagesMap.get(c.id),
-		sources: sourcesMap.get(c.id),
-		resolutions: resolutionsMap.get(c.id),
-		qualityModifiers: qualityModifiersMap.get(c.id),
-		releaseTypes: releaseTypesMap.get(c.id),
-		indexerFlags: indexerFlagsMap.get(c.id),
-		size: sizesMap.get(c.id),
-		years: yearsMap.get(c.id)
+		patterns: patternsMap.get(c.name),
+		languages: languagesMap.get(c.name),
+		sources: sourcesMap.get(c.name),
+		resolutions: resolutionsMap.get(c.name),
+		qualityModifiers: qualityModifiersMap.get(c.name),
+		releaseTypes: releaseTypesMap.get(c.name),
+		indexerFlags: indexerFlagsMap.get(c.name),
+		size: sizesMap.get(c.name),
+		years: yearsMap.get(c.name)
 	}));
 }

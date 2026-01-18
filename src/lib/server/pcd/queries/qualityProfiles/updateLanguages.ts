@@ -7,7 +7,7 @@ import { writeOperation, type OperationLayer } from '../../writer.ts';
 import { logger } from '$logger/logger.ts';
 
 export interface UpdateLanguagesInput {
-	languageId: number | null;
+	languageName: string | null;
 	type: 'must' | 'only' | 'not' | 'simple';
 }
 
@@ -15,7 +15,6 @@ export interface UpdateLanguagesOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
-	profileId: number;
 	profileName: string;
 	input: UpdateLanguagesInput;
 }
@@ -24,7 +23,7 @@ export interface UpdateLanguagesOptions {
  * Update quality profile language configuration
  */
 export async function updateLanguages(options: UpdateLanguagesOptions) {
-	const { databaseId, cache, layer, profileId, profileName, input } = options;
+	const { databaseId, cache, layer, profileName, input } = options;
 	const db = cache.kb;
 
 	const queries = [];
@@ -32,14 +31,14 @@ export async function updateLanguages(options: UpdateLanguagesOptions) {
 	// 1. Delete existing languages for this profile
 	const deleteLanguages = db
 		.deleteFrom('quality_profile_languages')
-		.where('quality_profile_id', '=', profileId)
+		.where('quality_profile_name', '=', profileName)
 		.compile();
 	queries.push(deleteLanguages);
 
 	// 2. Insert new language if one is selected
-	if (input.languageId !== null) {
+	if (input.languageName !== null) {
 		const insertLanguage = {
-			sql: `INSERT INTO quality_profile_languages (quality_profile_id, language_id, type) VALUES (${profileId}, ${input.languageId}, '${input.type}')`,
+			sql: `INSERT INTO quality_profile_languages (quality_profile_name, language_name, type) VALUES ('${profileName.replace(/'/g, "''")}', '${input.languageName.replace(/'/g, "''")}', '${input.type}')`,
 			parameters: [],
 			query: {} as never
 		};
@@ -49,8 +48,8 @@ export async function updateLanguages(options: UpdateLanguagesOptions) {
 	await logger.info(`Save quality profile languages "${profileName}"`, {
 		source: 'QualityProfile',
 		meta: {
-			profileId,
-			languageId: input.languageId,
+			profileName,
+			languageName: input.languageName,
 			type: input.type
 		}
 	});

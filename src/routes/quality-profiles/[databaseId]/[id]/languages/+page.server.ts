@@ -32,8 +32,19 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
+	// Get profile name from ID
+	const profile = await cache.kb
+		.selectFrom('quality_profiles')
+		.select('name')
+		.where('id', '=', profileId)
+		.executeTakeFirst();
+
+	if (!profile) {
+		throw error(404, 'Quality profile not found');
+	}
+
 	// Load languages for the quality profile
-	const languagesData = await qualityProfileQueries.languages(cache, profileId);
+	const languagesData = await qualityProfileQueries.languages(cache, profile.name);
 
 	// Load all available languages
 	const availableLanguages = languageQueries.list(cache);
@@ -72,10 +83,8 @@ export const actions: Actions = {
 
 		// Parse form data
 		const layer = (formData.get('layer') as OperationLayer) || 'user';
-		const languageIdStr = formData.get('languageId') as string;
+		const languageName = formData.get('languageName') as string | null;
 		const type = (formData.get('type') as 'must' | 'only' | 'not' | 'simple') || 'simple';
-
-		const languageId = languageIdStr ? parseInt(languageIdStr, 10) : null;
 
 		// Check layer permission
 		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
@@ -98,10 +107,9 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			profileId,
 			profileName: profile.name,
 			input: {
-				languageId,
+				languageName,
 				type
 			}
 		});

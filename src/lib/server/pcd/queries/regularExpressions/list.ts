@@ -21,31 +21,29 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 
 	if (expressions.length === 0) return [];
 
-	const expressionIds = expressions.map((e) => e.id);
+	const expressionNames = expressions.map((e) => e.name);
 
 	// 2. Get all tags for all expressions
 	const allTags = await db
 		.selectFrom('regular_expression_tags as ret')
-		.innerJoin('tags as t', 't.id', 'ret.tag_id')
+		.innerJoin('tags as t', 't.name', 'ret.tag_name')
 		.select([
-			'ret.regular_expression_id',
-			't.id as tag_id',
+			'ret.regular_expression_name',
 			't.name as tag_name',
 			't.created_at as tag_created_at'
 		])
-		.where('ret.regular_expression_id', 'in', expressionIds)
-		.orderBy('ret.regular_expression_id')
+		.where('ret.regular_expression_name', 'in', expressionNames)
+		.orderBy('ret.regular_expression_name')
 		.orderBy('t.name')
 		.execute();
 
 	// Build tags map
-	const tagsMap = new Map<number, Tag[]>();
+	const tagsMap = new Map<string, Tag[]>();
 	for (const tag of allTags) {
-		if (!tagsMap.has(tag.regular_expression_id)) {
-			tagsMap.set(tag.regular_expression_id, []);
+		if (!tagsMap.has(tag.regular_expression_name)) {
+			tagsMap.set(tag.regular_expression_name, []);
 		}
-		tagsMap.get(tag.regular_expression_id)!.push({
-			id: tag.tag_id,
+		tagsMap.get(tag.regular_expression_name)!.push({
 			name: tag.tag_name,
 			created_at: tag.tag_created_at
 		});
@@ -58,7 +56,7 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 		pattern: expression.pattern,
 		regex101_id: expression.regex101_id,
 		description: expression.description,
-		tags: tagsMap.get(expression.id) || [],
+		tags: tagsMap.get(expression.name) || [],
 		created_at: expression.created_at,
 		updated_at: expression.updated_at
 	}));

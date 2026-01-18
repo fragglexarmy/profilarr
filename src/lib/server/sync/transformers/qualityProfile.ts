@@ -280,8 +280,8 @@ export async function fetchQualityProfileFromPcd(
 	// Get quality groups for this profile
 	const groups = await db
 		.selectFrom('quality_groups')
-		.select(['id', 'name'])
-		.where('quality_profile_id', '=', profileId)
+		.select(['name'])
+		.where('quality_profile_name', '=', profile.name)
 		.execute();
 
 	// Get group members
@@ -289,27 +289,23 @@ export async function fetchQualityProfileFromPcd(
 		groups.length > 0
 			? await db
 					.selectFrom('quality_group_members')
-					.innerJoin('qualities', 'qualities.id', 'quality_group_members.quality_id')
+					.innerJoin('qualities', 'qualities.name', 'quality_group_members.quality_name')
 					.select([
-						'quality_group_members.quality_group_id',
+						'quality_group_members.quality_group_name',
 						'qualities.id as quality_id',
 						'qualities.name as quality_name'
 					])
-					.where(
-						'quality_group_members.quality_group_id',
-						'in',
-						groups.map((g) => g.id)
-					)
+					.where('quality_group_members.quality_profile_name', '=', profile.name)
 					.execute()
 			: [];
 
 	// Build groups map
-	const groupsMap = new Map<number, { id: number; name: string; members: { id: number; name: string }[] }>();
+	const groupsMap = new Map<string, { name: string; members: { id: number; name: string }[] }>();
 	for (const group of groups) {
-		groupsMap.set(group.id, { id: group.id, name: group.name, members: [] });
+		groupsMap.set(group.name, { name: group.name, members: [] });
 	}
 	for (const member of groupMembers) {
-		const group = groupsMap.get(member.quality_group_id);
+		const group = groupsMap.get(member.quality_group_name);
 		if (group) {
 			group.members.push({ id: member.quality_id, name: member.quality_name });
 		}
@@ -318,16 +314,19 @@ export async function fetchQualityProfileFromPcd(
 	// Get ordered quality items
 	const orderedItems = await db
 		.selectFrom('quality_profile_qualities')
-		.select(['id', 'quality_id', 'quality_group_id', 'position', 'enabled', 'upgrade_until'])
-		.where('quality_profile_id', '=', profileId)
+		.select(['quality_name', 'quality_group_name', 'position', 'enabled', 'upgrade_until'])
+		.where('quality_profile_name', '=', profile.name)
 		.orderBy('position')
 		.execute();
 
 	// Build quality items
 	const qualities: PcdQualityItem[] = orderedItems.map((item) => {
-		const isGroup = item.quality_group_id !== null;
-		const referenceId = isGroup ? item.quality_group_id! : item.quality_id!;
-		const name = isGroup ? groupsMap.get(referenceId)?.name ?? 'Group' : qualityNameMap.get(referenceId) ?? 'Unknown';
+		const isGroup = item.quality_group_name !== null;
+		const name = isGroup ? item.quality_group_name! : item.quality_name!;
+		// Get ID from name for referenceId (used for cutoff)
+		const referenceId = isGroup
+			? groups.findIndex(g => g.name === name) + 1
+			: allQualities.find(q => q.name === name)?.id ?? 0;
 
 		const result: PcdQualityItem = {
 			type: isGroup ? 'group' : 'quality',
@@ -339,7 +338,7 @@ export async function fetchQualityProfileFromPcd(
 		};
 
 		if (isGroup) {
-			result.members = groupsMap.get(referenceId)?.members || [];
+			result.members = groupsMap.get(name)?.members || [];
 		}
 
 		return result;
@@ -348,9 +347,9 @@ export async function fetchQualityProfileFromPcd(
 	// Get language config (first one if exists)
 	const languageRow = await db
 		.selectFrom('quality_profile_languages as qpl')
-		.innerJoin('languages as l', 'l.id', 'qpl.language_id')
+		.innerJoin('languages as l', 'l.name', 'qpl.language_name')
 		.select(['l.id as language_id', 'l.name as language_name', 'qpl.type'])
-		.where('qpl.quality_profile_id', '=', profileId)
+		.where('qpl.quality_profile_name', '=', profile.name)
 		.executeTakeFirst();
 
 	const language: PcdLanguageConfig | null = languageRow
@@ -364,17 +363,17 @@ export async function fetchQualityProfileFromPcd(
 	// Get custom format scores for this arr type
 	const cfScores = await db
 		.selectFrom('quality_profile_custom_formats as qpcf')
-		.innerJoin('custom_formats as cf', 'cf.id', 'qpcf.custom_format_id')
+		.innerJoin('custom_formats as cf', 'cf.name', 'qpcf.custom_format_name')
 		.select(['cf.id as format_id', 'cf.name as format_name', 'qpcf.score'])
-		.where('qpcf.quality_profile_id', '=', profileId)
+		.where('qpcf.quality_profile_name', '=', profile.name)
 		.where((eb) => eb.or([eb('qpcf.arr_type', '=', arrType), eb('qpcf.arr_type', '=', 'all')]))
 		.execute();
 
 	// For "all" type entries, if there's also a specific arr_type entry, prefer the specific one
-	const cfScoresMap = new Map<number, PcdCustomFormatScore>();
+	const cfScoresMap = new Map<string, PcdCustomFormatScore>();
 	for (const row of cfScores) {
 		// Later entries (specific arr_type) will override earlier ones (all)
-		cfScoresMap.set(row.format_id, {
+		cfScoresMap.set(row.format_name, {
 			formatId: row.format_id,
 			formatName: row.format_name,
 			score: row.score
@@ -414,19 +413,28 @@ export async function getQualityApiMappings(cache: PCDCache, arrType: SyncArrTyp
 }
 
 /**
- * Get all custom format IDs referenced by a quality profile
+ * Get all custom format names referenced by a quality profile
  */
-export async function getReferencedCustomFormatIds(
+export async function getReferencedCustomFormatNames(
 	cache: PCDCache,
 	profileId: number,
 	arrType: SyncArrType
-): Promise<number[]> {
+): Promise<string[]> {
+	// First get the profile name
+	const profile = await cache.kb
+		.selectFrom('quality_profiles')
+		.select(['name'])
+		.where('id', '=', profileId)
+		.executeTakeFirst();
+
+	if (!profile) return [];
+
 	const rows = await cache.kb
 		.selectFrom('quality_profile_custom_formats')
-		.select(['custom_format_id'])
-		.where('quality_profile_id', '=', profileId)
+		.select(['custom_format_name'])
+		.where('quality_profile_name', '=', profile.name)
 		.where((eb) => eb.or([eb('arr_type', '=', arrType), eb('arr_type', '=', 'all')]))
 		.execute();
 
-	return [...new Set(rows.map((r) => r.custom_format_id))];
+	return [...new Set(rows.map((r) => r.custom_format_name))];
 }

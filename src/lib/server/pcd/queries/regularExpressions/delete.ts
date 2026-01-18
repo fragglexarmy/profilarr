@@ -34,7 +34,7 @@ export async function remove(options: DeleteRegularExpressionOptions) {
 	// 1. Delete tag links first (foreign key constraint)
 	for (const tag of current.tags) {
 		const removeTagLink = {
-			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_id = (SELECT id FROM regular_expressions WHERE name = '${esc(current.name)}') AND tag_id = tag('${esc(tag.name)}')`,
+			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_name = '${esc(current.name)}' AND tag_name = '${esc(tag.name)}'`,
 			parameters: [],
 			query: {} as never
 		};

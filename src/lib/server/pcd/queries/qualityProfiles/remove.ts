@@ -25,7 +25,7 @@ export async function remove(options: RemoveQualityProfileOptions) {
 	// Delete associated tags
 	const deleteProfileTags = db
 		.deleteFrom('quality_profile_tags')
-		.where('quality_profile_id', '=', profileId)
+		.where('quality_profile_name', '=', profileName)
 		.compile();
 
 	queries.push(deleteProfileTags);
@@ -33,7 +33,7 @@ export async function remove(options: RemoveQualityProfileOptions) {
 	// Delete associated languages
 	const deleteProfileLanguages = db
 		.deleteFrom('quality_profile_languages')
-		.where('quality_profile_id', '=', profileId)
+		.where('quality_profile_name', '=', profileName)
 		.compile();
 
 	queries.push(deleteProfileLanguages);
@@ -41,7 +41,7 @@ export async function remove(options: RemoveQualityProfileOptions) {
 	// Delete associated qualities
 	const deleteProfileQualities = db
 		.deleteFrom('quality_profile_qualities')
-		.where('quality_profile_id', '=', profileId)
+		.where('quality_profile_name', '=', profileName)
 		.compile();
 
 	queries.push(deleteProfileQualities);
@@ -49,7 +49,7 @@ export async function remove(options: RemoveQualityProfileOptions) {
 	// Delete associated custom formats
 	const deleteProfileCustomFormats = db
 		.deleteFrom('quality_profile_custom_formats')
-		.where('quality_profile_id', '=', profileId)
+		.where('quality_profile_name', '=', profileName)
 		.compile();
 
 	queries.push(deleteProfileCustomFormats);
@@ -57,7 +57,7 @@ export async function remove(options: RemoveQualityProfileOptions) {
 	// Delete quality groups for this profile
 	const deleteQualityGroups = db
 		.deleteFrom('quality_groups')
-		.where('quality_profile_id', '=', profileId)
+		.where('quality_profile_name', '=', profileName)
 		.compile();
 
 	queries.push(deleteQualityGroups);

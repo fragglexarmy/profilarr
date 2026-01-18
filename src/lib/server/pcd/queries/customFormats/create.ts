@@ -51,9 +51,9 @@ export async function create(options: CreateCustomFormatOptions) {
 
 		queries.push(insertTag);
 
-		// Link tag to custom format
+		// Link tag to custom format using name-based FKs
 		const linkTag = {
-			sql: `INSERT INTO custom_format_tags (custom_format_id, tag_id) VALUES ((SELECT id FROM custom_formats WHERE name = '${input.name.replace(/'/g, "''")}'), tag('${tagName.replace(/'/g, "''")}'))`,
+			sql: `INSERT INTO custom_format_tags (custom_format_name, tag_name) VALUES ('${input.name.replace(/'/g, "''")}', '${tagName.replace(/'/g, "''")}')`,
 			parameters: [],
 			query: {} as never
 		};

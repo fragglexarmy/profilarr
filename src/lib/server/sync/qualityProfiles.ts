@@ -26,7 +26,7 @@ import {
 import {
 	fetchQualityProfileFromPcd,
 	getQualityApiMappings,
-	getReferencedCustomFormatIds,
+	getReferencedCustomFormatNames,
 	transformQualityProfile,
 	type PcdQualityProfile
 } from './transformers/qualityProfile.ts';
@@ -34,12 +34,12 @@ import {
 // Internal types for sync data
 interface ProfileSyncData {
 	pcdProfile: PcdQualityProfile;
-	referencedFormatIds: number[];
+	referencedFormatNames: string[];
 }
 
 interface SyncBatch {
 	profiles: ProfileSyncData[];
-	customFormats: Map<number, PcdCustomFormat>; // deduped by format ID
+	customFormats: Map<string, PcdCustomFormat>; // deduped by format name
 }
 
 interface SyncedProfileSummary {
@@ -142,7 +142,7 @@ export class QualityProfileSyncer extends BaseSyncer {
 		}
 
 		const profiles: ProfileSyncData[] = [];
-		const customFormats = new Map<number, PcdCustomFormat>();
+		const customFormats = new Map<string, PcdCustomFormat>();
 
 		for (const selection of syncConfig.selections) {
 			const cache = getCache(selection.databaseId);
@@ -164,21 +164,21 @@ export class QualityProfileSyncer extends BaseSyncer {
 				continue;
 			}
 
-			// Get referenced custom format IDs
-			const referencedFormatIds = await getReferencedCustomFormatIds(
+			// Get referenced custom format names
+			const referencedFormatNames = await getReferencedCustomFormatNames(
 				cache,
 				selection.profileId,
 				this.instanceType
 			);
 
-			profiles.push({ pcdProfile, referencedFormatIds });
+			profiles.push({ pcdProfile, referencedFormatNames });
 
-			// Fetch custom formats (dedupe by ID)
-			for (const formatId of referencedFormatIds) {
-				if (!customFormats.has(formatId)) {
-					const pcdFormat = await fetchCustomFormatFromPcd(cache, formatId);
+			// Fetch custom formats (dedupe by name)
+			for (const formatName of referencedFormatNames) {
+				if (!customFormats.has(formatName)) {
+					const pcdFormat = await fetchCustomFormatFromPcd(cache, formatName);
 					if (pcdFormat) {
-						customFormats.set(formatId, pcdFormat);
+						customFormats.set(formatName, pcdFormat);
 					}
 				}
 			}
@@ -192,7 +192,7 @@ export class QualityProfileSyncer extends BaseSyncer {
 	 * Returns a map of format name -> arr format ID
 	 */
 	private async syncCustomFormats(
-		pcdFormats: Map<number, PcdCustomFormat>
+		pcdFormats: Map<string, PcdCustomFormat>
 	): Promise<Map<string, number>> {
 		// Get existing formats from arr
 		const existingFormats = await this.client.getCustomFormats();

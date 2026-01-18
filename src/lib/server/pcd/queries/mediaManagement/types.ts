@@ -7,7 +7,6 @@
 // ============================================================================
 
 export interface QualityDefinition {
-	quality_id: number;
 	quality_name: string;
 	min_size: number;
 	max_size: number;

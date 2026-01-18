@@ -63,7 +63,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
-			sql: `DELETE FROM custom_format_tags WHERE custom_format_id = (SELECT id FROM custom_formats WHERE name = '${esc(current.name)}') AND tag_id = tag('${esc(tagName)}')`,
+			sql: `DELETE FROM custom_format_tags WHERE custom_format_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
@@ -83,10 +83,10 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		queries.push(insertTag);
 
 		// Link tag to custom format
-		// Use input.name for lookup since the format might have been renamed
+		// Use input.name since the format might have been renamed
 		const formatName = input.name !== current.name ? input.name : current.name;
 		const linkTag = {
-			sql: `INSERT INTO custom_format_tags (custom_format_id, tag_id) VALUES ((SELECT id FROM custom_formats WHERE name = '${esc(formatName)}'), tag('${esc(tagName)}'))`,
+			sql: `INSERT INTO custom_format_tags (custom_format_name, tag_name) VALUES ('${esc(formatName)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};

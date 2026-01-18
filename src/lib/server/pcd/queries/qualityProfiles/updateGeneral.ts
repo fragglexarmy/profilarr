@@ -61,7 +61,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	const tagsToRemove = currentTagNames.filter(t => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
-			sql: `DELETE FROM quality_profile_tags WHERE quality_profile_id = (SELECT id FROM quality_profiles WHERE name = '${esc(current.name)}') AND tag_id = tag('${esc(tagName)}')`,
+			sql: `DELETE FROM quality_profile_tags WHERE quality_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
@@ -81,10 +81,10 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		queries.push(insertTag);
 
 		// Link tag to quality profile
-		// Use input.name for lookup since the profile might have been renamed
-		const profileName = input.name !== current.name ? input.name : current.name;
+		// Use input.name since the profile might have been renamed
+		const profileNameForLink = input.name !== current.name ? input.name : current.name;
 		const linkTag = {
-			sql: `INSERT INTO quality_profile_tags (quality_profile_id, tag_id) VALUES ((SELECT id FROM quality_profiles WHERE name = '${esc(profileName)}'), tag('${esc(tagName)}'))`,
+			sql: `INSERT INTO quality_profile_tags (quality_profile_name, tag_name) VALUES ('${esc(profileNameForLink)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};

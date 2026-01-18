@@ -24,13 +24,15 @@
 	export let condition: ConditionData;
 	export let arrType: ArrType = 'all';
 	export let invalid = false;
+	export let nameConflict = false;
 
-	// Reference invalid to avoid unused export warning (used in template)
-	$: isInvalid = invalid;
+	// Combined error state for styling
+	$: hasError = invalid || nameConflict;
 
 	// Available patterns and languages from database (passed in)
 	export let availablePatterns: { id: number; name: string; pattern: string }[] = [];
 	export let availableLanguages: { id: number; name: string }[] = [];
+	// Note: availablePatterns/Languages still have id from DB, but ConditionData uses name for FK stability
 
 	// Helper to emit changes - creates new object to maintain immutability
 	function emitChange(updates: Partial<ConditionData>) {
@@ -78,20 +80,20 @@
 	// Check if type is pattern-based
 	$: isPatternType = PATTERN_TYPES.includes(condition.type as typeof PATTERN_TYPES[number]);
 
-	// Autocomplete options for patterns
-	$: patternOptions = availablePatterns.map((p) => ({ value: p.id.toString(), label: p.name }));
+	// Autocomplete options for patterns (use name as value for FK stability)
+	$: patternOptions = availablePatterns.map((p) => ({ value: p.name, label: p.name }));
 
 	// Currently selected pattern for Autocomplete
 	$: selectedPatterns = condition.patterns
-		? condition.patterns.map((p) => ({ value: p.id.toString(), label: availablePatterns.find((ap) => ap.id === p.id)?.name ?? p.pattern }))
+		? condition.patterns.map((p) => ({ value: p.name, label: p.name }))
 		: [];
 
 	function handlePatternChange(event: CustomEvent<{ value: string; label: string }[]>) {
 		const selected = event.detail;
 		if (selected.length > 0) {
-			const patternId = parseInt(selected[0].value);
-			const pattern = availablePatterns.find((p) => p.id === patternId);
-			emitChange({ patterns: pattern ? [{ id: pattern.id, pattern: pattern.pattern }] : [] });
+			const patternName = selected[0].value;
+			const pattern = availablePatterns.find((p) => p.name === patternName);
+			emitChange({ patterns: pattern ? [{ name: pattern.name, pattern: pattern.pattern }] : [] });
 		} else {
 			emitChange({ patterns: [] });
 		}
@@ -100,7 +102,7 @@
 	// Reactive selected value based on condition type
 	$: selectedValue = (() => {
 		if (isPatternType) {
-			return condition.patterns?.[0]?.id?.toString() ?? '';
+			return condition.patterns?.[0]?.name ?? '';
 		}
 		switch (condition.type) {
 			case 'source':
@@ -114,7 +116,7 @@
 			case 'indexer_flag':
 				return condition.indexerFlags?.[0] ?? '';
 			case 'language':
-				return condition.languages?.[0]?.id?.toString() ?? '';
+				return condition.languages?.[0]?.name ?? '';
 			default:
 				return '';
 		}
@@ -139,16 +141,15 @@
 				emitChange({ indexerFlags: value ? [value] : [] });
 				break;
 			case 'language':
-				const langId = parseInt(value);
-				const lang = availableLanguages.find((l) => l.id === langId);
-				emitChange({ languages: lang ? [{ id: lang.id, name: lang.name, except: false }] : [] });
+				const lang = availableLanguages.find((l) => l.name === value);
+				emitChange({ languages: lang ? [{ name: lang.name, except: false }] : [] });
 				break;
 		}
 	}
 
-	// Language options for Autocomplete (Any first, Original second, then alphabetical)
+	// Language options for Autocomplete (use name as value for FK stability)
 	$: languageOptions = availableLanguages
-		.map((l) => ({ value: l.id.toString(), label: l.name }))
+		.map((l) => ({ value: l.name, label: l.name }))
 		.sort((a, b) => {
 			if (a.label === 'Any') return -1;
 			if (b.label === 'Any') return 1;
@@ -159,15 +160,15 @@
 
 	// Currently selected language for Autocomplete
 	$: selectedLanguages = condition.languages
-		? condition.languages.map((l) => ({ value: l.id.toString(), label: l.name }))
+		? condition.languages.map((l) => ({ value: l.name, label: l.name }))
 		: [];
 
 	function handleLanguageChange(event: CustomEvent<{ value: string; label: string }[]>) {
 		const selected = event.detail;
 		if (selected.length > 0) {
-			const langId = parseInt(selected[0].value);
-			const lang = availableLanguages.find((l) => l.id === langId);
-			emitChange({ languages: lang ? [{ id: lang.id, name: lang.name, except: false }] : [] });
+			const langName = selected[0].value;
+			const lang = availableLanguages.find((l) => l.name === langName);
+			emitChange({ languages: lang ? [{ name: lang.name, except: false }] : [] });
 		} else {
 			emitChange({ languages: [] });
 		}
@@ -250,18 +251,18 @@
 </script>
 
 <div
-	class="flex items-center gap-3 rounded-lg border px-3 py-2 {isInvalid
+	class="flex items-center gap-3 rounded-lg border px-3 py-2 {invalid
 		? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20'
 		: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}"
 >
 	<!-- Name -->
-	<div class="w-48 shrink-0">
+	<div class="w-48 shrink-0" title={nameConflict ? 'Duplicate condition name' : ''}>
 		<input
 			type="text"
 			value={condition.name}
 			on:input={handleNameChange}
 			placeholder="Condition name"
-			class={inputClass}
+			class="{inputClass} {nameConflict ? 'text-red-500 dark:text-red-400' : ''}"
 		/>
 	</div>
 

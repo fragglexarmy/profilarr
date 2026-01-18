@@ -25,7 +25,7 @@
 	// Build initial data from server
 	$: initialData = {
 		type: data.languages[0]?.type || 'simple',
-		languageId: data.languages[0]?.id || null
+		languageName: data.languages[0]?.name || null
 	};
 
 	// Initialize dirty tracking
@@ -33,20 +33,20 @@
 
 	// Reactive getters for current values
 	$: selectedType = ($current.type ?? 'simple') as 'must' | 'only' | 'not' | 'simple';
-	$: selectedLanguageId = ($current.languageId ?? null) as number | null;
+	$: selectedLanguageName = ($current.languageName ?? null) as string | null;
 
 	// Search query tracks the display name
 	let searchQuery = data.languages[0]?.name || '';
 	let showTypeDropdown = false;
 	let showLanguageDropdown = false;
 
-	$: selectedLanguage = data.availableLanguages.find(l => l.id === selectedLanguageId);
+	$: selectedLanguage = data.availableLanguages.find(l => l.name === selectedLanguageName);
 
 	$: filteredLanguages = data.availableLanguages.filter(lang =>
 		lang.name.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
-	$: isValidLanguage = searchQuery === '' || selectedLanguageId !== null;
+	$: isValidLanguage = searchQuery === '' || selectedLanguageName !== null;
 	$: showValidationError = searchQuery !== '' && !isValidLanguage;
 
 	function selectType(type: 'must' | 'only' | 'not' | 'simple') {
@@ -55,7 +55,7 @@
 	}
 
 	function selectLanguage(language: { id: number; name: string }) {
-		update('languageId', language.id);
+		update('languageName', language.name);
 		searchQuery = language.name;
 		showLanguageDropdown = false;
 	}
@@ -69,9 +69,9 @@
 			l => l.name.toLowerCase() === searchQuery.toLowerCase()
 		);
 		if (!exactMatch) {
-			update('languageId', null);
+			update('languageName', null);
 		} else {
-			update('languageId', exactMatch.id);
+			update('languageName', exactMatch.name);
 		}
 	}
 
@@ -82,7 +82,7 @@
 	function handleBlur() {
 		setTimeout(() => {
 			showLanguageDropdown = false;
-			if (selectedLanguageId) {
+			if (selectedLanguageName) {
 				searchQuery = selectedLanguage?.name || '';
 			}
 		}, 200);
@@ -124,7 +124,7 @@
 	}}
 >
 	<input type="hidden" name="layer" value="user" />
-	<input type="hidden" name="languageId" value={selectedLanguageId ?? ''} />
+	<input type="hidden" name="languageName" value={selectedLanguageName ?? ''} />
 	<input type="hidden" name="type" value={selectedType} />
 </form>
 

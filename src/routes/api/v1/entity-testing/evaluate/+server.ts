@@ -76,16 +76,16 @@ export const POST: RequestHandler = async ({ request }) => {
 		const patternMatches = patternMatchResults?.get(release.title);
 
 		// Evaluate against all custom formats
-		const cfMatches: Record<number, boolean> = {};
+		const cfMatches: Record<string, boolean> = {};
 		for (const cf of customFormats) {
 			if (cf.conditions.length === 0) {
 				// No conditions = doesn't match
-				cfMatches[cf.id] = false;
+				cfMatches[cf.name] = false;
 				continue;
 			}
 
 			const result = evaluateCustomFormat(cf.conditions, parsed, release.title, patternMatches);
-			cfMatches[cf.id] = result.matches;
+			cfMatches[cf.name] = result.matches;
 		}
 
 		return {

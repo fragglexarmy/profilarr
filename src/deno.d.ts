@@ -24,7 +24,7 @@ declare namespace Deno {
 
 	export interface CreateHttpClientOptions {
 		poolMaxIdlePerHost?: number;
-		poolIdleTimeout?: number;
+		poolIdleTimeout?: number | false;
 	}
 
 	export function createHttpClient(options?: CreateHttpClientOptions): HttpClient;

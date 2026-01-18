@@ -53,7 +53,7 @@ export const actions: Actions = {
 		const name = formData.get('name')?.toString().trim();
 		const syncStrategy = parseInt(formData.get('sync_strategy')?.toString() || '0', 10);
 		const autoPull = formData.get('auto_pull') === '1';
-		const personalAccessToken = formData.get('personal_access_token')?.toString().trim() || null;
+		const personalAccessToken = formData.get('personal_access_token')?.toString().trim() || undefined;
 
 		// Validation
 		if (!name) {

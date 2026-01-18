@@ -6,7 +6,6 @@ import type { Tag } from '../../types.ts';
 
 /** Condition reference for display */
 export interface ConditionRef {
-	id: number;
 	name: string;
 	required: boolean;
 	negate: boolean;
@@ -41,7 +40,7 @@ export interface CustomFormatGeneral {
 
 /** Custom format test case */
 export interface CustomFormatTest {
-	id: number;
+	custom_format_name: string;
 	title: string;
 	type: string;
 	should_match: boolean;

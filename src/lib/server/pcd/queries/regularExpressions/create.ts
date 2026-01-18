@@ -53,9 +53,9 @@ export async function create(options: CreateRegularExpressionOptions) {
 
 		queries.push(insertTag);
 
-		// Link tag to regular expression using helper functions
+		// Link tag to regular expression using name-based FKs
 		const linkTag = {
-			sql: `INSERT INTO regular_expression_tags (regular_expression_id, tag_id) VALUES ((SELECT id FROM regular_expressions WHERE name = '${input.name.replace(/'/g, "''")}'), tag('${tagName.replace(/'/g, "''")}'))`,
+			sql: `INSERT INTO regular_expression_tags (regular_expression_name, tag_name) VALUES ('${input.name.replace(/'/g, "''")}', '${tagName.replace(/'/g, "''")}')`,
 			parameters: [],
 			query: {} as never
 		};

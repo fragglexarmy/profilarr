@@ -28,14 +28,14 @@ export async function getById(cache: PCDCache, formatId: number): Promise<Custom
 /**
  * Get all tests for a custom format
  */
-export async function listTests(cache: PCDCache, formatId: number): Promise<CustomFormatTest[]> {
+export async function listTests(cache: PCDCache, formatName: string): Promise<CustomFormatTest[]> {
 	const db = cache.kb;
 
 	const tests = await db
 		.selectFrom('custom_format_tests')
-		.select(['id', 'title', 'type', 'should_match', 'description'])
-		.where('custom_format_id', '=', formatId)
-		.orderBy('id')
+		.select(['custom_format_name', 'title', 'type', 'should_match', 'description'])
+		.where('custom_format_name', '=', formatName)
+		.orderBy('title')
 		.execute();
 
 	return tests.map((test) => ({
@@ -45,15 +45,17 @@ export async function listTests(cache: PCDCache, formatId: number): Promise<Cust
 }
 
 /**
- * Get a single test by ID
+ * Get a single test by composite key
  */
-export async function getTestById(cache: PCDCache, testId: number): Promise<CustomFormatTest | null> {
+export async function getTest(cache: PCDCache, formatName: string, title: string, type: string): Promise<CustomFormatTest | null> {
 	const db = cache.kb;
 
 	const test = await db
 		.selectFrom('custom_format_tests')
-		.select(['id', 'title', 'type', 'should_match', 'description'])
-		.where('id', '=', testId)
+		.select(['custom_format_name', 'title', 'type', 'should_match', 'description'])
+		.where('custom_format_name', '=', formatName)
+		.where('title', '=', title)
+		.where('type', '=', type)
 		.executeTakeFirst();
 
 	if (!test) return null;

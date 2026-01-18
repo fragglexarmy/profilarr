@@ -134,22 +134,22 @@
 		];
 	}
 
-	// Track markers for each definition by quality_id
-	let markersMap: Record<number, Marker[]> = {};
+	// Track markers for each definition by quality_name
+	let markersMap: Record<string, Marker[]> = {};
 
 	// Initialize markers from definitions
 	$: {
 		definitions.forEach((def) => {
-			if (!markersMap[def.quality_id]) {
-				markersMap[def.quality_id] = createMarkers(def);
+			if (!markersMap[def.quality_name]) {
+				markersMap[def.quality_name] = createMarkers(def);
 			}
 		});
 	}
 
 	// Sync marker values back to definitions when they change
-	function syncToDefinition(qualityId: number) {
-		const markers = markersMap[qualityId];
-		const def = definitions.find((d) => d.quality_id === qualityId);
+	function syncToDefinition(qualityName: string) {
+		const markers = markersMap[qualityName];
+		const def = definitions.find((d) => d.quality_name === qualityName);
 		if (markers && def) {
 			def.min_size = markers[0].value;
 			def.preferred_size = markers[1].value;
@@ -171,7 +171,7 @@
 		definitions = originalDefinitions.map((d) => ({ ...d }));
 		markersMap = {};
 		definitions.forEach((def) => {
-			markersMap[def.quality_id] = createMarkers(def);
+			markersMap[def.quality_name] = createMarkers(def);
 		});
 		isEditing = false;
 	}
@@ -195,7 +195,7 @@
 
 	// Get changed definitions
 	$: changedDefinitions = definitions.filter((d) => {
-		const original = originalDefinitions.find((o) => o.quality_id === d.quality_id);
+		const original = originalDefinitions.find((o) => o.quality_name === d.quality_name);
 		if (!original) return true;
 		return (
 			d.min_size !== original.min_size ||
@@ -208,7 +208,7 @@
 
 	$: definitionsForSubmit = JSON.stringify(
 		changedDefinitions.map((d) => ({
-			quality_id: d.quality_id,
+			quality_name: d.quality_name,
 			min_size: d.min_size,
 			max_size: d.max_size,
 			preferred_size: d.preferred_size
@@ -325,8 +325,8 @@
 
 				<svelte:fragment slot="expanded" let:row>
 					<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
-						{#each row.definitions as def (def.quality_id)}
-							{@const markers = markersMap[def.quality_id] || createMarkers(def)}
+						{#each row.definitions as def (def.quality_name)}
+							{@const markers = markersMap[def.quality_name] || createMarkers(def)}
 							<div class="flex items-center gap-3 bg-white pb-8 pt-5 pl-8 pr-4 dark:bg-neutral-900">
 								<!-- Quality Name -->
 								<div
@@ -347,8 +347,8 @@
 										unit={selectedUnit.short}
 										unlimitedValue={baseScaleMax}
 										displayTransform={toDisplayUnit}
-										bind:markers={markersMap[def.quality_id]}
-										on:change={() => syncToDefinition(def.quality_id)}
+										bind:markers={markersMap[def.quality_name]}
+										on:change={() => syncToDefinition(def.quality_name)}
 									/>
 								</div>
 
@@ -360,13 +360,13 @@
 										Min <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
 									</div>
 									<NumberInput
-										id="min-{def.quality_id}"
-										name="min-{def.quality_id}"
+										id="min-{def.quality_name}"
+										name="min-{def.quality_name}"
 										bind:value={markers[0].value}
 										min={0}
 										max={markers[1].value}
 										step={1}
-										onchange={() => syncToDefinition(def.quality_id)}
+										onchange={() => syncToDefinition(def.quality_name)}
 									/>
 								</div>
 
@@ -377,13 +377,13 @@
 										Pref <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
 									</div>
 									<NumberInput
-										id="preferred-{def.quality_id}"
-										name="preferred-{def.quality_id}"
+										id="preferred-{def.quality_name}"
+										name="preferred-{def.quality_name}"
 										bind:value={markers[1].value}
 										min={markers[0].value}
 										max={markers[2].value}
 										step={1}
-										onchange={() => syncToDefinition(def.quality_id)}
+										onchange={() => syncToDefinition(def.quality_name)}
 									/>
 								</div>
 
@@ -394,12 +394,12 @@
 										Max <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
 									</div>
 									<NumberInput
-										id="max-{def.quality_id}"
-										name="max-{def.quality_id}"
+										id="max-{def.quality_name}"
+										name="max-{def.quality_name}"
 										bind:value={markers[2].value}
 										min={markers[1].value}
 										step={1}
-										onchange={() => syncToDefinition(def.quality_id)}
+										onchange={() => syncToDefinition(def.quality_name)}
 									/>
 								</div>
 							</div>
@@ -461,8 +461,8 @@
 
 			<svelte:fragment slot="expanded" let:row>
 				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
-					{#each row.definitions as def (def.quality_id)}
-						{@const markers = markersMap[def.quality_id] || createMarkers(def)}
+					{#each row.definitions as def (def.quality_name)}
+						{@const markers = markersMap[def.quality_name] || createMarkers(def)}
 						<div class="flex items-center gap-3 bg-white pb-8 pt-5 pl-8 pr-4 dark:bg-neutral-900">
 							<!-- Quality Name -->
 							<div class="w-32 shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -481,7 +481,7 @@
 									unit={selectedUnit.short}
 									unlimitedValue={baseScaleMax}
 									displayTransform={toDisplayUnit}
-									bind:markers={markersMap[def.quality_id]}
+									bind:markers={markersMap[def.quality_name]}
 								/>
 							</div>
 

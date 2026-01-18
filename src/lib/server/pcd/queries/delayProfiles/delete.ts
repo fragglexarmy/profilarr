@@ -34,7 +34,7 @@ export async function remove(options: DeleteDelayProfileOptions) {
 	// 1. Delete tag links first (foreign key constraint)
 	for (const tag of current.tags) {
 		const removeTagLink = {
-			sql: `DELETE FROM delay_profile_tags WHERE delay_profile_id = dp('${esc(current.name)}') AND tag_id = tag('${esc(tag.name)}')`,
+			sql: `DELETE FROM delay_profile_tags WHERE delay_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tag.name)}'`,
 			parameters: [],
 			query: {} as never
 		};

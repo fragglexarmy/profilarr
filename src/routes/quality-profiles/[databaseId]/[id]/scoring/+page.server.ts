@@ -31,7 +31,18 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	const scoringData = await qualityProfileQueries.scoring(cache, currentDatabaseId, profileId);
+	// Get profile name from ID
+	const profile = await cache.kb
+		.selectFrom('quality_profiles')
+		.select('name')
+		.where('id', '=', profileId)
+		.executeTakeFirst();
+
+	if (!profile) {
+		throw error(404, 'Quality profile not found');
+	}
+
+	const scoringData = await qualityProfileQueries.scoring(cache, currentDatabaseId, profile.name);
 
 	return {
 		scoring: scoringData,
@@ -82,7 +93,7 @@ export const actions: Actions = {
 		}
 
 		// Parse custom format scores
-		let customFormatScores: Array<{ customFormatId: number; arrType: string; score: number | null }> = [];
+		let customFormatScores: Array<{ customFormatName: string; arrType: string; score: number | null }> = [];
 		try {
 			customFormatScores = JSON.parse(customFormatScoresJson || '[]');
 		} catch {
@@ -105,7 +116,6 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			profileId,
 			profileName: profile.name,
 			input: {
 				minimumScore,

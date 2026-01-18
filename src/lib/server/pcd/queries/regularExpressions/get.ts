@@ -14,7 +14,7 @@ export async function get(cache: PCDCache, id: number): Promise<RegularExpressio
 	// Get the regular expression
 	const regex = await db
 		.selectFrom('regular_expressions')
-		.select(['id', 'name', 'pattern', 'regex101_id', 'description'])
+		.select(['id', 'name', 'pattern', 'regex101_id', 'description', 'created_at', 'updated_at'])
 		.where('id', '=', id)
 		.executeTakeFirst();
 
@@ -25,9 +25,9 @@ export async function get(cache: PCDCache, id: number): Promise<RegularExpressio
 	// Get tags for this regular expression
 	const tags = await db
 		.selectFrom('regular_expression_tags as ret')
-		.innerJoin('tags as t', 't.id', 'ret.tag_id')
-		.select(['t.id', 't.name'])
-		.where('ret.regular_expression_id', '=', id)
+		.innerJoin('tags as t', 't.name', 'ret.tag_name')
+		.select(['t.name', 't.created_at'])
+		.where('ret.regular_expression_name', '=', regex.name)
 		.execute();
 
 	return {
