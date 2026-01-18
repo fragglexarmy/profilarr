@@ -237,36 +237,3 @@ export function groupSonarrReleases(
 
 	return groups;
 }
-
-// =============================================================================
-// Test Release Conversion
-// =============================================================================
-
-/**
- * Shape for PCD test release creation
- */
-export interface TestReleaseInput {
-	entityId: number;
-	title: string;
-	size_bytes: number | null;
-	languages: string[];
-	indexers: string[];
-	flags: string[];
-}
-
-/**
- * Convert grouped releases to test release inputs
- */
-export function groupedReleasesToTestInputs(
-	groupedReleases: GroupedRelease[],
-	entityId: number
-): TestReleaseInput[] {
-	return groupedReleases.map((r) => ({
-		entityId,
-		title: r.title,
-		size_bytes: r.size,
-		languages: r.languages,
-		indexers: r.indexers,
-		flags: r.flags
-	}));
-}

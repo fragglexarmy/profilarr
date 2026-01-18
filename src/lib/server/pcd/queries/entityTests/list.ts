@@ -28,14 +28,13 @@ export async function list(cache: PCDCache) {
 
 	if (entities.length === 0) return [];
 
-	const entityIds = entities.map((e) => e.id);
-
 	// 2. Get all releases for all entities
 	const allReleases = await db
 		.selectFrom('test_releases')
 		.select([
 			'id',
-			'test_entity_id',
+			'entity_type',
+			'entity_tmdb_id',
 			'title',
 			'size_bytes',
 			'languages',
@@ -44,24 +43,25 @@ export async function list(cache: PCDCache) {
 			'created_at',
 			'updated_at'
 		])
-		.where('test_entity_id', 'in', entityIds)
-		.orderBy('test_entity_id')
+		.orderBy('entity_type')
+		.orderBy('entity_tmdb_id')
 		.orderBy('title')
 		.execute();
 
-	// Build releases map
-	const releasesMap = new Map<number, typeof allReleases>();
+	// Build releases map using composite key
+	const releasesMap = new Map<string, typeof allReleases>();
 	for (const release of allReleases) {
-		if (!releasesMap.has(release.test_entity_id)) {
-			releasesMap.set(release.test_entity_id, []);
+		const key = `${release.entity_type}-${release.entity_tmdb_id}`;
+		if (!releasesMap.has(key)) {
+			releasesMap.set(key, []);
 		}
-		releasesMap.get(release.test_entity_id)!.push(release);
+		releasesMap.get(key)!.push(release);
 	}
 
 	// Build the final result
 	return entities.map((entity) => ({
 		...entity,
-		releases: (releasesMap.get(entity.id) || []).map((r) => ({
+		releases: (releasesMap.get(`${entity.type}-${entity.tmdb_id}`) || []).map((r) => ({
 			id: r.id,
 			title: r.title,
 			size_bytes: r.size_bytes !== null ? Number(r.size_bytes) : null,

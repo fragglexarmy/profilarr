@@ -6,7 +6,8 @@ import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
 
 export interface CreateTestReleasesInput {
-	entityId: number;
+	entityType: 'movie' | 'series';
+	entityTmdbId: number;
 	title: string;
 	size_bytes: number | null;
 	languages: string[];
@@ -37,14 +38,16 @@ export async function createReleases(options: CreateTestReleasesOptions) {
 		};
 	}
 
-	// Get the entity ID (all inputs should have the same entityId)
-	const entityId = inputs[0].entityId;
+	// Get the entity key (all inputs should have the same entity)
+	const entityType = inputs[0].entityType;
+	const entityTmdbId = inputs[0].entityTmdbId;
 
 	// Check for existing releases for this entity
 	const existingReleases = await db
 		.selectFrom('test_releases')
 		.select(['title'])
-		.where('test_entity_id', '=', entityId)
+		.where('entity_type', '=', entityType)
+		.where('entity_tmdb_id', '=', entityTmdbId)
 		.execute();
 
 	const existingTitles = new Set(existingReleases.map((r) => r.title));
@@ -69,7 +72,8 @@ export async function createReleases(options: CreateTestReleasesOptions) {
 		const insertRelease = db
 			.insertInto('test_releases')
 			.values({
-				test_entity_id: input.entityId,
+				entity_type: input.entityType,
+				entity_tmdb_id: input.entityTmdbId,
 				title: input.title,
 				size_bytes: input.size_bytes,
 				languages: JSON.stringify(input.languages),

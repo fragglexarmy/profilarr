@@ -163,11 +163,17 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const entityId = parseInt(formData.get('entityId') as string, 10);
+		const entityType = formData.get('entityType') as 'movie' | 'series';
+		const entityTmdbId = parseInt(formData.get('entityTmdbId') as string, 10);
+		const entityTitle = formData.get('entityTitle') as string;
 		const layer = (formData.get('layer') as 'user' | 'base') || 'user';
 
-		if (isNaN(entityId)) {
-			return fail(400, { error: 'Invalid entity ID' });
+		if (!entityType || !['movie', 'series'].includes(entityType)) {
+			return fail(400, { error: 'Invalid entity type' });
+		}
+
+		if (isNaN(entityTmdbId)) {
+			return fail(400, { error: 'Invalid entity TMDB ID' });
 		}
 
 		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
@@ -178,7 +184,9 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			entityId
+			entityType,
+			entityTmdbId,
+			entityTitle: entityTitle || 'Unknown'
 		});
 
 		if (!result.success) {
@@ -214,7 +222,8 @@ export const actions: Actions = {
 		}
 
 		let release: {
-			entityId: number;
+			entityType: 'movie' | 'series';
+			entityTmdbId: number;
 			title: string;
 			size_bytes: number | null;
 			languages: string[];
@@ -377,7 +386,8 @@ export const actions: Actions = {
 		}
 
 		let releases: Array<{
-			entityId: number;
+			entityType: 'movie' | 'series';
+			entityTmdbId: number;
 			title: string;
 			size_bytes: number | null;
 			languages: string[];

@@ -33,7 +33,7 @@ export async function getAllConditionsForEvaluation(
 	// Get all conditions for all formats
 	const conditions = await db
 		.selectFrom('custom_format_conditions')
-		.select(['id', 'custom_format_id', 'name', 'type', 'negate', 'required'])
+		.select(['id', 'custom_format_id', 'name', 'type', 'arr_type', 'negate', 'required'])
 		.execute();
 
 	if (conditions.length === 0) {
@@ -198,6 +198,7 @@ export async function getAllConditionsForEvaluation(
 			id: c.id,
 			name: c.name,
 			type: c.type,
+			arrType: c.arr_type as 'all' | 'radarr' | 'sonarr',
 			negate: c.negate === 1,
 			required: c.required === 1,
 			patterns: patternsMap.get(c.id),

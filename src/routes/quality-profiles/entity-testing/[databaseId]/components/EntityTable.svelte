@@ -24,9 +24,9 @@
 
 	const dispatch = createEventDispatcher<{
 		confirmDelete: { entity: TestEntity; formRef: HTMLFormElement };
-		addRelease: { entityId: number };
+		addRelease: { entityType: 'movie' | 'series'; entityTmdbId: number };
 		importReleases: { entity: TestEntity };
-		editRelease: { entityId: number; release: TestRelease };
+		editRelease: { entityType: 'movie' | 'series'; entityTmdbId: number; release: TestRelease };
 		confirmDeleteRelease: { release: TestRelease; formRef: HTMLFormElement };
 		expand: { entity: TestEntity };
 	}>();
@@ -160,7 +160,9 @@
 					};
 				}}
 			>
-				<input type="hidden" name="entityId" value={row.id} />
+				<input type="hidden" name="entityType" value={row.type} />
+				<input type="hidden" name="entityTmdbId" value={row.tmdb_id} />
+				<input type="hidden" name="entityTitle" value={row.title} />
 				<input type="hidden" name="layer" value={deleteLayer} />
 				<TableActionButton
 					icon={Trash2}
@@ -187,8 +189,8 @@
 				</div>
 			{:else}
 				<ReleaseTable
-					entityId={row.id}
 					entityType={row.type}
+					entityTmdbId={row.tmdb_id}
 					releases={row.releases}
 					{evaluations}
 					{selectedProfileId}

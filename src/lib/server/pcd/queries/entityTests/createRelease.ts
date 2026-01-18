@@ -6,7 +6,8 @@ import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
 
 export interface CreateTestReleaseInput {
-	entityId: number;
+	entityType: 'movie' | 'series';
+	entityTmdbId: number;
 	title: string;
 	size_bytes: number | null;
 	languages: string[];
@@ -31,7 +32,8 @@ export async function createRelease(options: CreateTestReleaseOptions) {
 	const insertRelease = db
 		.insertInto('test_releases')
 		.values({
-			test_entity_id: input.entityId,
+			entity_type: input.entityType,
+			entity_tmdb_id: input.entityTmdbId,
 			title: input.title,
 			size_bytes: input.size_bytes,
 			languages: JSON.stringify(input.languages),

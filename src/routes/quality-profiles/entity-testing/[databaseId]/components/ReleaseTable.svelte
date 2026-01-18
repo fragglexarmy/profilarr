@@ -14,8 +14,8 @@
 
 	type ReleaseEvaluation = components['schemas']['ReleaseEvaluation'];
 
-	export let entityId: number;
 	export let entityType: 'movie' | 'series';
+	export let entityTmdbId: number;
 	export let releases: TestRelease[];
 	export let evaluations: Record<number, ReleaseEvaluation>;
 	export let selectedProfileId: number | null;
@@ -57,8 +57,8 @@
 	}
 
 	const dispatch = createEventDispatcher<{
-		add: { entityId: number };
-		edit: { entityId: number; release: TestRelease };
+		add: { entityType: 'movie' | 'series'; entityTmdbId: number };
+		edit: { entityType: 'movie' | 'series'; entityTmdbId: number; release: TestRelease };
 		confirmDelete: { release: TestRelease; formRef: HTMLFormElement };
 	}>();
 
@@ -165,7 +165,7 @@
 						title="Edit release"
 						variant="accent"
 						size="sm"
-						on:click={() => dispatch('edit', { entityId, release })}
+						on:click={() => dispatch('edit', { entityType, entityTmdbId, release })}
 					/>
 					<form
 						id={releaseFormId}
@@ -276,7 +276,7 @@
 	<!-- Clickable add row -->
 	<button
 		type="button"
-		on:click={() => dispatch('add', { entityId })}
+		on:click={() => dispatch('add', { entityType, entityTmdbId })}
 		class="w-full rounded-lg border-2 border-dashed border-neutral-200 py-3 text-sm text-neutral-400 transition-colors hover:border-accent-300 hover:bg-accent-50/50 hover:text-accent-600 dark:border-neutral-700 dark:hover:border-accent-600 dark:hover:bg-accent-900/10 dark:hover:text-accent-400"
 	>
 		<span class="inline-flex items-center gap-1">

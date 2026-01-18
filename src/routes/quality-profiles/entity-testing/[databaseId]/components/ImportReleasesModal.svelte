@@ -318,7 +318,8 @@
 		releases
 			.filter((r) => selectedReleases.has(r.title))
 			.map((r) => ({
-				entityId: entity?.id ?? 0,
+				entityType: entity?.type ?? 'movie',
+				entityTmdbId: entity?.tmdb_id ?? 0,
 				title: r.title,
 				size_bytes: r.size,
 				languages: r.languages,

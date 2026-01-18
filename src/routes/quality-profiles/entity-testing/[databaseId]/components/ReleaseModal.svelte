@@ -9,7 +9,8 @@
 
 	export let open = false;
 	export let mode: 'create' | 'edit' = 'create';
-	export let entityId: number;
+	export let entityType: 'movie' | 'series';
+	export let entityTmdbId: number;
 	export let release: {
 		id?: number;
 		title: string;
@@ -86,7 +87,8 @@
 	// Build JSON for form submission
 	$: releaseJson = JSON.stringify({
 		id: release?.id,
-		entityId,
+		entityType,
+		entityTmdbId,
 		title,
 		size_bytes: gbToBytes(sizeGb),
 		languages,

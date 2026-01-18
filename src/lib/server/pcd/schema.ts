@@ -221,7 +221,8 @@ export interface TestEntitiesTable {
 
 export interface TestReleasesTable {
 	id: Generated<number>;
-	test_entity_id: number;
+	entity_type: 'movie' | 'series';
+	entity_tmdb_id: number;
 	title: string;
 	size_bytes: number | null;
 	languages: string; // JSON array

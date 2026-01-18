@@ -173,7 +173,8 @@
 	// Release modal state
 	let showReleaseModal = false;
 	let releaseModalMode: 'create' | 'edit' = 'create';
-	let releaseEntityId: number = 0;
+	let releaseEntityType: 'movie' | 'series' = 'movie';
+	let releaseEntityTmdbId: number = 0;
 	let currentRelease: TestRelease | null = null;
 
 	// Release delete modal state
@@ -284,15 +285,17 @@
 	}
 
 	// Release modal handlers
-	function handleAddRelease(e: CustomEvent<{ entityId: number }>) {
-		releaseEntityId = e.detail.entityId;
+	function handleAddRelease(e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number }>) {
+		releaseEntityType = e.detail.entityType;
+		releaseEntityTmdbId = e.detail.entityTmdbId;
 		releaseModalMode = 'create';
 		currentRelease = null;
 		showReleaseModal = true;
 	}
 
-	function handleEditRelease(e: CustomEvent<{ entityId: number; release: TestRelease }>) {
-		releaseEntityId = e.detail.entityId;
+	function handleEditRelease(e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number; release: TestRelease }>) {
+		releaseEntityType = e.detail.entityType;
+		releaseEntityTmdbId = e.detail.entityTmdbId;
 		releaseModalMode = 'edit';
 		currentRelease = e.detail.release;
 		showReleaseModal = true;
@@ -490,7 +493,8 @@
 <ReleaseModal
 	bind:open={showReleaseModal}
 	mode={releaseModalMode}
-	entityId={releaseEntityId}
+	entityType={releaseEntityType}
+	entityTmdbId={releaseEntityTmdbId}
 	release={currentRelease}
 	canWriteToBase={data.canWriteToBase}
 />
