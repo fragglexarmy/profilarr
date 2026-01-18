@@ -1,9 +1,11 @@
 /**
  * Structured logging for rename jobs
  * Uses the shared logger with source 'RenameJob'
+ * Stores run history in the database
  */
 
 import { logger } from '$logger/logger.ts';
+import { renameRunsQueries } from '$db/queries/renameRuns.ts';
 import type { RenameJobLog } from './types.ts';
 
 const SOURCE = 'RenameJob';
@@ -41,6 +43,16 @@ export async function logRenameRun(log: RenameJobLog): Promise<void> {
 			items
 		}
 	});
+
+	// Save full structured data to database
+	try {
+		renameRunsQueries.insert(log);
+	} catch (err) {
+		await logger.error(`Failed to save rename run to database: ${err}`, {
+			source: SOURCE,
+			meta: { runId: log.id, error: err }
+		});
+	}
 }
 
 /**

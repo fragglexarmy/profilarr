@@ -555,3 +555,59 @@ CREATE TABLE upgrade_runs (
 CREATE INDEX idx_upgrade_runs_instance ON upgrade_runs(instance_id);
 CREATE INDEX idx_upgrade_runs_started_at ON upgrade_runs(started_at DESC);
 CREATE INDEX idx_upgrade_runs_status ON upgrade_runs(status);
+
+-- ==============================================================================
+-- TABLE: rename_runs
+-- Purpose: Store rename run history for each arr instance
+-- Migration: 027_create_rename_runs.ts
+-- ==============================================================================
+
+CREATE TABLE rename_runs (
+    id TEXT PRIMARY KEY,                        -- UUID
+
+    -- Relationship
+    instance_id INTEGER NOT NULL,               -- Foreign key to arr_instances
+
+    -- Timing
+    started_at TEXT NOT NULL,                   -- ISO timestamp when run started
+    completed_at TEXT NOT NULL,                 -- ISO timestamp when run completed
+
+    -- Status
+    status TEXT NOT NULL CHECK (status IN ('success', 'partial', 'failed', 'skipped')),
+    dry_run INTEGER NOT NULL DEFAULT 1,         -- 1=dry run, 0=live
+    manual INTEGER NOT NULL DEFAULT 0,          -- 1=manually triggered, 0=scheduled
+
+    -- Config snapshot
+    rename_folders INTEGER NOT NULL DEFAULT 0,  -- 1=rename folders too
+    ignore_tag TEXT,                            -- Tag name to skip
+
+    -- Library stats
+    library_total INTEGER NOT NULL,             -- Total items in library
+    library_fetch_ms INTEGER NOT NULL,          -- Time to fetch library in ms
+
+    -- Filtering stats
+    after_ignore_tag INTEGER NOT NULL,          -- Items after ignore tag filter
+    skipped_by_tag INTEGER NOT NULL,            -- Items skipped due to tag
+
+    -- Results stats
+    files_needing_rename INTEGER NOT NULL,      -- Files that need renaming
+    files_renamed INTEGER NOT NULL,             -- Files actually renamed
+    folders_renamed INTEGER NOT NULL,           -- Folders renamed
+    commands_triggered INTEGER NOT NULL,        -- Rename commands triggered
+    commands_completed INTEGER NOT NULL,        -- Commands completed successfully
+    commands_failed INTEGER NOT NULL,           -- Commands that failed
+
+    -- Complex data as JSON
+    items TEXT NOT NULL DEFAULT '[]',           -- JSON array of renamed items
+    errors TEXT NOT NULL DEFAULT '[]',          -- JSON array of error strings
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- Rename runs indexes (Migration: 027_create_rename_runs.ts)
+CREATE INDEX idx_rename_runs_instance ON rename_runs(instance_id);
+CREATE INDEX idx_rename_runs_started_at ON rename_runs(started_at DESC);
+CREATE INDEX idx_rename_runs_status ON rename_runs(status);

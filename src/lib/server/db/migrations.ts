@@ -28,6 +28,7 @@ import { migration as migration023 } from './migrations/023_create_pattern_match
 import { migration as migration024 } from './migrations/024_create_arr_rename_settings.ts';
 import { migration as migration025 } from './migrations/025_add_rename_notification_mode.ts';
 import { migration as migration026 } from './migrations/026_create_upgrade_runs.ts';
+import { migration as migration027 } from './migrations/027_create_rename_runs.ts';
 
 export interface Migration {
 	version: number;
@@ -268,7 +269,8 @@ export function loadMigrations(): Migration[] {
 		migration023,
 		migration024,
 		migration025,
-		migration026
+		migration026,
+		migration027
 	];
 
 	// Sort by version number

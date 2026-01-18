@@ -4,8 +4,9 @@
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
-	import { Info, Save, Play, Settings } from 'lucide-svelte';
+	import { Info, Save, Play, Settings, History } from 'lucide-svelte';
 	import RenameSettings from './components/RenameSettings.svelte';
+	import RenameRunHistory from './components/RenameRunHistory.svelte';
 	import RenameInfoModal from './components/RenameInfoModal.svelte';
 	import DirtyModal from '$lib/client/ui/modal/DirtyModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
@@ -135,6 +136,14 @@
 		/>
 	</section>
 </div>
+
+<section class="mt-6">
+	<h2 class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+		<History size={18} class="text-neutral-500 dark:text-neutral-400" />
+		Run History
+	</h2>
+	<RenameRunHistory runs={data.renameRuns} />
+</section>
 
 <!-- Hidden forms -->
 <form
