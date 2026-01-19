@@ -6,6 +6,7 @@
 	import { navIconStore } from '$stores/navIcons';
 
 	export let collapsed: boolean = false;
+	export let version: string = '';
 
 	$: useEmoji = $navIconStore === 'emoji';
 </script>
@@ -79,5 +80,5 @@
 		</Group>
 	</div>
 
-	<Version />
+	<Version {version} />
 </nav>

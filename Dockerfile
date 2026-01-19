@@ -22,6 +22,14 @@ RUN deno install --node-modules-dir
 # Build the application
 # 1. Vite builds SvelteKit to dist/build/
 # 2. Deno compiles to standalone binary
+
+# Build-time variables for version card
+# TARGETARCH is automatically set by Docker buildx (amd64 or arm64)
+ARG TARGETARCH
+ARG VITE_CHANNEL=stable
+ENV VITE_PLATFORM=docker-${TARGETARCH}
+ENV VITE_CHANNEL=${VITE_CHANNEL}
+
 ENV APP_BASE_PATH=/build/dist/build
 RUN deno run -A npm:vite build
 RUN deno compile \

@@ -5,6 +5,8 @@
 	import PageNav from '$ui/navigation/pageNav/pageNav.svelte';
 	import AlertContainer from '$alerts/AlertContainer.svelte';
 	import { sidebarCollapsed } from '$lib/client/stores/sidebar';
+
+	export let data;
 </script>
 
 <svelte:head>
@@ -13,7 +15,7 @@
 </svelte:head>
 
 <Navbar collapsed={$sidebarCollapsed} />
-<PageNav collapsed={$sidebarCollapsed} />
+<PageNav collapsed={$sidebarCollapsed} version={data.version} />
 <AlertContainer />
 
 <!-- Sidebar collapse toggle button -->

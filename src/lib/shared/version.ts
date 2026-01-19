@@ -1,31 +1,72 @@
-// Version is injected at build time from package.json
-declare const __APP_VERSION__: string;
+// Platform and channel are injected at build time
+// Version comes from the database (fetched via API)
 
-export const VERSION = __APP_VERSION__;
-export const BUILD_TYPE = import.meta.env.MODE === 'development' ? 'dev' : 'stable';
+type Platform =
+	| 'docker-amd64'
+	| 'docker-arm64'
+	| 'windows-amd64'
+	| 'linux-amd64'
+	| 'linux-arm64'
+	| 'macos-amd64'
+	| 'macos-arm64';
 
-export function getBuildLabel(): string {
-	// Check for custom build type from environment
-	const customBuildType = import.meta.env.VITE_BUILD_TYPE as string | undefined;
+type Channel = 'stable' | 'beta' | 'develop' | 'dev';
 
-	if (customBuildType) {
-		switch (customBuildType) {
-			case 'beta':
-				return 'Beta';
-			case 'docker':
-				return 'Docker';
-			case 'dev':
-				return 'Develop';
-			case 'stable':
-			default:
-				return 'Stable';
+const PLATFORM_LABELS: Record<Platform, string> = {
+	'docker-amd64': 'docker/amd64',
+	'docker-arm64': 'docker/arm64',
+	'windows-amd64': 'windows/amd64',
+	'linux-amd64': 'linux/amd64',
+	'linux-arm64': 'linux/arm64',
+	'macos-amd64': 'macos/amd64',
+	'macos-arm64': 'macos/arm64'
+};
+
+const CHANNEL_LABELS: Record<Channel, string> = {
+	stable: 'Stable',
+	beta: 'Beta',
+	develop: 'Develop',
+	dev: 'Dev'
+};
+
+function detectPlatform(): Platform {
+	// Try to detect from navigator in browser
+	if (typeof navigator !== 'undefined' && navigator.platform) {
+		const platform = navigator.platform.toLowerCase();
+		if (platform.includes('win')) return 'windows-amd64';
+		if (platform.includes('mac')) {
+			// Check for Apple Silicon - this is a heuristic
+			return 'macos-arm64';
 		}
+		if (platform.includes('linux')) return 'linux-amd64';
 	}
-
-	// Fallback based on Vite mode
-	return import.meta.env.MODE === 'development' ? 'Developer Build' : 'Stable';
+	return 'linux-amd64';
 }
 
-export function getFullVersionString(): string {
-	return `Profilarr ${getBuildLabel()} v${VERSION}`;
+export function getPlatform(): Platform {
+	const envPlatform = import.meta.env.VITE_PLATFORM as Platform | undefined;
+	return envPlatform || detectPlatform();
+}
+
+export function getChannel(): Channel {
+	const envChannel = import.meta.env.VITE_CHANNEL as Channel | undefined;
+	if (envChannel) return envChannel;
+
+	// Default to dev for development mode, stable otherwise
+	return import.meta.env.MODE === 'development' ? 'dev' : 'stable';
+}
+
+export function getPlatformLabel(): string {
+	const platform = getPlatform();
+	return PLATFORM_LABELS[platform] || platform;
+}
+
+export function getChannelLabel(): string {
+	const channel = getChannel();
+	return CHANNEL_LABELS[channel] || channel;
+}
+
+export function shouldShowVersion(): boolean {
+	const channel = getChannel();
+	return channel === 'stable' || channel === 'beta';
 }
