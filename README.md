@@ -71,23 +71,45 @@ usage, and API documenation.
 
 ### Production
 
-TODO:
+```yaml
+services:
+  profilarr:
+    image: ghcr.io/dictionarry-hub/profilarr:latest
+    container_name: profilarr
+    ports:
+      - "6868:6868"
+    volumes:
+      - ./config:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - PARSER_HOST=parser
+      - PARSER_PORT=5000
+    depends_on:
+      parser:
+        condition: service_healthy
 
-- Deno binaries (Linux, macOS, Windows)
-- Docker image build process
-- Publishing to Docker Hub and ghcr.io
-- Example `compose.yml`
+  # Optional - only needed for CF/QP testing
+  parser:
+    image: ghcr.io/dictionarry-hub/profilarr-parser:latest
+    container_name: profilarr-parser
+    expose:
+      - "5000"
+```
 
 > [!NOTE]
 > The parser service is only required for custom format and quality profile
-> testing. Linking, syncing, and all other features work without it.
+> testing. Linking, syncing, and all other features work without it. Remove the
+> `parser` service and related environment variables if you don't need it.
 
 ### Development
 
 **Prerequisites**
 
+- [Git](https://git-scm.com/) (for PCD operations)
 - [Deno](https://deno.com/) 2.x
-- [.NET SDK](https://dotnet.microsoft.com/) 8.0+
+- [.NET SDK](https://dotnet.microsoft.com/) 8.0+ (optional, for parser)
 
 ```bash
 git clone https://github.com/Dictionarry-Hub/profilarr.git
@@ -102,10 +124,13 @@ This runs the parser service and Vite dev server concurrently. See
 
 | Variable        | Default              | Description                       |
 | --------------- | -------------------- | --------------------------------- |
+| `PUID`          | `1000`               | User ID for file permissions      |
+| `PGID`          | `1000`               | Group ID for file permissions     |
+| `UMASK`         | `022`                | File creation mask                |
+| `TZ`            | `Etc/UTC`            | Timezone for scheduling           |
 | `PORT`          | `6868`               | Web UI port                       |
 | `HOST`          | `0.0.0.0`            | Bind address                      |
-| `APP_BASE_PATH` | Executable directory | Base path for data, logs, backups |
-| `TZ`            | System timezone      | Timezone for scheduling           |
+| `APP_BASE_PATH` | `/config`            | Base path for data, logs, backups |
 | `PARSER_HOST`   | `localhost`          | Parser service host               |
 | `PARSER_PORT`   | `5000`               | Parser service port               |
 
