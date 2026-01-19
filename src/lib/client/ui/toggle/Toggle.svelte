@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { Check, X } from 'lucide-svelte';
 
 	export let checked: boolean = false;
 	export let color: 'accent' | 'amber' | 'green' | 'red' = 'accent';
@@ -8,14 +9,14 @@
 
 	const dispatch = createEventDispatcher<{ change: boolean }>();
 
-	const colors = {
-		accent: 'bg-accent-500',
-		amber: 'bg-amber-500',
-		green: 'bg-green-500',
-		red: 'bg-red-500'
+	const activeColors = {
+		accent: 'bg-accent-500 text-white',
+		amber: 'bg-amber-500 text-white',
+		green: 'bg-green-500 text-white',
+		red: 'bg-red-500 text-white'
 	};
 
-	$: colorClass = colors[color];
+	$: activeClass = activeColors[color];
 
 	function handleClick() {
 		if (disabled) return;
@@ -31,12 +32,23 @@
 	aria-label={label}
 	{disabled}
 	on:click={handleClick}
-	class="relative h-5 w-12 flex-shrink-0 cursor-pointer rounded-full p-[3px] transition-colors duration-300 ease-out
-		{checked ? colorClass : 'bg-neutral-300 dark:bg-neutral-600'}
-		{disabled ? 'cursor-not-allowed opacity-50' : ''}"
+	class="flex h-6 overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700 transition-all duration-200
+		{disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}"
 >
 	<span
-		class="block h-[14px] w-6 rounded-full bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-			{checked ? 'translate-x-[18px]' : 'translate-x-0'}"
-	></span>
+		class="flex w-7 items-center justify-center rounded-l transition-all duration-200
+			{!checked
+				? 'bg-neutral-500 text-white dark:bg-neutral-400 dark:text-neutral-900'
+				: 'text-neutral-400 dark:text-neutral-500'}"
+	>
+		<X size={14} strokeWidth={2.5} />
+	</span>
+	<span
+		class="flex w-7 items-center justify-center rounded-r transition-all duration-200
+			{checked
+				? activeClass
+				: 'text-neutral-400 dark:text-neutral-500'}"
+	>
+		<Check size={14} strokeWidth={2.5} />
+	</span>
 </button>
