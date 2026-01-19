@@ -1,6 +1,6 @@
 services:
   profilarr:
-    image: santiagosayshey/profilarr:latest
+    image: ghcr.io/dictionarry-hub/profilarr:latest
     container_name: profilarr
     restart: unless-stopped
     ports:
@@ -22,7 +22,7 @@ services:
 
   # Optional - only needed for CF/QP testing features
   parser:
-    image: santiagosayshey/profilarr-parser:latest
+    image: ghcr.io/dictionarry-hub/profilarr-parser:latest
     container_name: profilarr-parser
     restart: unless-stopped
     expose:

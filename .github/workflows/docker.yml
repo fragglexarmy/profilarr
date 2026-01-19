@@ -1,0 +1,81 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - v2
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/dictionarry-hub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    strategy:
+      matrix:
+        include:
+          - image: profilarr
+            dockerfile: Dockerfile
+          - image: profilarr-parser
+            dockerfile: Dockerfile.parser
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_BASE }}/${{ matrix.image }}
+          tags: |
+            # Branch push -> develop
+            type=raw,value=develop,enable=${{ github.ref == 'refs/heads/v2' }}
+            # Beta tag -> beta + version
+            type=raw,value=beta,enable=${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-beta') }}
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-beta') }}
+            # Stable tag -> latest + version
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-beta') }}
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-beta') }}
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_BASE }}/${{ matrix.image }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_BASE }}/${{ matrix.image }}:buildcache,mode=max
+
+      - name: Generate attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.IMAGE_BASE }}/${{ matrix.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
