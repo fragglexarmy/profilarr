@@ -1,5 +1,5 @@
 import { config } from '$config';
-import { printBanner, getServerInfo } from '$logger/startup.ts';
+import { printBanner, getServerInfo, logContainerConfig } from '$logger/startup.ts';
 import { logSettings } from '$logger/settings.ts';
 import { logger } from '$logger/logger.ts';
 import { db } from '$db/db.ts';
@@ -19,6 +19,9 @@ await runMigrations();
 
 // Load log settings from database (must be after migrations)
 logSettings.load();
+
+// Log container config (if running in Docker)
+await logContainerConfig();
 
 // Initialize PCD caches (must be after migrations and log settings)
 await pcdManager.initialize();

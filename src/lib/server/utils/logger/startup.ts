@@ -4,6 +4,7 @@
 
 import { config } from '$config';
 import { appInfoQueries } from '$db/queries/appInfo.ts';
+import { logger } from './logger.ts';
 
 const BANNER = String.raw`
                      _____.__.__
@@ -13,6 +14,42 @@ _____________  _____/ ____\__|  | _____ ______________
 |   __/|__|   \____/|__|  |__|____(____  /__|   |__|
 |__|                                   \/
 `;
+
+/**
+ * Check if running inside a Docker container
+ */
+function isDocker(): boolean {
+	try {
+		// Check for .dockerenv file (most reliable)
+		Deno.statSync('/.dockerenv');
+		return true;
+	} catch {
+		// Check for docker in cgroup (fallback)
+		try {
+			const cgroup = Deno.readTextFileSync('/proc/1/cgroup');
+			return cgroup.includes('docker');
+		} catch {
+			return false;
+		}
+	}
+}
+
+/**
+ * Log container configuration (only when running in Docker)
+ */
+export async function logContainerConfig(): Promise<void> {
+	if (!isDocker()) return;
+
+	await logger.info('Container initialized', {
+		source: 'Docker',
+		meta: {
+			puid: Deno.env.get('PUID') || '1000',
+			pgid: Deno.env.get('PGID') || '1000',
+			umask: Deno.env.get('UMASK') || '022',
+			tz: Deno.env.get('TZ') || 'UTC'
+		}
+	});
+}
 
 export function printBanner(): void {
 	const version = appInfoQueries.getVersion();
