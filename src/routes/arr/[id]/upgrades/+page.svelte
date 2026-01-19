@@ -34,6 +34,9 @@
 	// Track if config exists
 	$: isNewConfig = !data.config;
 
+	// Dev mode check
+	const isDev = import.meta.env.DEV;
+
 	let showInfoModal = false;
 	let saving = false;
 	let running = false;
@@ -103,6 +106,19 @@
 				disabled={running || saving || clearing || $isDirty}
 				on:click={() => {
 					const runForm = document.getElementById('run-form');
+					if (runForm instanceof HTMLFormElement) {
+						runForm.requestSubmit();
+					}
+				}}
+			/>
+		{:else if !isNewConfig && isDev}
+			<Button
+				text={running ? 'Running...' : 'Dev Run'}
+				icon={Play}
+				iconColor="text-red-600 dark:text-red-400"
+				disabled={running || saving || $isDirty}
+				on:click={() => {
+					const runForm = document.getElementById('dev-run-form');
 					if (runForm instanceof HTMLFormElement) {
 						runForm.requestSubmit();
 					}
@@ -216,6 +232,22 @@
 			};
 		}}
 	></form>
+{:else if !isNewConfig && isDev}
+	<form
+		id="dev-run-form"
+		method="POST"
+		action="?/run"
+		class="hidden"
+		use:enhance={() => {
+			running = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				running = false;
+			};
+		}}
+	>
+		<input type="hidden" name="devOverride" value="true" />
+	</form>
 {/if}
 
 <UpgradesInfoModal bind:open={showInfoModal} />
