@@ -225,6 +225,72 @@ export class PCDCache {
 
 		return this.db!.prepare(sql).get(...params) as T | undefined;
 	}
+
+	/**
+	 * Validate SQL statements by doing a dry-run in a transaction
+	 * Returns null if valid, or an error message if invalid
+	 *
+	 * This is a safety check before writing operations to files.
+	 * It catches FK violations, constraint errors, etc.
+	 */
+	validateSql(sqlStatements: string[]): { valid: boolean; error?: string } {
+		if (!this.isBuilt()) {
+			return { valid: false, error: 'Cache not built' };
+		}
+
+		try {
+			// Start a savepoint (nested transaction)
+			this.db!.exec('SAVEPOINT validation_check');
+
+			try {
+				// Try to execute each statement
+				for (const sql of sqlStatements) {
+					this.db!.exec(sql);
+				}
+
+				// All statements executed successfully
+				return { valid: true };
+			} finally {
+				// Always rollback - this is just a validation check
+				this.db!.exec('ROLLBACK TO SAVEPOINT validation_check');
+				this.db!.exec('RELEASE SAVEPOINT validation_check');
+			}
+		} catch (error) {
+			// Parse the error to provide a helpful message
+			const errorStr = String(error);
+
+			// Common SQLite constraint errors
+			if (errorStr.includes('FOREIGN KEY constraint failed')) {
+				return {
+					valid: false,
+					error: `Foreign key constraint failed - referenced entity does not exist. ${errorStr}`
+				};
+			}
+			if (errorStr.includes('UNIQUE constraint failed')) {
+				return {
+					valid: false,
+					error: `Unique constraint failed - duplicate entry. ${errorStr}`
+				};
+			}
+			if (errorStr.includes('NOT NULL constraint failed')) {
+				return {
+					valid: false,
+					error: `Required field is missing. ${errorStr}`
+				};
+			}
+			if (errorStr.includes('CHECK constraint failed')) {
+				return {
+					valid: false,
+					error: `Value validation failed. ${errorStr}`
+				};
+			}
+
+			return {
+				valid: false,
+				error: `Database validation failed: ${errorStr}`
+			};
+		}
+	}
 }
 
 // ============================================================================

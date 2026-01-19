@@ -6,7 +6,7 @@ import type { CompiledQuery } from 'kysely';
 import { getBaseOpsPath, getUserOpsPath } from './ops.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
-import { compile } from './cache.ts';
+import { compile, getCache } from './cache.ts';
 import { isFileUncommitted } from '$utils/git/status.ts';
 
 export type OperationLayer = 'base' | 'user';
@@ -280,6 +280,45 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 			return { success: true };
 		}
 
+		// Convert queries to SQL first (needed for validation)
+		const sqlStatements = queries.map(compiledQueryToSql);
+
+		// ========== VALIDATION - Final line of defense ==========
+		// Validate the SQL against the current cache before writing
+		// This catches FK violations, constraint errors, etc.
+		const cache = getCache(databaseId);
+		if (cache) {
+			const validation = cache.validateSql(sqlStatements);
+			if (!validation.valid) {
+				await logger.error('Operation validation failed - refusing to write', {
+					source: 'PCDWriter',
+					meta: {
+						databaseId,
+						layer,
+						description,
+						error: validation.error,
+						queries: sqlStatements
+					}
+				});
+				return {
+					success: false,
+					error: `Validation failed: ${validation.error}`
+				};
+			}
+
+			await logger.debug('Operation validated successfully', {
+				source: 'PCDWriter',
+				meta: { databaseId, description }
+			});
+		} else {
+			// No cache available - log warning but allow the write
+			// This might happen during initial setup
+			await logger.warn('No cache available for validation - proceeding without validation', {
+				source: 'PCDWriter',
+				meta: { databaseId, description }
+			});
+		}
+
 		// Get next operation number
 		const opNumber = await getNextOperationNumber(targetDir);
 
@@ -288,8 +327,7 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		const filename = `${opNumber}.${slug}.sql`;
 		const filepath = `${targetDir}/${filename}`;
 
-		// Convert queries to SQL
-		const sqlStatements = queries.map(compiledQueryToSql);
+		// Build SQL content
 		const sqlContent = sqlStatements.join(';\n\n') + ';\n';
 
 		// Build final content with optional metadata header
