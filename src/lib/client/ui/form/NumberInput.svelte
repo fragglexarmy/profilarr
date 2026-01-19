@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import { ChevronUp, ChevronDown } from 'lucide-svelte';
+
+	const dispatch = createEventDispatcher<{ change: number }>();
 
 	// Props
 	export let name: string;
@@ -20,6 +23,7 @@
 	function updateValue(newValue: number) {
 		value = newValue;
 		onchange?.(newValue);
+		dispatch('change', newValue);
 	}
 
 	// Increment/decrement handlers
@@ -72,7 +76,7 @@
 		{step}
 		{required}
 		{disabled}
-		class="block w-full [appearance:textfield] rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {fontClass}"
+		class="block w-full [appearance:textfield] rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {fontClass}"
 	/>
 
 	<!-- Custom increment/decrement buttons -->
