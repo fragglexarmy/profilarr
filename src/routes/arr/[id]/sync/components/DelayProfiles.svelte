@@ -125,23 +125,24 @@
 						{#if database.delayProfiles.length === 0}
 							<p class="text-sm text-neutral-500 dark:text-neutral-400">No delay profiles</p>
 						{:else}
-							<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+							<div class="grid grid-cols-5 gap-2">
 								{#each database.delayProfiles as profile}
-									<div class="flex items-center gap-2">
+									<button
+										type="button"
+										class="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
+										on:click={() => {
+											state[database.id][profile.id] = !state[database.id][profile.id];
+										}}
+									>
+										<code class="font-mono text-sm text-neutral-900 dark:text-neutral-50">
+											{profile.name}
+										</code>
 										<IconCheckbox
 											checked={state[database.id]?.[profile.id] ?? false}
 											icon={Check}
 											shape="rounded"
-											on:click={() => {
-												state[database.id][profile.id] = !state[database.id][profile.id];
-											}}
 										/>
-										<code
-											class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-sm text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
-										>
-											{profile.name}
-										</code>
-									</div>
+									</button>
 								{/each}
 							</div>
 						{/if}
