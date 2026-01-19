@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { logger } from '$logger/logger.ts';
 import { regex101CacheQueries } from '$db/queries/regex101Cache.ts';
+import { config } from '$config';
 
 export interface Regex101UnitTest {
 	description: string;
@@ -21,7 +22,7 @@ export interface Regex101Response {
 }
 
 /**
- * Run regex tests using PowerShell (.NET regex engine)
+ * Run regex tests using the parser service (.NET regex engine)
  */
 async function runRegexTests(
 	pattern: string,
@@ -30,67 +31,49 @@ async function runRegexTests(
 	if (tests.length === 0) return tests;
 
 	try {
-		const scriptPath = `${Deno.cwd()}/src/lib/server/regex/test.ps1`;
-		const testsJson = JSON.stringify(
-			tests.map((t) => ({
-				testString: t.testString,
-				criteria: t.criteria
-			}))
+		// Call parser service for each test
+		const results = await Promise.all(
+			tests.map(async (test) => {
+				try {
+					const response = await fetch(`${config.parserUrl}/match`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							text: test.testString,
+							patterns: [pattern]
+						})
+					});
+
+					if (!response.ok) {
+						await logger.warn('Parser match request failed', {
+							source: 'Regex101API',
+							meta: { status: response.status, testString: test.testString }
+						});
+						return { ...test };
+					}
+
+					const data = await response.json();
+					const matched = data.results?.[pattern] ?? false;
+					const shouldMatch = test.criteria === 'DOES_MATCH';
+
+					return {
+						...test,
+						actual: matched,
+						passed: matched === shouldMatch
+					};
+				} catch {
+					return { ...test };
+				}
+			})
 		);
 
-		const command = new Deno.Command('pwsh', {
-			args: [
-				'-NoProfile',
-				'-NonInteractive',
-				'-File',
-				scriptPath,
-				'-Pattern',
-				pattern,
-				'-TestsJson',
-				testsJson
-			],
-			stdout: 'piped',
-			stderr: 'piped'
-		});
-
-		const { code, stdout, stderr } = await command.output();
-
-		if (code !== 0) {
-			const errorText = new TextDecoder().decode(stderr);
-			await logger.error('PowerShell regex test failed', {
-				source: 'Regex101API',
-				meta: { error: errorText, pattern }
-			});
-			return tests; // Return tests without pass/fail info
-		}
-
-		const outputText = new TextDecoder().decode(stdout).trim();
-		await logger.debug('PowerShell output', {
-			source: 'Regex101API',
-			meta: { output: outputText }
-		});
-		const result = JSON.parse(outputText);
-
-		if (!result.success) {
-			await logger.error('PowerShell regex test error', {
-				source: 'Regex101API',
-				meta: { error: result.error }
-			});
-			return tests;
-		}
-
-		// Merge results back into tests
-		return tests.map((test, idx) => ({
-			...test,
-			actual: result.results[idx]?.actual ?? undefined,
-			passed: result.results[idx]?.passed ?? undefined
-		}));
+		return results;
 	} catch (err) {
 		await logger.error('Failed to run regex tests', {
 			source: 'Regex101API',
 			meta: { error: String(err) }
 		});
-		return tests; // Return tests without pass/fail info on error
+		return tests;
 	}
 }
 
@@ -153,7 +136,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 			})
 		);
 
-		// Run tests through PowerShell to get pass/fail results
+		// Run tests through parser service to get pass/fail results
 		const testedUnitTests = await runRegexTests(data.regex, unitTests);
 
 		const result: Regex101Response = {
