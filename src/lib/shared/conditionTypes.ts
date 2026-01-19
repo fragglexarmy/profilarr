@@ -30,7 +30,7 @@ export const SOURCE_VALUES = [
 	{ value: 'unknown', label: 'Unknown', arrType: 'all' as ArrType },
 	{ value: 'television', label: 'Television', arrType: 'all' as ArrType },
 	{ value: 'television_raw', label: 'Television Raw', arrType: 'sonarr' as ArrType },
-	{ value: 'webdl', label: 'WEB-DL', arrType: 'all' as ArrType },
+	{ value: 'web_dl', label: 'WEB-DL', arrType: 'all' as ArrType },
 	{ value: 'webrip', label: 'WEBRip', arrType: 'all' as ArrType },
 	{ value: 'dvd', label: 'DVD', arrType: 'all' as ArrType },
 	{ value: 'bluray', label: 'Bluray', arrType: 'all' as ArrType },

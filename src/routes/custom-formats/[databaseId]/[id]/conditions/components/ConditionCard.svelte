@@ -52,26 +52,24 @@
 		return 'all'; // Default to 'all' if neither is checked
 	}
 
-	// Filter condition types based on arrType
-	$: filteredConditionTypes = CONDITION_TYPES.filter(
-		(t) => t.arrType === 'all' || t.arrType === arrType
-	);
+	// All condition types (no arrType filtering)
+	$: filteredConditionTypes = [...CONDITION_TYPES];
 
-	// Get value options based on current type
+	// Get value options based on current type (no arrType filtering - show all options)
 	$: valueOptions = getValueOptions(condition.type);
 
 	function getValueOptions(type: string) {
 		switch (type) {
 			case 'source':
-				return SOURCE_VALUES.filter((v) => v.arrType === 'all' || v.arrType === arrType);
+				return [...SOURCE_VALUES];
 			case 'resolution':
-				return RESOLUTION_VALUES.filter((v) => v.arrType === 'all' || v.arrType === arrType);
+				return [...RESOLUTION_VALUES];
 			case 'quality_modifier':
-				return QUALITY_MODIFIER_VALUES.filter((v) => v.arrType === 'all' || v.arrType === arrType);
+				return [...QUALITY_MODIFIER_VALUES];
 			case 'release_type':
-				return RELEASE_TYPE_VALUES.filter((v) => v.arrType === 'all' || v.arrType === arrType);
+				return [...RELEASE_TYPE_VALUES];
 			case 'indexer_flag':
-				return INDEXER_FLAG_VALUES.filter((v) => v.arrType === 'all' || v.arrType === arrType);
+				return [...INDEXER_FLAG_VALUES];
 			default:
 				return [];
 		}
