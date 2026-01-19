@@ -3,6 +3,8 @@
  * Defines all available filter fields for upgrade filtering
  */
 
+import { uuid } from './uuid.ts';
+
 export interface FilterOperator {
 	id: string;
 	label: string;
@@ -294,7 +296,7 @@ export function createEmptyGroup(): FilterGroup {
  */
 export function createEmptyFilterConfig(name: string = 'New Filter'): FilterConfig {
 	return {
-		id: crypto.randomUUID(),
+		id: uuid(),
 		name,
 		enabled: true,
 		group: createEmptyGroup(),

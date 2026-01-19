@@ -11,6 +11,7 @@
 		Trash2
 	} from 'lucide-svelte';
 	import { createEmptyFilterConfig, type FilterConfig } from '$lib/shared/filters';
+	import { uuid } from '$shared/uuid';
 	import { selectors } from '$lib/shared/selectors';
 	import { createSearchStore } from '$lib/client/stores/search';
 	import FilterGroupComponent from './FilterGroup.svelte';
@@ -123,7 +124,7 @@
 		if (filter) {
 			const duplicate: FilterConfig = {
 				...structuredClone(filter),
-				id: crypto.randomUUID(),
+				id: uuid(),
 				name: `${filter.name} (Copy)`
 			};
 			filters = [...filters, duplicate];

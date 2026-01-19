@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { uuid } from '$shared/uuid';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 
@@ -15,7 +16,7 @@ function createAlertStore() {
 	return {
 		subscribe,
 		add: (type: AlertType, message: string, duration = 5000) => {
-			const id = crypto.randomUUID();
+			const id = uuid();
 			const alert: Alert = { id, type, message, duration };
 
 			update((alerts) => [...alerts, alert]);
