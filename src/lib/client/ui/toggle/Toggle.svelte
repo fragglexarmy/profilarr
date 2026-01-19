@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
+
 	export let checked: boolean = false;
 	export let color: 'accent' | 'amber' | 'green' | 'red' = 'accent';
 	export let disabled: boolean = false;
 	export let label: string = 'Toggle';
+
+	const dispatch = createEventDispatcher<{ change: boolean }>();
 
 	const colors = {
 		accent: 'bg-accent-500',
@@ -12,6 +16,12 @@
 	};
 
 	$: colorClass = colors[color];
+
+	function handleClick() {
+		if (disabled) return;
+		checked = !checked;
+		dispatch('change', checked);
+	}
 </script>
 
 <button
@@ -20,7 +30,7 @@
 	aria-checked={checked}
 	aria-label={label}
 	{disabled}
-	on:click={() => !disabled && (checked = !checked)}
+	on:click={handleClick}
 	class="relative h-5 w-12 flex-shrink-0 cursor-pointer rounded-full p-[3px] transition-colors duration-300 ease-out
 		{checked ? colorClass : 'bg-neutral-300 dark:bg-neutral-600'}
 		{disabled ? 'cursor-not-allowed opacity-50' : ''}"

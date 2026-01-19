@@ -4,7 +4,7 @@
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
-	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
+	import { isDirty, initEdit, update, current, clear } from '$lib/client/stores/dirty';
 	import { Info, Save, Play, RotateCcw, Settings, SlidersHorizontal, History } from 'lucide-svelte';
 	import CoreSettings from './components/CoreSettings.svelte';
 	import FilterSettings from './components/FilterSettings.svelte';
@@ -17,12 +17,19 @@
 	export let data: PageData;
 	export let form: ActionData;
 
-	// Initialize from existing config or defaults
-	let enabled = data.config?.enabled ?? false;
-	let dryRun = data.config?.dryRun ?? true;
-	let schedule = String(data.config?.schedule ?? 360);
-	let filterMode: FilterMode = data.config?.filterMode ?? 'round_robin';
-	let filters: FilterConfig[] = data.config?.filters ?? [];
+	// Initialize dirty tracking on mount (same pattern as sync page)
+	onMount(() => {
+		const initialFormData = {
+			enabled: data.config?.enabled ?? false,
+			dryRun: data.config?.dryRun ?? true,
+			schedule: String(data.config?.schedule ?? 360),
+			filterMode: (data.config?.filterMode ?? 'round_robin') as FilterMode,
+			filters: JSON.stringify(data.config?.filters ?? [])
+		};
+		// Always use initEdit - isDirty should be false until user makes changes
+		initEdit(initialFormData);
+		return () => clear();
+	});
 
 	// Track if config exists
 	$: isNewConfig = !data.config;
@@ -32,23 +39,12 @@
 	let running = false;
 	let clearing = false;
 
-	// Initialize dirty tracking
-	onMount(() => {
-		const formData = { enabled, dryRun, schedule, filterMode, filters: JSON.stringify(filters) };
-		if (data.config) {
-			initEdit(formData);
-		} else {
-			initCreate(formData);
-		}
-		return () => clear();
-	});
-
-	// Update dirty store when fields change
-	$: update('enabled', enabled);
-	$: update('dryRun', dryRun);
-	$: update('schedule', schedule);
-	$: update('filterMode', filterMode);
-	$: update('filters', JSON.stringify(filters));
+	// Read current values from dirty store (same pattern as working pages)
+	$: enabled = ($current.enabled ?? false) as boolean;
+	$: dryRun = ($current.dryRun ?? true) as boolean;
+	$: schedule = ($current.schedule ?? '360') as string;
+	$: filterMode = ($current.filterMode ?? 'round_robin') as FilterMode;
+	$: filters = JSON.parse(($current.filters ?? '[]') as string) as FilterConfig[];
 
 	// Handle form response - use a processed flag to avoid re-running on field changes
 	let lastFormId: unknown = null;
@@ -137,11 +133,15 @@
 			Settings
 		</h2>
 		<CoreSettings
-			bind:enabled
-			bind:dryRun
-			bind:schedule
-			bind:filterMode
+			{enabled}
+			{dryRun}
+			{schedule}
+			{filterMode}
 			lastRunAt={data.config?.lastRunAt ?? null}
+			onEnabledChange={(v) => update('enabled', v)}
+			onDryRunChange={(v) => update('dryRun', v)}
+			onScheduleChange={(v) => update('schedule', v)}
+			onFilterModeChange={(v) => update('filterMode', v)}
 		/>
 	</section>
 
@@ -152,7 +152,10 @@
 			<SlidersHorizontal size={18} class="text-neutral-500 dark:text-neutral-400" />
 			Filters
 		</h2>
-		<FilterSettings bind:filters />
+		<FilterSettings
+			{filters}
+			onFiltersChange={(v) => update('filters', JSON.stringify(v))}
+		/>
 	</section>
 </div>
 

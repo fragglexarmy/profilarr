@@ -23,7 +23,6 @@
 	}>();
 
 	export let condition: ConditionData;
-	export let arrType: ArrType = 'all';
 
 	// Available patterns and languages from database (passed in)
 	export let availablePatterns: { id: number; name: string; pattern: string }[] = [];

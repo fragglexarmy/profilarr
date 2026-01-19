@@ -15,6 +15,11 @@
 	export let filterMode: FilterMode = 'round_robin';
 	export let lastRunAt: string | null = null;
 
+	export let onEnabledChange: ((value: boolean) => void) | undefined = undefined;
+	export let onDryRunChange: ((value: boolean) => void) | undefined = undefined;
+	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
+	export let onFilterModeChange: ((value: FilterMode) => void) | undefined = undefined;
+
 	let scheduleOpen = false;
 	let modeOpen = false;
 
@@ -101,7 +106,10 @@
 		<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
 			<!-- Enabled Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle bind:checked={enabled} />
+				<Toggle
+					checked={enabled}
+					on:change={(e) => onEnabledChange?.(e.detail)}
+				/>
 				<div>
 					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Enabled</span>
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Run on schedule</p>
@@ -110,7 +118,11 @@
 
 			<!-- Dry Run Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle bind:checked={dryRun} color="amber" />
+				<Toggle
+					checked={dryRun}
+					color="amber"
+					on:change={(e) => onDryRunChange?.(e.detail)}
+				/>
 				<div>
 					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dry Run</span>
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Preview only</p>
@@ -137,7 +149,7 @@
 									label={option.label}
 									selected={schedule === option.value}
 									on:click={() => {
-										schedule = option.value;
+										onScheduleChange?.(option.value);
 										scheduleOpen = false;
 									}}
 								/>
@@ -164,7 +176,7 @@
 									label={mode.label}
 									selected={filterMode === mode.id}
 									on:click={() => {
-										filterMode = mode.id;
+										onFilterModeChange?.(mode.id);
 										modeOpen = false;
 									}}
 								/>

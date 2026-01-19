@@ -3,7 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
-	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
+	import { isDirty, initEdit, update, current, clear } from '$lib/client/stores/dirty';
 	import { Info, Save, Play, Settings, History } from 'lucide-svelte';
 	import RenameSettings from './components/RenameSettings.svelte';
 	import RenameRunHistory from './components/RenameRunHistory.svelte';
@@ -15,41 +15,34 @@
 	export let data: PageData;
 	export let form: ActionData;
 
-	// Initialize from existing settings or defaults
-	let enabled = data.settings?.enabled ?? false;
-	let dryRun = data.settings?.dryRun ?? true;
-	let renameFolders = data.settings?.renameFolders ?? false;
-	let ignoreTag = data.settings?.ignoreTag ?? '';
-	let schedule = String(data.settings?.schedule ?? 1440);
-	let summaryNotifications = data.settings?.summaryNotifications ?? true;
+	// Initialize dirty tracking on mount (same pattern as sync page)
+	onMount(() => {
+		const initialFormData = {
+			enabled: data.settings?.enabled ?? false,
+			dryRun: data.settings?.dryRun ?? true,
+			renameFolders: data.settings?.renameFolders ?? false,
+			ignoreTag: data.settings?.ignoreTag ?? '',
+			schedule: String(data.settings?.schedule ?? 1440),
+			summaryNotifications: data.settings?.summaryNotifications ?? true
+		};
+		// Always use initEdit - isDirty should be false until user makes changes
+		initEdit(initialFormData);
+		return () => clear();
+	});
 
-	// Track if settings exist (determines save vs edit)
 	$: isNewConfig = !data.settings;
 
 	let showInfoModal = false;
 	let saving = false;
 	let running = false;
 
-	// Initialize dirty tracking
-	onMount(() => {
-		const formData = { enabled, dryRun, renameFolders, ignoreTag, schedule, summaryNotifications };
-		if (isNewConfig) {
-			initCreate(formData);
-		} else {
-			initEdit(formData);
-		}
-		return () => clear();
-	});
+	$: enabled = ($current.enabled ?? false) as boolean;
+	$: dryRun = ($current.dryRun ?? true) as boolean;
+	$: renameFolders = ($current.renameFolders ?? false) as boolean;
+	$: ignoreTag = ($current.ignoreTag ?? '') as string;
+	$: schedule = ($current.schedule ?? '1440') as string;
+	$: summaryNotifications = ($current.summaryNotifications ?? true) as boolean;
 
-	// Update dirty store when fields change
-	$: update('enabled', enabled);
-	$: update('dryRun', dryRun);
-	$: update('renameFolders', renameFolders);
-	$: update('ignoreTag', ignoreTag);
-	$: update('schedule', schedule);
-	$: update('summaryNotifications', summaryNotifications);
-
-	// Handle form response - use a processed flag to avoid re-running on field changes
 	let lastFormId: unknown = null;
 	$: if (form && form !== lastFormId) {
 		lastFormId = form;
@@ -124,13 +117,19 @@
 			Settings
 		</h2>
 		<RenameSettings
-			bind:enabled
-			bind:dryRun
-			bind:renameFolders
-			bind:ignoreTag
-			bind:schedule
-			bind:summaryNotifications
+			{enabled}
+			{dryRun}
+			{renameFolders}
+			{ignoreTag}
+			{schedule}
+			{summaryNotifications}
 			lastRunAt={data.settings?.lastRunAt ?? null}
+			onEnabledChange={(v) => update('enabled', v)}
+			onDryRunChange={(v) => update('dryRun', v)}
+			onRenameFoldersChange={(v) => update('renameFolders', v)}
+			onIgnoreTagChange={(v) => update('ignoreTag', v)}
+			onScheduleChange={(v) => update('schedule', v)}
+			onSummaryNotificationsChange={(v) => update('summaryNotifications', v)}
 		/>
 	</section>
 </div>

@@ -17,6 +17,13 @@
 	export let summaryNotifications: boolean = true;
 	export let lastRunAt: string | null = null;
 
+	export let onEnabledChange: ((value: boolean) => void) | undefined = undefined;
+	export let onDryRunChange: ((value: boolean) => void) | undefined = undefined;
+	export let onRenameFoldersChange: ((value: boolean) => void) | undefined = undefined;
+	export let onIgnoreTagChange: ((value: string) => void) | undefined = undefined;
+	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
+	export let onSummaryNotificationsChange: ((value: boolean) => void) | undefined = undefined;
+
 	let scheduleOpen = false;
 
 	const scheduleOptions = [
@@ -102,7 +109,7 @@
 		<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
 			<!-- Enabled Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle bind:checked={enabled} />
+				<Toggle checked={enabled} on:change={(e) => onEnabledChange?.(e.detail)} />
 				<div>
 					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Enabled</span>
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Run on schedule</p>
@@ -111,7 +118,7 @@
 
 			<!-- Dry Run Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle bind:checked={dryRun} color="amber" />
+				<Toggle checked={dryRun} color="amber" on:change={(e) => onDryRunChange?.(e.detail)} />
 				<div>
 					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dry Run</span>
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Preview only</p>
@@ -120,7 +127,7 @@
 
 			<!-- Rename Folders Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle bind:checked={renameFolders} />
+				<Toggle checked={renameFolders} on:change={(e) => onRenameFoldersChange?.(e.detail)} />
 				<div>
 					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Folders</span>
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Also rename folders</p>
@@ -129,7 +136,7 @@
 
 			<!-- Summary Notifications Toggle -->
 			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle bind:checked={summaryNotifications} />
+				<Toggle checked={summaryNotifications} on:change={(e) => onSummaryNotificationsChange?.(e.detail)} />
 				<div>
 					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Summary</span>
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Compact notifications</p>
@@ -156,7 +163,7 @@
 									label={option.label}
 									selected={schedule === option.value}
 									on:click={() => {
-										schedule = option.value;
+										onScheduleChange?.(option.value);
 										scheduleOpen = false;
 									}}
 								/>
@@ -169,7 +176,7 @@
 			<!-- Ignore Tag -->
 			<div class="flex items-center gap-2">
 				<span class="text-sm text-neutral-500 dark:text-neutral-400">Ignore Tag:</span>
-				<Input bind:value={ignoreTag} placeholder="no-rename" />
+				<Input value={ignoreTag} placeholder="no-rename" on:input={(e) => onIgnoreTagChange?.(e.detail)} />
 			</div>
 		</div>
 

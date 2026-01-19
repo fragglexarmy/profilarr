@@ -29,6 +29,11 @@
 	const debouncedQuery = searchStore.debouncedQuery;
 
 	export let filters: FilterConfig[] = [];
+	export let onFiltersChange: ((filters: FilterConfig[]) => void) | undefined = undefined;
+
+	function notifyChange() {
+		onFiltersChange?.(filters);
+	}
 
 	let showInfoModal = false;
 
@@ -62,6 +67,7 @@
 			expandedIds.delete(filterToDelete.id);
 			expandedIds = expandedIds;
 			alertStore.add('success', `Deleted "${filterToDelete.name}"`);
+			notifyChange();
 		}
 		deleteModalOpen = false;
 		filterToDelete = null;
@@ -77,6 +83,7 @@
 		filters = [...filters, newFilter];
 		expandedIds.add(newFilter.id);
 		expandedIds = expandedIds;
+		notifyChange();
 	}
 
 	function startEditing(filter: FilterConfig) {
@@ -90,6 +97,7 @@
 			if (filter) {
 				filter.name = editingName;
 				filters = filters;
+				notifyChange();
 			}
 		}
 		editingId = null;
@@ -98,6 +106,7 @@
 
 	function handleChange() {
 		filters = filters;
+		notifyChange();
 	}
 
 	function toggleEnabled(id: string) {
@@ -105,6 +114,7 @@
 		if (filter) {
 			filter.enabled = !filter.enabled;
 			filters = filters;
+			notifyChange();
 		}
 	}
 
@@ -119,6 +129,7 @@
 			filters = [...filters, duplicate];
 			expandedIds.add(duplicate.id);
 			expandedIds = expandedIds;
+			notifyChange();
 		}
 	}
 
@@ -161,6 +172,7 @@
 			filter.enabled = imported.enabled ?? filter.enabled;
 
 			filters = filters;
+			notifyChange();
 			alertStore.add('success', `Pasted settings into "${filter.name}"`);
 		} catch {
 			alertStore.add('error', 'Failed to paste from clipboard');

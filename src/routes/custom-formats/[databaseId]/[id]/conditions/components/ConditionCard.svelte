@@ -22,7 +22,6 @@
 	}>();
 
 	export let condition: ConditionData;
-	export let arrType: ArrType = 'all';
 	export let invalid = false;
 	export let nameConflict = false;
 
