@@ -44,7 +44,7 @@ async function runParser() {
 	return process.status;
 }
 
-async function runVite() {
+async function runServer() {
 	const cmd = new Deno.Command('deno', {
 		args: ['run', '-A', 'npm:vite', 'dev'],
 		env: {
@@ -74,4 +74,4 @@ console.log(`${colors.parser}[parser]${colors.reset} Starting .NET parser servic
 console.log(`${colors.server}[server]${colors.reset} Starting Vite dev server...`);
 console.log('');
 
-await Promise.all([runParser(), runVite()]);
+await Promise.all([runParser(), runServer()]);
