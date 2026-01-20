@@ -85,13 +85,13 @@
 	const devTeam: DevTeamMember[] = [
 		{
 			name: 'santiagosayshey',
-			remark: 'No Gatekeeping Allowed',
+			remark: 'No gatekeeping allowed',
 			tags: ['Lead Profilarr Developer', 'Database Hater']
 		},
 		{
 			name: 'Seraphys',
 			remark: 'Your sync broke? But the conditions are in order now!',
-			tags: ['Dictionarry Database Lead', 'Sexy God']
+			tags: ['Lead Database Developer', 'Sexy God']
 		}
 	];
 </script>
