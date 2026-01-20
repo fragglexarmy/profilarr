@@ -343,6 +343,251 @@ class FilterEvaluationTest extends BaseTest {
 		});
 
 		// =====================
+		// Ordinal Operators (minimum_availability)
+		// =====================
+		// Hierarchy: tba(0) → announced(1) → inCinemas(2) → released(3)
+
+		this.test('ordinal: eq operator matches exact value', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'eq',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: eq operator rejects different value', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'eq',
+				value: 'released'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: neq operator matches different value', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'neq',
+				value: 'released'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: neq operator rejects same value', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'neq',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: gte (has reached) matches same stage', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gte',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: gte (has reached) matches later stage', () => {
+			const item = { minimum_availability: 'released' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gte',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: gte (has reached) rejects earlier stage', () => {
+			const item = { minimum_availability: 'announced' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gte',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: lte (hasn\'t passed) matches same stage', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'lte',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: lte (hasn\'t passed) matches earlier stage', () => {
+			const item = { minimum_availability: 'announced' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'lte',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: lte (hasn\'t passed) rejects later stage', () => {
+			const item = { minimum_availability: 'released' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'lte',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: gt (is past) matches later stage', () => {
+			const item = { minimum_availability: 'released' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gt',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: gt (is past) rejects same stage', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gt',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: gt (is past) rejects earlier stage', () => {
+			const item = { minimum_availability: 'announced' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gt',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: lt (is before) matches earlier stage', () => {
+			const item = { minimum_availability: 'announced' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'lt',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), true);
+		});
+
+		this.test('ordinal: lt (is before) rejects same stage', () => {
+			const item = { minimum_availability: 'inCinemas' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'lt',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: lt (is before) rejects later stage', () => {
+			const item = { minimum_availability: 'released' };
+			const rule: FilterRule = {
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'lt',
+				value: 'inCinemas'
+			};
+			assertEquals(evaluateRule(item, rule), false);
+		});
+
+		this.test('ordinal: full hierarchy test - tba is earliest', () => {
+			const item = { minimum_availability: 'tba' };
+			// tba should be before all others
+			assertEquals(
+				evaluateRule(item, {
+					type: 'rule',
+					field: 'minimum_availability',
+					operator: 'lt',
+					value: 'announced'
+				}),
+				true
+			);
+			assertEquals(
+				evaluateRule(item, {
+					type: 'rule',
+					field: 'minimum_availability',
+					operator: 'lt',
+					value: 'inCinemas'
+				}),
+				true
+			);
+			assertEquals(
+				evaluateRule(item, {
+					type: 'rule',
+					field: 'minimum_availability',
+					operator: 'lt',
+					value: 'released'
+				}),
+				true
+			);
+		});
+
+		this.test('ordinal: full hierarchy test - released is latest', () => {
+			const item = { minimum_availability: 'released' };
+			// released should be past all others
+			assertEquals(
+				evaluateRule(item, {
+					type: 'rule',
+					field: 'minimum_availability',
+					operator: 'gt',
+					value: 'tba'
+				}),
+				true
+			);
+			assertEquals(
+				evaluateRule(item, {
+					type: 'rule',
+					field: 'minimum_availability',
+					operator: 'gt',
+					value: 'announced'
+				}),
+				true
+			);
+			assertEquals(
+				evaluateRule(item, {
+					type: 'rule',
+					field: 'minimum_availability',
+					operator: 'gt',
+					value: 'inCinemas'
+				}),
+				true
+			);
+		});
+
+		// =====================
 		// Null/Undefined Handling
 		// =====================
 
