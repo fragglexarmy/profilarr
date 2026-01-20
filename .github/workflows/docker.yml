@@ -63,6 +63,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_BASE }}/${{ matrix.image }}
+          labels: |
+            org.opencontainers.image.licenses=AGPL-3.0
           tags: |
             # Branch push -> develop
             type=raw,value=develop,enable=${{ github.ref == 'refs/heads/v2' }}
