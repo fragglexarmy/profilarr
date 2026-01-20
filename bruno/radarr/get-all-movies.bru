@@ -1,0 +1,15 @@
+meta {
+  name: Get All Movies
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{radarrUrl}}/api/v3/movie
+  body: none
+  auth: none
+}
+
+headers {
+  X-Api-Key: {{radarrApiKey}}
+}
