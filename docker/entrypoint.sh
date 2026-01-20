@@ -17,10 +17,17 @@ UMASK=${UMASK:-022}
 # -----------------------------------------------------------------------------
 # Create group if it doesn't exist
 # -----------------------------------------------------------------------------
-if ! getent group profilarr > /dev/null 2>&1; then
+if getent group "${PGID}" > /dev/null 2>&1; then
+    # GID already exists - use that group name for the user
+    PROFILARR_GROUP=$(getent group "${PGID}" | cut -d: -f1)
+elif ! getent group profilarr > /dev/null 2>&1; then
+    # GID is free and profilarr group doesn't exist - create it
     groupadd -g "${PGID}" profilarr
-elif [ "$(getent group profilarr | cut -d: -f3)" != "${PGID}" ]; then
+    PROFILARR_GROUP=profilarr
+else
+    # profilarr group exists but with wrong GID - modify it
     groupmod -g "${PGID}" profilarr 2>/dev/null || true
+    PROFILARR_GROUP=profilarr
 fi
 
 # -----------------------------------------------------------------------------

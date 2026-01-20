@@ -1,6 +1,8 @@
 > a quick brain dump for ideas as they come up
 
-# Filter Cooldown
+# Adaptive Backoff
+
+_aka the-bear-is-sticky-with-honey_ 🐻🍯
 
 Eventually, a filter is going is to "run out" of items to search. Maybe its an
 uber specific one - all marvel releases perhaps. What are they at now? 30
@@ -31,8 +33,8 @@ want to wake it up?
   we care about removals? greater than only wakes for new items
 - edge case: count stays same but items changed (one removed, one added) -
   probably fine though, filters like minimum_availability already catch state
-  changes (e.g., movie goes from announced to released, now passes filter,
-  count increases)
+  changes (e.g., movie goes from announced to released, now passes filter, count
+  increases)
 - if same, still sleeping, return early
 - cheap check, catches everything (new items, removed items, filter edits,
   quality changes) maybe
@@ -49,8 +51,8 @@ want to wake it up?
 
 **Other considerations:**
 
-- UI feedback: show current state to user, e.g., "next run in 4h (backed off 2x)"
-  or indicator on sleeping filters. otherwise invisible and confusing
+- UI feedback: show current state to user, e.g., "next run in 4h (backed off
+  2x)" or indicator on sleeping filters. otherwise invisible and confusing
 - what triggers backoff: probably either 0 afterCooldown OR 0 upgrades found
 - per-filter state: each filter tracks its own multiplier. important for
   round_robin
@@ -86,6 +88,7 @@ want to wake it up?
 7. Save state: lastMatchedCount, emptyRunCount, nextRunAt
 
 **On success (found upgrades):**
+
 - Reset emptyRunCount to 0
 - Reset backoffMultiplier to 1 (or gradual decay?)
 - Resume normal schedule
@@ -147,3 +150,14 @@ Run 50: matched=50, afterCooldown=0
 Run N: sleeping, dry run → matched=70 (was 50)
        WAKE UP!
 ```
+
+# Toggles
+
+Maybe use DropdownSelect instead? i hate the current design
+
+# Upgrades Info
+
+Move info to upgrades/info to use full page. Modal is too small
+
+- using a table maybe?
+- examples?
