@@ -17,6 +17,7 @@
 	import FilterGroupComponent from './FilterGroup.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import FiltersInfoModal from './FiltersInfoModal.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
@@ -307,6 +308,7 @@
 									min={0}
 									max={100}
 									font="mono"
+									responsive
 									on:change={handleChange}
 								/>
 							</div>
@@ -327,6 +329,7 @@
 									bind:value={row.searchCooldown}
 									min={24}
 									font="mono"
+									responsive
 									on:change={handleChange}
 								/>
 							</div>
@@ -337,20 +340,26 @@
 						<div>
 							<label
 								for="selector-{row.id}"
-								class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
+								class="block mb-1 text-sm font-medium text-neutral-600 dark:text-neutral-400"
 							>
 								Method
 							</label>
-							<select
-								id="selector-{row.id}"
-								bind:value={row.selector}
-								on:change={handleChange}
-								class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-							>
-								{#each selectors as s}
-									<option value={s.id}>{s.label} - {s.description}</option>
-								{/each}
-							</select>
+							<DropdownSelect
+								value={row.selector}
+								options={selectors.map((s) => ({
+									value: s.id,
+									label: `${s.label} - ${s.description}`
+								}))}
+								minWidth="14rem"
+								responsiveButton
+								compactDropdownThreshold={7}
+								fullWidth
+								fixed
+								on:change={(e) => {
+									row.selector = e.detail;
+									handleChange();
+								}}
+							/>
 						</div>
 						<div>
 							<label
@@ -366,6 +375,7 @@
 									min={1}
 									max={5}
 									font="mono"
+									responsive
 									on:change={handleChange}
 								/>
 							</div>

@@ -2,12 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { filterModes, type FilterMode } from '$lib/shared/filters';
 	import { parseUTC } from '$shared/dates';
-	import { clickOutside } from '$lib/client/utils/clickOutside';
-	import { ChevronDown } from 'lucide-svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
-	import Button from '$ui/button/Button.svelte';
-	import Dropdown from '$ui/dropdown/Dropdown.svelte';
-	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let enabled: boolean = true;
 	export let dryRun: boolean = false;
@@ -20,9 +16,6 @@
 	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
 	export let onFilterModeChange: ((value: FilterMode) => void) | undefined = undefined;
 
-	let scheduleOpen = false;
-	let modeOpen = false;
-
 	const scheduleOptions = [
 		{ value: '30', label: '30 min' },
 		{ value: '60', label: '1 hour' },
@@ -34,8 +27,8 @@
 		{ value: '1440', label: '24 hours' }
 	];
 
-	$: currentScheduleLabel = scheduleOptions.find((o) => o.value === schedule)?.label ?? '6 hours';
-	$: currentModeLabel = filterModes.find((m) => m.id === filterMode)?.label ?? 'Round Robin';
+	// Map filterModes to DropdownSelect format
+	$: modeOptions = filterModes.map((m) => ({ value: m.id, label: m.label }));
 
 	// Cooldown tracking
 	let now = Date.now();
@@ -133,58 +126,25 @@
 			<div class="hidden h-6 w-px bg-neutral-200 sm:block dark:bg-neutral-700"></div>
 
 			<!-- Schedule -->
-			<div class="flex items-center gap-2">
-				<span class="text-sm text-neutral-500 dark:text-neutral-400">Schedule:</span>
-				<div class="relative" use:clickOutside={() => (scheduleOpen = false)}>
-					<Button
-						text={currentScheduleLabel}
-						icon={ChevronDown}
-						iconPosition="right"
-						on:click={() => (scheduleOpen = !scheduleOpen)}
-					/>
-					{#if scheduleOpen}
-						<Dropdown position="left" minWidth="8rem">
-							{#each scheduleOptions as option}
-								<DropdownItem
-									label={option.label}
-									selected={schedule === option.value}
-									on:click={() => {
-										onScheduleChange?.(option.value);
-										scheduleOpen = false;
-									}}
-								/>
-							{/each}
-						</Dropdown>
-					{/if}
-				</div>
-			</div>
+			<DropdownSelect
+				label="Schedule:"
+				value={schedule}
+				options={scheduleOptions}
+				responsiveButton
+				compactDropdown
+				on:change={(e) => onScheduleChange?.(e.detail)}
+			/>
 
 			<!-- Filter Mode -->
-			<div class="flex items-center gap-2">
-				<span class="text-sm text-neutral-500 dark:text-neutral-400">Mode:</span>
-				<div class="relative" use:clickOutside={() => (modeOpen = false)}>
-					<Button
-						text={currentModeLabel}
-						icon={ChevronDown}
-						iconPosition="right"
-						on:click={() => (modeOpen = !modeOpen)}
-					/>
-					{#if modeOpen}
-						<Dropdown position="left" minWidth="10rem">
-							{#each filterModes as mode}
-								<DropdownItem
-									label={mode.label}
-									selected={filterMode === mode.id}
-									on:click={() => {
-										onFilterModeChange?.(mode.id);
-										modeOpen = false;
-									}}
-								/>
-							{/each}
-						</Dropdown>
-					{/if}
-				</div>
-			</div>
+			<DropdownSelect
+				label="Mode:"
+				value={filterMode}
+				options={modeOptions}
+				minWidth="10rem"
+				responsiveButton
+				compactDropdown
+				on:change={(e) => onFilterModeChange?.(e.detail as FilterMode)}
+			/>
 		</div>
 
 		<!-- Right: Status -->

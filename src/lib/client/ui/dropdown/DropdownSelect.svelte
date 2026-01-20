@@ -1,0 +1,101 @@
+<script lang="ts">
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { clickOutside } from '$lib/client/utils/clickOutside';
+	import { ChevronDown } from 'lucide-svelte';
+	import Button from '$ui/button/Button.svelte';
+	import Dropdown from './Dropdown.svelte';
+	import DropdownItem from './DropdownItem.svelte';
+
+	export let label: string | undefined = undefined;
+	export let value: string;
+	export let options: { value: string; label: string; description?: string }[];
+	export let minWidth: string = '8rem';
+	export let position: 'left' | 'right' | 'middle' = 'left';
+	// Separate compact controls - compact is shorthand for both
+	export let compact: boolean = false;
+	export let compactButton: boolean | undefined = undefined;
+	export let compactDropdown: boolean | undefined = undefined;
+	// Auto-compact dropdown when options exceed this threshold (0 = disabled)
+	export let compactDropdownThreshold: number = 0;
+	// Responsive: auto-compact button on smaller screens (< 1280px)
+	export let responsiveButton: boolean = false;
+	export let fullWidth: boolean = false;
+	// Fixed positioning to escape overflow containers (e.g. tables)
+	export let fixed: boolean = false;
+
+	const dispatch = createEventDispatcher<{ change: string }>();
+
+	let open = false;
+	let isSmallScreen = false;
+	let mediaQuery: MediaQueryList | null = null;
+	let triggerEl: HTMLElement;
+
+	onMount(() => {
+		if (responsiveButton && typeof window !== 'undefined') {
+			mediaQuery = window.matchMedia('(max-width: 1279px)');
+			isSmallScreen = mediaQuery.matches;
+			mediaQuery.addEventListener('change', handleMediaChange);
+		}
+	});
+
+	onDestroy(() => {
+		if (mediaQuery) {
+			mediaQuery.removeEventListener('change', handleMediaChange);
+		}
+	});
+
+	function handleMediaChange(e: MediaQueryListEvent) {
+		isSmallScreen = e.matches;
+	}
+
+	$: currentLabel = options.find((o) => o.value === value)?.label ?? value;
+	$: isCompactButton = compactButton ?? (responsiveButton ? isSmallScreen : compact);
+	$: isCompactDropdown =
+		compactDropdown !== undefined
+			? compactDropdown
+			: compactDropdownThreshold > 0 && options.length >= compactDropdownThreshold
+				? true
+				: compact;
+	$: buttonSize = (isCompactButton ? 'xs' : 'sm') as 'xs' | 'sm';
+	$: labelClasses = isCompactButton
+		? 'text-xs text-neutral-500 dark:text-neutral-400'
+		: 'text-sm text-neutral-500 dark:text-neutral-400';
+
+	function select(optionValue: string) {
+		dispatch('change', optionValue);
+		open = false;
+	}
+</script>
+
+<div class="flex items-center gap-2" class:w-full={fullWidth}>
+	{#if label}
+		<span class={labelClasses}>{label}</span>
+	{/if}
+	<div
+		class="relative"
+		class:flex-1={fullWidth}
+		bind:this={triggerEl}
+		use:clickOutside={() => (open = false)}
+	>
+		<Button
+			text={currentLabel}
+			icon={ChevronDown}
+			iconPosition="right"
+			size={buttonSize}
+			{fullWidth}
+			on:click={() => (open = !open)}
+		/>
+		{#if open}
+			<Dropdown {position} {minWidth} compact={isCompactDropdown} {fixed} {triggerEl}>
+				{#each options as option}
+					<DropdownItem
+						label={option.label}
+						selected={value === option.value}
+						compact={isCompactDropdown}
+						on:click={() => select(option.value)}
+					/>
+				{/each}
+			</Dropdown>
+		{/if}
+	</div>
+</div>

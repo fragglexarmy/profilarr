@@ -11,7 +11,10 @@
 		type FilterGroup,
 		type FilterRule
 	} from '$lib/shared/filters';
+	import Input from '$ui/form/Input.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let group: FilterGroup;
 	export let onRemove: (() => void) | null = null;
@@ -63,16 +66,23 @@
 	<!-- Group Header -->
 	<div class="mb-3 flex items-center justify-between">
 		<div class="flex items-center gap-2">
-			<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Match</span>
-			<select
-				bind:value={group.match}
-				on:change={notifyChange}
-				class="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-			>
-				<option value="all">All (AND)</option>
-				<option value="any">Any (OR)</option>
-			</select>
-			<span class="text-sm text-neutral-500 dark:text-neutral-400">of the following rules</span>
+			<span class="text-xs font-medium text-neutral-700 dark:text-neutral-300">Match</span>
+			<DropdownSelect
+				value={group.match}
+				options={[
+					{ value: 'all', label: 'All (AND)' },
+					{ value: 'any', label: 'Any (OR)' }
+				]}
+				minWidth="7rem"
+				responsiveButton
+				compactDropdownThreshold={7}
+				fixed
+				on:change={(e) => {
+					group.match = e.detail as 'all' | 'any';
+					notifyChange();
+				}}
+			/>
+			<span class="text-xs text-neutral-500 dark:text-neutral-400">of the following rules</span>
 		</div>
 		{#if onRemove}
 			<button
@@ -97,51 +107,61 @@
 					{@const field = getFilterField(child.field)}
 					<div class="flex items-center gap-2">
 						<!-- Field -->
-						<select
+						<DropdownSelect
 							value={child.field}
-							on:change={(e) => onFieldChange(child, e.currentTarget.value)}
-							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-						>
-							{#each filterFields as f}
-								<option value={f.id}>{f.label}</option>
-							{/each}
-						</select>
+							options={filterFields.map((f) => ({ value: f.id, label: f.label }))}
+							minWidth="10rem"
+							responsiveButton
+							compactDropdownThreshold={7}
+							fixed
+							on:change={(e) => onFieldChange(child, e.detail)}
+						/>
 
 						<!-- Operator -->
-						<select
-							bind:value={child.operator}
-							on:change={notifyChange}
-							class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-						>
-							{#if field}
-								{#each field.operators as op}
-									<option value={op.id}>{op.label}</option>
-								{/each}
-							{/if}
-						</select>
+						{#if field}
+							<DropdownSelect
+								value={child.operator}
+								options={field.operators.map((op) => ({ value: op.id, label: op.label }))}
+								minWidth="8rem"
+								responsiveButton
+								compactDropdownThreshold={7}
+								fixed
+								on:change={(e) => {
+									child.operator = e.detail;
+									notifyChange();
+								}}
+							/>
+						{/if}
 
 						<!-- Value -->
 						{#if field?.valueType === 'boolean' || field?.valueType === 'select'}
-							<select
-								bind:value={child.value}
-								on:change={notifyChange}
-								class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-							>
-								{#if field.values}
-									{#each field.values as v}
-										<option value={v.value}>{v.label}</option>
-									{/each}
-								{/if}
-							</select>
+							{#if field.values}
+								<DropdownSelect
+									value={String(child.value)}
+									options={field.values.map((v) => ({ value: String(v.value), label: v.label }))}
+									minWidth="8rem"
+									responsiveButton
+									compactDropdownThreshold={7}
+									fixed
+									on:change={(e) => {
+										const originalValue = field.values?.find((v) => String(v.value) === e.detail)?.value;
+										child.value = originalValue ?? e.detail;
+										notifyChange();
+									}}
+								/>
+							{/if}
 						{:else if field?.valueType === 'text'}
-							<input
-								type="text"
-								bind:value={child.value}
-								on:input={notifyChange}
-								class="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+							<Input
+								value={child.value as string}
+								width="flex-1"
+								responsive
+								on:input={(e) => {
+									child.value = e.detail;
+									notifyChange();
+								}}
 							/>
 						{:else if field?.valueType === 'number'}
-							<div class="w-32">
+							<div class="w-24">
 								<NumberInput
 									name="value-{childIndex}"
 									value={child.value as number}
@@ -150,12 +170,13 @@
 										notifyChange();
 									}}
 									font="mono"
+									responsive
 								/>
 							</div>
 						{:else if field?.valueType === 'date'}
 							{#if child.operator === 'in_last' || child.operator === 'not_in_last'}
 								<div class="flex items-center gap-2">
-									<div class="w-24">
+									<div class="w-20">
 										<NumberInput
 											name="value-{childIndex}"
 											value={child.value as number}
@@ -165,16 +186,17 @@
 											}}
 											min={1}
 											font="mono"
+											responsive
 										/>
 									</div>
-									<span class="text-sm text-neutral-500 dark:text-neutral-400">days</span>
+									<span class="text-xs text-neutral-500 dark:text-neutral-400">days</span>
 								</div>
 							{:else}
 								<input
 									type="date"
 									bind:value={child.value}
 									on:change={notifyChange}
-									class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+									class="rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 								/>
 							{/if}
 						{/if}
@@ -205,21 +227,7 @@
 
 	<!-- Add Buttons -->
 	<div class="mt-3 flex items-center gap-2">
-		<button
-			type="button"
-			on:click={addRule}
-			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<Plus size={14} />
-			Add Rule
-		</button>
-		<button
-			type="button"
-			on:click={addNestedGroup}
-			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<FolderPlus size={14} />
-			Add Group
-		</button>
+		<Button text="Add Rule" icon={Plus} responsive on:click={addRule} />
+		<Button text="Add Group" icon={FolderPlus} responsive on:click={addNestedGroup} />
 	</div>
 </div>
