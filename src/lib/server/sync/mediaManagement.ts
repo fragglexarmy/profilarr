@@ -401,9 +401,8 @@ export class MediaManagementSyncer extends BaseSyncer {
 		const arrType = this.instanceType;
 		const rows = await cache.kb
 			.selectFrom('quality_api_mappings as qam')
-			.innerJoin('qualities as q', 'q.id', 'qam.quality_id')
 			.where('qam.arr_type', '=', arrType)
-			.select(['q.name as quality_name', 'qam.api_name'])
+			.select(['qam.quality_name', 'qam.api_name'])
 			.execute();
 
 		const map = new Map<string, string>();
