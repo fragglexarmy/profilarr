@@ -1,4 +1,4 @@
-namespace Parser.Core;
+namespace Parser.Models;
 
 public enum QualitySource
 {

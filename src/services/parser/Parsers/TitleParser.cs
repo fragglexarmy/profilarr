@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
+using Parser.Parsers.Common;
 
-namespace Parser.Core;
+namespace Parser.Parsers;
 
 public class ParsedMovieInfo
 {

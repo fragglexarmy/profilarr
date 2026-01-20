@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Parser.Core;
+namespace Parser.Parsers.Common;
 
 internal static class ParserCommon
 {

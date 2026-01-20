@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
+using Parser.Models;
 
-namespace Parser.Core;
+namespace Parser.Parsers;
 
 public static class QualityParser
 {
