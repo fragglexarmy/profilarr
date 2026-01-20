@@ -3,46 +3,44 @@
 # Profilarr Container Entrypoint
 # =============================================================================
 # Handles PUID/PGID/UMASK setup for proper file permissions
-# All logging is handled by the application's startup module
-
 set -e
 
-# -----------------------------------------------------------------------------
-# Configuration with defaults
-# -----------------------------------------------------------------------------
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 UMASK=${UMASK:-022}
 
 # -----------------------------------------------------------------------------
-# Create group if it doesn't exist
+# Resolve group - use existing GID or create/modify group
 # -----------------------------------------------------------------------------
 if getent group "${PGID}" > /dev/null 2>&1; then
-    # GID already exists - use that group name for the user
-    PROFILARR_GROUP=$(getent group "${PGID}" | cut -d: -f1)
+    # GID already taken - use that group
+    APP_GROUP=$(getent group "${PGID}" | cut -d: -f1)
 elif ! getent group profilarr > /dev/null 2>&1; then
-    # GID is free and profilarr group doesn't exist - create it
+    # GID free, profilarr doesn't exist - create it
     groupadd -g "${PGID}" profilarr
-    PROFILARR_GROUP=profilarr
+    APP_GROUP=profilarr
 else
-    # profilarr group exists but with wrong GID - modify it
+    # GID free, but profilarr exists with wrong GID - modify it
     groupmod -g "${PGID}" profilarr 2>/dev/null || true
-    PROFILARR_GROUP=profilarr
+    APP_GROUP=profilarr
 fi
 
 # -----------------------------------------------------------------------------
-# Create user if it doesn't exist
+# Resolve user - use existing UID or create/modify user
 # -----------------------------------------------------------------------------
-if ! getent passwd profilarr > /dev/null 2>&1; then
-    useradd -u "${PUID}" -g "${PGID}" -d /config -s /bin/bash profilarr
-elif [ "$(id -u profilarr)" != "${PUID}" ]; then
-    usermod -u "${PUID}" profilarr 2>/dev/null || true
+if getent passwd "${PUID}" > /dev/null 2>&1; then
+    # UID already taken - use that user
+    APP_USER=$(getent passwd "${PUID}" | cut -d: -f1)
+    usermod -g "${APP_GROUP}" "${APP_USER}" 2>/dev/null || true
+elif ! getent passwd profilarr > /dev/null 2>&1; then
+    # UID free, profilarr doesn't exist - create it
+    useradd -u "${PUID}" -g "${APP_GROUP}" -d /config -s /bin/bash profilarr
+    APP_USER=profilarr
+else
+    # UID free, but profilarr exists with wrong UID - modify it
+    usermod -u "${PUID}" -g "${APP_GROUP}" profilarr 2>/dev/null || true
+    APP_USER=profilarr
 fi
-
-# -----------------------------------------------------------------------------
-# Ensure user is in the correct group
-# -----------------------------------------------------------------------------
-usermod -g "${PGID}" profilarr >/dev/null 2>&1 || true
 
 # -----------------------------------------------------------------------------
 # Set umask
@@ -50,7 +48,7 @@ usermod -g "${PGID}" profilarr >/dev/null 2>&1 || true
 umask "${UMASK}"
 
 # -----------------------------------------------------------------------------
-# Create config directory structure if it doesn't exist
+# Create config directory structure
 # -----------------------------------------------------------------------------
 mkdir -p /config/data /config/logs /config/backups /config/databases
 
@@ -60,6 +58,6 @@ mkdir -p /config/data /config/logs /config/backups /config/databases
 chown -R "${PUID}:${PGID}" /config
 
 # -----------------------------------------------------------------------------
-# Drop privileges and run the application
+# Drop privileges and run
 # -----------------------------------------------------------------------------
-exec gosu profilarr /app/profilarr
+exec gosu "${APP_USER}" /app/profilarr
