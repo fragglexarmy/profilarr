@@ -34,8 +34,8 @@
 	// Track if config exists
 	$: isNewConfig = !data.config;
 
-	// Dev mode check
-	const isDev = import.meta.env.DEV;
+	// Dev mode check - use VITE_CHANNEL which is explicitly set in dev mode
+	const isDev = import.meta.env.VITE_CHANNEL === 'dev';
 
 	let showInfoModal = false;
 	let saving = false;
@@ -118,7 +118,7 @@
 				iconColor="text-red-600 dark:text-red-400"
 				disabled={running || saving || $isDirty}
 				on:click={() => {
-					const runForm = document.getElementById('dev-run-form');
+					const runForm = document.getElementById('run-form');
 					if (runForm instanceof HTMLFormElement) {
 						runForm.requestSubmit();
 					}
@@ -205,7 +205,7 @@
 	<input type="hidden" name="filterMode" value={filterMode} />
 	<input type="hidden" name="filters" value={JSON.stringify(filters)} />
 </form>
-{#if !isNewConfig && data.config?.dryRun}
+{#if !isNewConfig && (data.config?.dryRun || isDev)}
 	<form
 		id="run-form"
 		method="POST"
@@ -219,6 +219,8 @@
 			};
 		}}
 	></form>
+{/if}
+{#if !isNewConfig && data.config?.dryRun}
 	<form
 		id="clear-cache-form"
 		method="POST"
@@ -232,22 +234,6 @@
 			};
 		}}
 	></form>
-{:else if !isNewConfig && isDev}
-	<form
-		id="dev-run-form"
-		method="POST"
-		action="?/run"
-		class="hidden"
-		use:enhance={() => {
-			running = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				running = false;
-			};
-		}}
-	>
-		<input type="hidden" name="devOverride" value="true" />
-	</form>
 {/if}
 
 <UpgradesInfoModal bind:open={showInfoModal} />

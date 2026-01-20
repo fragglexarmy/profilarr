@@ -144,13 +144,11 @@ export const actions: Actions = {
 			return fail(400, { error: `Upgrade not yet supported for ${instance.type}` });
 		}
 
-		// Check for dev mode override
-		const formData = await request.formData();
-		const devOverride = formData.get('devOverride') === 'true';
-		const isDev = import.meta.env.DEV;
+		// Check for dev mode - in dev mode, allow manual runs even without dry run
+		const isDev = import.meta.env.VITE_CHANNEL === 'dev';
 
-		// Only allow manual runs in dry run mode (or dev mode with override)
-		if (!config.dryRun && !(isDev && devOverride)) {
+		// Only allow manual runs in dry run mode (or dev mode)
+		if (!config.dryRun && !isDev) {
 			return fail(400, {
 				error: 'Manual runs only allowed in Dry Run mode. Enable Dry Run first.'
 			});
@@ -159,7 +157,7 @@ export const actions: Actions = {
 		try {
 			await logger.debug(`Manual upgrade run triggered for "${instance.name}"`, {
 				source: 'upgrades',
-				meta: { instanceId: id, dryRun: config.dryRun, devOverride }
+				meta: { instanceId: id, dryRun: config.dryRun, isDev }
 			});
 
 			const result = await processUpgradeConfig(config, instance, true);
