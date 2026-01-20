@@ -35,7 +35,9 @@ function detectPlatform(): Platform {
 		const platform = navigator.platform.toLowerCase();
 		if (platform.includes('win')) return 'windows-amd64';
 		if (platform.includes('mac')) {
-			// Check for Apple Silicon - this is a heuristic
+			// Check for user agent for architecture hints
+			const ua = navigator.userAgent || '';
+			if (ua.includes('Intel')) return 'macos-amd64';
 			return 'macos-arm64';
 		}
 		if (platform.includes('linux')) return 'linux-amd64';
