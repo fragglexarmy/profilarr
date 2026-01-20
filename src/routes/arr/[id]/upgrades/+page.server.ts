@@ -92,6 +92,17 @@ export const actions: Actions = {
 				}
 			});
 
+			// Full filter rules for debugging
+			await logger.debug('Filter rules', {
+				source: 'upgrades',
+				meta: {
+					filters: filters.map((f: FilterConfig) => ({
+						name: f.name,
+						rules: f.group
+					}))
+				}
+			});
+
 			return { success: true };
 		} catch (err) {
 			await logger.error('Failed to save upgrade config', {

@@ -32,6 +32,8 @@ export interface UpgradeItem {
 	tomato_rating: number;
 	trakt_rating: number;
 	date_added: string;
+	digital_release: string | null;
+	physical_release: string | null;
 
 	// For selectors (camelCase versions)
 	dateAdded: string;

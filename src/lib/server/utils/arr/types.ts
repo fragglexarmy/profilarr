@@ -26,6 +26,9 @@ export interface RadarrMovie {
 	tmdbId?: number;
 	imdbId?: string;
 	added?: string;
+	inCinemas?: string;
+	digitalRelease?: string;
+	physicalRelease?: string;
 	ratings?: {
 		imdb?: { votes: number; value: number };
 		tmdb?: { votes: number; value: number };
@@ -33,6 +36,7 @@ export interface RadarrMovie {
 		trakt?: { votes: number; value: number };
 	};
 	genres?: string[];
+	keywords?: string[];
 	overview?: string;
 	images?: { coverType: string; url: string; remoteUrl?: string }[];
 	path?: string;

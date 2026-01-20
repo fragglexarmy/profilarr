@@ -46,6 +46,10 @@ export function normalizeRadarrItem(
 	// Date added - use movie's added date
 	const dateAdded = movie.added ?? new Date().toISOString();
 
+	// Release dates (null if not available)
+	const digitalRelease = movie.digitalRelease ?? null;
+	const physicalRelease = movie.physicalRelease ?? null;
+
 	return {
 		// Core fields (snake_case for filter matching)
 		id: movie.id,
@@ -59,7 +63,7 @@ export function normalizeRadarrItem(
 		studio: movie.studio ?? '',
 		original_language: movie.originalLanguage?.name ?? '',
 		genres: movie.genres?.join(', ') ?? '',
-		keywords: '', // Radarr doesn't expose keywords in basic movie endpoint
+		keywords: movie.keywords?.join(', ') ?? '',
 		release_group: movieFile?.releaseGroup ?? '',
 		popularity: movie.popularity ?? 0,
 		runtime: movie.runtime ?? 0,
@@ -69,6 +73,8 @@ export function normalizeRadarrItem(
 		tomato_rating: tomatoRating,
 		trakt_rating: traktRating,
 		date_added: dateAdded,
+		digital_release: digitalRelease,
+		physical_release: physicalRelease,
 
 		// For selectors (camelCase)
 		dateAdded: dateAdded,

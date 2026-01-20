@@ -111,6 +111,26 @@ const dateOperators: FilterOperator[] = [
 	{ id: 'not_in_last', label: 'not in the last' }
 ];
 
+const ordinalOperators: FilterOperator[] = [
+	{ id: 'eq', label: 'is exactly' },
+	{ id: 'neq', label: 'is not' },
+	{ id: 'gte', label: 'has reached' },
+	{ id: 'lte', label: "hasn't passed" },
+	{ id: 'gt', label: 'is past' },
+	{ id: 'lt', label: 'is before' }
+];
+
+/**
+ * Ordinal value mappings for ordered select fields
+ * Higher number = further along in the progression
+ */
+export const availabilityOrder: Record<string, number> = {
+	tba: 0,
+	announced: 1,
+	inCinemas: 2,
+	released: 3
+};
+
 /**
  * All available filter fields
  */
@@ -137,13 +157,14 @@ export const filterFields: FilterField[] = [
 		]
 	},
 
-	// Select fields
+	// Ordinal fields (ordered select values)
 	{
 		id: 'minimum_availability',
 		label: 'Minimum Availability',
-		operators: booleanOperators,
+		operators: ordinalOperators,
 		valueType: 'select',
 		values: [
+			{ value: 'tba', label: 'TBA' },
 			{ value: 'announced', label: 'Announced' },
 			{ value: 'inCinemas', label: 'In Cinemas' },
 			{ value: 'released', label: 'Released' }
@@ -254,6 +275,18 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'date_added',
 		label: 'Date Added',
+		operators: dateOperators,
+		valueType: 'date'
+	},
+	{
+		id: 'digital_release',
+		label: 'Digital Release',
+		operators: dateOperators,
+		valueType: 'date'
+	},
+	{
+		id: 'physical_release',
+		label: 'Physical Release',
 		operators: dateOperators,
 		valueType: 'date'
 	}
@@ -383,23 +416,6 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 				return fieldValue.toLowerCase() !== ruleValue.toLowerCase();
 			}
 			return fieldValue !== ruleValue;
-		case 'gt':
-			return (
-				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue > ruleValue
-			);
-		case 'gte':
-			return (
-				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue >= ruleValue
-			);
-		case 'lt':
-			return (
-				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue < ruleValue
-			);
-		case 'lte':
-			return (
-				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue <= ruleValue
-			);
-
 		// Text operators (case-insensitive)
 		case 'contains': {
 			const strField = String(fieldValue).toLowerCase();
@@ -420,6 +436,50 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 			const strField = String(fieldValue).toLowerCase();
 			const strRule = String(ruleValue).toLowerCase();
 			return strField.endsWith(strRule);
+		}
+
+		// Ordinal operators (for fields like minimum_availability)
+		case 'gte': {
+			// Check if this is an ordinal field
+			if (rule.field === 'minimum_availability') {
+				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
+				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+				return fieldOrdinal >= ruleOrdinal;
+			}
+			// Fall through to number comparison
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue >= ruleValue
+			);
+		}
+		case 'lte': {
+			if (rule.field === 'minimum_availability') {
+				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
+				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+				return fieldOrdinal <= ruleOrdinal;
+			}
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue <= ruleValue
+			);
+		}
+		case 'gt': {
+			if (rule.field === 'minimum_availability') {
+				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
+				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+				return fieldOrdinal > ruleOrdinal;
+			}
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue > ruleValue
+			);
+		}
+		case 'lt': {
+			if (rule.field === 'minimum_availability') {
+				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
+				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+				return fieldOrdinal < ruleOrdinal;
+			}
+			return (
+				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue < ruleValue
+			);
 		}
 
 		// Date operators
