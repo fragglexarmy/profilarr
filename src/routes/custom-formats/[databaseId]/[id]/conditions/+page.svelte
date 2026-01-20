@@ -9,7 +9,7 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
-	import { CONDITION_TYPES } from '$lib/shared/conditionTypes';
+	import { sortConditions } from '$lib/shared/conditionTypes';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 	import type { ConditionData } from '$pcd/queries/customFormats/index';
@@ -104,23 +104,8 @@
 		}
 	}
 
-	// Group conditions by type
-	$: groupedConditions = conditions.reduce(
-		(acc, condition) => {
-			const type = condition.type;
-			if (!acc[type]) acc[type] = [];
-			acc[type].push(condition);
-			return acc;
-		},
-		{} as Record<string, KeyedCondition[]>
-	);
-
-	// Get ordered types (only those that have conditions)
-	$: orderedTypes = CONDITION_TYPES.filter((t) => groupedConditions[t.value]).map((t) => ({
-		value: t.value,
-		label: t.label,
-		conditions: groupedConditions[t.value]
-	}));
+	// Sort conditions by status (required -> negated -> optional), then type, then alphabetical
+	$: sortedConditions = sortConditions(conditions);
 
 	function handleRemove(key: string) {
 		update(
@@ -277,34 +262,23 @@
 			</div>
 		{/if}
 
-		<!-- Existing conditions grouped by type -->
+		<!-- Existing conditions sorted by status, type, then name -->
 		{#if conditions.length === 0 && draftConditions.length === 0}
 			<p class="text-sm text-neutral-500 dark:text-neutral-400">No conditions defined</p>
 		{:else}
-			{#each orderedTypes as group (group.value)}
-				<div class="space-y-2">
-					<!-- Group header -->
-					<div class="flex items-center gap-2">
-						<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-							{group.label}
-						</span>
-						<Badge variant="neutral" size="sm">{group.conditions.length}</Badge>
-					</div>
-
-					<!-- Conditions -->
-					{#each group.conditions as condition (condition._key)}
-						<ConditionCard
-							{condition}
-							availablePatterns={data.availablePatterns}
-							availableLanguages={data.availableLanguages}
-							invalid={!isConditionValid(condition)}
-							nameConflict={hasNameConflict(condition)}
-							on:remove={() => handleRemove(condition._key)}
-							on:change={(e) => handleConditionChange(e.detail, condition._key)}
-						/>
-					{/each}
-				</div>
-			{/each}
+			<div class="space-y-2">
+				{#each sortedConditions as condition (condition._key)}
+					<ConditionCard
+						{condition}
+						availablePatterns={data.availablePatterns}
+						availableLanguages={data.availableLanguages}
+						invalid={!isConditionValid(condition)}
+						nameConflict={hasNameConflict(condition)}
+						on:remove={() => handleRemove(condition._key)}
+						on:change={(e) => handleConditionChange(e.detail, condition._key)}
+					/>
+				{/each}
+			</div>
 		{/if}
 	</div>
 </form>

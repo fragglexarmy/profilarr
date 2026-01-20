@@ -6,6 +6,7 @@
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { sortConditions } from '$lib/shared/conditionTypes';
 
 	export let formats: CustomFormatTableRow[];
 
@@ -80,11 +81,11 @@
 			cell: (row: CustomFormatTableRow) => ({
 				html:
 					row.conditions.length > 0
-						? `<div class="flex flex-wrap gap-1">${row.conditions
+						? `<div class="flex flex-wrap gap-1">${sortConditions(row.conditions)
 								.map((c) => {
 									// Color based on required/negate:
 									// required + negate = red (must NOT match)
-									// required + !negate = accent (must match)
+									// required + !negate = green (must match)
 									// !required + negate = amber (optional negative)
 									// !required + !negate = neutral (optional)
 									let colorClass: string;
@@ -92,7 +93,7 @@
 										colorClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
 									} else if (c.required) {
 										colorClass =
-											'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200';
+											'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
 									} else if (c.negate) {
 										colorClass =
 											'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';

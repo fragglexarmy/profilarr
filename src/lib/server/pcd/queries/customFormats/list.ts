@@ -36,10 +36,8 @@ export async function list(cache: PCDCache): Promise<CustomFormatTableRow[]> {
 	// 3. Get all conditions for all custom formats
 	const allConditions = await db
 		.selectFrom('custom_format_conditions')
-		.select(['custom_format_name', 'name', 'required', 'negate'])
+		.select(['custom_format_name', 'name', 'type', 'required', 'negate'])
 		.where('custom_format_name', 'in', formatNames)
-		.orderBy('custom_format_name')
-		.orderBy('name')
 		.execute();
 
 	// 4. Get test counts for all custom formats
@@ -77,6 +75,7 @@ export async function list(cache: PCDCache): Promise<CustomFormatTableRow[]> {
 		}
 		conditionsMap.get(condition.custom_format_name)!.push({
 			name: condition.name,
+			type: condition.type,
 			required: condition.required === 1,
 			negate: condition.negate === 1
 		});

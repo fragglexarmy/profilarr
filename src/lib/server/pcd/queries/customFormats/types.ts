@@ -7,6 +7,7 @@ import type { Tag } from '../../types.ts';
 /** Condition reference for display */
 export interface ConditionRef {
 	name: string;
+	type: string;
 	required: boolean;
 	negate: boolean;
 }

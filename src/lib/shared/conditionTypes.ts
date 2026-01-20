@@ -5,20 +5,54 @@
 // Arr type for filtering
 export type ArrType = 'all' | 'radarr' | 'sonarr';
 
-// Condition type definitions
+// Condition type definitions (ordered for display sorting)
 export const CONDITION_TYPES = [
+	{ value: 'resolution', label: 'Resolution', arrType: 'all' as ArrType },
+	{ value: 'source', label: 'Source', arrType: 'all' as ArrType },
+	{ value: 'quality_modifier', label: 'Quality Modifier', arrType: 'radarr' as ArrType },
 	{ value: 'release_title', label: 'Release Title', arrType: 'all' as ArrType },
 	{ value: 'release_group', label: 'Release Group', arrType: 'all' as ArrType },
 	{ value: 'edition', label: 'Edition', arrType: 'radarr' as ArrType },
 	{ value: 'language', label: 'Language', arrType: 'all' as ArrType },
-	{ value: 'source', label: 'Source', arrType: 'all' as ArrType },
-	{ value: 'resolution', label: 'Resolution', arrType: 'all' as ArrType },
-	{ value: 'quality_modifier', label: 'Quality Modifier', arrType: 'radarr' as ArrType },
 	{ value: 'release_type', label: 'Release Type', arrType: 'sonarr' as ArrType },
 	{ value: 'indexer_flag', label: 'Indexer Flag', arrType: 'all' as ArrType },
 	{ value: 'size', label: 'Size', arrType: 'all' as ArrType },
 	{ value: 'year', label: 'Year', arrType: 'all' as ArrType }
 ] as const;
+
+// Type order index for sorting
+const TYPE_ORDER: Map<string, number> = new Map(CONDITION_TYPES.map((t, i) => [t.value, i]));
+
+/**
+ * Get the status priority for sorting: required=0, negated=1, optional=2
+ */
+function getStatusPriority(required: boolean, negate: boolean): number {
+	if (required && !negate) return 0; // Required
+	if (negate) return 1; // Negated (includes required+negate)
+	return 2; // Optional
+}
+
+/**
+ * Sort conditions by: required/negated/optional, then type order, then alphabetical
+ */
+export function sortConditions<T extends { required: boolean; negate: boolean; type: string; name: string }>(
+	conditions: T[]
+): T[] {
+	return [...conditions].sort((a, b) => {
+		// Primary: status (required -> negated -> optional)
+		const statusA = getStatusPriority(a.required, a.negate);
+		const statusB = getStatusPriority(b.required, b.negate);
+		if (statusA !== statusB) return statusA - statusB;
+
+		// Secondary: type order
+		const typeA = TYPE_ORDER.get(a.type) ?? 999;
+		const typeB = TYPE_ORDER.get(b.type) ?? 999;
+		if (typeA !== typeB) return typeA - typeB;
+
+		// Tertiary: alphabetical by name
+		return a.name.localeCompare(b.name);
+	});
+}
 
 // Pattern-based types (use regex patterns as values)
 export const PATTERN_TYPES = ['release_title', 'release_group', 'edition'] as const;
