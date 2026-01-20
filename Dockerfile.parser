@@ -20,7 +20,8 @@ RUN dotnet restore
 
 # Copy source and build
 COPY src/services/parser/ ./
-RUN dotnet publish -c Release -o /app --no-restore
+# Remove local build config (uses paths that don't exist in container)
+RUN rm -f Directory.Build.props && dotnet publish -c Release -o /app --no-restore
 
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime
