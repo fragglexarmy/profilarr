@@ -2,6 +2,13 @@
  * Dev script that runs parser and server concurrently with labeled output
  */
 
+// Auto-detect platform from Deno.build
+function getPlatform(): string {
+	const os = Deno.build.os === 'darwin' ? 'darwin' : Deno.build.os;
+	const arch = Deno.build.arch === 'x86_64' ? 'amd64' : Deno.build.arch === 'aarch64' ? 'arm64' : Deno.build.arch;
+	return `${os}/${arch}`;
+}
+
 const colors = {
 	parser: '\x1b[33m', // yellow
 	server: '\x1b[34m', // blue
@@ -54,7 +61,9 @@ async function runServer() {
 			HOST: '0.0.0.0',
 			APP_BASE_PATH: './dist/dev',
 			PARSER_HOST: 'localhost',
-			PARSER_PORT: '5000'
+			PARSER_PORT: '5000',
+			VITE_PLATFORM: getPlatform(),
+			VITE_CHANNEL: 'dev'
 		},
 		stdout: 'piped',
 		stderr: 'piped'
