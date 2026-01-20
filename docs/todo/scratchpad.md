@@ -1,5 +1,20 @@
 > a quick brain dump for ideas as they come up
 
+# Feedback from Serpahys
+
+- add tags to filters for upgrades
+- upradinatorr filter should be default - both when adding new config and when
+  an arr is added (run a transformation on the database when an arr is added to
+  add the default config, but keep upgrades disabled)
+- cutoff % should be 100 or removed entirely
+- cooldown maybe too complicated
+- cache fetches from github on things that dont change often (images, stats for
+  example)
+- rethink job polling architecture
+- maybe move langauges to general tab or put info directly below it to fill
+  space
+- adding a database requires double click??? im not running into this personally
+
 # Adaptive Backoff
 
 _aka the-bear-is-sticky-with-honey_ 🐻🍯
