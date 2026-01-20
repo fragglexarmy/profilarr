@@ -9,7 +9,6 @@
 	// Default initial data for create mode
 	const initialData = {
 		name: '',
-		tags: [] as string[],
 		preferredProtocol: 'prefer_usenet' as const,
 		usenetDelay: 0,
 		torrentDelay: 0,

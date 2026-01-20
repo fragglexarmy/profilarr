@@ -3,7 +3,6 @@
  */
 
 import type { PCDCache } from '../../cache.ts';
-import type { Tag } from '../../types.ts';
 import type { DelayProfileTableRow, PreferredProtocol } from './types.ts';
 
 /**
@@ -12,7 +11,6 @@ import type { DelayProfileTableRow, PreferredProtocol } from './types.ts';
 export async function get(cache: PCDCache, id: number): Promise<DelayProfileTableRow | null> {
 	const db = cache.kb;
 
-	// Get the delay profile
 	const profile = await db
 		.selectFrom('delay_profiles')
 		.select([
@@ -32,20 +30,6 @@ export async function get(cache: PCDCache, id: number): Promise<DelayProfileTabl
 
 	if (!profile) return null;
 
-	// Get tags for this profile
-	const tags = await db
-		.selectFrom('delay_profile_tags as dpt')
-		.innerJoin('tags as t', 't.name', 'dpt.tag_name')
-		.select(['t.name as tag_name', 't.created_at as tag_created_at'])
-		.where('dpt.delay_profile_name', '=', profile.name)
-		.orderBy('t.name')
-		.execute();
-
-	const tagList: Tag[] = tags.map((t) => ({
-		name: t.tag_name,
-		created_at: t.tag_created_at
-	}));
-
 	return {
 		id: profile.id,
 		name: profile.name,
@@ -55,7 +39,6 @@ export async function get(cache: PCDCache, id: number): Promise<DelayProfileTabl
 		bypass_if_highest_quality: profile.bypass_if_highest_quality === 1,
 		bypass_if_above_custom_format_score: profile.bypass_if_above_custom_format_score === 1,
 		minimum_custom_format_score: profile.minimum_custom_format_score,
-		tags: tagList,
 		created_at: profile.created_at,
 		updated_at: profile.updated_at
 	};

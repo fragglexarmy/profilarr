@@ -20,8 +20,11 @@ export interface QualityProfilesSyncData {
 }
 
 export interface DelayProfilesSyncData {
-	selections: ProfileSelection[];
-	config: SyncConfig;
+	databaseId: number | null;
+	profileId: number | null;
+	trigger: SyncTrigger;
+	cron: string | null;
+	nextRunAt?: string | null;
 }
 
 export interface MediaManagementSyncData {
@@ -42,6 +45,14 @@ interface ProfileSelectionRow {
 
 interface ConfigRow {
 	instance_id: number;
+	trigger: string;
+	cron: string | null;
+}
+
+interface DelayProfileConfigRow {
+	instance_id: number;
+	database_id: number | null;
+	profile_id: number | null;
 	trigger: string;
 	cron: string | null;
 }
@@ -117,58 +128,41 @@ export const arrSyncQueries = {
 	// ========== Delay Profiles ==========
 
 	getDelayProfilesSync(instanceId: number): DelayProfilesSyncData {
-		const selectionRows = db.query<ProfileSelectionRow>(
-			'SELECT * FROM arr_sync_delay_profiles WHERE instance_id = ?',
-			instanceId
-		);
-
-		const configRow = db.queryFirst<ConfigRow>(
+		const row = db.queryFirst<DelayProfileConfigRow>(
 			'SELECT * FROM arr_sync_delay_profiles_config WHERE instance_id = ?',
 			instanceId
 		);
 
 		return {
-			selections: selectionRows.map((row) => ({
-				databaseId: row.database_id,
-				profileId: row.profile_id
-			})),
-			config: {
-				trigger: (configRow?.trigger as SyncTrigger) ?? 'manual',
-				cron: configRow?.cron ?? null
-			}
+			databaseId: row?.database_id ?? null,
+			profileId: row?.profile_id ?? null,
+			trigger: (row?.trigger as SyncTrigger) ?? 'manual',
+			cron: row?.cron ?? null
 		};
 	},
 
-	saveDelayProfilesSync(
-		instanceId: number,
-		selections: ProfileSelection[],
-		config: SyncConfig
-	): void {
-		// Clear existing selections
-		db.execute('DELETE FROM arr_sync_delay_profiles WHERE instance_id = ?', instanceId);
-
-		// Insert new selections
-		for (const sel of selections) {
-			db.execute(
-				'INSERT INTO arr_sync_delay_profiles (instance_id, database_id, profile_id) VALUES (?, ?, ?)',
-				instanceId,
-				sel.databaseId,
-				sel.profileId
-			);
-		}
-
-		// Upsert config
+	saveDelayProfilesSync(instanceId: number, data: DelayProfilesSyncData): void {
 		db.execute(
-			`INSERT INTO arr_sync_delay_profiles_config (instance_id, trigger, cron, next_run_at)
-			 VALUES (?, ?, ?, ?)
-			 ON CONFLICT(instance_id) DO UPDATE SET trigger = ?, cron = ?, next_run_at = ?`,
+			`INSERT INTO arr_sync_delay_profiles_config
+			 (instance_id, database_id, profile_id, trigger, cron, next_run_at)
+			 VALUES (?, ?, ?, ?, ?, ?)
+			 ON CONFLICT(instance_id) DO UPDATE SET
+			 database_id = ?,
+			 profile_id = ?,
+			 trigger = ?,
+			 cron = ?,
+			 next_run_at = ?`,
 			instanceId,
-			config.trigger,
-			config.cron,
-			config.nextRunAt ?? null,
-			config.trigger,
-			config.cron,
-			config.nextRunAt ?? null
+			data.databaseId,
+			data.profileId,
+			data.trigger,
+			data.cron,
+			data.nextRunAt ?? null,
+			data.databaseId,
+			data.profileId,
+			data.trigger,
+			data.cron,
+			data.nextRunAt ?? null
 		);
 	},
 
@@ -242,7 +236,7 @@ export const arrSyncQueries = {
 
 	removeDelayProfileReference(databaseId: number, profileId: number): number {
 		return db.execute(
-			'DELETE FROM arr_sync_delay_profiles WHERE database_id = ? AND profile_id = ?',
+			'UPDATE arr_sync_delay_profiles_config SET database_id = NULL, profile_id = NULL WHERE database_id = ? AND profile_id = ?',
 			databaseId,
 			profileId
 		);
@@ -253,7 +247,10 @@ export const arrSyncQueries = {
 	 */
 	removeDatabaseReferences(databaseId: number): void {
 		db.execute('DELETE FROM arr_sync_quality_profiles WHERE database_id = ?', databaseId);
-		db.execute('DELETE FROM arr_sync_delay_profiles WHERE database_id = ?', databaseId);
+		db.execute(
+			'UPDATE arr_sync_delay_profiles_config SET database_id = NULL, profile_id = NULL WHERE database_id = ?',
+			databaseId
+		);
 		db.execute(
 			'UPDATE arr_sync_media_management SET naming_database_id = NULL WHERE naming_database_id = ?',
 			databaseId

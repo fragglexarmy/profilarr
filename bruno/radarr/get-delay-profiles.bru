@@ -1,0 +1,15 @@
+meta {
+  name: Get Delay Profiles
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{radarrUrl}}/api/v3/delayprofile
+  body: none
+  auth: none
+}
+
+headers {
+  X-Api-Key: {{radarrApiKey}}
+}

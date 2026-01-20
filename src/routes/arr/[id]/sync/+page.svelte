@@ -32,9 +32,12 @@
 	let qualityProfileTrigger: SyncTrigger = data.syncData.qualityProfiles.config.trigger;
 	let qualityProfileCron: string = data.syncData.qualityProfiles.config.cron || '0 * * * *';
 
-	let delayProfileState = buildProfileState(data.syncData.delayProfiles.selections);
-	let delayProfileTrigger: SyncTrigger = data.syncData.delayProfiles.config.trigger;
-	let delayProfileCron: string = data.syncData.delayProfiles.config.cron || '0 * * * *';
+	let delayProfileState = {
+		databaseId: data.syncData.delayProfiles.databaseId,
+		profileId: data.syncData.delayProfiles.profileId
+	};
+	let delayProfileTrigger: SyncTrigger = data.syncData.delayProfiles.trigger;
+	let delayProfileCron: string = data.syncData.delayProfiles.cron || '0 * * * *';
 
 	let mediaManagementState = {
 		namingDatabaseId: data.syncData.mediaManagement.namingDatabaseId,
@@ -59,26 +62,45 @@
 	$: anyDirty = qualityProfilesDirty || delayProfilesDirty || mediaManagementDirty;
 	$: update('anyDirty', anyDirty);
 
-	// Validation: Quality profiles require media management settings (saved, not dirty)
+	// Validation: Quality profiles require both media management AND delay profiles (saved, not dirty)
 	$: hasQualityProfilesSelected = Object.values(qualityProfileState).some((db) =>
 		Object.values(db).some((selected) => selected)
 	);
 
 	$: hasMediaManagement =
-		mediaManagementState.namingDatabaseId !== null &&
-		mediaManagementState.qualityDefinitionsDatabaseId !== null &&
-		mediaManagementState.mediaSettingsDatabaseId !== null;
+		typeof mediaManagementState.namingDatabaseId === 'number' &&
+		typeof mediaManagementState.qualityDefinitionsDatabaseId === 'number' &&
+		typeof mediaManagementState.mediaSettingsDatabaseId === 'number';
+
+	$: hasDelayProfile =
+		typeof delayProfileState.databaseId === 'number' &&
+		typeof delayProfileState.profileId === 'number';
 
 	$: qualityProfilesCanSave =
-		!hasQualityProfilesSelected || (hasMediaManagement && !mediaManagementDirty);
+		!hasQualityProfilesSelected ||
+		(hasMediaManagement && !mediaManagementDirty && hasDelayProfile && !delayProfilesDirty);
 
-	$: qualityProfilesWarning = !hasQualityProfilesSelected
-		? null
-		: !hasMediaManagement
-			? 'Quality profiles require media management settings. Configure media management settings above.'
-			: mediaManagementDirty
-				? 'Save your media management settings before saving quality profiles.'
-				: null;
+	// Build warning message showing all missing requirements
+	$: qualityProfilesWarning = (() => {
+		if (!hasQualityProfilesSelected) return null;
+
+		const issues: string[] = [];
+
+		if (!hasMediaManagement) {
+			issues.push('media management settings (configure above)');
+		} else if (mediaManagementDirty) {
+			issues.push('media management settings to be saved');
+		}
+
+		if (!hasDelayProfile) {
+			issues.push('a delay profile (configure below)');
+		} else if (delayProfilesDirty) {
+			issues.push('delay profile settings to be saved');
+		}
+
+		if (issues.length === 0) return null;
+		return `Quality profiles require ${issues.join(' and ')}.`;
+	})();
 </script>
 
 <svelte:head>

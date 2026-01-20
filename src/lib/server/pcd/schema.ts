@@ -40,7 +40,7 @@ export interface QualitiesTable {
 }
 
 export interface QualityApiMappingsTable {
-	quality_id: number;
+	quality_name: string;
 	arr_type: string;
 	api_name: string;
 	created_at: Generated<string>;
@@ -255,11 +255,6 @@ export interface DelayProfilesTable {
 	updated_at: Generated<string>;
 }
 
-export interface DelayProfileTagsTable {
-	delay_profile_name: string;
-	tag_name: string;
-}
-
 // ============================================================================
 // MEDIA MANAGEMENT TABLES
 // ============================================================================
@@ -358,7 +353,6 @@ export interface PCDDatabase {
 	test_entities: TestEntitiesTable;
 	test_releases: TestReleasesTable;
 	delay_profiles: DelayProfilesTable;
-	delay_profile_tags: DelayProfileTagsTable;
 	quality_api_mappings: QualityApiMappingsTable;
 	radarr_quality_definitions: RadarrQualityDefinitionsTable;
 	sonarr_quality_definitions: SonarrQualityDefinitionsTable;

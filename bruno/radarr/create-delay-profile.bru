@@ -1,0 +1,30 @@
+meta {
+  name: Create Delay Profile
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{radarrUrl}}/api/v3/delayprofile
+  body: json
+  auth: none
+}
+
+headers {
+  X-Api-Key: {{radarrApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "enableUsenet": true,
+    "enableTorrent": true,
+    "preferredProtocol": "usenet",
+    "usenetDelay": 30,
+    "torrentDelay": 60,
+    "bypassIfHighestQuality": true,
+    "bypassIfAboveCustomFormatScore": false,
+    "minimumCustomFormatScore": 0,
+    "tags": []
+  }
+}

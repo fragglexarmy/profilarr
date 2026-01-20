@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
-	import TagInput from '$ui/form/TagInput.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2, Loader2 } from 'lucide-svelte';
@@ -12,7 +11,6 @@
 	// Form data shape
 	interface DelayProfileFormData {
 		name: string;
-		tags: string[];
 		preferredProtocol: PreferredProtocol;
 		usenetDelay: number;
 		torrentDelay: number;
@@ -34,7 +32,6 @@
 
 	const defaults: DelayProfileFormData = {
 		name: '',
-		tags: [],
 		preferredProtocol: 'prefer_usenet',
 		usenetDelay: 0,
 		torrentDelay: 0,
@@ -95,7 +92,7 @@
 		{ value: 'only_torrent', label: 'Only Torrent', description: 'Never use Usenet' }
 	];
 
-	$: isValid = formData.name.trim() !== '' && formData.tags.length > 0;
+	$: isValid = formData.name.trim() !== '';
 
 	async function handleSaveClick() {
 		if (canWriteToBase) {
@@ -167,7 +164,6 @@
 		}}
 	>
 		<!-- Hidden fields for form data -->
-		<input type="hidden" name="tags" value={JSON.stringify(formData.tags)} />
 		<input type="hidden" name="preferredProtocol" value={formData.preferredProtocol} />
 		<input type="hidden" name="usenetDelay" value={formData.usenetDelay} />
 		<input type="hidden" name="torrentDelay" value={formData.torrentDelay} />
@@ -200,23 +196,6 @@
 						placeholder="e.g., Standard Delay"
 						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 					/>
-				</div>
-
-				<!-- Tags -->
-				<div>
-					<div class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-						Tags <span class="text-red-500">*</span>
-					</div>
-					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						Delay profiles apply to items with matching tags
-					</p>
-					<div class="mt-2">
-						<TagInput
-							tags={formData.tags}
-							onchange={(newTags) => update('tags', newTags)}
-							placeholder="Add tags..."
-						/>
-					</div>
 				</div>
 			</div>
 		</div>

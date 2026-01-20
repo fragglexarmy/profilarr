@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2026-01-16
+-- Last updated: 2026-01-21
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -309,23 +309,9 @@ CREATE TABLE arr_sync_quality_profiles_config (
 );
 
 -- ==============================================================================
--- TABLE: arr_sync_delay_profiles
--- Purpose: Store delay profile sync selections (many-to-many)
--- Migration: 015_create_arr_sync_tables.ts
--- ==============================================================================
-
-CREATE TABLE arr_sync_delay_profiles (
-    instance_id INTEGER NOT NULL,
-    database_id INTEGER NOT NULL,
-    profile_id INTEGER NOT NULL,
-    PRIMARY KEY (instance_id, database_id, profile_id),
-    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
-);
-
--- ==============================================================================
 -- TABLE: arr_sync_delay_profiles_config
--- Purpose: Store delay profile sync trigger configuration (one per instance)
--- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts
+-- Purpose: Store delay profile sync configuration (one per instance, single profile)
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 028_simplify_delay_profile_sync.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_delay_profiles_config (
@@ -334,6 +320,8 @@ CREATE TABLE arr_sync_delay_profiles_config (
     cron TEXT,                                  -- Cron expression for schedule trigger
     should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
     next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
+    database_id INTEGER,                        -- Single database reference (Migration 028)
+    profile_id INTEGER,                         -- Single profile reference (Migration 028)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
 );
 
@@ -385,7 +373,6 @@ CREATE INDEX idx_upgrade_configs_arr_instance ON upgrade_configs(arr_instance_id
 
 -- Arr sync indexes (Migration: 015_create_arr_sync_tables.ts)
 CREATE INDEX idx_arr_sync_quality_profiles_instance ON arr_sync_quality_profiles(instance_id);
-CREATE INDEX idx_arr_sync_delay_profiles_instance ON arr_sync_delay_profiles(instance_id);
 
 -- ==============================================================================
 -- TABLE: regex101_cache

@@ -2,8 +2,6 @@
  * Delay Profile query-specific types
  */
 
-import type { Tag } from '../../types.ts';
-
 /** Preferred protocol options */
 export type PreferredProtocol = 'prefer_usenet' | 'prefer_torrent' | 'only_usenet' | 'only_torrent';
 
@@ -17,7 +15,6 @@ export interface DelayProfileTableRow {
 	bypass_if_highest_quality: boolean;
 	bypass_if_above_custom_format_score: boolean;
 	minimum_custom_format_score: number | null;
-	tags: Tag[];
 	created_at: string;
 	updated_at: string;
 }

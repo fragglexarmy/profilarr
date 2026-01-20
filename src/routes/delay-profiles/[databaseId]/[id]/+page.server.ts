@@ -73,7 +73,6 @@ export const actions: Actions = {
 
 		// Parse form data
 		const name = formData.get('name') as string;
-		const tagsJson = formData.get('tags') as string;
 		const preferredProtocol = formData.get('preferredProtocol') as PreferredProtocol;
 		const usenetDelay = parseInt(formData.get('usenetDelay') as string, 10) || 0;
 		const torrentDelay = parseInt(formData.get('torrentDelay') as string, 10) || 0;
@@ -85,17 +84,6 @@ export const actions: Actions = {
 		// Validate
 		if (!name?.trim()) {
 			return fail(400, { error: 'Name is required' });
-		}
-
-		let tags: string[] = [];
-		try {
-			tags = JSON.parse(tagsJson || '[]');
-		} catch {
-			return fail(400, { error: 'Invalid tags format' });
-		}
-
-		if (tags.length === 0) {
-			return fail(400, { error: 'At least one tag is required' });
 		}
 
 		// Check layer permission
@@ -111,7 +99,6 @@ export const actions: Actions = {
 			current,
 			input: {
 				name: name.trim(),
-				tags,
 				preferredProtocol,
 				usenetDelay,
 				torrentDelay,

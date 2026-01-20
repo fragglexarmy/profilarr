@@ -41,6 +41,24 @@
 		}
 	}
 
+	// Reactive set of selected keys for checkbox state
+	$: selectedKeys = new Set(
+		Object.entries(state).flatMap(([dbId, profiles]) =>
+			Object.entries(profiles)
+				.filter(([, selected]) => selected)
+				.map(([profileId]) => `${dbId}-${profileId}`)
+		)
+	);
+
+	function isSelected(databaseId: number, profileId: number): boolean {
+		return selectedKeys.has(`${databaseId}-${profileId}`);
+	}
+
+	function toggleProfile(databaseId: number, profileId: number) {
+		state[databaseId][profileId] = !state[databaseId][profileId];
+		state = { ...state }; // Reassign to trigger reactivity
+	}
+
 	function getSelections(): { databaseId: number; profileId: number }[] {
 		const selections: { databaseId: number; profileId: number }[] = [];
 		for (const [dbId, profiles] of Object.entries(state)) {
@@ -132,15 +150,13 @@
 									<button
 										type="button"
 										class="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
-										on:click={() => {
-											state[database.id][profile.id] = !state[database.id][profile.id];
-										}}
+										on:click={() => toggleProfile(database.id, profile.id)}
 									>
 										<code class="font-mono text-sm text-neutral-900 dark:text-neutral-50">
 											{profile.name}
 										</code>
 										<IconCheckbox
-											checked={state[database.id]?.[profile.id] ?? false}
+											checked={selectedKeys.has(`${database.id}-${profile.id}`)}
 											icon={Check}
 											shape="rounded"
 										/>

@@ -9,7 +9,6 @@
 	// Build initial data from server
 	$: initialData = {
 		name: data.delayProfile.name,
-		tags: data.delayProfile.tags.map((t) => t.name),
 		preferredProtocol: data.delayProfile.preferred_protocol,
 		usenetDelay: data.delayProfile.usenet_delay ?? 0,
 		torrentDelay: data.delayProfile.torrent_delay ?? 0,

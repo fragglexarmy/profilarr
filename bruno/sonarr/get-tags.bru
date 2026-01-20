@@ -1,0 +1,15 @@
+meta {
+  name: Get Tags
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sonarrUrl}}/api/v3/tag
+  body: none
+  auth: none
+}
+
+headers {
+  X-Api-Key: {{sonarrApiKey}}
+}

@@ -9,7 +9,6 @@ import { logger } from '$logger/logger.ts';
 
 export interface UpdateDelayProfileInput {
 	name: string;
-	tags: string[];
 	preferredProtocol: PreferredProtocol;
 	usenetDelay: number;
 	torrentDelay: number;
@@ -29,21 +28,12 @@ export interface UpdateDelayProfileOptions {
 }
 
 /**
- * Escape a string for SQL
- */
-function esc(value: string): string {
-	return value.replace(/'/g, "''");
-}
-
-/**
  * Update a delay profile by writing an operation to the specified layer
  * Uses value guards to detect conflicts with upstream changes
  */
 export async function update(options: UpdateDelayProfileOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
-
-	const queries = [];
 
 	// Determine delay values based on protocol (schema has CHECK constraints)
 	// only_torrent -> usenet_delay must be NULL
@@ -54,8 +44,7 @@ export async function update(options: UpdateDelayProfileOptions) {
 	// minimum_custom_format_score must be NULL if bypass_if_above_custom_format_score is false
 	const minimumCfScore = input.bypassIfAboveCfScore ? input.minimumCfScore : null;
 
-	// 1. Update the delay profile with value guards
-	// We build the WHERE clause to include current values as guards
+	// Update the delay profile with value guards
 	const updateProfile = db
 		.updateTable('delay_profiles')
 		.set({
@@ -73,48 +62,7 @@ export async function update(options: UpdateDelayProfileOptions) {
 		.where('preferred_protocol', '=', current.preferred_protocol)
 		.compile();
 
-	queries.push(updateProfile);
-
-	// 2. Handle tag changes
-	const currentTagNames = current.tags.map((t) => t.name);
-	const newTagNames = input.tags;
-
-	// Tags to remove
-	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
-	for (const tagName of tagsToRemove) {
-		const removeTag = {
-			sql: `DELETE FROM delay_profile_tags WHERE delay_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
-			parameters: [],
-			query: {} as never
-		};
-		queries.push(removeTag);
-	}
-
-	// Tags to add
-	const tagsToAdd = newTagNames.filter((t) => !currentTagNames.includes(t));
-	for (const tagName of tagsToAdd) {
-		// Insert tag if not exists
-		const insertTag = db
-			.insertInto('tags')
-			.values({ name: tagName })
-			.onConflict((oc) => oc.column('name').doNothing())
-			.compile();
-
-		queries.push(insertTag);
-
-		// Link tag to delay profile
-		// Use input.name since the profile might have been renamed
-		const profileName = input.name !== current.name ? input.name : current.name;
-		const linkTag = {
-			sql: `INSERT INTO delay_profile_tags (delay_profile_name, tag_name) VALUES ('${esc(profileName)}', '${esc(tagName)}')`,
-			parameters: [],
-			query: {} as never
-		};
-
-		queries.push(linkTag);
-	}
-
-	// Log what's being changed (before the write)
+	// Log what's being changed
 	const changes: Record<string, { from: unknown; to: unknown }> = {};
 
 	if (current.name !== input.name) {
@@ -144,9 +92,6 @@ export async function update(options: UpdateDelayProfileOptions) {
 	if (current.minimum_custom_format_score !== minimumCfScore) {
 		changes.minimumCfScore = { from: current.minimum_custom_format_score, to: minimumCfScore };
 	}
-	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
-		changes.tags = { from: currentTagNames, to: input.tags };
-	}
 
 	await logger.info(`Save delay profile "${input.name}"`, {
 		source: 'DelayProfile',
@@ -157,14 +102,13 @@ export async function update(options: UpdateDelayProfileOptions) {
 	});
 
 	// Write the operation with metadata
-	// Include previousName if this is a rename
 	const isRename = input.name !== current.name;
 
 	const result = await writeOperation({
 		databaseId,
 		layer,
 		description: `update-delay-profile-${input.name}`,
-		queries,
+		queries: [updateProfile],
 		metadata: {
 			operation: 'update',
 			entity: 'delay_profile',

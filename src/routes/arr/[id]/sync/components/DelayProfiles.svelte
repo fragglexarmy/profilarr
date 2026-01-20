@@ -12,7 +12,13 @@
 	}
 
 	export let databases: DatabaseWithProfiles[];
-	export let state: Record<number, Record<number, boolean>> = {};
+	export let state: {
+		databaseId: number | null;
+		profileId: number | null;
+	} = {
+		databaseId: null,
+		profileId: null
+	};
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
 
@@ -25,37 +31,32 @@
 	export let isDirty = false;
 	$: isDirty = currentState !== savedState;
 
-	// Initialize state for all databases/profiles
-	$: {
-		for (const db of databases) {
-			if (!state[db.id]) {
-				state[db.id] = {};
-			}
-			for (const profile of db.delayProfiles) {
-				if (state[db.id][profile.id] === undefined) {
-					state[db.id][profile.id] = false;
-				}
-			}
-		}
+	// Reactive selected key for checkbox state
+	$: selectedKey =
+		state.databaseId !== null && state.profileId !== null
+			? `${state.databaseId}-${state.profileId}`
+			: null;
+
+	function isSelected(databaseId: number, profileId: number): boolean {
+		return selectedKey === `${databaseId}-${profileId}`;
 	}
 
-	function getSelections(): { databaseId: number; profileId: number }[] {
-		const selections: { databaseId: number; profileId: number }[] = [];
-		for (const [dbId, profiles] of Object.entries(state)) {
-			for (const [profileId, selected] of Object.entries(profiles)) {
-				if (selected) {
-					selections.push({ databaseId: parseInt(dbId), profileId: parseInt(profileId) });
-				}
-			}
+	function toggleProfile(databaseId: number, profileId: number) {
+		if (isSelected(databaseId, profileId)) {
+			// Deselect
+			state = { databaseId: null, profileId: null };
+		} else {
+			// Select this one (deselects any previous)
+			state = { databaseId, profileId };
 		}
-		return selections;
 	}
 
 	async function handleSave() {
 		saving = true;
 		try {
 			const formData = new FormData();
-			formData.set('selections', JSON.stringify(getSelections()));
+			formData.set('databaseId', state.databaseId?.toString() ?? '');
+			formData.set('profileId', state.profileId?.toString() ?? '');
 			formData.set('trigger', syncTrigger);
 			formData.set('cron', cronExpression);
 
@@ -65,14 +66,14 @@
 			});
 
 			if (response.ok) {
-				alertStore.add('success', 'Delay profiles sync config saved');
+				alertStore.add('success', 'Delay profile sync config saved');
 				// Update saved state to current
 				savedState = JSON.stringify({ state, syncTrigger, cronExpression });
 			} else {
-				alertStore.add('error', 'Failed to save delay profiles sync config');
+				alertStore.add('error', 'Failed to save delay profile sync config');
 			}
 		} catch {
-			alertStore.add('error', 'Failed to save delay profiles sync config');
+			alertStore.add('error', 'Failed to save delay profile sync config');
 		} finally {
 			saving = false;
 		}
@@ -130,15 +131,13 @@
 									<button
 										type="button"
 										class="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
-										on:click={() => {
-											state[database.id][profile.id] = !state[database.id][profile.id];
-										}}
+										on:click={() => toggleProfile(database.id, profile.id)}
 									>
 										<code class="font-mono text-sm text-neutral-900 dark:text-neutral-50">
 											{profile.name}
 										</code>
 										<IconCheckbox
-											checked={state[database.id]?.[profile.id] ?? false}
+											checked={selectedKey === `${database.id}-${profile.id}`}
 											icon={Check}
 											shape="rounded"
 										/>

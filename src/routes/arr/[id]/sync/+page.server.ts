@@ -107,32 +107,34 @@ export const actions: Actions = {
 
 		const instance = arrInstancesQueries.getById(id);
 		const formData = await request.formData();
-		const selectionsJson = formData.get('selections') as string;
+		const databaseId = formData.get('databaseId') as string | null;
+		const profileId = formData.get('profileId') as string | null;
 		const trigger = formData.get('trigger') as SyncTrigger;
 		const cron = formData.get('cron') as string | null;
 
 		try {
-			const selections: ProfileSelection[] = JSON.parse(selectionsJson || '[]');
 			const effectiveTrigger = trigger || 'manual';
 			const effectiveCron = cron || null;
-			arrSyncQueries.saveDelayProfilesSync(id, selections, {
+			arrSyncQueries.saveDelayProfilesSync(id, {
+				databaseId: databaseId ? parseInt(databaseId, 10) : null,
+				profileId: profileId ? parseInt(profileId, 10) : null,
 				trigger: effectiveTrigger,
 				cron: effectiveCron,
 				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null
 			});
 
-			await logger.info(`Delay profiles sync config saved for "${instance?.name}"`, {
+			await logger.info(`Delay profile sync config saved for "${instance?.name}"`, {
 				source: 'sync',
-				meta: { instanceId: id, profileCount: selections.length, trigger }
+				meta: { instanceId: id, databaseId, profileId, trigger }
 			});
 
 			return { success: true };
 		} catch (e) {
-			await logger.error('Failed to save delay profiles sync config', {
+			await logger.error('Failed to save delay profile sync config', {
 				source: 'sync',
 				meta: { instanceId: id, error: e }
 			});
-			return fail(500, { error: 'Failed to save delay profiles sync config' });
+			return fail(500, { error: 'Failed to save delay profile sync config' });
 		}
 	},
 

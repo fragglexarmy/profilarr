@@ -8,7 +8,6 @@ import type { PreferredProtocol } from './types.ts';
 
 export interface CreateDelayProfileInput {
 	name: string;
-	tags: string[];
 	preferredProtocol: PreferredProtocol;
 	usenetDelay: number;
 	torrentDelay: number;
@@ -31,8 +30,6 @@ export async function create(options: CreateDelayProfileOptions) {
 	const { databaseId, cache, layer, input } = options;
 	const db = cache.kb;
 
-	const queries = [];
-
 	// Determine delay values based on protocol (schema has CHECK constraints)
 	// only_torrent -> usenet_delay must be NULL
 	// only_usenet -> torrent_delay must be NULL
@@ -42,7 +39,6 @@ export async function create(options: CreateDelayProfileOptions) {
 	// minimum_custom_format_score must be NULL if bypass_if_above_custom_format_score is false
 	const minimumCfScore = input.bypassIfAboveCfScore ? input.minimumCfScore : null;
 
-	// 1. Insert the delay profile
 	const insertProfile = db
 		.insertInto('delay_profiles')
 		.values({
@@ -56,35 +52,11 @@ export async function create(options: CreateDelayProfileOptions) {
 		})
 		.compile();
 
-	queries.push(insertProfile);
-
-	// 2. Insert tags (create if not exist, then link)
-	for (const tagName of input.tags) {
-		// Insert tag if not exists
-		const insertTag = db
-			.insertInto('tags')
-			.values({ name: tagName })
-			.onConflict((oc) => oc.column('name').doNothing())
-			.compile();
-
-		queries.push(insertTag);
-
-		// Link tag to delay profile using direct name values
-		const linkTag = {
-			sql: `INSERT INTO delay_profile_tags (delay_profile_name, tag_name) VALUES ('${input.name.replace(/'/g, "''")}', '${tagName.replace(/'/g, "''")}')`,
-			parameters: [],
-			query: {} as never
-		};
-
-		queries.push(linkTag);
-	}
-
-	// Write the operation
 	const result = await writeOperation({
 		databaseId,
 		layer,
 		description: `create-delay-profile-${input.name}`,
-		queries,
+		queries: [insertProfile],
 		metadata: {
 			operation: 'create',
 			entity: 'delay_profile',

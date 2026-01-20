@@ -260,8 +260,8 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 		result.qualityProfiles = await syncer.sync();
 	}
 
-	// Sync delay profiles if configured
-	if (dpConfig.selections.length > 0) {
+	// Sync delay profile if configured
+	if (dpConfig.databaseId && dpConfig.profileId) {
 		const syncer = new DelayProfileSyncer(client, instanceId, instance.name);
 		result.delayProfiles = await syncer.sync();
 	}
