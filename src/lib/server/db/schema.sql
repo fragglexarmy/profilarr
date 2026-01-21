@@ -282,7 +282,7 @@ CREATE TABLE ai_settings (
 -- ==============================================================================
 -- TABLE: arr_sync_quality_profiles
 -- Purpose: Store quality profile sync selections (many-to-many)
--- Migration: 015_create_arr_sync_tables.ts
+-- Migration: 015_create_arr_sync_tables.ts, 029_add_database_id_foreign_keys.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_quality_profiles (
@@ -290,7 +290,8 @@ CREATE TABLE arr_sync_quality_profiles (
     database_id INTEGER NOT NULL,
     profile_id INTEGER NOT NULL,
     PRIMARY KEY (instance_id, database_id, profile_id),
-    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
+    FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE CASCADE
 );
 
 -- ==============================================================================
@@ -311,7 +312,7 @@ CREATE TABLE arr_sync_quality_profiles_config (
 -- ==============================================================================
 -- TABLE: arr_sync_delay_profiles_config
 -- Purpose: Store delay profile sync configuration (one per instance, single profile)
--- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 028_simplify_delay_profile_sync.ts
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 028_simplify_delay_profile_sync.ts, 029_add_database_id_foreign_keys.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_delay_profiles_config (
@@ -322,13 +323,14 @@ CREATE TABLE arr_sync_delay_profiles_config (
     next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
     database_id INTEGER,                        -- Single database reference (Migration 028)
     profile_id INTEGER,                         -- Single profile reference (Migration 028)
-    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
+    FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE SET NULL
 );
 
 -- ==============================================================================
 -- TABLE: arr_sync_media_management
 -- Purpose: Store media management sync configuration (one per instance)
--- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 029_add_database_id_foreign_keys.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_media_management (
@@ -340,7 +342,10 @@ CREATE TABLE arr_sync_media_management (
     cron TEXT,                                  -- Cron expression for schedule trigger
     should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
     next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
-    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
+    FOREIGN KEY (naming_database_id) REFERENCES database_instances(id) ON DELETE SET NULL,
+    FOREIGN KEY (quality_definitions_database_id) REFERENCES database_instances(id) ON DELETE SET NULL,
+    FOREIGN KEY (media_settings_database_id) REFERENCES database_instances(id) ON DELETE SET NULL
 );
 
 -- ==============================================================================
