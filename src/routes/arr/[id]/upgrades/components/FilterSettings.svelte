@@ -3,7 +3,6 @@
 		Plus,
 		Pencil,
 		Check,
-		Info,
 		Power,
 		Copy,
 		ClipboardCopy,
@@ -16,7 +15,6 @@
 	import { createSearchStore } from '$lib/client/stores/search';
 	import FilterGroupComponent from './FilterGroup.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
-	import FiltersInfoModal from './FiltersInfoModal.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -36,8 +34,6 @@
 	function notifyChange() {
 		onFiltersChange?.(filters);
 	}
-
-	let showInfoModal = false;
 
 	// Filter the filters list based on search
 	$: filteredFilters = filterByName(filters, $debouncedQuery);
@@ -186,7 +182,6 @@
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search filters..." />
-			<ActionButton icon={Info} title="Fields" on:click={() => (showInfoModal = true)} />
 			<ActionButton icon={Plus} title="Add filter" on:click={addFilter} />
 		</ActionsBar>
 	</div>
@@ -389,8 +384,6 @@
 		</svelte:fragment>
 	</ExpandableTable>
 </div>
-
-<FiltersInfoModal bind:open={showInfoModal} />
 
 <Modal
 	bind:open={deleteModalOpen}

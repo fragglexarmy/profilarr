@@ -14,6 +14,8 @@
 	// Responsive: auto-switch to xs on smaller screens (< 1280px)
 	export let responsive: boolean = false;
 	export let fullWidth: boolean = false;
+	// Optional href - renders as anchor instead of button
+	export let href: string | undefined = undefined;
 
 	let isSmallScreen = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -64,15 +66,30 @@
 	$: classes = `${baseClasses} ${sizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
 </script>
 
-<button {type} {disabled} class={classes} on:click on:mouseenter on:mouseleave>
-	{#if icon && iconPosition === 'left'}
-		<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
-	{/if}
-	{#if text}
-		<span class={baseTextColor}>{text}</span>
-	{/if}
-	<slot />
-	{#if icon && iconPosition === 'right'}
-		<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
-	{/if}
-</button>
+{#if href}
+	<a {href} class={classes} on:click on:mouseenter on:mouseleave>
+		{#if icon && iconPosition === 'left'}
+			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
+		{/if}
+		{#if text}
+			<span class={baseTextColor}>{text}</span>
+		{/if}
+		<slot />
+		{#if icon && iconPosition === 'right'}
+			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
+		{/if}
+	</a>
+{:else}
+	<button {type} {disabled} class={classes} on:click on:mouseenter on:mouseleave>
+		{#if icon && iconPosition === 'left'}
+			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
+		{/if}
+		{#if text}
+			<span class={baseTextColor}>{text}</span>
+		{/if}
+		<slot />
+		{#if icon && iconPosition === 'right'}
+			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
+		{/if}
+	</button>
+{/if}

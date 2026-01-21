@@ -9,7 +9,6 @@
 	import CoreSettings from './components/CoreSettings.svelte';
 	import FilterSettings from './components/FilterSettings.svelte';
 	import RunHistory from './components/RunHistory.svelte';
-	import UpgradesInfoModal from './components/UpgradesInfoModal.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
@@ -37,7 +36,6 @@
 	// Dev mode check - use VITE_CHANNEL which is explicitly set in dev mode
 	const isDev = import.meta.env.VITE_CHANNEL === 'dev';
 
-	let showInfoModal = false;
 	let saving = false;
 	let running = false;
 	let clearing = false;
@@ -86,7 +84,7 @@
 		</p>
 	</div>
 	<div slot="right" class="flex items-center gap-2">
-		<Button text="How it works" icon={Info} on:click={() => (showInfoModal = true)} />
+		<Button text="Info" icon={Info} href="/arr/{data.instance.id}/upgrades/info" />
 		{#if !isNewConfig && data.config?.dryRun}
 			<Button
 				text={clearing ? 'Clearing...' : 'Reset Cache'}
@@ -236,5 +234,4 @@
 	></form>
 {/if}
 
-<UpgradesInfoModal bind:open={showInfoModal} />
 <DirtyModal />

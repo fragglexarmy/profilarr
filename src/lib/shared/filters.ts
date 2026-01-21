@@ -8,6 +8,7 @@ import { uuid } from './uuid.ts';
 export interface FilterOperator {
 	id: string;
 	label: string;
+	description?: string;
 }
 
 export type FilterValueType = string | number | boolean | null;
@@ -20,6 +21,7 @@ export interface FilterValue {
 export interface FilterField {
 	id: string;
 	label: string;
+	description: string;
 	operators: FilterOperator[];
 	valueType: 'boolean' | 'select' | 'text' | 'number' | 'date';
 	values?: FilterValue[];
@@ -82,42 +84,42 @@ export const filterModes: { id: FilterMode; label: string; description: string }
  * Common operator sets
  */
 const booleanOperators: FilterOperator[] = [
-	{ id: 'is', label: 'is' },
-	{ id: 'is_not', label: 'is not' }
+	{ id: 'is', label: 'is', description: 'Exact match' },
+	{ id: 'is_not', label: 'is not', description: 'Does not match' }
 ];
 
 const numberOperators: FilterOperator[] = [
-	{ id: 'eq', label: 'equals' },
-	{ id: 'neq', label: 'does not equal' },
-	{ id: 'gt', label: 'is greater than' },
-	{ id: 'gte', label: 'is greater than or equal' },
-	{ id: 'lt', label: 'is less than' },
-	{ id: 'lte', label: 'is less than or equal' }
+	{ id: 'eq', label: 'equals', description: 'Exactly equals the value' },
+	{ id: 'neq', label: 'does not equal', description: 'Does not equal the value' },
+	{ id: 'gt', label: 'is greater than', description: 'Greater than the value' },
+	{ id: 'gte', label: 'is greater than or equal', description: 'Greater than or equal to the value' },
+	{ id: 'lt', label: 'is less than', description: 'Less than the value' },
+	{ id: 'lte', label: 'is less than or equal', description: 'Less than or equal to the value' }
 ];
 
 const textOperators: FilterOperator[] = [
-	{ id: 'contains', label: 'contains' },
-	{ id: 'not_contains', label: 'does not contain' },
-	{ id: 'starts_with', label: 'starts with' },
-	{ id: 'ends_with', label: 'ends with' },
-	{ id: 'eq', label: 'equals' },
-	{ id: 'neq', label: 'does not equal' }
+	{ id: 'contains', label: 'contains', description: 'Contains the text (case-insensitive)' },
+	{ id: 'not_contains', label: 'does not contain', description: 'Does not contain the text' },
+	{ id: 'starts_with', label: 'starts with', description: 'Starts with the text' },
+	{ id: 'ends_with', label: 'ends with', description: 'Ends with the text' },
+	{ id: 'eq', label: 'equals', description: 'Exactly equals the text (case-insensitive)' },
+	{ id: 'neq', label: 'does not equal', description: 'Does not equal the text' }
 ];
 
 const dateOperators: FilterOperator[] = [
-	{ id: 'before', label: 'is before' },
-	{ id: 'after', label: 'is after' },
-	{ id: 'in_last', label: 'in the last' },
-	{ id: 'not_in_last', label: 'not in the last' }
+	{ id: 'before', label: 'is before', description: 'The date is before the specified date' },
+	{ id: 'after', label: 'is after', description: 'The date is after the specified date' },
+	{ id: 'in_last', label: 'in the last', description: 'Within the last N days' },
+	{ id: 'not_in_last', label: 'not in the last', description: 'Not within the last N days' }
 ];
 
 const ordinalOperators: FilterOperator[] = [
-	{ id: 'eq', label: 'is exactly' },
-	{ id: 'neq', label: 'is not' },
-	{ id: 'gte', label: 'has reached' },
-	{ id: 'lte', label: "hasn't passed" },
-	{ id: 'gt', label: 'is past' },
-	{ id: 'lt', label: 'is before' }
+	{ id: 'eq', label: 'is exactly', description: 'Exactly matches the status' },
+	{ id: 'neq', label: 'is not', description: 'Does not match the status' },
+	{ id: 'gte', label: 'has reached', description: 'Has reached this status or further in the progression' },
+	{ id: 'lte', label: "hasn't passed", description: 'Has not passed this status in the progression' },
+	{ id: 'gt', label: 'is past', description: 'Is past this status (further along)' },
+	{ id: 'lt', label: 'is before', description: 'Is before this status (not yet reached)' }
 ];
 
 /**
@@ -139,6 +141,7 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'monitored',
 		label: 'Monitored',
+		description: 'Whether the item is being monitored for upgrades',
 		operators: booleanOperators,
 		valueType: 'boolean',
 		values: [
@@ -149,6 +152,7 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'cutoff_met',
 		label: 'Cutoff Met',
+		description: "Whether the item's quality score meets the filter's cutoff percentage",
 		operators: booleanOperators,
 		valueType: 'boolean',
 		values: [
@@ -161,6 +165,7 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'minimum_availability',
 		label: 'Minimum Availability',
+		description: 'The minimum availability status set in Radarr. Progresses: TBA → Announced → In Cinemas → Released',
 		operators: ordinalOperators,
 		valueType: 'select',
 		values: [
@@ -175,48 +180,56 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'title',
 		label: 'Title',
+		description: 'The title of the movie',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'quality_profile',
 		label: 'Quality Profile',
+		description: 'The assigned quality profile name',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'collection',
 		label: 'Collection',
+		description: 'The collection the movie belongs to (e.g., "Marvel Cinematic Universe")',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'studio',
 		label: 'Studio',
+		description: 'The production studio',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'original_language',
 		label: 'Original Language',
+		description: 'The original language of the movie (e.g., "en", "ja")',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'genres',
 		label: 'Genres',
+		description: 'Movie genres (Action, Comedy, Drama, etc.)',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'keywords',
 		label: 'Keywords',
+		description: 'TMDb keywords associated with the movie',
 		operators: textOperators,
 		valueType: 'text'
 	},
 	{
 		id: 'release_group',
 		label: 'Release Group',
+		description: 'The release group of the current file',
 		operators: textOperators,
 		valueType: 'text'
 	},
@@ -225,48 +238,56 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'year',
 		label: 'Year',
+		description: 'The release year',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'popularity',
 		label: 'Popularity',
+		description: 'TMDb popularity score',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'runtime',
-		label: 'Runtime (minutes)',
+		label: 'Runtime',
+		description: 'Movie runtime in minutes',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'size_on_disk',
-		label: 'Size on Disk (GB)',
+		label: 'Size on Disk',
+		description: 'Current file size in GB',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'tmdb_rating',
 		label: 'TMDb Rating',
+		description: 'TMDb rating (0-10)',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'imdb_rating',
 		label: 'IMDb Rating',
+		description: 'IMDb rating (0-10)',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'tomato_rating',
-		label: 'Rotten Tomatoes Rating',
+		label: 'Rotten Tomatoes',
+		description: 'Rotten Tomatoes score (0-100)',
 		operators: numberOperators,
 		valueType: 'number'
 	},
 	{
 		id: 'trakt_rating',
 		label: 'Trakt Rating',
+		description: 'Trakt rating (0-100)',
 		operators: numberOperators,
 		valueType: 'number'
 	},
@@ -275,18 +296,21 @@ export const filterFields: FilterField[] = [
 	{
 		id: 'date_added',
 		label: 'Date Added',
+		description: 'When the movie was added to your library',
 		operators: dateOperators,
 		valueType: 'date'
 	},
 	{
 		id: 'digital_release',
 		label: 'Digital Release',
+		description: 'The digital release date from TMDb',
 		operators: dateOperators,
 		valueType: 'date'
 	},
 	{
 		id: 'physical_release',
 		label: 'Physical Release',
+		description: 'The physical release date from TMDb',
 		operators: dateOperators,
 		valueType: 'date'
 	}
