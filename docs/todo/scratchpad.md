@@ -14,6 +14,10 @@
 - maybe move langauges to general tab or put info directly below it to fill
   space
 - adding a database requires double click??? im not running into this personally
+- default delay profiles upon adding an arr. different for radarr/sonarr
+  - wait for seraphys to give default profiles
+  - maybe need to get feedback and update over time
+  - on by default, turn off in settings > general
 
 # Adaptive Backoff
 
