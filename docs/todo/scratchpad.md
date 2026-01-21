@@ -14,7 +14,6 @@
 - maybe move langauges to general tab or put info directly below it to fill
   space
 - adding a database requires double click??? im not running into this personally
-- pageinate the profilarr log pages
 
 # Adaptive Backoff
 

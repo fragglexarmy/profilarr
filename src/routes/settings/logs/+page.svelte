@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { Eye, Copy } from 'lucide-svelte';
+	import { Eye, Copy, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
 	import Modal from '$ui/modal/Modal.svelte';
 	import JsonView from '$ui/meta/JsonView.svelte';
 	import Table from '$ui/table/Table.svelte';
 	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import NumberInput from '$ui/form/NumberInput.svelte';
 	import type { Column } from '$ui/table/types';
 	import LogsActionsBar from './components/LogsActionsBar.svelte';
 	import { createSearchStore } from '$lib/client/stores/search';
@@ -28,6 +29,10 @@
 	let selectedLevel: 'ALL' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' = 'ALL';
 	let selectedSources: Set<string> = new Set();
 	let isRefreshing = false;
+
+	// Pagination state
+	let currentPage = 1;
+	let itemsPerPage = 100;
 
 	// Extract unique sources from logs (excluding 'ALL' since empty set means all)
 	$: uniqueSources = [...new Set(data.logs.map((log) => log.source).filter(Boolean))] as string[];
@@ -156,6 +161,34 @@
 
 		return true;
 	});
+
+	// Reset to page 1 when filters change
+	$: if (selectedLevel || selectedSources || $searchStore.query) {
+		currentPage = 1;
+	}
+
+	// Pagination computed values
+	$: totalPages = Math.max(1, Math.ceil(filteredLogs.length / itemsPerPage));
+	$: startIndex = (currentPage - 1) * itemsPerPage;
+	$: endIndex = Math.min(startIndex + itemsPerPage, filteredLogs.length);
+	$: paginatedLogs = filteredLogs.slice(startIndex, endIndex);
+
+	// Ensure currentPage stays within bounds when itemsPerPage changes
+	$: if (currentPage > totalPages) {
+		currentPage = totalPages;
+	}
+
+	function goToPreviousPage() {
+		if (currentPage > 1) {
+			currentPage--;
+		}
+	}
+
+	function goToNextPage() {
+		if (currentPage < totalPages) {
+			currentPage++;
+		}
+	}
 </script>
 
 <div class="p-8">
@@ -183,17 +216,60 @@
 		onDownload={downloadLogs}
 	/>
 
-	<!-- Stats -->
-	<div class="mt-6 mb-4 text-sm text-neutral-600 dark:text-neutral-400">
-		Showing {filteredLogs.length} of {data.logs.length} logs
-		{#if data.selectedFile}
-			from {data.selectedFile}
-		{/if}
+	<!-- Stats and Pagination Controls (Top) -->
+	<div class="mt-6 mb-4 grid grid-cols-3 items-center">
+		<!-- Stats (Left) -->
+		<div class="font-mono text-sm text-neutral-600 dark:text-neutral-400">
+			Showing {startIndex + 1}-{endIndex} of {filteredLogs.length} logs
+			{#if filteredLogs.length !== data.logs.length}
+				(filtered from {data.logs.length})
+			{/if}
+			{#if data.selectedFile}
+				from {data.selectedFile}
+			{/if}
+		</div>
+
+		<!-- Page navigation (Center) -->
+		<div class="flex items-center justify-center gap-2">
+			<button
+				type="button"
+				on:click={goToPreviousPage}
+				disabled={currentPage <= 1}
+				class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+			>
+				<ChevronLeft size={16} />
+			</button>
+			<span class="min-w-[80px] text-center text-sm text-neutral-600 dark:text-neutral-400">
+				Page {currentPage} of {totalPages}
+			</span>
+			<button
+				type="button"
+				on:click={goToNextPage}
+				disabled={currentPage >= totalPages}
+				class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+			>
+				<ChevronRight size={16} />
+			</button>
+		</div>
+
+		<!-- Items per page (Right) -->
+		<div class="flex items-center justify-end gap-2">
+			<span class="text-sm text-neutral-600 dark:text-neutral-400">Per page:</span>
+			<div class="w-24">
+				<NumberInput
+					name="itemsPerPage"
+					bind:value={itemsPerPage}
+					min={10}
+					max={500}
+					step={10}
+				/>
+			</div>
+		</div>
 	</div>
 
 	<!-- Log Table -->
 	<Table
-		data={filteredLogs}
+		data={paginatedLogs}
 		{columns}
 		emptyMessage="No logs found"
 		hoverable={true}
@@ -209,6 +285,29 @@
 			</div>
 		</svelte:fragment>
 	</Table>
+
+	<!-- Pagination Controls (Bottom) -->
+	<div class="mt-4 flex items-center justify-center gap-2">
+		<button
+			type="button"
+			on:click={goToPreviousPage}
+			disabled={currentPage <= 1}
+			class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+		>
+			<ChevronLeft size={16} />
+		</button>
+		<span class="min-w-[80px] text-center text-sm text-neutral-600 dark:text-neutral-400">
+			Page {currentPage} of {totalPages}
+		</span>
+		<button
+			type="button"
+			on:click={goToNextPage}
+			disabled={currentPage >= totalPages}
+			class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+		>
+			<ChevronRight size={16} />
+		</button>
+	</div>
 </div>
 
 <!-- Meta Modal -->
