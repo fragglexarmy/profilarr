@@ -4,6 +4,7 @@ import { logSettingsQueries } from '$db/queries/logSettings.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { aiSettingsQueries } from '$db/queries/aiSettings.ts';
 import { tmdbSettingsQueries } from '$db/queries/tmdbSettings.ts';
+import { generalSettingsQueries } from '$db/queries/generalSettings.ts';
 import { logSettings } from '$logger/settings.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -12,6 +13,7 @@ export const load = () => {
 	const backupSetting = backupSettingsQueries.get();
 	const aiSetting = aiSettingsQueries.get();
 	const tmdbSetting = tmdbSettingsQueries.get();
+	const generalSetting = generalSettingsQueries.get();
 
 	if (!logSetting) {
 		throw new Error('Log settings not found in database');
@@ -27,6 +29,10 @@ export const load = () => {
 
 	if (!tmdbSetting) {
 		throw new Error('TMDB settings not found in database');
+	}
+
+	if (!generalSetting) {
+		throw new Error('General settings not found in database');
 	}
 
 	return {
@@ -52,6 +58,9 @@ export const load = () => {
 		},
 		tmdbSettings: {
 			api_key: tmdbSetting.api_key
+		},
+		generalSettings: {
+			apply_default_delay_profiles: generalSetting.apply_default_delay_profiles === 1
 		}
 	};
 };
@@ -241,6 +250,32 @@ export const actions: Actions = {
 
 		await logger.info('TMDB settings updated', {
 			source: 'settings/general'
+		});
+
+		return { success: true };
+	},
+
+	updateArrDefaults: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+
+		// Parse form data
+		const applyDefaultDelayProfiles = formData.get('apply_default_delay_profiles') === 'on';
+
+		// Update settings
+		const updated = generalSettingsQueries.update({
+			applyDefaultDelayProfiles
+		});
+
+		if (!updated) {
+			await logger.error('Failed to update arr default settings', {
+				source: 'settings/general'
+			});
+			return fail(500, { error: 'Failed to update settings' });
+		}
+
+		await logger.info('Arr default settings updated', {
+			source: 'settings/general',
+			meta: { applyDefaultDelayProfiles }
 		});
 
 		return { success: true };

@@ -28,3 +28,7 @@ export interface AISettings {
 export interface TMDBSettings {
 	api_key: string;
 }
+
+export interface GeneralSettings {
+	apply_default_delay_profiles: boolean;
+}

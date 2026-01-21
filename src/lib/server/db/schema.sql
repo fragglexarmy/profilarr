@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2026-01-21
+-- Last updated: 2026-01-22
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -603,3 +603,20 @@ CREATE TABLE rename_runs (
 CREATE INDEX idx_rename_runs_instance ON rename_runs(instance_id);
 CREATE INDEX idx_rename_runs_started_at ON rename_runs(started_at DESC);
 CREATE INDEX idx_rename_runs_status ON rename_runs(status);
+
+-- ==============================================================================
+-- TABLE: general_settings
+-- Purpose: Store general app-wide settings (singleton pattern with id=1)
+-- Migration: 030_create_general_settings.ts
+-- ==============================================================================
+
+CREATE TABLE general_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+
+    -- Default delay profile settings
+    apply_default_delay_profiles INTEGER NOT NULL DEFAULT 1,  -- 1=apply defaults when adding arr, 0=don't
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

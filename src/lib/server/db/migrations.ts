@@ -31,6 +31,7 @@ import { migration as migration026 } from './migrations/026_create_upgrade_runs.
 import { migration as migration027 } from './migrations/027_create_rename_runs.ts';
 import { migration as migration028 } from './migrations/028_simplify_delay_profile_sync.ts';
 import { migration as migration029 } from './migrations/029_add_database_id_foreign_keys.ts';
+import { migration as migration030 } from './migrations/030_create_general_settings.ts';
 
 export interface Migration {
 	version: number;
@@ -274,7 +275,8 @@ export function loadMigrations(): Migration[] {
 		migration026,
 		migration027,
 		migration028,
-		migration029
+		migration029,
+		migration030
 	];
 
 	// Sort by version number

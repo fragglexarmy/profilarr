@@ -1,0 +1,64 @@
+import { db } from '../db.ts';
+
+/**
+ * Types for general_settings table
+ */
+export interface GeneralSettings {
+	id: number;
+	apply_default_delay_profiles: number; // 1=true, 0=false
+	created_at: string;
+	updated_at: string;
+}
+
+export interface UpdateGeneralSettingsInput {
+	applyDefaultDelayProfiles?: boolean;
+}
+
+/**
+ * All queries for general_settings table
+ * Singleton pattern - only one settings record exists
+ */
+export const generalSettingsQueries = {
+	/**
+	 * Get the general settings (singleton)
+	 */
+	get(): GeneralSettings | undefined {
+		return db.queryFirst<GeneralSettings>('SELECT * FROM general_settings WHERE id = 1');
+	},
+
+	/**
+	 * Check if default delay profiles should be applied when adding arr
+	 */
+	shouldApplyDefaultDelayProfiles(): boolean {
+		const settings = this.get();
+		return settings?.apply_default_delay_profiles === 1;
+	},
+
+	/**
+	 * Update general settings
+	 */
+	update(input: UpdateGeneralSettingsInput): boolean {
+		const updates: string[] = [];
+		const params: (string | number)[] = [];
+
+		if (input.applyDefaultDelayProfiles !== undefined) {
+			updates.push('apply_default_delay_profiles = ?');
+			params.push(input.applyDefaultDelayProfiles ? 1 : 0);
+		}
+
+		if (updates.length === 0) {
+			return false;
+		}
+
+		// Add updated_at
+		updates.push('updated_at = CURRENT_TIMESTAMP');
+		params.push(1); // id is always 1
+
+		const affected = db.execute(
+			`UPDATE general_settings SET ${updates.join(', ')} WHERE id = ?`,
+			...params
+		);
+
+		return affected > 0;
+	}
+};

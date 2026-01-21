@@ -4,6 +4,7 @@
 	import AISettings from './components/AISettings.svelte';
 	import TMDBSettings from './components/TMDBSettings.svelte';
 	import UISettings from './components/UISettings.svelte';
+	import ArrDefaultsSettings from './components/ArrDefaultsSettings.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -20,6 +21,9 @@
 	<div class="space-y-8">
 		<!-- UI Preferences -->
 		<UISettings />
+
+		<!-- Arr Instance Defaults -->
+		<ArrDefaultsSettings settings={data.generalSettings} />
 
 		<!-- Backup Configuration -->
 		<BackupSettings settings={data.backupSettings} />
