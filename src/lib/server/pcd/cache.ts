@@ -352,6 +352,13 @@ export function getCache(databaseInstanceId: number): PCDCache | undefined {
 }
 
 /**
+ * Get all currently cached database instance IDs (for debugging)
+ */
+export function getCachedDatabaseIds(): number[] {
+	return Array.from(caches.keys());
+}
+
+/**
  * Invalidate a cache (close and remove from registry)
  */
 export function invalidate(databaseInstanceId: number): void {

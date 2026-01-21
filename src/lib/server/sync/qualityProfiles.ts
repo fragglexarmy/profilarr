@@ -13,7 +13,8 @@
 
 import { BaseSyncer, type SyncResult } from './base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { getCache } from '$pcd/cache.ts';
+import { getCache, getCachedDatabaseIds } from '$pcd/cache.ts';
+import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
 import type { SyncArrType } from './mappings.ts';
 
@@ -97,6 +98,21 @@ export class QualityProfileSyncer extends BaseSyncer {
 			const firstSelection = arrSyncQueries.getQualityProfilesSync(this.instanceId).selections[0];
 			const cache = getCache(firstSelection.databaseId);
 			if (!cache) {
+				// Debug: gather info about why cache is missing
+				const cachedIds = getCachedDatabaseIds();
+				const dbInstance = databaseInstancesQueries.getById(firstSelection.databaseId);
+
+				await logger.error(`PCD cache not found for database ${firstSelection.databaseId}`, {
+					source: 'Sync:QualityProfiles',
+					meta: {
+						requestedDatabaseId: firstSelection.databaseId,
+						cachedDatabaseIds: cachedIds,
+						databaseExists: !!dbInstance,
+						databaseEnabled: dbInstance?.enabled ?? null,
+						databaseName: dbInstance?.name ?? null
+					}
+				});
+
 				throw new Error(`PCD cache not found for database ${firstSelection.databaseId}`);
 			}
 			const qualityMappings = await getQualityApiMappings(cache, this.instanceType);
@@ -147,9 +163,20 @@ export class QualityProfileSyncer extends BaseSyncer {
 		for (const selection of syncConfig.selections) {
 			const cache = getCache(selection.databaseId);
 			if (!cache) {
+				// Debug: gather info about why cache is missing
+				const cachedIds = getCachedDatabaseIds();
+				const dbInstance = databaseInstancesQueries.getById(selection.databaseId);
+
 				await logger.warn(`PCD cache not found for database ${selection.databaseId}`, {
 					source: 'Sync:QualityProfiles',
-					meta: { instanceId: this.instanceId, databaseId: selection.databaseId }
+					meta: {
+						instanceId: this.instanceId,
+						requestedDatabaseId: selection.databaseId,
+						cachedDatabaseIds: cachedIds,
+						databaseExists: !!dbInstance,
+						databaseEnabled: dbInstance?.enabled ?? null,
+						databaseName: dbInstance?.name ?? null
+					}
 				});
 				continue;
 			}
