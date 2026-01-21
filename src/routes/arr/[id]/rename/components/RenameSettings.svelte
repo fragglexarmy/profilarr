@@ -1,13 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { parseUTC } from '$shared/dates';
-	import { clickOutside } from '$lib/client/utils/clickOutside';
-	import { ChevronDown } from 'lucide-svelte';
-	import Toggle from '$ui/toggle/Toggle.svelte';
-	import Button from '$ui/button/Button.svelte';
 	import Input from '$ui/form/Input.svelte';
-	import Dropdown from '$ui/dropdown/Dropdown.svelte';
-	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let enabled: boolean = false;
 	export let dryRun: boolean = true;
@@ -24,7 +19,10 @@
 	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
 	export let onSummaryNotificationsChange: ((value: boolean) => void) | undefined = undefined;
 
-	let scheduleOpen = false;
+	const enabledOptions = [
+		{ value: 'false', label: 'Disabled' },
+		{ value: 'true', label: 'Enabled' }
+	];
 
 	const scheduleOptions = [
 		{ value: '60', label: '1 hour' },
@@ -37,8 +35,6 @@
 		{ value: '2880', label: '2 days' },
 		{ value: '10080', label: '1 week' }
 	];
-
-	$: currentScheduleLabel = scheduleOptions.find((o) => o.value === schedule)?.label ?? '24 hours';
 
 	// Cooldown tracking
 	let now = Date.now();
@@ -107,71 +103,53 @@
 	<div class="flex flex-wrap items-center justify-between gap-y-3">
 		<!-- Left: Settings -->
 		<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-			<!-- Enabled Toggle -->
-			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle checked={enabled} on:change={(e) => onEnabledChange?.(e.detail)} />
-				<div>
-					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Enabled</span>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Run on schedule</p>
-				</div>
-			</label>
+			<!-- Status -->
+			<DropdownSelect
+				label="Status:"
+				value={enabled ? 'true' : 'false'}
+				options={enabledOptions}
+				responsiveButton
+				on:change={(e) => onEnabledChange?.(e.detail === 'true')}
+			/>
 
-			<!-- Dry Run Toggle -->
-			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle checked={dryRun} color="amber" on:change={(e) => onDryRunChange?.(e.detail)} />
-				<div>
-					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dry Run</span>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Preview only</p>
-				</div>
-			</label>
+			<!-- Dry Run -->
+			<DropdownSelect
+				label="Dry Run:"
+				value={dryRun ? 'true' : 'false'}
+				options={enabledOptions}
+				responsiveButton
+				on:change={(e) => onDryRunChange?.(e.detail === 'true')}
+			/>
 
-			<!-- Rename Folders Toggle -->
-			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle checked={renameFolders} on:change={(e) => onRenameFoldersChange?.(e.detail)} />
-				<div>
-					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Folders</span>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Also rename folders</p>
-				</div>
-			</label>
+			<!-- Rename Folders -->
+			<DropdownSelect
+				label="Folders:"
+				value={renameFolders ? 'true' : 'false'}
+				options={enabledOptions}
+				responsiveButton
+				on:change={(e) => onRenameFoldersChange?.(e.detail === 'true')}
+			/>
 
-			<!-- Summary Notifications Toggle -->
-			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle checked={summaryNotifications} on:change={(e) => onSummaryNotificationsChange?.(e.detail)} />
-				<div>
-					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Summary</span>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Compact notifications</p>
-				</div>
-			</label>
+			<!-- Summary Notifications -->
+			<DropdownSelect
+				label="Summary:"
+				value={summaryNotifications ? 'true' : 'false'}
+				options={enabledOptions}
+				responsiveButton
+				on:change={(e) => onSummaryNotificationsChange?.(e.detail === 'true')}
+			/>
 
 			<!-- Divider -->
 			<div class="hidden h-6 w-px bg-neutral-200 sm:block dark:bg-neutral-700"></div>
 
 			<!-- Schedule -->
-			<div class="flex items-center gap-2">
-				<span class="text-sm text-neutral-500 dark:text-neutral-400">Schedule:</span>
-				<div class="relative" use:clickOutside={() => (scheduleOpen = false)}>
-					<Button
-						text={currentScheduleLabel}
-						icon={ChevronDown}
-						iconPosition="right"
-						on:click={() => (scheduleOpen = !scheduleOpen)}
-					/>
-					{#if scheduleOpen}
-						<Dropdown position="left" minWidth="8rem">
-							{#each scheduleOptions as option}
-								<DropdownItem
-									label={option.label}
-									selected={schedule === option.value}
-									on:click={() => {
-										onScheduleChange?.(option.value);
-										scheduleOpen = false;
-									}}
-								/>
-							{/each}
-						</Dropdown>
-					{/if}
-				</div>
-			</div>
+			<DropdownSelect
+				label="Schedule:"
+				value={schedule}
+				options={scheduleOptions}
+				responsiveButton
+				on:change={(e) => onScheduleChange?.(e.detail)}
+			/>
 
 			<!-- Ignore Tag -->
 			<div class="flex items-center gap-2">

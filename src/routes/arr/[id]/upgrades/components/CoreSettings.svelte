@@ -2,7 +2,6 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { filterModes, type FilterMode } from '$lib/shared/filters';
 	import { parseUTC } from '$shared/dates';
-	import Toggle from '$ui/toggle/Toggle.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let enabled: boolean = true;
@@ -15,6 +14,11 @@
 	export let onDryRunChange: ((value: boolean) => void) | undefined = undefined;
 	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
 	export let onFilterModeChange: ((value: FilterMode) => void) | undefined = undefined;
+
+	const enabledOptions = [
+		{ value: 'false', label: 'Disabled' },
+		{ value: 'true', label: 'Enabled' }
+	];
 
 	const scheduleOptions = [
 		{ value: '30', label: '30 min' },
@@ -97,30 +101,23 @@
 	<div class="flex flex-wrap items-center justify-between gap-y-3">
 		<!-- Left: Settings -->
 		<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-			<!-- Enabled Toggle -->
-			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle
-					checked={enabled}
-					on:change={(e) => onEnabledChange?.(e.detail)}
-				/>
-				<div>
-					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Enabled</span>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Run on schedule</p>
-				</div>
-			</label>
+			<!-- Status -->
+			<DropdownSelect
+				label="Status:"
+				value={enabled ? 'true' : 'false'}
+				options={enabledOptions}
+				responsiveButton
+				on:change={(e) => onEnabledChange?.(e.detail === 'true')}
+			/>
 
-			<!-- Dry Run Toggle -->
-			<label class="flex cursor-pointer items-center gap-2">
-				<Toggle
-					checked={dryRun}
-					color="amber"
-					on:change={(e) => onDryRunChange?.(e.detail)}
-				/>
-				<div>
-					<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dry Run</span>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400">Preview only</p>
-				</div>
-			</label>
+			<!-- Dry Run -->
+			<DropdownSelect
+				label="Dry Run:"
+				value={dryRun ? 'true' : 'false'}
+				options={enabledOptions}
+				responsiveButton
+				on:change={(e) => onDryRunChange?.(e.detail === 'true')}
+			/>
 
 			<!-- Divider -->
 			<div class="hidden h-6 w-px bg-neutral-200 sm:block dark:bg-neutral-700"></div>
@@ -131,7 +128,6 @@
 				value={schedule}
 				options={scheduleOptions}
 				responsiveButton
-				compactDropdown
 				on:change={(e) => onScheduleChange?.(e.detail)}
 			/>
 
@@ -142,7 +138,6 @@
 				options={modeOptions}
 				minWidth="10rem"
 				responsiveButton
-				compactDropdown
 				on:change={(e) => onFilterModeChange?.(e.detail as FilterMode)}
 			/>
 		</div>

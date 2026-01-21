@@ -166,10 +166,6 @@ Run N: sleeping, dry run → matched=70 (was 50)
        WAKE UP!
 ```
 
-# Toggles
-
-Maybe use DropdownSelect instead? i hate the current design
-
 # Upgrades Info
 
 Move info to upgrades/info to use full page. Modal is too small
