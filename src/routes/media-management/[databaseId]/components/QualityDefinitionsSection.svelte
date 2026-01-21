@@ -126,11 +126,14 @@
 	];
 
 	// Convert definitions to reactive markers for each quality
+	// Note: API uses 0 for "unlimited", but UI slider uses baseScaleMax (2000/1000)
 	function createMarkers(def: QualityDefinition): Marker[] {
+		// Fallback in case baseScaleMax isn't set yet
+		const scaleMax = baseScaleMax || (arrType === 'radarr' ? 2000 : 1000);
 		return [
 			{ id: 'min', label: 'Min', color: 'blue', value: def.min_size },
-			{ id: 'preferred', label: 'Preferred', color: 'green', value: def.preferred_size },
-			{ id: 'max', label: 'Max', color: 'orange', value: def.max_size }
+			{ id: 'preferred', label: 'Preferred', color: 'green', value: def.preferred_size === 0 ? scaleMax : def.preferred_size },
+			{ id: 'max', label: 'Max', color: 'orange', value: def.max_size === 0 ? scaleMax : def.max_size }
 		];
 	}
 
@@ -206,12 +209,13 @@
 
 	$: hasChanges = changedDefinitions.length > 0;
 
+	// Note: API uses 0 for "unlimited", so convert baseScaleMax → 0 on save
 	$: definitionsForSubmit = JSON.stringify(
 		changedDefinitions.map((d) => ({
 			quality_name: d.quality_name,
 			min_size: d.min_size,
-			max_size: d.max_size,
-			preferred_size: d.preferred_size
+			max_size: d.max_size >= baseScaleMax ? 0 : d.max_size,
+			preferred_size: d.preferred_size >= baseScaleMax ? 0 : d.preferred_size
 		}))
 	);
 </script>
@@ -508,7 +512,7 @@
 								<div
 									class="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 								>
-									{def.preferred_size}
+									{def.preferred_size === 0 || def.preferred_size >= baseScaleMax ? 'Unlimited' : def.preferred_size}
 								</div>
 							</div>
 
@@ -521,7 +525,7 @@
 								<div
 									class="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
 								>
-									{def.max_size === baseScaleMax ? 'Unlimited' : def.max_size}
+									{def.max_size === 0 || def.max_size >= baseScaleMax ? 'Unlimited' : def.max_size}
 								</div>
 							</div>
 						</div>
