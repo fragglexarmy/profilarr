@@ -1,0 +1,36 @@
+meta {
+  name: Update Quality Definitions (All)
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{radarrUrl}}/api/v3/qualitydefinition/update
+  body: json
+  auth: none
+}
+
+headers {
+  X-Api-Key: {{radarrApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  [
+    {
+      "id": 8,
+      "quality": {
+        "id": 1,
+        "name": "SDTV",
+        "source": "tv",
+        "resolution": 480,
+        "modifier": "none"
+      },
+      "title": "SDTV",
+      "weight": 8,
+      "minSize": 0,
+      "maxSize": 2000,
+      "preferredSize": 1990
+    }
+  ]
+}
