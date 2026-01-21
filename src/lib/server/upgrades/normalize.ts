@@ -17,12 +17,14 @@ import type { UpgradeItem } from './types.ts';
  * @param movieFile - The movie file (if exists)
  * @param profile - The quality profile
  * @param cutoffPercent - The cutoff percentage from filter config (0-100)
+ * @param tagMap - Map of tag IDs to labels for resolving tag names
  */
 export function normalizeRadarrItem(
 	movie: RadarrMovie,
 	movieFile: RadarrMovieFile | undefined,
 	profile: RadarrQualityProfile | undefined,
-	cutoffPercent: number
+	cutoffPercent: number,
+	tagMap?: Map<number, string>
 ): UpgradeItem {
 	// Calculate current score
 	const currentScore = movieFile?.customFormatScore ?? 0;
@@ -50,6 +52,12 @@ export function normalizeRadarrItem(
 	const digitalRelease = movie.digitalRelease ?? null;
 	const physicalRelease = movie.physicalRelease ?? null;
 
+	// Convert tag IDs to labels
+	const tags = (movie.tags ?? [])
+		.map((tagId) => tagMap?.get(tagId) ?? '')
+		.filter(Boolean)
+		.join(', ');
+
 	return {
 		// Core fields (snake_case for filter matching)
 		id: movie.id,
@@ -65,6 +73,7 @@ export function normalizeRadarrItem(
 		genres: movie.genres?.join(', ') ?? '',
 		keywords: movie.keywords?.join(', ') ?? '',
 		release_group: movieFile?.releaseGroup ?? '',
+		tags,
 		popularity: movie.popularity ?? 0,
 		runtime: movie.runtime ?? 0,
 		size_on_disk: sizeOnDiskGB,
@@ -93,11 +102,12 @@ export function normalizeRadarrItems(
 	movies: RadarrMovie[],
 	movieFileMap: Map<number, RadarrMovieFile>,
 	profileMap: Map<number, RadarrQualityProfile>,
-	cutoffPercent: number
+	cutoffPercent: number,
+	tagMap?: Map<number, string>
 ): UpgradeItem[] {
 	return movies.map((movie) => {
 		const movieFile = movieFileMap.get(movie.id);
 		const profile = profileMap.get(movie.qualityProfileId);
-		return normalizeRadarrItem(movie, movieFile, profile, cutoffPercent);
+		return normalizeRadarrItem(movie, movieFile, profile, cutoffPercent, tagMap);
 	});
 }

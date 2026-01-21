@@ -24,6 +24,7 @@ export interface UpgradeItem {
 	genres: string;
 	keywords: string;
 	release_group: string;
+	tags: string;
 	popularity: number;
 	runtime: number;
 	size_on_disk: number;

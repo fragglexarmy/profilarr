@@ -204,16 +204,25 @@ export async function processUpgradeConfig(
 		const movieFileMap = new Map(movieFiles.map((mf) => [mf.movieId, mf]));
 		const profileMap = new Map(profiles.map((p) => [p.id, p]));
 
+		// Fetch tags for normalization and cooldown
+		const tags = await client.getTags();
+		const tagMap = new Map(tags.map((t) => [t.id, t.label]));
+
 		// Step 2: Normalize items
-		const normalizedItems = normalizeRadarrItems(movies, movieFileMap, profileMap, filter.cutoff);
+		const normalizedItems = normalizeRadarrItems(
+			movies,
+			movieFileMap,
+			profileMap,
+			filter.cutoff,
+			tagMap
+		);
 
 		// Step 3: Apply filter rules
 		const matchedItems = normalizedItems.filter((item) =>
 			evaluateGroup(item as unknown as Record<string, unknown>, filter.group)
 		);
 
-		// Step 4: Filter by cooldown
-		const tags = await client.getTags();
+		// Step 4: Filter by cooldown (tags already fetched above)
 		const afterCooldownItems = filterByCooldown(matchedItems, tags, filter.searchCooldown);
 		const afterCooldownCount = afterCooldownItems.length;
 

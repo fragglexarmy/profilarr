@@ -233,6 +233,13 @@ export const filterFields: FilterField[] = [
 		operators: textOperators,
 		valueType: 'text'
 	},
+	{
+		id: 'tags',
+		label: 'Tags',
+		description: 'Tags applied to the item',
+		operators: textOperators,
+		valueType: 'text'
+	},
 
 	// Number fields
 	{
