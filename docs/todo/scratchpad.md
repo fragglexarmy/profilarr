@@ -1,6 +1,6 @@
 > a quick brain dump for ideas as they come up
 
-# Feedback from Serpahys
+# Feedback from Seraphys
 
 - cache fetches from github on things that dont change often (images, stats for
   example)
