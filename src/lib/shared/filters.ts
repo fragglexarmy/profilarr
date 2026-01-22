@@ -356,18 +356,44 @@ export function createEmptyGroup(): FilterGroup {
 }
 
 /**
- * Create an empty filter config
+ * Create a default filter group with upgradinatorr-style rules:
+ * - monitored is true
+ * - minimum_availability has reached released
+ */
+export function createDefaultGroup(): FilterGroup {
+	return {
+		type: 'group',
+		match: 'all',
+		children: [
+			{
+				type: 'rule',
+				field: 'monitored',
+				operator: 'is',
+				value: true
+			},
+			{
+				type: 'rule',
+				field: 'minimum_availability',
+				operator: 'gte',
+				value: 'released'
+			}
+		]
+	};
+}
+
+/**
+ * Create a filter config with sensible defaults (upgradinatorr-style)
  */
 export function createEmptyFilterConfig(name: string = 'New Filter'): FilterConfig {
 	return {
 		id: uuid(),
 		name,
 		enabled: true,
-		group: createEmptyGroup(),
+		group: createDefaultGroup(),
 		selector: 'random',
-		count: 5,
-		cutoff: 80,
-		searchCooldown: 24 // default 24 hours
+		count: 2,
+		cutoff: 100,
+		searchCooldown: 672 // 4 weeks in hours
 	};
 }
 
