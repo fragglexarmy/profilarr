@@ -9,6 +9,7 @@
 	export let label: string | undefined = undefined;
 	export let value: string;
 	export let options: { value: string; label: string; description?: string }[];
+	export let placeholder: string = 'Select...';
 	export let minWidth: string = '8rem';
 	export let position: 'left' | 'right' | 'middle' = 'left';
 	// Separate compact controls - compact is shorthand for both
@@ -22,6 +23,8 @@
 	export let fullWidth: boolean = false;
 	// Fixed positioning to escape overflow containers (e.g. tables)
 	export let fixed: boolean = false;
+	// Custom width class (overrides fullWidth if set)
+	export let width: string | undefined = undefined;
 
 	const dispatch = createEventDispatcher<{ change: string }>();
 
@@ -48,7 +51,9 @@
 		isSmallScreen = e.matches;
 	}
 
-	$: currentLabel = options.find((o) => o.value === value)?.label ?? value;
+	$: matchedOption = options.find((o) => o.value === value);
+	$: currentLabel = matchedOption?.label || placeholder;
+	$: isPlaceholder = !matchedOption;
 	$: isCompactButton = compactButton ?? (responsiveButton ? isSmallScreen : compact);
 	$: isCompactDropdown =
 		compactDropdown !== undefined
@@ -67,7 +72,7 @@
 	}
 </script>
 
-<div class="flex items-center gap-2" class:w-full={fullWidth}>
+<div class="flex items-center gap-2 {width ?? ''}" class:w-full={fullWidth && !width}>
 	{#if label}
 		<span class={labelClasses}>{label}</span>
 	{/if}
@@ -83,6 +88,8 @@
 			iconPosition="right"
 			size={buttonSize}
 			{fullWidth}
+			justify={fullWidth || width ? 'between' : 'center'}
+			textColor={isPlaceholder ? 'text-neutral-400 dark:text-neutral-500' : ''}
 			on:click={() => (open = !open)}
 		/>
 		{#if open}

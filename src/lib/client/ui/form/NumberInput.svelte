@@ -2,17 +2,18 @@
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import { ChevronUp, ChevronDown } from 'lucide-svelte';
 
-	const dispatch = createEventDispatcher<{ change: number }>();
+	const dispatch = createEventDispatcher<{ change: number | undefined }>();
 
 	// Props
 	export let name: string;
 	export let id: string = name;
-	export let value: number;
+	export let value: number | undefined = undefined;
 	export let min: number | undefined = undefined;
 	export let max: number | undefined = undefined;
 	export let step: number = 1;
 	export let required: boolean = false;
 	export let disabled: boolean = false;
+	export let placeholder: string = '';
 	export let font: 'mono' | 'sans' | undefined = undefined;
 	export let compact: boolean = false;
 	// Responsive: auto-switch to compact on smaller screens (< 1280px)
@@ -58,28 +59,38 @@
 
 	// Increment/decrement handlers
 	function increment() {
-		if (max !== undefined && value >= max) {
+		const currentValue = value ?? min ?? 0;
+		if (max !== undefined && currentValue >= max) {
 			onMaxBlocked?.();
 			return;
 		}
-		updateValue(value + step);
+		updateValue(currentValue + step);
 	}
 
 	function decrement() {
-		if (min !== undefined && value <= min) {
+		const currentValue = value ?? min ?? 0;
+		if (min !== undefined && currentValue <= min) {
 			onMinBlocked?.();
 			return;
 		}
-		updateValue(value - step);
+		updateValue(currentValue - step);
 	}
 
 	// Validate on input
 	function handleInput(event: Event) {
 		const target = event.target as HTMLInputElement;
-		let newValue = parseInt(target.value);
+
+		// Allow clearing the input (show placeholder)
+		if (target.value === '') {
+			value = undefined;
+			dispatch('change', undefined);
+			return;
+		}
+
+		let newValue = parseFloat(target.value);
 
 		if (isNaN(newValue)) {
-			newValue = min ?? 0;
+			return; // Don't update for invalid input
 		}
 
 		if (min !== undefined && newValue < min) {
@@ -106,6 +117,7 @@
 		{step}
 		{required}
 		{disabled}
+		{placeholder}
 		class="block w-full [appearance:textfield] border border-neutral-300 bg-white text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {inputSizeClasses} {fontClass}"
 	/>
 

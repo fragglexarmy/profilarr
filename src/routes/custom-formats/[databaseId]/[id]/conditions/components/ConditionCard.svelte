@@ -3,7 +3,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import Autocomplete from '$ui/form/Autocomplete.svelte';
-	import Select from '$ui/form/Select.svelte';
+	import Input from '$ui/form/Input.svelte';
+	import NumberInput from '$ui/form/NumberInput.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
 	import {
 		CONDITION_TYPES,
 		PATTERN_TYPES,
@@ -18,20 +21,25 @@
 
 	const dispatch = createEventDispatcher<{
 		remove: void;
+		confirm: ConditionData;
+		discard: void;
 		change: ConditionData;
 	}>();
 
+	// Mode: 'normal' for existing conditions, 'draft' for new unsaved conditions
+	export let mode: 'normal' | 'draft' = 'normal';
 	export let condition: ConditionData;
 	export let invalid = false;
 	export let nameConflict = false;
-
-	// Combined error state for styling
-	$: hasError = invalid || nameConflict;
+	export let hasDrafts = false;
 
 	// Available patterns and languages from database (passed in)
 	export let availablePatterns: { id: number; name: string; pattern: string }[] = [];
-	export let availableLanguages: { id: number; name: string }[] = [];
-	// Note: availablePatterns/Languages still have id from DB, but ConditionData uses name for FK stability
+	export let availableLanguages: { name: string; radarr: boolean; sonarr: boolean }[] = [];
+
+	// Computed states based on mode
+	$: isDraft = mode === 'draft';
+	$: rightPadding = isDraft ? 'pr-14' : hasDrafts ? 'pr-14' : 'pr-3';
 
 	// Helper to emit changes - creates new object to maintain immutability
 	function emitChange(updates: Partial<ConditionData>) {
@@ -48,13 +56,13 @@
 		if (r && s) return 'all';
 		if (r) return 'radarr';
 		if (s) return 'sonarr';
-		return 'all'; // Default to 'all' if neither is checked
+		return 'all';
 	}
 
-	// All condition types (no arrType filtering)
+	// All condition types
 	$: filteredConditionTypes = [...CONDITION_TYPES];
 
-	// Get value options based on current type (no arrType filtering - show all options)
+	// Get value options based on current type
 	$: valueOptions = getValueOptions(condition.type);
 
 	function getValueOptions(type: string) {
@@ -77,7 +85,7 @@
 	// Check if type is pattern-based
 	$: isPatternType = PATTERN_TYPES.includes(condition.type as (typeof PATTERN_TYPES)[number]);
 
-	// Autocomplete options for patterns (use name as value for FK stability)
+	// Autocomplete options for patterns
 	$: patternOptions = availablePatterns.map((p) => ({ value: p.name, label: p.name }));
 
 	// Currently selected pattern for Autocomplete
@@ -137,37 +145,41 @@
 			case 'indexer_flag':
 				emitChange({ indexerFlags: value ? [value] : [] });
 				break;
-			case 'language':
-				const lang = availableLanguages.find((l) => l.name === value);
-				emitChange({ languages: lang ? [{ name: lang.name, except: false }] : [] });
-				break;
 		}
 	}
 
-	// Language options for Autocomplete (use name as value for FK stability)
-	$: languageOptions = availableLanguages
-		.map((l) => ({ value: l.name, label: l.name }))
-		.sort((a, b) => {
-			if (a.label === 'Any') return -1;
-			if (b.label === 'Any') return 1;
-			if (a.label === 'Original') return -1;
-			if (b.label === 'Original') return 1;
-			return a.label.localeCompare(b.label);
-		});
+	// Language options for Autocomplete
+	$: languageOptions = availableLanguages.map((l) => ({
+		value: l.name,
+		label: l.name,
+		radarr: l.radarr,
+		sonarr: l.sonarr
+	}));
 
 	// Currently selected language for Autocomplete
 	$: selectedLanguages = condition.languages
 		? condition.languages.map((l) => ({ value: l.name, label: l.name }))
 		: [];
 
+	// Language except state
+	$: hasLanguage = (condition.languages?.length ?? 0) > 0;
+	$: languageExcept = condition.languages?.[0]?.except ?? false;
+
 	function handleLanguageChange(event: CustomEvent<{ value: string; label: string }[]>) {
 		const selected = event.detail;
 		if (selected.length > 0) {
 			const langName = selected[0].value;
-			const lang = availableLanguages.find((l) => l.name === langName);
-			emitChange({ languages: lang ? [{ name: lang.name, except: false }] : [] });
+			emitChange({ languages: [{ name: langName, except: languageExcept }] });
 		} else {
 			emitChange({ languages: [] });
+		}
+	}
+
+	function toggleLanguageExcept() {
+		if (hasLanguage) {
+			emitChange({
+				languages: [{ ...condition.languages![0], except: !languageExcept }]
+			});
 		}
 	}
 
@@ -175,7 +187,6 @@
 	function handleTypeChange(newType: string) {
 		emitChange({
 			type: newType,
-			// Reset all value fields
 			patterns: undefined,
 			languages: undefined,
 			sources: undefined,
@@ -192,84 +203,79 @@
 	$: typeOptions = filteredConditionTypes.map((t) => ({ value: t.value, label: t.label }));
 
 	// Size helpers (convert between bytes and GB for display)
-	$: minSizeGB = condition.size?.minBytes ? condition.size.minBytes / 1024 / 1024 / 1024 : null;
-	$: maxSizeGB = condition.size?.maxBytes ? condition.size.maxBytes / 1024 / 1024 / 1024 : null;
+	$: minSizeGB = condition.size?.minBytes
+		? condition.size.minBytes / 1024 / 1024 / 1024
+		: undefined;
+	$: maxSizeGB = condition.size?.maxBytes
+		? condition.size.maxBytes / 1024 / 1024 / 1024
+		: undefined;
 
-	function handleMinSizeChange(event: Event) {
-		const value = parseFloat((event.target as HTMLInputElement).value);
+	function handleMinSizeChange(value: number | undefined) {
 		const currentSize = condition.size ?? { minBytes: null, maxBytes: null };
 		emitChange({
 			size: {
 				...currentSize,
-				minBytes: isNaN(value) ? null : Math.round(value * 1024 * 1024 * 1024)
+				minBytes: value == null ? null : Math.round(value * 1024 * 1024 * 1024)
 			}
 		});
 	}
 
-	function handleMaxSizeChange(event: Event) {
-		const value = parseFloat((event.target as HTMLInputElement).value);
+	function handleMaxSizeChange(value: number | undefined) {
 		const currentSize = condition.size ?? { minBytes: null, maxBytes: null };
 		emitChange({
 			size: {
 				...currentSize,
-				maxBytes: isNaN(value) ? null : Math.round(value * 1024 * 1024 * 1024)
+				maxBytes: value == null ? null : Math.round(value * 1024 * 1024 * 1024)
 			}
 		});
 	}
 
-	function handleMinYearChange(event: Event) {
-		const value = parseInt((event.target as HTMLInputElement).value);
+	// Year helpers
+	$: minYear = condition.years?.minYear ?? undefined;
+	$: maxYear = condition.years?.maxYear ?? undefined;
+
+	function handleMinYearChange(value: number | undefined) {
 		const currentYears = condition.years ?? { minYear: null, maxYear: null };
 		emitChange({
 			years: {
 				...currentYears,
-				minYear: isNaN(value) ? null : value
+				minYear: value ?? null
 			}
 		});
 	}
 
-	function handleMaxYearChange(event: Event) {
-		const value = parseInt((event.target as HTMLInputElement).value);
+	function handleMaxYearChange(value: number | undefined) {
 		const currentYears = condition.years ?? { minYear: null, maxYear: null };
 		emitChange({
 			years: {
 				...currentYears,
-				maxYear: isNaN(value) ? null : value
+				maxYear: value ?? null
 			}
 		});
-	}
-
-	function handleNameChange(event: Event) {
-		emitChange({ name: (event.target as HTMLInputElement).value });
 	}
 
 	const inputClass =
 		'w-full rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm font-mono text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100';
 </script>
 
-<div
-	class="flex items-center gap-3 rounded-lg border px-3 py-2 {invalid
-		? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20'
-		: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}"
->
+<div class="relative flex items-center gap-3 py-2 pl-3 {rightPadding}">
 	<!-- Name -->
 	<div class="w-48 shrink-0" title={nameConflict ? 'Duplicate condition name' : ''}>
-		<input
-			type="text"
+		<Input
 			value={condition.name}
-			on:input={handleNameChange}
 			placeholder="Condition name"
-			class="{inputClass} {nameConflict ? 'text-red-500 dark:text-red-400' : ''}"
+			width="w-full"
+			error={invalid && !isDraft}
+			on:input={(e) => emitChange({ name: e.detail })}
 		/>
 	</div>
 
 	<!-- Type dropdown -->
-	<div class="w-44 shrink-0">
-		<Select
+	<div class="w-52 shrink-0">
+		<DropdownSelect
 			options={typeOptions}
 			value={condition.type}
-			placeholder="Select type..."
-			mono
+			fullWidth
 			on:change={(e) => handleTypeChange(e.detail)}
 		/>
 	</div>
@@ -281,121 +287,190 @@
 				options={patternOptions}
 				selected={selectedPatterns}
 				max={1}
-				placeholder="Search patterns..."
+				placeholder="Select pattern..."
 				mono
 				on:change={handlePatternChange}
 			/>
 		{:else if condition.type === 'language'}
-			<Autocomplete
-				options={languageOptions}
-				selected={selectedLanguages}
-				max={1}
-				placeholder="Search languages..."
-				mono
-				on:change={handleLanguageChange}
-			/>
+			<div class="flex items-center gap-2">
+				<div class="min-w-0 flex-1">
+					<Autocomplete
+						options={languageOptions}
+						selected={selectedLanguages}
+						max={1}
+						placeholder="Select language..."
+						mono
+						customItems
+						fullWidth
+						on:change={handleLanguageChange}
+					>
+						<svelte:fragment slot="item" let:option>
+							<span class="flex items-center justify-between w-full">
+								<span>{option.label}</span>
+								<span class="flex gap-1">
+									{#if option.radarr}
+										<Badge variant="warning" size="sm">Radarr</Badge>
+									{/if}
+									{#if option.sonarr}
+										<Badge variant="info" size="sm">Sonarr</Badge>
+									{/if}
+								</span>
+							</span>
+						</svelte:fragment>
+					</Autocomplete>
+				</div>
+				<button
+					type="button"
+					class="relative z-10 flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors dark:border-neutral-600 dark:bg-neutral-800 {hasLanguage
+						? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700'
+						: 'cursor-not-allowed opacity-50'}"
+					disabled={!hasLanguage}
+					on:click={toggleLanguageExcept}
+				>
+					<span class="text-sm text-neutral-700 dark:text-neutral-300">Except</span>
+					<IconCheckbox icon={X} checked={languageExcept} color="red" shape="rounded" />
+				</button>
+			</div>
 		{:else if condition.type === 'size'}
 			<div class="flex items-center gap-2">
-				<input
-					type="number"
-					step="0.1"
-					placeholder="Min"
-					value={minSizeGB ?? ''}
-					on:change={handleMinSizeChange}
-					class="{inputClass} w-20 font-mono"
-				/>
+				<div class="flex-1">
+					<NumberInput
+						name="minSize"
+						value={minSizeGB}
+						min={0}
+						step={1}
+						font="mono"
+						placeholder="Min GB"
+						on:change={(e) => handleMinSizeChange(e.detail)}
+					/>
+				</div>
 				<span class="text-sm text-neutral-500">-</span>
-				<input
-					type="number"
-					step="0.1"
-					placeholder="Max"
-					value={maxSizeGB ?? ''}
-					on:change={handleMaxSizeChange}
-					class="{inputClass} w-20 font-mono"
-				/>
-				<span class="text-sm text-neutral-500 dark:text-neutral-400">GB</span>
+				<div class="flex-1">
+					<NumberInput
+						name="maxSize"
+						value={maxSizeGB}
+						min={0}
+						step={1}
+						font="mono"
+						placeholder="Max GB"
+						on:change={(e) => handleMaxSizeChange(e.detail)}
+					/>
+				</div>
 			</div>
 		{:else if condition.type === 'year'}
 			<div class="flex items-center gap-2">
-				<input
-					type="number"
-					placeholder="Min"
-					value={condition.years?.minYear ?? ''}
-					on:change={handleMinYearChange}
-					class="{inputClass} w-20 font-mono"
-				/>
+				<div class="flex-1">
+					<NumberInput
+						name="minYear"
+						value={minYear}
+						min={1900}
+						max={2100}
+						step={1}
+						font="mono"
+						placeholder="Min Year"
+						on:change={(e) => handleMinYearChange(e.detail)}
+					/>
+				</div>
 				<span class="text-sm text-neutral-500">-</span>
-				<input
-					type="number"
-					placeholder="Max"
-					value={condition.years?.maxYear ?? ''}
-					on:change={handleMaxYearChange}
-					class="{inputClass} w-20 font-mono"
-				/>
+				<div class="flex-1">
+					<NumberInput
+						name="maxYear"
+						value={maxYear}
+						min={1900}
+						max={2100}
+						step={1}
+						font="mono"
+						placeholder="Max Year"
+						on:change={(e) => handleMaxYearChange(e.detail)}
+					/>
+				</div>
 			</div>
 		{:else}
 			<!-- Enum-based types -->
-			<Select
+			<DropdownSelect
 				options={valueOptions}
 				value={selectedValue}
-				placeholder="Select value..."
-				mono
+				fullWidth
 				on:change={(e) => handleSelectChange(e.detail)}
 			/>
 		{/if}
 	</div>
 
-	<!-- Negate -->
-	<div class="flex shrink-0 items-center gap-1.5">
-		<IconCheckbox
-			icon={X}
-			checked={condition.negate}
-			color="red"
+	<!-- Controls - right aligned -->
+	<div class="ml-auto flex shrink-0 items-center gap-2">
+		<!-- Negate -->
+		<button
+			type="button"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ negate: !condition.negate })}
-		/>
-		<span class="text-xs text-neutral-500 dark:text-neutral-400">Negate</span>
-	</div>
+		>
+			<span class="text-sm text-neutral-700 dark:text-neutral-300">Negate</span>
+			<IconCheckbox icon={X} checked={condition.negate} color="red" shape="rounded" />
+		</button>
 
-	<!-- Required -->
-	<div class="flex shrink-0 items-center gap-1.5">
-		<IconCheckbox
-			icon={Check}
-			checked={condition.required}
-			color="green"
+		<!-- Required -->
+		<button
+			type="button"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ required: !condition.required })}
-		/>
-		<span class="text-xs text-neutral-500 dark:text-neutral-400">Required</span>
-	</div>
+		>
+			<span class="text-sm text-neutral-700 dark:text-neutral-300">Required</span>
+			<IconCheckbox icon={Check} checked={condition.required} color="green" shape="rounded" />
+		</button>
 
-	<!-- Radarr -->
-	<div class="flex shrink-0 items-center gap-1.5">
-		<IconCheckbox
-			icon={Check}
-			checked={radarrEnabled}
-			color={ARR_COLORS.radarr}
+		<!-- Radarr -->
+		<button
+			type="button"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ arrType: getArrType(!radarrEnabled, sonarrEnabled) })}
-		/>
-		<span class="text-xs text-neutral-500 dark:text-neutral-400">Radarr</span>
-	</div>
+		>
+			<span class="text-sm text-neutral-700 dark:text-neutral-300">Radarr</span>
+			<IconCheckbox icon={Check} checked={radarrEnabled} color={ARR_COLORS.radarr} shape="rounded" />
+		</button>
 
-	<!-- Sonarr -->
-	<div class="flex shrink-0 items-center gap-1.5">
-		<IconCheckbox
-			icon={Check}
-			checked={sonarrEnabled}
-			color={ARR_COLORS.sonarr}
+		<!-- Sonarr -->
+		<button
+			type="button"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ arrType: getArrType(radarrEnabled, !sonarrEnabled) })}
-		/>
-		<span class="text-xs text-neutral-500 dark:text-neutral-400">Sonarr</span>
+		>
+			<span class="text-sm text-neutral-700 dark:text-neutral-300">Sonarr</span>
+			<IconCheckbox icon={Check} checked={sonarrEnabled} color={ARR_COLORS.sonarr} shape="rounded" />
+		</button>
+
+		<!-- Action buttons based on mode -->
+		{#if isDraft}
+			<!-- Discard -->
+			<button
+				type="button"
+				on:click={() => dispatch('discard')}
+				class="flex cursor-pointer items-center rounded-lg border border-neutral-300 bg-white p-2 transition-colors hover:border-red-300 hover:bg-red-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:border-red-500 dark:hover:bg-red-900/20"
+				title="Discard condition"
+			>
+				<Trash2 size={14} class="text-red-500 dark:text-red-400" />
+			</button>
+		{:else}
+			<!-- Remove -->
+			<button
+				type="button"
+				on:click={() => dispatch('remove')}
+				class="flex cursor-pointer items-center rounded-lg border border-neutral-300 bg-white p-2 transition-colors hover:border-red-300 hover:bg-red-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:border-red-500 dark:hover:bg-red-900/20"
+				title="Remove condition"
+			>
+				<Trash2 size={14} class="text-red-500 dark:text-red-400" />
+			</button>
+		{/if}
 	</div>
 
-	<!-- Remove -->
-	<button
-		type="button"
-		on:click={() => dispatch('remove')}
-		class="shrink-0 cursor-pointer p-1 text-neutral-400 transition-colors hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400"
-		title="Remove condition"
-	>
-		<Trash2 size={16} />
-	</button>
+	<!-- Confirm button for draft mode - positioned in right padding -->
+	{#if isDraft}
+		<button
+			type="button"
+			on:click={() => dispatch('confirm', condition)}
+			class="absolute right-3 top-1/2 -translate-y-1/2 flex cursor-pointer items-center rounded-lg border border-neutral-300 bg-white p-2 transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20"
+			title="Confirm condition"
+		>
+			<Check size={14} class="text-emerald-500 dark:text-emerald-400" />
+		</button>
+	{/if}
 </div>

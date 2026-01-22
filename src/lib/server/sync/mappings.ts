@@ -525,9 +525,6 @@ export function getLanguagesWithSupport(): LanguageWithSupport[] {
 	// Build result with support flags
 	const result: LanguageWithSupport[] = [];
 	for (const name of allNames) {
-		// Skip "Any" - it's only for quality profiles, not conditions
-		if (name === 'Any') continue;
-
 		result.push({
 			name,
 			radarr: radarrLangs.has(name),
@@ -535,8 +532,10 @@ export function getLanguagesWithSupport(): LanguageWithSupport[] {
 		});
 	}
 
-	// Sort: Original first, then alphabetically
+	// Sort: Any first, Original second, then alphabetically
 	return result.sort((a, b) => {
+		if (a.name === 'Any') return -1;
+		if (b.name === 'Any') return 1;
 		if (a.name === 'Original') return -1;
 		if (b.name === 'Original') return 1;
 		return a.name.localeCompare(b.name);

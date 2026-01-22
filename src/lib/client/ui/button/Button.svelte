@@ -16,6 +16,8 @@
 	export let fullWidth: boolean = false;
 	// Optional href - renders as anchor instead of button
 	export let href: string | undefined = undefined;
+	// Alignment for content (center or between for dropdowns)
+	export let justify: 'center' | 'between' = 'center';
 
 	let isSmallScreen = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -38,8 +40,9 @@
 		isSmallScreen = e.matches;
 	}
 
-	const baseClasses =
-		'inline-flex items-center justify-center font-medium transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50';
+	$: justifyClass = justify === 'between' ? 'justify-between' : 'justify-center';
+
+	$: baseClasses = `inline-flex items-center ${justifyClass} font-medium transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50`;
 
 	const sizeClasses = {
 		xs: 'gap-1 rounded px-2 py-1 text-xs',

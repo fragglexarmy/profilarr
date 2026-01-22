@@ -11,6 +11,7 @@
 	export let value: string = '';
 	export let placeholder: string = 'Select...';
 	export let mono: boolean = false;
+	export let width: string = 'w-full';
 
 	const dispatch = createEventDispatcher<{
 		change: string;
@@ -77,7 +78,7 @@
 	}
 </script>
 
-<div class="relative" bind:this={containerElement}>
+<div class="relative {width}" bind:this={containerElement}>
 	<!-- Trigger button -->
 	<button
 		type="button"

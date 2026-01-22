@@ -3,7 +3,6 @@
 	import { tick } from 'svelte';
 	import { Plus, Save, Loader2, AlertTriangle } from 'lucide-svelte';
 	import ConditionCard from './components/ConditionCard.svelte';
-	import DraftConditionCard from './components/DraftConditionCard.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
@@ -240,17 +239,18 @@
 		</svelte:fragment>
 	</StickyCard>
 
-	<div class="mt-6 space-y-6 px-4 pb-12">
+	<div class="mt-6 space-y-6 pb-12">
 		<!-- Draft conditions -->
 		{#if draftConditions.length > 0}
 			<div class="space-y-2">
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 px-3">
 					<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Drafts</span>
 					<Badge variant="neutral" size="sm">{draftConditions.length}</Badge>
 				</div>
 
 				{#each draftConditions as draft (draft._key)}
-					<DraftConditionCard
+					<ConditionCard
+						mode="draft"
 						condition={draft}
 						availablePatterns={data.availablePatterns}
 						availableLanguages={data.availableLanguages}
@@ -264,9 +264,13 @@
 
 		<!-- Existing conditions sorted by status, type, then name -->
 		{#if conditions.length === 0 && draftConditions.length === 0}
-			<p class="text-sm text-neutral-500 dark:text-neutral-400">No conditions defined</p>
-		{:else}
+			<p class="px-3 text-sm text-neutral-500 dark:text-neutral-400">No conditions defined</p>
+		{:else if conditions.length > 0}
 			<div class="space-y-2">
+				<div class="flex items-center gap-2 px-3">
+					<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Conditions</span>
+					<Badge variant="neutral" size="sm">{conditions.length}</Badge>
+				</div>
 				{#each sortedConditions as condition (condition._key)}
 					<ConditionCard
 						{condition}
@@ -274,6 +278,7 @@
 						availableLanguages={data.availableLanguages}
 						invalid={!isConditionValid(condition)}
 						nameConflict={hasNameConflict(condition)}
+						{hasDrafts}
 						on:remove={() => handleRemove(condition._key)}
 						on:change={(e) => handleConditionChange(e.detail, condition._key)}
 					/>

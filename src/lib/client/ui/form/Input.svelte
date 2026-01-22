@@ -9,6 +9,8 @@
 	export let compact: boolean = false;
 	// Responsive: auto-switch to compact on smaller screens (< 1280px)
 	export let responsive: boolean = false;
+	// Error state - shows red border
+	export let error: boolean = false;
 
 	const dispatch = createEventDispatcher<{ input: string }>();
 
@@ -51,7 +53,7 @@
 	{placeholder}
 	{disabled}
 	on:input={handleInput}
-	class="{width} border border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 {sizeClasses} {disabled
-		? 'cursor-not-allowed opacity-50'
-		: ''}"
+	class="{width} border bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 {sizeClasses} {error
+		? 'border-red-400 bg-red-50 dark:border-red-500 dark:bg-red-900/20'
+		: 'border-neutral-300 dark:border-neutral-700'} {disabled ? 'cursor-not-allowed opacity-50' : ''}"
 />

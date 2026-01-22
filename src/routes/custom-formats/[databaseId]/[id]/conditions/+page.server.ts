@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import * as customFormatQueries from '$pcd/queries/customFormats/index.ts';
 import * as regularExpressionQueries from '$pcd/queries/regularExpressions/index.ts';
-import * as languageQueries from '$pcd/queries/languages.ts';
+import { getLanguagesWithSupport } from '$lib/server/sync/mappings.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import type { ConditionData } from '$pcd/queries/customFormats/index.ts';
 
@@ -47,18 +47,20 @@ export const load: ServerLoad = async ({ params }) => {
 	}
 
 	// Get conditions and available options
-	const [conditions, patterns, languages] = await Promise.all([
+	const [conditions, patterns] = await Promise.all([
 		customFormatQueries.getConditionsForEvaluation(cache, format.name),
-		regularExpressionQueries.list(cache),
-		languageQueries.list(cache)
+		regularExpressionQueries.list(cache)
 	]);
+
+	// Get languages with arr type support from static mappings
+	const availableLanguages = getLanguagesWithSupport();
 
 	return {
 		currentDatabase,
 		format,
 		conditions,
 		availablePatterns: patterns.map((p) => ({ id: p.id, name: p.name, pattern: p.pattern })),
-		availableLanguages: languages,
+		availableLanguages,
 		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };
