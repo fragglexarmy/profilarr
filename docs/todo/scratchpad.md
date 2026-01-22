@@ -2,6 +2,7 @@
 
 # Feedback from Seraphys
 
+- font is too small in some places / too squished
 - rethink job polling architecture
 - maybe move langauges to general tab or put info directly below it to fill
   space
