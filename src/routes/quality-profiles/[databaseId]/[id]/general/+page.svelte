@@ -8,7 +8,8 @@
 	$: initialData = {
 		name: data.profile.name,
 		tags: data.profile.tags.map((t) => t.name),
-		description: data.profile.description ?? ''
+		description: data.profile.description ?? '',
+		language: data.profile.language ?? null
 	};
 </script>
 
@@ -22,5 +23,6 @@
 		canWriteToBase={data.canWriteToBase}
 		actionUrl="?/update"
 		{initialData}
+		availableLanguages={data.availableLanguages}
 	/>
 </div>

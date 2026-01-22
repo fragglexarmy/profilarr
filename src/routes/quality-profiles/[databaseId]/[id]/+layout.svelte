@@ -2,7 +2,7 @@
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import { page } from '$app/stores';
-	import { FileText, Scale, Layers, Earth } from 'lucide-svelte';
+	import { FileText, Scale, Layers } from 'lucide-svelte';
 
 	$: databaseId = $page.params.databaseId;
 	$: profileId = $page.params.id;
@@ -26,12 +26,6 @@
 			href: `/quality-profiles/${databaseId}/${profileId}/qualities`,
 			active: currentPath.includes('/qualities'),
 			icon: Layers
-		},
-		{
-			label: 'Languages',
-			href: `/quality-profiles/${databaseId}/${profileId}/languages`,
-			active: currentPath.includes('/languages'),
-			icon: Earth
 		}
 	];
 

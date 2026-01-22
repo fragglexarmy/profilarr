@@ -40,6 +40,7 @@ export interface QualityProfileGeneral {
 	name: string;
 	description: string; // Raw markdown
 	tags: Tag[];
+	language: string | null; // Language name, null means "Any"
 }
 
 /** Language configuration for a quality profile */

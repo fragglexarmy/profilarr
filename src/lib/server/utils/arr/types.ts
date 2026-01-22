@@ -607,7 +607,7 @@ export interface ArrQualityProfilePayload {
 	id?: number;
 	name: string;
 	items: ArrQualityProfileItem[];
-	language: ArrLanguage;
+	language?: ArrLanguage; // Radarr only - Sonarr uses custom formats for language filtering
 	upgradeAllowed: boolean;
 	cutoff: number;
 	minFormatScore: number;

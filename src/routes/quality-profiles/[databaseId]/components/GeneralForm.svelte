@@ -6,6 +6,7 @@
 	import TagInput from '$ui/form/TagInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import { alertStore } from '$alerts/store';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 
@@ -14,7 +15,14 @@
 		name: string;
 		tags: string[];
 		description: string;
+		language: string | null;
 		[key: string]: unknown;
+	}
+
+	// Language option
+	interface LanguageOption {
+		id: number;
+		name: string;
 	}
 
 	// Props
@@ -22,6 +30,7 @@
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
 	export let initialData: GeneralFormData;
+	export let availableLanguages: LanguageOption[] = [];
 
 	// Event handlers
 	export let onCancel: (() => void) | undefined = undefined;
@@ -29,7 +38,8 @@
 	const defaults: GeneralFormData = {
 		name: '',
 		tags: [],
-		description: ''
+		description: '',
+		language: null
 	};
 
 	if (mode === 'create') {
@@ -68,6 +78,57 @@
 	$: name = ($current.name ?? '') as string;
 	$: tags = ($current.tags ?? []) as string[];
 	$: description = ($current.description ?? '') as string;
+	$: selectedLanguageName = ($current.language ?? null) as string | null;
+
+	// Language autocomplete state
+	let languageSearchQuery = initialData.language || '';
+	let showLanguageDropdown = false;
+
+	$: filteredLanguages = availableLanguages.filter((lang) =>
+		lang.name.toLowerCase().includes(languageSearchQuery.toLowerCase())
+	);
+
+	function selectLanguage(language: LanguageOption) {
+		update('language', language.name);
+		languageSearchQuery = language.name;
+		showLanguageDropdown = false;
+	}
+
+	function clearLanguage() {
+		update('language', null);
+		languageSearchQuery = '';
+		showLanguageDropdown = false;
+	}
+
+	function handleLanguageInput(e: Event) {
+		const target = e.target as HTMLInputElement;
+		languageSearchQuery = target.value;
+		showLanguageDropdown = true;
+
+		const exactMatch = availableLanguages.find(
+			(l) => l.name.toLowerCase() === languageSearchQuery.toLowerCase()
+		);
+		if (!exactMatch) {
+			update('language', null);
+		} else {
+			update('language', exactMatch.name);
+		}
+	}
+
+	function handleLanguageFocus() {
+		showLanguageDropdown = true;
+	}
+
+	function handleLanguageBlur() {
+		setTimeout(() => {
+			showLanguageDropdown = false;
+			if (selectedLanguageName) {
+				languageSearchQuery = selectedLanguageName;
+			} else if (languageSearchQuery && !availableLanguages.find((l) => l.name === languageSearchQuery)) {
+				languageSearchQuery = '';
+			}
+		}, 200);
+	}
 
 	// Validation
 	$: isValid = name.trim() !== '';
@@ -146,7 +207,9 @@
 		}}
 	>
 		<!-- Hidden fields for form data -->
+		<input type="hidden" name="description" value={description} />
 		<input type="hidden" name="tags" value={JSON.stringify(tags)} />
+		<input type="hidden" name="language" value={selectedLanguageName ?? ''} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 
 		<div class="space-y-6">
@@ -172,7 +235,6 @@
 			<!-- Description -->
 			<MarkdownInput
 				id="description"
-				name="description"
 				label="Description"
 				description="Add any notes or details about this profile's purpose and configuration."
 				value={description}
@@ -188,53 +250,89 @@
 				<TagInput {tags} onchange={(newTags) => update('tags', newTags)} />
 			</div>
 
+			<!-- Language -->
+			{#if availableLanguages.length > 0}
+				<div class="space-y-2">
+					<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+						Language
+					</div>
+					<p class="text-xs text-neutral-600 dark:text-neutral-400">
+						Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.
+					</p>
+					<div class="relative">
+						<input
+							type="text"
+							bind:value={languageSearchQuery}
+							oninput={handleLanguageInput}
+							onfocus={handleLanguageFocus}
+							onblur={handleLanguageBlur}
+							placeholder="Search for a language..."
+							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+						/>
+
+						{#if selectedLanguageName}
+							<button
+								type="button"
+								onclick={clearLanguage}
+								aria-label="Clear language"
+								class="absolute top-1/2 right-3 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+							>
+								<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						{/if}
+
+						{#if showLanguageDropdown && filteredLanguages.length > 0}
+							<div
+								class="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+							>
+								{#each filteredLanguages as language}
+									<button
+										type="button"
+										onmousedown={() => selectLanguage(language)}
+										class="w-full px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
+									>
+										{language.name}
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/if}
+
 			<!-- Actions -->
 			<div class="flex items-center justify-between pt-4">
 				<!-- Left side: Delete (only in edit mode) -->
 				<div>
 					{#if mode === 'edit'}
-						<button
-							type="button"
+						<Button
+							variant="danger"
 							disabled={deleting}
-							onclick={handleDeleteClick}
-							class="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900/20"
-						>
-							{#if deleting}
-								<Loader2 size={14} class="animate-spin" />
-								Deleting...
-							{:else}
-								<Trash2 size={14} />
-								Delete
-							{/if}
-						</button>
+							icon={deleting ? Loader2 : Trash2}
+							text={deleting ? 'Deleting...' : 'Delete'}
+							on:click={handleDeleteClick}
+						/>
 					{/if}
 				</div>
 
 				<!-- Right side: Cancel and Save -->
 				<div class="flex gap-3">
 					{#if onCancel}
-						<button
-							type="button"
-							onclick={onCancel}
-							class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-						>
-							Cancel
-						</button>
+						<Button
+							variant="secondary"
+							text="Cancel"
+							on:click={onCancel}
+						/>
 					{/if}
-					<button
-						type="button"
+					<Button
+						variant="primary"
 						disabled={saving || !isValid || !$isDirty}
-						onclick={handleSaveClick}
-						class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-					>
-						{#if saving}
-							<Loader2 size={14} class="animate-spin" />
-							{mode === 'create' ? 'Creating...' : 'Saving...'}
-						{:else}
-							<Save size={14} />
-							{submitButtonText}
-						{/if}
-					</button>
+						icon={saving ? Loader2 : Save}
+						text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
+						on:click={handleSaveClick}
+					/>
 				</div>
 			</div>
 		</div>

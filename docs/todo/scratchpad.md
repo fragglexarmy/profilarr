@@ -7,6 +7,8 @@
 - maybe move langauges to general tab or put info directly below it to fill
   space
 - adding a database requires double click??? im not running into this personally
+- new quality handling
+- copy button on logs page not woprking? cant recreate
 
 # Adaptive Backoff
 

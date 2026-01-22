@@ -32,6 +32,13 @@ export async function general(
 		.orderBy('t.name')
 		.execute();
 
+	// Get language for this profile (first one if exists)
+	const languageRow = await db
+		.selectFrom('quality_profile_languages as qpl')
+		.select(['qpl.language_name'])
+		.where('qpl.quality_profile_name', '=', profile.name)
+		.executeTakeFirst();
+
 	return {
 		id: profile.id,
 		name: profile.name,
@@ -39,6 +46,7 @@ export async function general(
 		tags: tags.map((tag) => ({
 			name: tag.tag_name,
 			created_at: tag.tag_created_at
-		}))
+		})),
+		language: languageRow?.language_name ?? null
 	};
 }

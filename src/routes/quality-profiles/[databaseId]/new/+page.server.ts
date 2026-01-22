@@ -3,6 +3,7 @@ import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
+import { getRadarrLanguages } from '$lib/server/sync/mappings.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 
 export const load: ServerLoad = ({ params }) => {
@@ -22,8 +23,12 @@ export const load: ServerLoad = ({ params }) => {
 		throw error(404, 'Database not found');
 	}
 
+	// Get Radarr languages (language field is Radarr-only)
+	const availableLanguages = getRadarrLanguages();
+
 	return {
 		currentDatabase,
+		availableLanguages,
 		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };
@@ -52,6 +57,8 @@ export const actions: Actions = {
 		const name = formData.get('name') as string;
 		const description = (formData.get('description') as string) || null;
 		const tagsJson = formData.get('tags') as string;
+		const languageRaw = formData.get('language') as string;
+		const language = languageRaw && languageRaw.trim() !== '' ? languageRaw.trim() : null;
 		const layer = (formData.get('layer') as OperationLayer) || 'user';
 
 		// Validate
@@ -88,7 +95,8 @@ export const actions: Actions = {
 			input: {
 				name: name.trim(),
 				description: description?.trim() || null,
-				tags
+				tags,
+				language
 			}
 		});
 

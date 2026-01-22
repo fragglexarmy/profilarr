@@ -10,7 +10,8 @@
 	const initialData = {
 		name: '',
 		tags: [],
-		description: ''
+		description: '',
+		language: null
 	};
 
 	function handleCancel() {
@@ -27,6 +28,7 @@
 		mode="create"
 		canWriteToBase={data.canWriteToBase}
 		{initialData}
+		availableLanguages={data.availableLanguages}
 		onCancel={handleCancel}
 	/>
 </div>

@@ -1,0 +1,15 @@
+meta {
+  name: Get Quality Profiles
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sonarrUrl}}/api/v3/qualityprofile
+  body: none
+  auth: none
+}
+
+headers {
+  X-Api-Key: {{sonarrApiKey}}
+}

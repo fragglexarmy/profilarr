@@ -11,6 +11,7 @@ export interface UpdateGeneralInput {
 	name: string;
 	description: string;
 	tags: string[];
+	language: string | null; // Language name, null means no language set
 }
 
 export interface UpdateGeneralOptions {
@@ -92,6 +93,27 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		queries.push(linkTag);
 	}
 
+	// 3. Handle language changes
+	const profileNameForLanguage = input.name !== current.name ? input.name : current.name;
+
+	// Delete existing language for this profile
+	const deleteLanguage = {
+		sql: `DELETE FROM quality_profile_languages WHERE quality_profile_name = '${esc(profileNameForLanguage)}'`,
+		parameters: [],
+		query: {} as never
+	};
+	queries.push(deleteLanguage);
+
+	// Insert new language if one is selected
+	if (input.language !== null) {
+		const insertLanguage = {
+			sql: `INSERT INTO quality_profile_languages (quality_profile_name, language_name, type) VALUES ('${esc(profileNameForLanguage)}', '${esc(input.language)}', 'simple')`,
+			parameters: [],
+			query: {} as never
+		};
+		queries.push(insertLanguage);
+	}
+
 	// Log what's being changed
 	const changes: Record<string, { from: unknown; to: unknown }> = {};
 
@@ -103,6 +125,9 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	}
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
 		changes.tags = { from: currentTagNames, to: input.tags };
+	}
+	if (current.language !== input.language) {
+		changes.language = { from: current.language, to: input.language };
 	}
 
 	await logger.info(`Save quality profile "${input.name}"`, {

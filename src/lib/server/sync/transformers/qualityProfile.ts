@@ -34,7 +34,7 @@ export interface ArrQualityProfile {
 	id?: number;
 	name: string;
 	items: ArrQualityItem[];
-	language: { id: number; name: string };
+	language?: { id: number; name: string }; // Radarr only, Sonarr ignores this
 	upgradeAllowed: boolean;
 	cutoff: number;
 	minFormatScore: number;
@@ -201,9 +201,11 @@ export function transformQualityProfile(
 	// Reverse items to match arr expected order
 	items.reverse();
 
-	// Build language config
-	const languageName = profile.language?.name ?? 'any';
-	const language = getLanguageForProfile(languageName, arrType);
+	// Build language config (Radarr only - Sonarr uses custom formats for language filtering)
+	const language =
+		arrType === 'radarr'
+			? getLanguageForProfile(profile.language?.name ?? 'any', arrType)
+			: undefined;
 
 	// Build format items
 	const formatItems: ArrFormatItem[] = [];
@@ -236,7 +238,7 @@ export function transformQualityProfile(
 	return {
 		name: profile.name,
 		items,
-		language,
+		...(language && { language }), // Only include for Radarr
 		upgradeAllowed: profile.upgradesAllowed,
 		cutoff: cutoffId ?? items[items.length - 1]?.quality?.id ?? 0,
 		minFormatScore: profile.minimumCustomFormatScore,

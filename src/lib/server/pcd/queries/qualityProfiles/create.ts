@@ -9,6 +9,7 @@ export interface CreateQualityProfileInput {
 	name: string;
 	description: string | null;
 	tags: string[];
+	language: string | null;
 }
 
 export interface CreateQualityProfileOptions {
@@ -87,6 +88,16 @@ export async function create(options: CreateQualityProfileOptions) {
 			query: {} as never
 		};
 		queries.push(insertQuality);
+	}
+
+	// 4. Insert language if one is selected
+	if (input.language !== null) {
+		const insertLanguage = {
+			sql: `INSERT INTO quality_profile_languages (quality_profile_name, language_name, type) VALUES ('${esc(input.name)}', '${esc(input.language)}', 'simple')`,
+			parameters: [],
+			query: {} as never
+		};
+		queries.push(insertLanguage);
 	}
 
 	// Write the operation

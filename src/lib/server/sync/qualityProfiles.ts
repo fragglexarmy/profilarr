@@ -345,7 +345,7 @@ export class QualityProfileSyncer extends BaseSyncer {
 				syncedProfiles.push({
 					name: arrProfile.name,
 					action: isUpdate ? 'updated' : 'created',
-					language: arrProfile.language.name,
+					language: arrProfile.language?.name ?? 'N/A',
 					cutoffFormatScore: arrProfile.cutoffFormatScore,
 					minFormatScore: arrProfile.minFormatScore,
 					formats: scoredFormats

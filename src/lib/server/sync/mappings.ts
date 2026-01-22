@@ -246,7 +246,13 @@ export const LANGUAGES: Record<SyncArrType, Record<string, LanguageDefinition>> 
 		malayalam: { id: 48, name: 'Malayalam' },
 		kannada: { id: 49, name: 'Kannada' },
 		albanian: { id: 50, name: 'Albanian' },
-		afrikaans: { id: 51, name: 'Afrikaans' }
+		afrikaans: { id: 51, name: 'Afrikaans' },
+		marathi: { id: 52, name: 'Marathi' },
+		tagalog: { id: 53, name: 'Tagalog' },
+		urdu: { id: 54, name: 'Urdu' },
+		romansh: { id: 55, name: 'Romansh' },
+		mongolian: { id: 56, name: 'Mongolian' },
+		georgian: { id: 57, name: 'Georgian' }
 	},
 	sonarr: {
 		unknown: { id: 0, name: 'Unknown' },
@@ -478,4 +484,61 @@ export function getLanguageForProfile(name: string, arrType: SyncArrType): Langu
 	}
 
 	return getLanguage(name, arrType);
+}
+
+/**
+ * Get all Radarr languages as an array (for UI dropdowns)
+ * Returns languages sorted by name, with Any and Original at the top
+ */
+export function getRadarrLanguages(): LanguageDefinition[] {
+	const languages = Object.values(LANGUAGES.radarr);
+	// Sort: Any first, Original second, then alphabetically
+	return languages.sort((a, b) => {
+		if (a.id === -1) return -1;
+		if (b.id === -1) return 1;
+		if (a.id === -2) return -1;
+		if (b.id === -2) return 1;
+		return a.name.localeCompare(b.name);
+	});
+}
+
+/**
+ * Language with arr type support information (for conditions UI)
+ */
+export interface LanguageWithSupport {
+	name: string;
+	radarr: boolean;
+	sonarr: boolean;
+}
+
+/**
+ * Get all languages with their arr type support (for conditions page)
+ * Returns sorted array with Original first, then alphabetically
+ */
+export function getLanguagesWithSupport(): LanguageWithSupport[] {
+	const radarrLangs = new Set(Object.values(LANGUAGES.radarr).map((l) => l.name));
+	const sonarrLangs = new Set(Object.values(LANGUAGES.sonarr).map((l) => l.name));
+
+	// Combine all language names
+	const allNames = new Set([...radarrLangs, ...sonarrLangs]);
+
+	// Build result with support flags
+	const result: LanguageWithSupport[] = [];
+	for (const name of allNames) {
+		// Skip "Any" - it's only for quality profiles, not conditions
+		if (name === 'Any') continue;
+
+		result.push({
+			name,
+			radarr: radarrLangs.has(name),
+			sonarr: sonarrLangs.has(name)
+		});
+	}
+
+	// Sort: Original first, then alphabetically
+	return result.sort((a, b) => {
+		if (a.name === 'Original') return -1;
+		if (b.name === 'Original') return 1;
+		return a.name.localeCompare(b.name);
+	});
 }
