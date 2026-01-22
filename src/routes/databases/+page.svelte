@@ -49,11 +49,11 @@
 	// Track loaded images
 	let loadedImages: Set<number> = new Set();
 
-	// Extract GitHub username/org from repository URL
+	// Extract GitHub username/org from repository URL and use local proxy
 	function getGitHubAvatar(repoUrl: string): string {
 		const match = repoUrl.match(/github\.com\/([^\/]+)\//);
 		if (match) {
-			return `https://github.com/${match[1]}.png?size=40`;
+			return `/api/github/avatar/${match[1]}`;
 		}
 		return '';
 	}

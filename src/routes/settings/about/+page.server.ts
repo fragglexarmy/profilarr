@@ -1,37 +1,12 @@
 import { migrationRunner } from '$db/migrations.ts';
 import { config } from '$config';
 import packageJson from '../../../../package.json' with { type: 'json' };
-
-type GitHubRelease = {
-	tag_name: string;
-	name: string;
-	published_at: string;
-	html_url: string;
-	prerelease: boolean;
-};
+import { getCachedReleases, type GitHubRelease } from '$lib/server/utils/github/cache.ts';
 
 type VersionStatus = 'up-to-date' | 'out-of-date' | 'dev-build';
 
 async function fetchGitHubReleases(): Promise<GitHubRelease[]> {
-	try {
-		const response = await fetch(
-			'https://api.github.com/repos/Dictionarry-Hub/profilarr/releases',
-			{
-				headers: {
-					Accept: 'application/vnd.github+json',
-					'User-Agent': 'Profilarr'
-				}
-			}
-		);
-
-		if (!response.ok) {
-			return [];
-		}
-
-		return await response.json();
-	} catch {
-		return [];
-	}
+	return getCachedReleases('Dictionarry-Hub', 'profilarr');
 }
 
 function compareVersions(v1: string, v2: string): number {

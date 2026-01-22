@@ -4,6 +4,7 @@
 
 import { execGit, execGitSafe } from './exec.ts';
 import type { RepoInfo } from './types.ts';
+import { getCachedRepoInfo } from '../github/cache.ts';
 
 /**
  * Validate that a repository URL is accessible and detect if it's private
@@ -174,54 +175,11 @@ export async function commit(repoPath: string, message: string): Promise<void> {
 }
 
 /**
- * Get repository info from GitHub API
+ * Get repository info from GitHub API (cached)
  */
 export async function getRepoInfo(
 	repositoryUrl: string,
 	personalAccessToken?: string | null
 ): Promise<RepoInfo | null> {
-	const githubPattern = /^https:\/\/github\.com\/([\w-]+)\/([\w-]+)\/?$/;
-	const normalizedUrl = repositoryUrl.replace(/\.git$/, '');
-	const match = normalizedUrl.match(githubPattern);
-
-	if (!match) {
-		return null;
-	}
-
-	const [, owner, repo] = match;
-	const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
-
-	const headers: Record<string, string> = {
-		Accept: 'application/vnd.github+json',
-		'X-GitHub-Api-Version': '2022-11-28',
-		'User-Agent': 'Profilarr'
-	};
-
-	if (personalAccessToken) {
-		headers['Authorization'] = `Bearer ${personalAccessToken}`;
-	}
-
-	try {
-		const response = await globalThis.fetch(apiUrl, { headers });
-
-		if (!response.ok) {
-			return null;
-		}
-
-		const data = await response.json();
-
-		return {
-			owner: data.owner.login,
-			repo: data.name,
-			description: data.description,
-			stars: data.stargazers_count,
-			forks: data.forks_count,
-			openIssues: data.open_issues_count,
-			ownerAvatarUrl: data.owner.avatar_url,
-			ownerType: data.owner.type,
-			htmlUrl: data.html_url
-		};
-	} catch {
-		return null;
-	}
+	return getCachedRepoInfo(repositoryUrl, personalAccessToken);
 }

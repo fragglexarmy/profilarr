@@ -2,8 +2,6 @@
 
 # Feedback from Seraphys
 
-- cache fetches from github on things that dont change often (images, stats for
-  example)
 - rethink job polling architecture
 - maybe move langauges to general tab or put info directly below it to fill
   space

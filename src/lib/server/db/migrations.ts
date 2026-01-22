@@ -34,6 +34,7 @@ import { migration as migration029 } from './migrations/029_add_database_id_fore
 import { migration as migration030 } from './migrations/030_create_general_settings.ts';
 import { migration as migration031 } from './migrations/031_remove_search_cooldown.ts';
 import { migration as migration032 } from './migrations/032_add_filter_id_to_upgrade_runs.ts';
+import { migration as migration033 } from './migrations/033_create_github_cache.ts';
 
 export interface Migration {
 	version: number;
@@ -286,7 +287,8 @@ export function loadMigrations(): Migration[] {
 		migration029,
 		migration030,
 		migration031,
-		migration032
+		migration032,
+		migration033
 	];
 
 	// Sort by version number

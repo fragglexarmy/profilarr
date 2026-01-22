@@ -620,3 +620,21 @@ CREATE TABLE general_settings (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ==============================================================================
+-- TABLE: github_cache
+-- Purpose: Cache GitHub API responses (repo info, avatars, releases) to reduce API calls
+-- Migration: 033_create_github_cache.ts
+-- ==============================================================================
+
+CREATE TABLE github_cache (
+    cache_key TEXT PRIMARY KEY,             -- e.g., "repo:owner/repo", "avatar:owner", "releases:owner/repo"
+    cache_type TEXT NOT NULL,               -- "repo_info", "avatar", "releases"
+    data TEXT NOT NULL,                     -- JSON response data (or base64 data URL for images)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL            -- TTL-based expiration
+);
+
+-- GitHub cache indexes (Migration: 033_create_github_cache.ts)
+CREATE INDEX idx_github_cache_type ON github_cache(cache_type);
+CREATE INDEX idx_github_cache_expires ON github_cache(expires_at);
