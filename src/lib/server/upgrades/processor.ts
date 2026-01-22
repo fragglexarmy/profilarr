@@ -10,7 +10,13 @@ import { evaluateGroup } from '$lib/shared/filters.ts';
 import { getSelector } from '$lib/shared/selectors.ts';
 import type { UpgradeItem, UpgradeJobLog, UpgradeSelectionItem } from './types.ts';
 import { normalizeRadarrItems } from './normalize.ts';
-import { filterByCooldown, getTodayTagLabel, applySearchTagToMovies } from './cooldown.ts';
+import {
+	filterByFilterTag,
+	getFilterTagLabel,
+	applyFilterTagToMovies,
+	isFilterExhausted,
+	resetFilterCooldown
+} from './cooldown.ts';
 import { logUpgradeRun, logUpgradeError, logUpgradeSkipped } from './logger.ts';
 import { notifications } from '$lib/server/notifications/definitions/index.ts';
 import { notificationServicesQueries } from '$lib/server/db/queries/notificationServices.ts';
@@ -145,11 +151,11 @@ function createSkippedLog(
 			fetchDurationMs: 0
 		},
 		filter: {
+			id: '',
 			name: '',
 			rules: { type: 'group', match: 'all', children: [] },
 			matchedCount: 0,
 			afterCooldown: 0,
-			cooldownHours: 0,
 			dryRunExcluded: 0
 		},
 		selection: {
@@ -222,8 +228,19 @@ export async function processUpgradeConfig(
 			evaluateGroup(item as unknown as Record<string, unknown>, filter.group)
 		);
 
-		// Step 4: Filter by cooldown (tags already fetched above)
-		const afterCooldownItems = filterByCooldown(matchedItems, tags, filter.searchCooldown);
+		// Step 4: Filter by filter-level tag (items already searched by this filter)
+		// First check if filter is exhausted - if so, reset the cooldown
+		if (isFilterExhausted(matchedItems, tags, filter.name)) {
+			const resetResult = await resetFilterCooldown(client, filter.name);
+			if (resetResult.reset > 0) {
+				// Re-fetch tags after reset
+				const updatedTags = await client.getTags();
+				tags.length = 0;
+				tags.push(...updatedTags);
+			}
+		}
+
+		const afterCooldownItems = filterByFilterTag(matchedItems, tags, filter.name);
 		const afterCooldownCount = afterCooldownItems.length;
 
 		// Step 4b: If dry run, also exclude items from previous dry runs
@@ -363,13 +380,13 @@ export async function processUpgradeConfig(
 						}
 					}
 
-					// Apply search tag
-					const tagLabel = getTodayTagLabel();
-					const searchTag = await client.getOrCreateTag(tagLabel);
-					const tagResult = await applySearchTagToMovies(
+					// Apply filter tag to mark items as searched by this filter
+					const tagLabel = getFilterTagLabel(filter.name);
+					const filterTag = await client.getOrCreateTag(tagLabel);
+					const tagResult = await applyFilterTagToMovies(
 						client,
 						selectedItems.map((item) => item._raw),
-						searchTag.id
+						filterTag.id
 					);
 
 					failed = tagResult.failed;
@@ -414,11 +431,11 @@ export async function processUpgradeConfig(
 				fetchDurationMs
 			},
 			filter: {
+				id: filter.id,
 				name: filter.name,
 				rules: filter.group,
 				matchedCount: matchedItems.length,
 				afterCooldown: afterCooldownCount,
-				cooldownHours: filter.searchCooldown,
 				dryRunExcluded: dryRunExcludedCount
 			},
 			selection: {
@@ -451,6 +468,8 @@ export async function processUpgradeConfig(
 		log.completedAt = new Date().toISOString();
 		log.status = 'failed';
 		log.config.selectedFilter = filter?.name ?? '';
+		log.filter.id = filter?.id ?? '';
+		log.filter.name = filter?.name ?? '';
 
 		return log;
 	} finally {

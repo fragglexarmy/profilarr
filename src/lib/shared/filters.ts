@@ -48,7 +48,8 @@ export interface FilterConfig {
 	selector: string;
 	count: number;
 	cutoff: number;
-	searchCooldown: number; // hours - skip items searched within this time
+	// Cooldown is handled via filter-level tags (profilarr-{filterId})
+	// Future: cooldownMode?: 'basic' | 'advanced' for adaptive backoff
 }
 
 export type FilterMode = 'round_robin' | 'random';
@@ -392,8 +393,7 @@ export function createEmptyFilterConfig(name: string = 'New Filter'): FilterConf
 		group: createDefaultGroup(),
 		selector: 'random',
 		count: 2,
-		cutoff: 100,
-		searchCooldown: 672 // 4 weeks in hours
+		cutoff: 100
 	};
 }
 

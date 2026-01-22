@@ -77,7 +77,16 @@
 	}
 
 	function addFilter() {
-		const newFilter = createEmptyFilterConfig(`Filter ${filters.length + 1}`);
+		// Generate unique filter name
+		let baseName = 'Filter';
+		let counter = filters.length + 1;
+		let name = `${baseName} ${counter}`;
+		while (filters.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
+			counter++;
+			name = `${baseName} ${counter}`;
+		}
+
+		const newFilter = createEmptyFilterConfig(name);
 		filters = [...filters, newFilter];
 		expandedIds.add(newFilter.id);
 		expandedIds = expandedIds;
@@ -93,7 +102,16 @@
 		if (editingId) {
 			const filter = filters.find((f) => f.id === editingId);
 			if (filter) {
-				filter.name = editingName;
+				// Check for duplicate names
+				const trimmedName = editingName.trim();
+				const isDuplicate = filters.some(
+					(f) => f.id !== editingId && f.name.toLowerCase() === trimmedName.toLowerCase()
+				);
+				if (isDuplicate) {
+					alertStore.add('error', 'A filter with this name already exists');
+					return;
+				}
+				filter.name = trimmedName || filter.name;
 				filters = filters;
 				notifyChange();
 			}
@@ -119,10 +137,19 @@
 	function duplicateFilter(id: string) {
 		const filter = filters.find((f) => f.id === id);
 		if (filter) {
+			// Generate unique name for duplicate
+			let baseName = `${filter.name} (Copy)`;
+			let name = baseName;
+			let counter = 1;
+			while (filters.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
+				counter++;
+				name = `${baseName} ${counter}`;
+			}
+
 			const duplicate: FilterConfig = {
 				...structuredClone(filter),
 				id: uuid(),
-				name: `${filter.name} (Copy)`
+				name
 			};
 			filters = [...filters, duplicate];
 			expandedIds.add(duplicate.id);
@@ -166,7 +193,6 @@
 			filter.selector = imported.selector ?? filter.selector;
 			filter.count = imported.count ?? filter.count;
 			filter.cutoff = imported.cutoff ?? filter.cutoff;
-			filter.searchCooldown = imported.searchCooldown ?? filter.searchCooldown;
 			filter.enabled = imported.enabled ?? filter.enabled;
 
 			filters = filters;
@@ -288,7 +314,7 @@
 					class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
 				>
 					<h3 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Settings</h3>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 						<div>
 							<label
 								for="cutoff-{row.id}"
@@ -309,27 +335,6 @@
 							</div>
 							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 								Score threshold for "cutoff met"
-							</p>
-						</div>
-						<div>
-							<label
-								for="cooldown-{row.id}"
-								class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-							>
-								Cooldown (hours)
-							</label>
-							<div class="mt-1">
-								<NumberInput
-									name="cooldown-{row.id}"
-									bind:value={row.searchCooldown}
-									min={24}
-									font="mono"
-									responsive
-									on:change={handleChange}
-								/>
-							</div>
-							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-								Skip if searched recently
 							</p>
 						</div>
 						<div>

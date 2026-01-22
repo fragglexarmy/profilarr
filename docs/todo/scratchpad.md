@@ -2,12 +2,6 @@
 
 # Feedback from Serpahys
 
-- add tags to filters for upgrades
-- upradinatorr filter should be default - both when adding new config and when
-  an arr is added (run a transformation on the database when an arr is added to
-  add the default config, but keep upgrades disabled)
-- cutoff % should be 100 or removed entirely
-- cooldown maybe too complicated
 - cache fetches from github on things that dont change often (images, stats for
   example)
 - rethink job polling architecture
@@ -165,10 +159,3 @@ Run 50: matched=50, afterCooldown=0
 Run N: sleeping, dry run → matched=70 (was 50)
        WAKE UP!
 ```
-
-# Upgrades Info
-
-Move info to upgrades/info to use full page. Modal is too small
-
-- using a table maybe?
-- examples?

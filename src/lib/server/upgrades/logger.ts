@@ -69,8 +69,8 @@ export async function logUpgradeRun(log: UpgradeJobLog): Promise<void> {
 	const meta = {
 		dryRun: log.config.dryRun,
 		filter: log.filter.name,
+		filterId: log.filter.id,
 		selector: log.selection.method,
-		cooldownHours: log.filter.cooldownHours,
 		funnel,
 		items: formattedItems
 	};

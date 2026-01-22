@@ -32,12 +32,15 @@ import { migration as migration027 } from './migrations/027_create_rename_runs.t
 import { migration as migration028 } from './migrations/028_simplify_delay_profile_sync.ts';
 import { migration as migration029 } from './migrations/029_add_database_id_foreign_keys.ts';
 import { migration as migration030 } from './migrations/030_create_general_settings.ts';
+import { migration as migration031 } from './migrations/031_remove_search_cooldown.ts';
+import { migration as migration032 } from './migrations/032_add_filter_id_to_upgrade_runs.ts';
 
 export interface Migration {
 	version: number;
 	name: string;
 	up: string;
 	down?: string;
+	afterUp?: () => void; // Optional callback for data migrations
 }
 
 /**
@@ -97,6 +100,11 @@ class MigrationRunner {
 					migration.name
 				);
 			});
+
+			// Run data migration callback if present (outside transaction)
+			if (migration.afterUp) {
+				migration.afterUp();
+			}
 		} catch (error) {
 			await logger.error(`Failed to apply migration ${migration.version}: ${migration.name}`, {
 				source: 'DatabaseMigrations',
@@ -276,7 +284,9 @@ export function loadMigrations(): Migration[] {
 		migration027,
 		migration028,
 		migration029,
-		migration030
+		migration030,
+		migration031,
+		migration032
 	];
 
 	// Sort by version number

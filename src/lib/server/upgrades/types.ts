@@ -101,11 +101,11 @@ export interface UpgradeJobLog {
 	};
 
 	filter: {
+		id: string;
 		name: string;
 		rules: FilterGroup;
 		matchedCount: number;
 		afterCooldown: number;
-		cooldownHours: number;
 		dryRunExcluded: number;
 	};
 

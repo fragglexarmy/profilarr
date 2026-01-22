@@ -86,8 +86,7 @@ export const actions: Actions = {
 						enabled: f.enabled,
 						selector: f.selector,
 						count: f.count,
-						cutoff: f.cutoff,
-						searchCooldown: f.searchCooldown
+						cutoff: f.cutoff
 					}))
 				}
 			});

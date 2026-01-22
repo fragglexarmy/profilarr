@@ -14,12 +14,12 @@ interface UpgradeRunRow {
 	schedule: number;
 	filter_mode: string;
 	filter_name: string;
+	filter_id: string;
 	library_total: number;
 	library_cached: number;
 	library_fetch_ms: number;
 	matched_count: number;
 	after_cooldown: number;
-	cooldown_hours: number;
 	dry_run_excluded: number;
 	selection_method: string;
 	selection_requested: number;
@@ -60,11 +60,11 @@ function rowToLog(row: UpgradeRunRow): UpgradeJobLog {
 		},
 
 		filter: {
+			id: row.filter_id,
 			name: row.filter_name,
 			rules: { type: 'group', match: 'all', children: [] }, // Not stored, too complex
 			matchedCount: row.matched_count,
 			afterCooldown: row.after_cooldown,
-			cooldownHours: row.cooldown_hours,
 			dryRunExcluded: row.dry_run_excluded
 		},
 
@@ -95,13 +95,13 @@ export const upgradeRunsQueries = {
 		db.execute(
 			`INSERT INTO upgrade_runs (
 				id, instance_id, started_at, completed_at, status, dry_run,
-				schedule, filter_mode, filter_name,
+				schedule, filter_mode, filter_name, filter_id,
 				library_total, library_cached, library_fetch_ms,
 				matched_count, after_cooldown, cooldown_hours, dry_run_excluded,
 				selection_method, selection_requested, selected_count,
 				searches_triggered, successful, failed,
 				items, errors
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			log.id,
 			log.instanceId,
 			log.startedAt,
@@ -111,12 +111,13 @@ export const upgradeRunsQueries = {
 			log.config.schedule,
 			log.config.filterMode,
 			log.config.selectedFilter,
+			log.filter.id,
 			log.library.totalItems,
 			log.library.fetchedFromCache ? 1 : 0,
 			log.library.fetchDurationMs,
 			log.filter.matchedCount,
 			log.filter.afterCooldown,
-			log.filter.cooldownHours,
+			0, // cooldown_hours deprecated, kept for backwards compatibility
 			log.filter.dryRunExcluded,
 			log.selection.method,
 			log.selection.requestedCount,
