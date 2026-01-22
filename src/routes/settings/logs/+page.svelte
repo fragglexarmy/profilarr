@@ -133,8 +133,21 @@
 		try {
 			await navigator.clipboard.writeText(logText);
 			alertStore.add('success', 'Log entry copied to clipboard');
-		} catch (err) {
-			alertStore.add('error', 'Failed to copy to clipboard');
+		} catch {
+			// Fallback for non-secure contexts (HTTP + non-localhost)
+			const textArea = document.createElement('textarea');
+			textArea.value = logText;
+			textArea.style.position = 'fixed';
+			textArea.style.left = '-9999px';
+			document.body.appendChild(textArea);
+			textArea.select();
+			try {
+				document.execCommand('copy');
+				alertStore.add('success', 'Log entry copied to clipboard');
+			} catch {
+				alertStore.add('error', 'Failed to copy to clipboard');
+			}
+			document.body.removeChild(textArea);
 		}
 	}
 
