@@ -3,33 +3,37 @@
  * Processes pending syncs by creating syncer instances and running them
  *
  * Triggers:
- * - on_pull: Call arrSyncQueries.markForSync('on_pull') after database git pull completes
- * - on_change: Call arrSyncQueries.markForSync('on_change') after PCD files change
+ * - on_pull: Triggered directly via triggerSyncs() after database git pull completes
+ * - on_change: Triggered directly via triggerSyncs() after PCD files change
  * - schedule: Cron expressions evaluated by evaluateScheduledSyncs() before processing
  */
 
+import { arrInstancesQueries, type ArrInstance } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
-import { calculateNextRun } from './cron.ts';
+import { calculateNextRun } from './utils.ts';
 import { createArrClient } from '$arr/factory.ts';
 import type { ArrType } from '$arr/types.ts';
-import type { SyncArrType } from './mappings.ts';
 import { logger } from '$logger/logger.ts';
-import { QualityProfileSyncer } from './qualityProfiles.ts';
-import { DelayProfileSyncer } from './delayProfiles.ts';
-import { MediaManagementSyncer } from './mediaManagement.ts';
-import type { SyncResult } from './base.ts';
+import type {
+	SyncResult,
+	SectionType,
+	SectionHandler,
+	ProcessSyncsResult,
+	InstanceSyncResult,
+	SyncTriggerEvent,
+	TriggerContext
+} from './types.ts';
+// Import handlers to trigger registration
+import './qualityProfiles/handler.ts';
+import './delayProfiles/handler.ts';
+import './mediaManagement/handler.ts';
 
-export interface ProcessSyncsResult {
-	totalSynced: number;
-	results: {
-		instanceId: number;
-		instanceName: string;
-		qualityProfiles?: SyncResult;
-		delayProfiles?: SyncResult;
-		mediaManagement?: SyncResult;
-	}[];
-}
+import { getAllSections, getSection } from './registry.ts';
+
+// Concurrency limit for parallel instance processing
+const CONCURRENCY_LIMIT = 3;
+
+export type { ProcessSyncsResult, InstanceSyncResult, SyncTriggerEvent, TriggerContext };
 
 /**
  * Check if a scheduled config should trigger based on next_run_at
@@ -47,53 +51,41 @@ function shouldTrigger(nextRunAt: string | null): boolean {
 
 /**
  * Evaluate scheduled sync configs and mark matching ones for sync
+ * Uses the section registry to reduce code duplication
  */
 async function evaluateScheduledSyncs(): Promise<void> {
-	const scheduled = arrSyncQueries.getScheduledConfigs();
+	const sections = getAllSections();
+	let totalScheduled = 0;
+	let marked = 0;
 
-	const totalScheduled =
-		scheduled.qualityProfiles.length +
-		scheduled.delayProfiles.length +
-		scheduled.mediaManagement.length;
+	// Gather all scheduled configs
+	const scheduledBySection = new Map<SectionType, ReturnType<SectionHandler['getScheduledConfigs']>>();
+	for (const handler of sections) {
+		const configs = handler.getScheduledConfigs();
+		scheduledBySection.set(handler.type, configs);
+		totalScheduled += configs.length;
+	}
 
 	if (totalScheduled === 0) return;
 
 	await logger.debug(`Evaluating ${totalScheduled} scheduled config(s)`, {
 		source: 'SyncProcessor',
-		meta: {
-			qualityProfiles: scheduled.qualityProfiles,
-			delayProfiles: scheduled.delayProfiles,
-			mediaManagement: scheduled.mediaManagement
-		}
+		meta: Object.fromEntries(
+			[...scheduledBySection.entries()].map(([type, configs]) => [type, configs.length])
+		)
 	});
 
-	let marked = 0;
-
-	for (const config of scheduled.qualityProfiles) {
-		if (shouldTrigger(config.nextRunAt)) {
-			arrSyncQueries.setQualityProfilesShouldSync(config.instanceId, true);
-			// Calculate and store next run time
-			const nextRun = calculateNextRun(config.cron);
-			arrSyncQueries.setQualityProfilesNextRunAt(config.instanceId, nextRun);
-			marked++;
-		}
-	}
-
-	for (const config of scheduled.delayProfiles) {
-		if (shouldTrigger(config.nextRunAt)) {
-			arrSyncQueries.setDelayProfilesShouldSync(config.instanceId, true);
-			const nextRun = calculateNextRun(config.cron);
-			arrSyncQueries.setDelayProfilesNextRunAt(config.instanceId, nextRun);
-			marked++;
-		}
-	}
-
-	for (const config of scheduled.mediaManagement) {
-		if (shouldTrigger(config.nextRunAt)) {
-			arrSyncQueries.setMediaManagementShouldSync(config.instanceId, true);
-			const nextRun = calculateNextRun(config.cron);
-			arrSyncQueries.setMediaManagementNextRunAt(config.instanceId, nextRun);
-			marked++;
+	// Process each section's scheduled configs
+	for (const handler of sections) {
+		const configs = scheduledBySection.get(handler.type) ?? [];
+		for (const config of configs) {
+			if (shouldTrigger(config.nextRunAt)) {
+				// Use setStatusPending which sets both should_sync and sync_status
+				handler.setStatusPending(config.instanceId);
+				const nextRun = calculateNextRun(config.cron);
+				handler.setNextRunAt(config.instanceId, nextRun);
+				marked++;
+			}
 		}
 	}
 
@@ -105,40 +97,129 @@ async function evaluateScheduledSyncs(): Promise<void> {
 }
 
 /**
+ * Get all pending syncs grouped by instance
+ * Returns a map of instanceId -> list of section types that need syncing
+ */
+function getPendingSyncsByInstance(): Map<number, SectionType[]> {
+	const result = new Map<number, SectionType[]>();
+
+	for (const handler of getAllSections()) {
+		const instanceIds = handler.getPendingInstanceIds();
+		for (const instanceId of instanceIds) {
+			if (!result.has(instanceId)) {
+				result.set(instanceId, []);
+			}
+			result.get(instanceId)!.push(handler.type);
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Process a single instance's pending syncs
+ * Sections are processed sequentially within an instance (dependency order matters)
+ */
+async function processInstanceSections(
+	instance: ArrInstance,
+	sectionTypes: SectionType[]
+): Promise<InstanceSyncResult> {
+	const instanceResult: InstanceSyncResult = {
+		instanceId: instance.id,
+		instanceName: instance.name
+	};
+
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	// Process sections sequentially (quality profiles depend on custom formats being synced first)
+	for (const sectionType of sectionTypes) {
+		const handler = getSection(sectionType);
+
+		// Atomically claim the sync (prevents double-processing)
+		if (!handler.claimSync(instance.id)) {
+			await logger.debug(`Sync for ${sectionType} already claimed, skipping`, {
+				source: 'SyncProcessor',
+				meta: { instanceId: instance.id, section: sectionType }
+			});
+			continue;
+		}
+
+		try {
+			const syncer = handler.createSyncer(client, instance);
+			const syncResult = await syncer.sync();
+
+			// Store result on the instance result object
+			instanceResult[sectionType] = syncResult;
+
+			// Mark as complete or failed based on result
+			if (syncResult.success) {
+				handler.completeSync(instance.id);
+			} else {
+				handler.failSync(instance.id, syncResult.error ?? 'Unknown error');
+			}
+		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+			handler.failSync(instance.id, errorMsg);
+			await logger.error(`Failed to sync ${sectionType} for "${instance.name}"`, {
+				source: 'SyncProcessor',
+				meta: { instanceId: instance.id, section: sectionType, error: errorMsg }
+			});
+			instanceResult[sectionType] = { success: false, itemsSynced: 0, error: errorMsg };
+		}
+	}
+
+	return instanceResult;
+}
+
+/**
+ * Process items in batches with concurrency limit
+ */
+async function processBatches<T, R>(
+	items: T[],
+	processor: (item: T) => Promise<R>,
+	concurrency: number
+): Promise<R[]> {
+	const results: R[] = [];
+
+	for (let i = 0; i < items.length; i += concurrency) {
+		const batch = items.slice(i, i + concurrency);
+		const batchResults = await Promise.all(batch.map(processor));
+		results.push(...batchResults);
+	}
+
+	return results;
+}
+
+/**
  * Process all pending syncs
- * Called by the sync job and can be called manually
+ * Called by the sync job and directly via triggerSyncs()
  */
 export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
 	// Evaluate scheduled configs and mark them for sync if cron matches
 	await evaluateScheduledSyncs();
 
-	const pending = arrSyncQueries.getPendingSyncs();
-	const results: ProcessSyncsResult['results'] = [];
+	const pendingByInstance = getPendingSyncsByInstance();
 
-	// Collect all unique instance IDs
-	const instanceIds = new Set([
-		...pending.qualityProfiles,
-		...pending.delayProfiles,
-		...pending.mediaManagement
-	]);
-
-	if (instanceIds.size === 0) {
+	if (pendingByInstance.size === 0) {
 		await logger.debug('No pending syncs', { source: 'SyncProcessor' });
 		return { totalSynced: 0, results: [] };
 	}
 
-	await logger.info(`Processing syncs for ${instanceIds.size} instance(s)`, {
+	// Log pending counts
+	const pendingCounts: Record<string, number> = {};
+	for (const handler of getAllSections()) {
+		pendingCounts[handler.type] = handler.getPendingInstanceIds().length;
+	}
+
+	await logger.info(`Processing syncs for ${pendingByInstance.size} instance(s)`, {
 		source: 'SyncProcessor',
-		meta: {
-			qualityProfiles: pending.qualityProfiles.length,
-			delayProfiles: pending.delayProfiles.length,
-			mediaManagement: pending.mediaManagement.length
-		}
+		meta: pendingCounts
 	});
 
-	let totalSynced = 0;
+	// Prepare instance processing tasks
+	const instanceTasks: Array<{ instance: ArrInstance; sectionTypes: SectionType[] }> = [];
 
-	for (const instanceId of instanceIds) {
+	for (const [instanceId, sectionTypes] of pendingByInstance) {
 		const instance = arrInstancesQueries.getById(instanceId);
 
 		if (!instance) {
@@ -155,63 +236,22 @@ export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
 			continue;
 		}
 
-		const instanceResult: ProcessSyncsResult['results'][0] = {
-			instanceId,
-			instanceName: instance.name
-		};
+		instanceTasks.push({ instance, sectionTypes });
+	}
 
-		try {
-			// Create arr client for this instance
-			const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+	// Process instances in parallel with concurrency limit
+	const results = await processBatches(
+		instanceTasks,
+		({ instance, sectionTypes }) => processInstanceSections(instance, sectionTypes),
+		CONCURRENCY_LIMIT
+	);
 
-			// Process quality profiles if pending
-			if (pending.qualityProfiles.includes(instanceId)) {
-				const syncer = new QualityProfileSyncer(
-					client,
-					instanceId,
-					instance.name,
-					instance.type as SyncArrType
-				);
-				instanceResult.qualityProfiles = await syncer.sync();
-				totalSynced += instanceResult.qualityProfiles.itemsSynced;
-
-				// Clear the should_sync flag
-				arrSyncQueries.setQualityProfilesShouldSync(instanceId, false);
-			}
-
-			// Process delay profiles if pending
-			if (pending.delayProfiles.includes(instanceId)) {
-				const syncer = new DelayProfileSyncer(client, instanceId, instance.name);
-				instanceResult.delayProfiles = await syncer.sync();
-				totalSynced += instanceResult.delayProfiles.itemsSynced;
-
-				// Clear the should_sync flag
-				arrSyncQueries.setDelayProfilesShouldSync(instanceId, false);
-			}
-
-			// Process media management if pending
-			if (pending.mediaManagement.includes(instanceId)) {
-				const syncer = new MediaManagementSyncer(
-					client,
-					instanceId,
-					instance.name,
-					instance.type as ArrType
-				);
-				instanceResult.mediaManagement = await syncer.sync();
-				totalSynced += instanceResult.mediaManagement.itemsSynced;
-
-				// Clear the should_sync flag
-				arrSyncQueries.setMediaManagementShouldSync(instanceId, false);
-			}
-		} catch (error) {
-			const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-			await logger.error(`Failed to sync instance "${instance.name}"`, {
-				source: 'SyncProcessor',
-				meta: { instanceId, error: errorMsg }
-			});
-		}
-
-		results.push(instanceResult);
+	// Calculate total synced
+	let totalSynced = 0;
+	for (const result of results) {
+		if (result.qualityProfiles?.itemsSynced) totalSynced += result.qualityProfiles.itemsSynced;
+		if (result.delayProfiles?.itemsSynced) totalSynced += result.delayProfiles.itemsSynced;
+		if (result.mediaManagement?.itemsSynced) totalSynced += result.mediaManagement.itemsSynced;
 	}
 
 	await logger.info(`Sync processing complete`, {
@@ -226,7 +266,7 @@ export async function processPendingSyncs(): Promise<ProcessSyncsResult> {
  * Sync a specific instance manually
  * Syncs all configured sections regardless of should_sync flag
  */
-export async function syncInstance(instanceId: number): Promise<ProcessSyncsResult['results'][0]> {
+export async function syncInstance(instanceId: number): Promise<InstanceSyncResult> {
 	const instance = arrInstancesQueries.getById(instanceId);
 
 	if (!instance) {
@@ -239,47 +279,39 @@ export async function syncInstance(instanceId: number): Promise<ProcessSyncsResu
 	});
 
 	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
-	const result: ProcessSyncsResult['results'][0] = {
+	const result: InstanceSyncResult = {
 		instanceId,
 		instanceName: instance.name
 	};
 
-	// Get sync configs to check what's enabled
-	const qpConfig = arrSyncQueries.getQualityProfilesSync(instanceId);
-	const dpConfig = arrSyncQueries.getDelayProfilesSync(instanceId);
-	const mmConfig = arrSyncQueries.getMediaManagementSync(instanceId);
-
-	// Sync quality profiles if configured
-	if (qpConfig.selections.length > 0) {
-		const syncer = new QualityProfileSyncer(
-			client,
-			instanceId,
-			instance.name,
-			instance.type as SyncArrType
-		);
-		result.qualityProfiles = await syncer.sync();
-	}
-
-	// Sync delay profile if configured
-	if (dpConfig.databaseId && dpConfig.profileId) {
-		const syncer = new DelayProfileSyncer(client, instanceId, instance.name);
-		result.delayProfiles = await syncer.sync();
-	}
-
-	// Sync media management if configured
-	if (
-		mmConfig.namingDatabaseId ||
-		mmConfig.qualityDefinitionsDatabaseId ||
-		mmConfig.mediaSettingsDatabaseId
-	) {
-		const syncer = new MediaManagementSyncer(
-			client,
-			instanceId,
-			instance.name,
-			instance.type as ArrType
-		);
-		result.mediaManagement = await syncer.sync();
+	// Sync all sections that have configuration
+	for (const handler of getAllSections()) {
+		if (handler.hasConfig(instanceId)) {
+			const syncer = handler.createSyncer(client, instance);
+			result[handler.type] = await syncer.sync();
+		}
 	}
 
 	return result;
+}
+
+// =============================================================================
+// Event triggers
+// =============================================================================
+
+/**
+ * Trigger syncs for configs matching the event type
+ * Called directly from pcd.ts (on_pull) and cache.ts (on_change)
+ */
+export async function triggerSyncs(context: TriggerContext): Promise<void> {
+	await logger.debug(`Sync trigger: ${context.event}`, {
+		source: 'SyncProcessor',
+		meta: { databaseId: context.databaseId }
+	});
+
+	// Mark configs for sync based on trigger type
+	arrSyncQueries.markForSync(context.event);
+
+	// Process immediately instead of waiting for polling
+	await processPendingSyncs();
 }

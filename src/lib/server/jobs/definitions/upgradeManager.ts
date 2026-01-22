@@ -20,6 +20,7 @@ export const upgradeManagerJob: JobDefinition = {
 			if (result.totalProcessed === 0) {
 				return {
 					success: true,
+					skipped: true,
 					output: 'No upgrade configs due to run'
 				};
 			}

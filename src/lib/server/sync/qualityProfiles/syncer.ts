@@ -11,26 +11,26 @@
  * 6. Sync quality profiles to arr (create or update by name)
  */
 
-import { BaseSyncer, type SyncResult } from './base.ts';
+import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache, getCachedDatabaseIds } from '$pcd/cache.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
-import type { SyncArrType } from './mappings.ts';
+import type { SyncArrType } from '../mappings.ts';
 
-// Transformers
+// Custom formats
 import {
 	fetchCustomFormatFromPcd,
-	transformCustomFormat,
+	syncCustomFormats,
 	type PcdCustomFormat
-} from './transformers/customFormat.ts';
+} from '../customFormats/index.ts';
 import {
 	fetchQualityProfileFromPcd,
 	getQualityApiMappings,
 	getReferencedCustomFormatNames,
 	transformQualityProfile,
 	type PcdQualityProfile
-} from './transformers/qualityProfile.ts';
+} from './transformer.ts';
 
 // Internal types for sync data
 interface ProfileSyncData {
@@ -91,7 +91,12 @@ export class QualityProfileSyncer extends BaseSyncer {
 			}
 
 			// 2. Sync custom formats first (profiles depend on format IDs)
-			const formatIdMap = await this.syncCustomFormats(syncBatch.customFormats);
+			const formatIdMap = await syncCustomFormats(
+				this.client,
+				this.instanceId,
+				this.instanceType,
+				syncBatch.customFormats
+			);
 
 			// 3. Get quality API mappings for this arr type
 			// Use the first database's cache (all should have same mappings)
@@ -219,71 +224,6 @@ export class QualityProfileSyncer extends BaseSyncer {
 		}
 
 		return { profiles, customFormats };
-	}
-
-	/**
-	 * Sync custom formats to arr instance
-	 * Returns a map of format name -> arr format ID
-	 */
-	private async syncCustomFormats(
-		pcdFormats: Map<string, PcdCustomFormat>
-	): Promise<Map<string, number>> {
-		// Get existing formats from arr
-		const existingFormats = await this.client.getCustomFormats();
-		const existingMap = new Map(existingFormats.map((f) => [f.name, f.id!]));
-
-		for (const pcdFormat of pcdFormats.values()) {
-			const arrFormat = transformCustomFormat(pcdFormat, this.instanceType);
-
-			await logger.debug(`Compiled custom format "${arrFormat.name}"`, {
-				source: 'Compile:CustomFormat',
-				meta: {
-					instanceId: this.instanceId,
-					format: arrFormat
-				}
-			});
-
-			try {
-				if (existingMap.has(arrFormat.name)) {
-					// Update existing
-					const existingId = existingMap.get(arrFormat.name)!;
-					arrFormat.id = existingId;
-					await this.client.updateCustomFormat(existingId, arrFormat);
-					await logger.debug(`Updated custom format "${arrFormat.name}"`, {
-						source: 'Sync:CustomFormats',
-						meta: { instanceId: this.instanceId, formatId: existingId }
-					});
-				} else {
-					// Create new
-					const response = await this.client.createCustomFormat(arrFormat);
-					existingMap.set(arrFormat.name, response.id!);
-					await logger.debug(`Created custom format "${arrFormat.name}"`, {
-						source: 'Sync:CustomFormats',
-						meta: { instanceId: this.instanceId, formatId: response.id }
-					});
-				}
-			} catch (error) {
-				const errorDetails = this.extractErrorDetails(error);
-				await logger.error(`Failed to sync custom format "${arrFormat.name}"`, {
-					source: 'Sync:CustomFormats',
-					meta: {
-						instanceId: this.instanceId,
-						formatName: arrFormat.name,
-						request: arrFormat,
-						...errorDetails
-					}
-				});
-			}
-		}
-
-		// Refresh format map from arr to get accurate IDs
-		const refreshedFormats = await this.client.getCustomFormats();
-		const formatIdMap = new Map<string, number>();
-		for (const format of refreshedFormats) {
-			formatIdMap.set(format.name, format.id!);
-		}
-
-		return formatIdMap;
 	}
 
 	/**

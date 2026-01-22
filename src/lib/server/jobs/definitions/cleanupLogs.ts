@@ -51,6 +51,15 @@ export const cleanupLogsJob: JobDefinition = {
 				};
 			}
 
+			// Mark as skipped if nothing was deleted (no old logs to clean)
+			if (result.deletedCount === 0) {
+				return {
+					success: true,
+					skipped: true,
+					output: 'No old log files to clean up'
+				};
+			}
+
 			return {
 				success: true,
 				output: message

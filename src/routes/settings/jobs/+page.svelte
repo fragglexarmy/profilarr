@@ -7,7 +7,7 @@
 	import TableActionButton from '$lib/client/ui/table/TableActionButton.svelte';
 	import Badge from '$lib/client/ui/badge/Badge.svelte';
 	import JobHistory from './components/JobHistory.svelte';
-	import { Play, Edit2, Power, CheckCircle, XCircle, AlertCircle } from 'lucide-svelte';
+	import { Play, Edit2, Power, CheckCircle, XCircle, AlertCircle, MinusCircle } from 'lucide-svelte';
 
 	export let data: PageData;
 
@@ -105,6 +105,8 @@
 						<Badge variant="neutral" mono>{getRelativeTime(row.last_run_at)}</Badge>
 						{#if row.last_run_status === 'success'}
 							<Badge variant="success" icon={CheckCircle}>Success</Badge>
+						{:else if row.last_run_status === 'skipped'}
+							<Badge variant="neutral" icon={MinusCircle}>Skipped</Badge>
 						{:else if row.last_run_status === 'failure'}
 							<Badge variant="danger" icon={XCircle}>Failed</Badge>
 						{/if}

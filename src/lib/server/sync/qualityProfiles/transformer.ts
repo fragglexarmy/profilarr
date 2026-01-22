@@ -4,6 +4,11 @@
  */
 
 import type { PCDCache } from '$pcd/cache.ts';
+import type {
+	ArrQualityProfileItem,
+	ArrQualityProfilePayload,
+	QualityProfileFormatItem
+} from '$arr/types.ts';
 import {
 	type SyncArrType,
 	type QualityDefinition,
@@ -11,37 +16,6 @@ import {
 	getLanguageForProfile,
 	mapQualityName
 } from '../mappings.ts';
-
-// =============================================================================
-// Arr API Types
-// =============================================================================
-
-export interface ArrQualityItem {
-	quality?: QualityDefinition;
-	items: ArrQualityItem[];
-	allowed: boolean;
-	id?: number;
-	name?: string;
-}
-
-export interface ArrFormatItem {
-	format: number;
-	name: string;
-	score: number;
-}
-
-export interface ArrQualityProfile {
-	id?: number;
-	name: string;
-	items: ArrQualityItem[];
-	language?: { id: number; name: string }; // Radarr only, Sonarr ignores this
-	upgradeAllowed: boolean;
-	cutoff: number;
-	minFormatScore: number;
-	cutoffFormatScore: number;
-	minUpgradeFormatScore: number;
-	formatItems: ArrFormatItem[];
-}
 
 // =============================================================================
 // PCD Data Types
@@ -101,11 +75,11 @@ export function transformQualityProfile(
 	arrType: SyncArrType,
 	qualityApiMappings: Map<string, string>,
 	formatIdMap: Map<string, number>
-): ArrQualityProfile {
+): ArrQualityProfilePayload {
 	const allQualities = getAllQualities(arrType);
 
 	// Build quality items
-	const items: ArrQualityItem[] = [];
+	const items: ArrQualityProfileItem[] = [];
 	const usedQualityNames = new Set<string>();
 	const qualityIdsInGroups = new Set<number>();
 	let cutoffId: number | undefined;
@@ -131,7 +105,7 @@ export function transformQualityProfile(
 			// Group item
 			const groupId = convertGroupId(item.referenceId, groupIndex++);
 
-			const groupItem: ArrQualityItem = {
+			const groupItem: ArrQualityProfileItem = {
 				id: groupId,
 				name: item.name,
 				items: [],
@@ -208,7 +182,7 @@ export function transformQualityProfile(
 			: undefined;
 
 	// Build format items
-	const formatItems: ArrFormatItem[] = [];
+	const formatItems: QualityProfileFormatItem[] = [];
 	const processedFormats = new Set<string>();
 
 	// Add explicit scores from profile

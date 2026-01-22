@@ -5,12 +5,9 @@
 
 import type { BaseArrClient } from '$arr/base.ts';
 import { logger } from '$logger/logger.ts';
+import type { SyncResult } from './types.ts';
 
-export interface SyncResult {
-	success: boolean;
-	itemsSynced: number;
-	error?: string;
-}
+export type { SyncResult };
 
 /**
  * Abstract base class for syncers

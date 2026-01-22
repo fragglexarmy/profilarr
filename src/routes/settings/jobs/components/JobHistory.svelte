@@ -2,13 +2,14 @@
 	import type { Column } from '$lib/client/ui/table/types';
 	import Table from '$lib/client/ui/table/Table.svelte';
 	import Badge from '$lib/client/ui/badge/Badge.svelte';
-	import { CheckCircle, XCircle, Clock } from 'lucide-svelte';
+	import Toggle from '$lib/client/ui/toggle/Toggle.svelte';
+	import { CheckCircle, XCircle, Clock, MinusCircle } from 'lucide-svelte';
 
 	type JobRun = {
 		id: number;
 		job_id: number;
 		job_name: string;
-		status: 'success' | 'failure';
+		status: 'success' | 'failure' | 'skipped';
 		started_at: string;
 		finished_at: string;
 		duration_ms: number;
@@ -17,6 +18,15 @@
 	};
 
 	export let jobRuns: JobRun[];
+
+	// Filter state - hide skipped by default
+	let showSkipped = false;
+
+	// Filtered runs based on toggle
+	$: filteredRuns = showSkipped ? jobRuns : jobRuns.filter((run) => run.status !== 'skipped');
+
+	// Count of hidden skipped runs
+	$: skippedCount = jobRuns.filter((run) => run.status === 'skipped').length;
 
 	const columns: Column<JobRun>[] = [
 		{ key: 'job_name', header: 'Job', sortable: true },
@@ -60,18 +70,31 @@
 </script>
 
 <div class="space-y-4">
-	<div class="flex items-center gap-2">
-		<Clock size={18} class="text-neutral-600 dark:text-neutral-400" />
-		<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Recent Job Runs</h2>
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-2">
+			<Clock size={18} class="text-neutral-600 dark:text-neutral-400" />
+			<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Recent Job Runs</h2>
+		</div>
+
+		{#if skippedCount > 0}
+			<div class="flex items-center gap-2">
+				<span class="text-sm text-neutral-500 dark:text-neutral-400">
+					{skippedCount} skipped
+				</span>
+				<Toggle bind:checked={showSkipped} label="Show skipped runs" />
+			</div>
+		{/if}
 	</div>
 
-	<Table {columns} data={jobRuns} emptyMessage="No job runs yet" compact>
+	<Table {columns} data={filteredRuns} emptyMessage="No job runs yet" compact>
 		<svelte:fragment slot="cell" let:row let:column>
 			{#if column.key === 'job_name'}
 				<span class="text-xs font-medium">{formatJobName(row.job_name)}</span>
 			{:else if column.key === 'status'}
 				{#if row.status === 'success'}
 					<Badge variant="success" icon={CheckCircle}>Success</Badge>
+				{:else if row.status === 'skipped'}
+					<Badge variant="neutral" icon={MinusCircle}>Skipped</Badge>
 				{:else}
 					<Badge variant="danger" icon={XCircle}>Failed</Badge>
 				{/if}

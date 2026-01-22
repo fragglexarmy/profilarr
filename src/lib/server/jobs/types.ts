@@ -7,6 +7,7 @@
  */
 export interface JobResult {
 	success: boolean;
+	skipped?: boolean; // True if job ran but had nothing to do
 	output?: string;
 	error?: string;
 }
@@ -42,12 +43,20 @@ export interface Job {
 }
 
 /**
+ * Job run status
+ * - success: Job completed and did work
+ * - failure: Job encountered an error
+ * - skipped: Job ran but had nothing to do (e.g., no pending syncs)
+ */
+export type JobRunStatus = 'success' | 'failure' | 'skipped';
+
+/**
  * Job run record from database
  */
 export interface JobRun {
 	id: number;
 	job_id: number;
-	status: 'success' | 'failure';
+	status: JobRunStatus;
 	started_at: string;
 	finished_at: string;
 	duration_ms: number;

@@ -6,7 +6,8 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { logger } from '$logger/logger.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
-import { calculateNextRun } from '$lib/server/sync/cron.ts';
+import { calculateNextRun } from '$lib/server/sync/utils.ts';
+import { updateSyncArrJobEnabled } from '$lib/server/jobs/init.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -89,6 +90,9 @@ export const actions: Actions = {
 				meta: { instanceId: id, profileCount: selections.length, trigger }
 			});
 
+			// Update sync_arr job enabled state based on whether any scheduled configs exist
+			await updateSyncArrJobEnabled();
+
 			return { success: true };
 		} catch (e) {
 			await logger.error('Failed to save quality profiles sync config', {
@@ -127,6 +131,9 @@ export const actions: Actions = {
 				source: 'sync',
 				meta: { instanceId: id, databaseId, profileId, trigger }
 			});
+
+			// Update sync_arr job enabled state based on whether any scheduled configs exist
+			await updateSyncArrJobEnabled();
 
 			return { success: true };
 		} catch (e) {
@@ -175,6 +182,9 @@ export const actions: Actions = {
 				meta: { instanceId: id, trigger }
 			});
 
+			// Update sync_arr job enabled state based on whether any scheduled configs exist
+			await updateSyncArrJobEnabled();
+
 			return { success: true };
 		} catch (e) {
 			await logger.error('Failed to save media management sync config', {
@@ -198,7 +208,7 @@ export const actions: Actions = {
 
 		try {
 			const { createArrClient } = await import('$arr/factory.ts');
-			const { DelayProfileSyncer } = await import('$lib/server/sync/delayProfiles.ts');
+			const { DelayProfileSyncer } = await import('$lib/server/sync');
 			const client = createArrClient(
 				instance.type as 'radarr' | 'sonarr',
 				instance.url,
@@ -236,7 +246,7 @@ export const actions: Actions = {
 
 		try {
 			const { createArrClient } = await import('$arr/factory.ts');
-			const { QualityProfileSyncer } = await import('$lib/server/sync/qualityProfiles.ts');
+			const { QualityProfileSyncer } = await import('$lib/server/sync');
 			const client = createArrClient(
 				instance.type as 'radarr' | 'sonarr',
 				instance.url,
@@ -279,7 +289,7 @@ export const actions: Actions = {
 
 		try {
 			const { createArrClient } = await import('$arr/factory.ts');
-			const { MediaManagementSyncer } = await import('$lib/server/sync/mediaManagement.ts');
+			const { MediaManagementSyncer } = await import('$lib/server/sync');
 			const client = createArrClient(
 				instance.type as 'radarr' | 'sonarr',
 				instance.url,

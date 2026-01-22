@@ -20,6 +20,7 @@ export const renameManagerJob: JobDefinition = {
 			if (result.totalProcessed === 0) {
 				return {
 					success: true,
+					skipped: true,
 					output: 'No rename configs due to run'
 				};
 			}

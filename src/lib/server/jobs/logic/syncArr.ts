@@ -5,6 +5,15 @@
 
 import { processPendingSyncs, type ProcessSyncsResult } from '$lib/server/sync/index.ts';
 
+/**
+ * Outcome of a sync operation
+ * - success: All syncs completed successfully
+ * - partial: Some syncs succeeded, some failed
+ * - failed: All syncs failed
+ * - skipped: No syncs were pending
+ */
+export type SyncOutcome = 'success' | 'partial' | 'failed' | 'skipped';
+
 export interface SyncStatus {
 	instanceId: number;
 	instanceName: string;
@@ -14,6 +23,7 @@ export interface SyncStatus {
 }
 
 export interface SyncArrResult {
+	outcome: SyncOutcome;
 	totalProcessed: number;
 	successCount: number;
 	failureCount: number;
@@ -81,10 +91,24 @@ function transformResult(result: ProcessSyncsResult): SyncArrResult {
 		}
 	}
 
+	// Determine outcome based on success/failure counts
+	const outcome = determineOutcome(syncs.length, successCount, failureCount);
+
 	return {
+		outcome,
 		totalProcessed: syncs.length,
 		successCount,
 		failureCount,
 		syncs
 	};
+}
+
+/**
+ * Determine the outcome based on counts
+ */
+function determineOutcome(total: number, success: number, failure: number): SyncOutcome {
+	if (total === 0) return 'skipped';
+	if (failure === 0) return 'success';
+	if (success === 0) return 'failed';
+	return 'partial';
 }

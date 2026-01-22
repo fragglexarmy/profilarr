@@ -13,6 +13,7 @@ import {
 	databaseInstancesQueries
 } from '$db/queries/databaseInstances.ts';
 import type { PCDDatabase } from './schema.ts';
+import { triggerSyncs } from '$sync/processor.ts';
 
 /**
  * Stats returned from cache build
@@ -543,6 +544,9 @@ function scheduleRebuild(pcdPath: string, databaseInstanceId: number): void {
 					timing: `${stats.timing}ms`
 				}
 			});
+
+			// Trigger arr syncs for configs with on_change trigger
+			await triggerSyncs({ event: 'on_change', databaseId: databaseInstanceId });
 		} catch (error) {
 			await logger.error('Failed to rebuild cache', {
 				source: 'PCDCache',

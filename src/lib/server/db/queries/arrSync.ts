@@ -303,21 +303,22 @@ export const arrSyncQueries = {
 	/**
 	 * Mark all configs with a specific trigger as should_sync
 	 * Used when events occur (pull, change)
+	 * Also sets sync_status to 'pending' for the new status-based flow
 	 */
 	markForSync(trigger: 'on_pull' | 'on_change'): void {
 		const triggers = trigger === 'on_change' ? ['on_pull', 'on_change'] : ['on_pull'];
 		const placeholders = triggers.map(() => '?').join(', ');
 
 		db.execute(
-			`UPDATE arr_sync_quality_profiles_config SET should_sync = 1 WHERE trigger IN (${placeholders})`,
+			`UPDATE arr_sync_quality_profiles_config SET should_sync = 1, sync_status = 'pending' WHERE trigger IN (${placeholders})`,
 			...triggers
 		);
 		db.execute(
-			`UPDATE arr_sync_delay_profiles_config SET should_sync = 1 WHERE trigger IN (${placeholders})`,
+			`UPDATE arr_sync_delay_profiles_config SET should_sync = 1, sync_status = 'pending' WHERE trigger IN (${placeholders})`,
 			...triggers
 		);
 		db.execute(
-			`UPDATE arr_sync_media_management SET should_sync = 1 WHERE trigger IN (${placeholders})`,
+			`UPDATE arr_sync_media_management SET should_sync = 1, sync_status = 'pending' WHERE trigger IN (${placeholders})`,
 			...triggers
 		);
 	},
@@ -415,5 +416,172 @@ export const arrSyncQueries = {
 			nextRunAt,
 			instanceId
 		);
+	},
+
+	// ========== Sync Status Methods (Migration 034) ==========
+
+	/**
+	 * Atomically claim a sync for processing
+	 * Returns true if claim succeeded (status was 'pending' and is now 'in_progress')
+	 */
+	claimQualityProfilesSync(instanceId: number): boolean {
+		const result = db.execute(
+			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'in_progress' WHERE instance_id = ? AND sync_status = 'pending'",
+			instanceId
+		);
+		return result > 0;
+	},
+
+	claimDelayProfilesSync(instanceId: number): boolean {
+		const result = db.execute(
+			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'in_progress' WHERE instance_id = ? AND sync_status = 'pending'",
+			instanceId
+		);
+		return result > 0;
+	},
+
+	claimMediaManagementSync(instanceId: number): boolean {
+		const result = db.execute(
+			"UPDATE arr_sync_media_management SET sync_status = 'in_progress' WHERE instance_id = ? AND sync_status = 'pending'",
+			instanceId
+		);
+		return result > 0;
+	},
+
+	/**
+	 * Mark sync as completed successfully
+	 */
+	completeQualityProfilesSync(instanceId: number): void {
+		db.execute(
+			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'idle', should_sync = 0, last_error = NULL, last_synced_at = ? WHERE instance_id = ?",
+			new Date().toISOString(),
+			instanceId
+		);
+	},
+
+	completeDelayProfilesSync(instanceId: number): void {
+		db.execute(
+			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'idle', should_sync = 0, last_error = NULL, last_synced_at = ? WHERE instance_id = ?",
+			new Date().toISOString(),
+			instanceId
+		);
+	},
+
+	completeMediaManagementSync(instanceId: number): void {
+		db.execute(
+			"UPDATE arr_sync_media_management SET sync_status = 'idle', should_sync = 0, last_error = NULL, last_synced_at = ? WHERE instance_id = ?",
+			new Date().toISOString(),
+			instanceId
+		);
+	},
+
+	/**
+	 * Mark sync as failed
+	 */
+	failQualityProfilesSync(instanceId: number, error: string): void {
+		db.execute(
+			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'failed', should_sync = 0, last_error = ? WHERE instance_id = ?",
+			error,
+			instanceId
+		);
+	},
+
+	failDelayProfilesSync(instanceId: number, error: string): void {
+		db.execute(
+			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'failed', should_sync = 0, last_error = ? WHERE instance_id = ?",
+			error,
+			instanceId
+		);
+	},
+
+	failMediaManagementSync(instanceId: number, error: string): void {
+		db.execute(
+			"UPDATE arr_sync_media_management SET sync_status = 'failed', should_sync = 0, last_error = ? WHERE instance_id = ?",
+			error,
+			instanceId
+		);
+	},
+
+	/**
+	 * Set sync status to pending (used by markForSync and triggers)
+	 */
+	setQualityProfilesStatusPending(instanceId: number): void {
+		db.execute(
+			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'pending', should_sync = 1 WHERE instance_id = ?",
+			instanceId
+		);
+	},
+
+	setDelayProfilesStatusPending(instanceId: number): void {
+		db.execute(
+			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'pending', should_sync = 1 WHERE instance_id = ?",
+			instanceId
+		);
+	},
+
+	setMediaManagementStatusPending(instanceId: number): void {
+		db.execute(
+			"UPDATE arr_sync_media_management SET sync_status = 'pending', should_sync = 1 WHERE instance_id = ?",
+			instanceId
+		);
+	},
+
+	/**
+	 * Get pending syncs by status (uses new sync_status column)
+	 */
+	getPendingSyncsByStatus(): {
+		qualityProfiles: number[];
+		delayProfiles: number[];
+		mediaManagement: number[];
+	} {
+		const qp = db.query<{ instance_id: number }>(
+			"SELECT instance_id FROM arr_sync_quality_profiles_config WHERE sync_status = 'pending'"
+		);
+		const dp = db.query<{ instance_id: number }>(
+			"SELECT instance_id FROM arr_sync_delay_profiles_config WHERE sync_status = 'pending'"
+		);
+		const mm = db.query<{ instance_id: number }>(
+			"SELECT instance_id FROM arr_sync_media_management WHERE sync_status = 'pending'"
+		);
+
+		return {
+			qualityProfiles: qp.map((r) => r.instance_id),
+			delayProfiles: dp.map((r) => r.instance_id),
+			mediaManagement: mm.map((r) => r.instance_id)
+		};
+	},
+
+	/**
+	 * Reset any in_progress syncs back to pending (for startup recovery)
+	 */
+	recoverInterruptedSyncs(): number {
+		let count = 0;
+		count += db.execute(
+			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'pending' WHERE sync_status = 'in_progress'"
+		);
+		count += db.execute(
+			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'pending' WHERE sync_status = 'in_progress'"
+		);
+		count += db.execute(
+			"UPDATE arr_sync_media_management SET sync_status = 'pending' WHERE sync_status = 'in_progress'"
+		);
+		return count;
+	},
+
+	/**
+	 * Check if any sync configs have a scheduled (cron) trigger
+	 * Used to determine if the sync_arr job should be enabled
+	 */
+	hasAnyScheduledConfigs(): boolean {
+		const result = db.queryFirst<{ count: number }>(`
+			SELECT COUNT(*) as count FROM (
+				SELECT 1 FROM arr_sync_quality_profiles_config WHERE trigger = 'schedule'
+				UNION ALL
+				SELECT 1 FROM arr_sync_delay_profiles_config WHERE trigger = 'schedule'
+				UNION ALL
+				SELECT 1 FROM arr_sync_media_management WHERE trigger = 'schedule'
+			)
+		`);
+		return (result?.count ?? 0) > 0;
 	}
 };

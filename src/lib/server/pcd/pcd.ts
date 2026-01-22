@@ -10,6 +10,7 @@ import { getPCDPath } from './paths.ts';
 import { processDependencies, syncDependencies } from './deps.ts';
 import { compile, invalidate, startWatch, getCache } from './cache.ts';
 import { logger } from '$logger/logger.ts';
+import { triggerSyncs } from '$sync/processor.ts';
 
 export interface LinkOptions {
 	repositoryUrl: string;
@@ -186,6 +187,9 @@ class PCDManager {
 					});
 				}
 			}
+
+			// Trigger arr syncs for configs with on_pull trigger
+			await triggerSyncs({ event: 'on_pull', databaseId: id });
 
 			return {
 				success: true,

@@ -1,7 +1,7 @@
 import { jobRegistry } from './registry.ts';
 import { jobsQueries, jobRunsQueries } from '$db/queries/jobs.ts';
 import { logger } from '$logger/logger.ts';
-import type { Job, JobResult } from './types.ts';
+import type { Job, JobResult, JobRunStatus } from './types.ts';
 import { Cron } from 'croner';
 
 /**
@@ -81,8 +81,23 @@ export async function runJob(job: Job): Promise<boolean> {
 	const finishedAt = new Date().toISOString();
 	const durationMs = Date.now() - startTime;
 
-	// Log result
-	if (result.success) {
+	// Determine status
+	let status: JobRunStatus;
+	if (!result.success) {
+		status = 'failure';
+	} else if (result.skipped) {
+		status = 'skipped';
+	} else {
+		status = 'success';
+	}
+
+	// Log result based on status
+	if (status === 'skipped') {
+		await logger.debug(`Job skipped (nothing to do): ${job.name}`, {
+			source: 'JobRunner',
+			meta: { jobId: job.id, durationMs, output: result.output }
+		});
+	} else if (status === 'success') {
 		await logger.info(`Job completed successfully: ${job.name}`, {
 			source: 'JobRunner',
 			meta: { jobId: job.id, durationMs, output: result.output }
@@ -97,7 +112,7 @@ export async function runJob(job: Job): Promise<boolean> {
 	// Save job run to database
 	jobRunsQueries.create(
 		job.id,
-		result.success ? 'success' : 'failure',
+		status,
 		startedAt,
 		finishedAt,
 		durationMs,

@@ -94,7 +94,7 @@ export interface QualityProfileQuality {
 
 export interface QualityProfileCustomFormat {
 	customFormat: CustomFormat;
-	arr_type: 'radarr' | 'sonarr' | 'all';
+	arr_type: PcdArrTarget;
 	score: number;
 }
 
@@ -102,7 +102,11 @@ export interface QualityProfileCustomFormat {
 // CUSTOM FORMAT CONDITION TYPES
 // ============================================================================
 
-export type ArrType = 'radarr' | 'sonarr' | 'all';
+/**
+ * PCD arr targeting - includes 'all' to indicate a condition/score applies to all arr types
+ * This is different from $arr/types.ts ArrType which represents actual arr application types
+ */
+export type PcdArrTarget = 'radarr' | 'sonarr' | 'all';
 
 export type ConditionType =
 	| 'release_title'
@@ -121,7 +125,7 @@ export interface CustomFormatCondition {
 	custom_format_name: string;
 	name: string;
 	type: ConditionType;
-	arr_type: ArrType;
+	arr_type: PcdArrTarget;
 	negate: number; // 0 or 1 (boolean)
 	required: number; // 0 or 1 (boolean)
 	created_at: string;
@@ -269,3 +273,4 @@ export interface QualityProfileScoring {
 	upgrade_until_score: number; // Stop upgrading when reached
 	upgrade_score_increment: number; // Minimum score improvement needed
 }
+

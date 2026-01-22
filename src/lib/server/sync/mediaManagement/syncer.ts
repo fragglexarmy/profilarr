@@ -14,9 +14,9 @@
  * 4. PUT the full config back to arr
  */
 
-import { BaseSyncer, type SyncResult } from './base.ts';
+import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { getCache, type PCDCache } from '$lib/server/pcd/cache.ts';
+import { getCache, type PCDCache } from '$pcd/cache.ts';
 import { getRadarr, getSonarr } from '$pcd/queries/mediaManagement/get.ts';
 import type { MediaSettings, RadarrNaming, SonarrNaming } from '$lib/shared/mediaManagement.ts';
 import type { QualityDefinition } from '$pcd/queries/mediaManagement/types.ts';

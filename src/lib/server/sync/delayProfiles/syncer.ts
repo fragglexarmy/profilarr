@@ -5,11 +5,11 @@
  * Only one delay profile can be synced per arr - it overwrites the default.
  */
 
-import { BaseSyncer, type SyncResult } from './base.ts';
+import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { getCache } from '$lib/server/pcd/cache.ts';
-import { get as getDelayProfile } from '$lib/server/pcd/queries/delayProfiles/get.ts';
-import type { DelayProfileTableRow } from '$lib/server/pcd/queries/delayProfiles/types.ts';
+import { getCache } from '$pcd/cache.ts';
+import { get as getDelayProfile } from '$pcd/queries/delayProfiles/get.ts';
+import type { DelayProfileTableRow } from '$pcd/queries/delayProfiles/types.ts';
 import type { ArrDelayProfile } from '$arr/types.ts';
 import { logger } from '$logger/logger.ts';
 

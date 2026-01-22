@@ -78,6 +78,15 @@ export const cleanupBackupsJob: JobDefinition = {
 				};
 			}
 
+			// Mark as skipped if nothing was deleted (no old backups to clean)
+			if (deletedCount === 0) {
+				return {
+					success: true,
+					skipped: true,
+					output: 'No old backups to clean up'
+				};
+			}
+
 			return {
 				success: true,
 				output: message

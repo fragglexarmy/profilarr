@@ -1,5 +1,5 @@
 import { db } from '../db.ts';
-import type { Job, CreateJobInput, UpdateJobInput, JobRun } from '../../jobs/types.ts';
+import type { Job, CreateJobInput, UpdateJobInput, JobRun, JobRunStatus } from '../../jobs/types.ts';
 
 /**
  * All queries for jobs table
@@ -125,7 +125,7 @@ export const jobRunsQueries = {
 	 */
 	create(
 		jobId: number,
-		status: 'success' | 'failure',
+		status: JobRunStatus,
 		startedAt: string,
 		finishedAt: string,
 		durationMs: number,

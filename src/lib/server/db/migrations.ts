@@ -35,6 +35,8 @@ import { migration as migration030 } from './migrations/030_create_general_setti
 import { migration as migration031 } from './migrations/031_remove_search_cooldown.ts';
 import { migration as migration032 } from './migrations/032_add_filter_id_to_upgrade_runs.ts';
 import { migration as migration033 } from './migrations/033_create_github_cache.ts';
+import { migration as migration034 } from './migrations/034_add_sync_status.ts';
+import { migration as migration035 } from './migrations/035_add_job_skipped_status.ts';
 
 export interface Migration {
 	version: number;
@@ -288,7 +290,9 @@ export function loadMigrations(): Migration[] {
 		migration030,
 		migration031,
 		migration032,
-		migration033
+		migration033,
+		migration034,
+		migration035
 	];
 
 	// Sort by version number

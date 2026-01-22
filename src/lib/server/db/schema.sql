@@ -95,7 +95,7 @@ CREATE TABLE jobs (
 -- ==============================================================================
 -- TABLE: job_runs
 -- Purpose: Store execution history for each job
--- Migration: 004_create_jobs_tables.ts
+-- Migration: 004_create_jobs_tables.ts, 035_add_job_skipped_status.ts
 -- ==============================================================================
 
 CREATE TABLE job_runs (
@@ -104,8 +104,8 @@ CREATE TABLE job_runs (
     -- Foreign key to jobs
     job_id INTEGER NOT NULL,
 
-    -- Execution status
-    status TEXT NOT NULL CHECK (status IN ('success', 'failure')),
+    -- Execution status (skipped = job ran but had nothing to do)
+    status TEXT NOT NULL CHECK (status IN ('success', 'failure', 'skipped')),
 
     -- Timing
     started_at DATETIME NOT NULL,
@@ -297,32 +297,38 @@ CREATE TABLE arr_sync_quality_profiles (
 -- ==============================================================================
 -- TABLE: arr_sync_quality_profiles_config
 -- Purpose: Store quality profile sync trigger configuration (one per instance)
--- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 034_add_sync_status.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_quality_profiles_config (
     instance_id INTEGER PRIMARY KEY,
     trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
     cron TEXT,                                  -- Cron expression for schedule trigger
-    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016) - deprecated
     next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
+    sync_status TEXT NOT NULL DEFAULT 'idle',   -- Status: idle, pending, in_progress, failed (Migration 034)
+    last_error TEXT,                            -- Last sync error message (Migration 034)
+    last_synced_at TEXT,                        -- Last successful sync timestamp (Migration 034)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
 );
 
 -- ==============================================================================
 -- TABLE: arr_sync_delay_profiles_config
 -- Purpose: Store delay profile sync configuration (one per instance, single profile)
--- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 028_simplify_delay_profile_sync.ts, 029_add_database_id_foreign_keys.ts
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 028_simplify_delay_profile_sync.ts, 029_add_database_id_foreign_keys.ts, 034_add_sync_status.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_delay_profiles_config (
     instance_id INTEGER PRIMARY KEY,
     trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
     cron TEXT,                                  -- Cron expression for schedule trigger
-    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016) - deprecated
     next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
     database_id INTEGER,                        -- Single database reference (Migration 028)
     profile_id INTEGER,                         -- Single profile reference (Migration 028)
+    sync_status TEXT NOT NULL DEFAULT 'idle',   -- Status: idle, pending, in_progress, failed (Migration 034)
+    last_error TEXT,                            -- Last sync error message (Migration 034)
+    last_synced_at TEXT,                        -- Last successful sync timestamp (Migration 034)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
     FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE SET NULL
 );
@@ -330,7 +336,7 @@ CREATE TABLE arr_sync_delay_profiles_config (
 -- ==============================================================================
 -- TABLE: arr_sync_media_management
 -- Purpose: Store media management sync configuration (one per instance)
--- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 029_add_database_id_foreign_keys.ts
+-- Migration: 015_create_arr_sync_tables.ts, 016_add_should_sync_flags.ts, 029_add_database_id_foreign_keys.ts, 034_add_sync_status.ts
 -- ==============================================================================
 
 CREATE TABLE arr_sync_media_management (
@@ -340,8 +346,11 @@ CREATE TABLE arr_sync_media_management (
     media_settings_database_id INTEGER,         -- Database to use for media settings
     trigger TEXT NOT NULL DEFAULT 'none',       -- 'none', 'manual', 'on_pull', 'on_change', 'schedule'
     cron TEXT,                                  -- Cron expression for schedule trigger
-    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016)
+    should_sync INTEGER NOT NULL DEFAULT 0,     -- Flag for pending sync (Migration 016) - deprecated
     next_run_at TEXT,                           -- Next scheduled run timestamp (Migration 022)
+    sync_status TEXT NOT NULL DEFAULT 'idle',   -- Status: idle, pending, in_progress, failed (Migration 034)
+    last_error TEXT,                            -- Last sync error message (Migration 034)
+    last_synced_at TEXT,                        -- Last successful sync timestamp (Migration 034)
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
     FOREIGN KEY (naming_database_id) REFERENCES database_instances(id) ON DELETE SET NULL,
     FOREIGN KEY (quality_definitions_database_id) REFERENCES database_instances(id) ON DELETE SET NULL,
@@ -357,9 +366,10 @@ CREATE TABLE arr_sync_media_management (
 CREATE INDEX idx_jobs_enabled ON jobs(enabled);
 CREATE INDEX idx_jobs_next_run ON jobs(next_run_at);
 
--- Job runs indexes (Migration: 004_create_jobs_tables.ts)
+-- Job runs indexes (Migration: 004_create_jobs_tables.ts, 035_add_job_skipped_status.ts)
 CREATE INDEX idx_job_runs_job_id ON job_runs(job_id);
 CREATE INDEX idx_job_runs_started_at ON job_runs(started_at);
+CREATE INDEX idx_job_runs_status ON job_runs(status);
 
 -- Notification services indexes (Migration: 007_create_notification_tables.ts)
 CREATE INDEX idx_notification_services_enabled ON notification_services(enabled);

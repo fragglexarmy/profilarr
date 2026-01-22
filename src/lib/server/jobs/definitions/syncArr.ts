@@ -9,43 +9,60 @@ import type { JobDefinition, JobResult } from '../types.ts';
 export const syncArrJob: JobDefinition = {
 	name: 'sync_arr',
 	description: 'Sync PCD profiles and settings to arr instances',
-	schedule: '* * * * *', // Every minute
+	schedule: '*/5 * * * *', // Every 5 minutes (on_pull/on_change trigger directly)
 
 	handler: async (): Promise<JobResult> => {
 		try {
 			const result = await syncArr();
 
-			// Nothing to process
-			if (result.totalProcessed === 0) {
-				return {
-					success: true,
-					output: 'No pending syncs'
-				};
-			}
+			// Handle based on outcome
+			switch (result.outcome) {
+				case 'skipped':
+					return {
+						success: true,
+						skipped: true,
+						output: 'No pending syncs'
+					};
 
-			// Log errors only
-			for (const sync of result.syncs) {
-				if (!sync.success) {
-					await logger.error(`Failed to sync ${sync.section} to ${sync.instanceName}`, {
-						source: 'SyncArrJob',
-						meta: { instanceId: sync.instanceId, section: sync.section, error: sync.error }
-					});
+				case 'success':
+					return {
+						success: true,
+						output: `Sync completed: ${result.successCount} successful (${result.totalProcessed} total)`
+					};
+
+				case 'partial': {
+					// Log errors for failed syncs
+					for (const sync of result.syncs) {
+						if (!sync.success) {
+							await logger.error(`Failed to sync ${sync.section} to ${sync.instanceName}`, {
+								source: 'SyncArrJob',
+								meta: { instanceId: sync.instanceId, section: sync.section, error: sync.error }
+							});
+						}
+					}
+					// Partial success still returns success=true but with warning in output
+					return {
+						success: true,
+						output: `Sync partially completed: ${result.successCount} successful, ${result.failureCount} failed (${result.totalProcessed} total)`
+					};
+				}
+
+				case 'failed': {
+					// Log all errors
+					for (const sync of result.syncs) {
+						if (!sync.success) {
+							await logger.error(`Failed to sync ${sync.section} to ${sync.instanceName}`, {
+								source: 'SyncArrJob',
+								meta: { instanceId: sync.instanceId, section: sync.section, error: sync.error }
+							});
+						}
+					}
+					return {
+						success: false,
+						error: `Sync failed: all ${result.failureCount} syncs failed`
+					};
 				}
 			}
-
-			const message = `Sync completed: ${result.successCount} successful, ${result.failureCount} failed (${result.totalProcessed} total)`;
-
-			if (result.failureCount > 0 && result.successCount === 0) {
-				return {
-					success: false,
-					error: message
-				};
-			}
-
-			return {
-				success: true,
-				output: message
-			};
 		} catch (error) {
 			return {
 				success: false,
