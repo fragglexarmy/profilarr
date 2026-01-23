@@ -34,10 +34,10 @@ export const GET: RequestHandler = async () => {
 		}
 	};
 
-	// Determine overall status
 	response.status = determineOverallStatus(response.components);
 
-	return json(response);
+	const httpStatus = response.status === 'unhealthy' ? 503 : 200;
+	return json(response, { status: httpStatus });
 };
 
 function determineOverallStatus(components: HealthResponse['components']): ComponentStatus {
