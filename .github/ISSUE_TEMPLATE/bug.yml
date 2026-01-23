@@ -1,0 +1,89 @@
+name: 🐛 Bug Report
+description: Report something that isn't working correctly
+labels: ["type: bug"]
+
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened and what did you expect?
+      placeholder: Describe the bug and what you expected to happen instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include screenshots if relevant. For grab/matching issues, include interactive search screenshots.
+      placeholder: |
+        1. Go to...
+        2. Click on...
+        3. See error...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Profilarr version
+      placeholder: e.g. 2.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: channel
+    attributes:
+      label: Release channel
+      options:
+        - Stable
+        - Beta
+        - Develop
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation method
+      options:
+        - Docker
+        - Unraid
+        - TrueNAS
+        - Windows
+        - macOS (Intel)
+        - macOS (ARM)
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: arr-version
+    attributes:
+      label: Radarr/Sonarr version
+      placeholder: e.g. Radarr 5.2.6
+
+  - type: input
+    id: database
+    attributes:
+      label: Database
+      placeholder: e.g. dictionarry/profilarr-database
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: e.g. Chrome 120, Firefox 121
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant logs or attach a file
+      render: shell
+
+  - type: input
+    id: related
+    attributes:
+      label: Related issues
+      placeholder: "#123, #456"
