@@ -107,8 +107,8 @@
 	// Get selected instance name
 	$: selectedInstance = filteredInstances.find((i) => i.id === selectedInstanceId);
 
-	// Auto-select if only one matching instance
-	$: if (open && entity && filteredInstances.length === 1 && selectedInstanceId === null) {
+	// Auto-select first matching instance
+	$: if (open && entity && filteredInstances.length > 0 && selectedInstanceId === null) {
 		selectedInstanceId = filteredInstances[0].id;
 	}
 
