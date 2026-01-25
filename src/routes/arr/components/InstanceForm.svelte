@@ -108,6 +108,7 @@
 
 	<form
 		method="POST"
+		action={mode === 'edit' ? '?/update' : undefined}
 		class="space-y-6"
 		use:enhance={() => {
 			return async ({ result, update }) => {
