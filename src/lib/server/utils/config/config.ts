@@ -2,12 +2,20 @@
  * Application configuration singleton
  */
 
+export type AuthMode = 'on' | 'local' | 'off' | 'oidc';
+
 class Config {
 	private basePath: string;
 	public readonly timezone: string;
 	public readonly parserUrl: string;
 	public readonly port: number;
 	public readonly host: string;
+	public readonly authMode: AuthMode;
+	public readonly oidc: {
+		discoveryUrl: string | null;
+		clientId: string | null;
+		clientSecret: string | null;
+	};
 
 	constructor() {
 		// Default base path logic:
@@ -36,6 +44,19 @@ class Config {
 		// Server bind configuration
 		this.port = parseInt(Deno.env.get('PORT') || '6868', 10);
 		this.host = Deno.env.get('HOST') || '0.0.0.0';
+
+		// Auth mode: 'on' (default), 'local', 'off', 'oidc'
+		const auth = (Deno.env.get('AUTH') || 'on').toLowerCase();
+		this.authMode = ['on', 'local', 'off', 'oidc'].includes(auth)
+			? (auth as AuthMode)
+			: 'on';
+
+		// OIDC configuration (only used when AUTH=oidc)
+		this.oidc = {
+			discoveryUrl: Deno.env.get('OIDC_DISCOVERY_URL') || null,
+			clientId: Deno.env.get('OIDC_CLIENT_ID') || null,
+			clientSecret: Deno.env.get('OIDC_CLIENT_SECRET') || null
+		};
 	}
 
 	/**

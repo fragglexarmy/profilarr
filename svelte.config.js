@@ -29,7 +29,8 @@ const config = {
 			$utils: './src/lib/server/utils',
 			$notifications: './src/lib/server/notifications',
 			$cache: './src/lib/server/utils/cache',
-			$sync: './src/lib/server/sync'
+			$sync: './src/lib/server/sync',
+			$auth: './src/lib/server/utils/auth'
 		}
 	}
 };

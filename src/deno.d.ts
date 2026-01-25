@@ -7,3 +7,9 @@ declare const __APP_VERSION__: string;
 
 // Note: Deno namespace types are provided by Deno's built-in lib.deno.ns.d.ts
 // Do not redeclare them here to avoid conflicts
+
+// JSR package declarations for svelte-check compatibility
+declare module '@felix/bcrypt' {
+	export function hash(password: string, rounds?: number): Promise<string>;
+	export function verify(password: string, hash: string): Promise<boolean>;
+}

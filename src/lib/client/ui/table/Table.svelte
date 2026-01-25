@@ -12,6 +12,7 @@
 	export let onRowClick: ((row: T) => void) | undefined = undefined;
 	export let initialSort: SortState | null = null;
 	export let onSortChange: ((sort: SortState | null) => void) | undefined = undefined;
+	export let actionsHeader: string = 'Actions';
 
 	let sortKey: string | null = initialSort?.key ?? null;
 	let sortDirection: SortDirection = initialSort?.direction ?? 'asc';
@@ -169,7 +170,7 @@
 					<th
 						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300`}
 					>
-						Actions
+						{actionsHeader}
 					</th>
 				{/if}
 			</tr>

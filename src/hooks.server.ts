@@ -1,3 +1,5 @@
+import type { Handle } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { config } from '$config';
 import { printBanner, getServerInfo, logContainerConfig } from '$logger/startup.ts';
 import { logSettings } from '$logger/settings.ts';
@@ -7,6 +9,13 @@ import { runMigrations } from '$db/migrations.ts';
 import { initializeJobs } from '$jobs/init.ts';
 import { jobScheduler } from '$jobs/scheduler.ts';
 import { pcdManager } from '$pcd/pcd.ts';
+import {
+	getAuthState,
+	isPublicPath,
+	maybeExtendSession,
+	cleanupExpiredSessions
+} from '$auth/middleware.ts';
+import { getClientIp } from '$auth/network.ts';
 
 // Initialize configuration on server startup
 await config.init();
@@ -30,6 +39,15 @@ await pcdManager.initialize();
 await initializeJobs();
 await jobScheduler.start();
 
+// Clean expired sessions on startup
+const expiredCount = cleanupExpiredSessions();
+if (expiredCount > 0) {
+	await logger.info(`Cleaned up ${expiredCount} expired session${expiredCount === 1 ? '' : 's'}`, {
+		source: 'Auth:Session',
+		meta: { count: expiredCount }
+	});
+}
+
 // Log server ready
 await logger.info('Server ready', {
 	source: 'Startup',
@@ -38,3 +56,61 @@ await logger.info('Server ready', {
 
 // Print startup banner with URL
 printBanner();
+
+/**
+ * Auth middleware
+ * Handles authentication, authorization, and session management
+ */
+export const handle: Handle = async ({ event, resolve }) => {
+	const auth = getAuthState(event);
+
+	// First-run setup flow (applies to all auth modes except AUTH=off)
+	if (auth.needsSetup) {
+		if (event.url.pathname === '/auth/setup') {
+			return resolve(event);
+		}
+		throw redirect(303, '/auth/setup');
+	}
+
+	// AUTH=off or AUTH=local with local IP - skip auth after setup
+	if (auth.skipAuth) {
+		return resolve(event);
+	}
+
+	// Block setup page after user exists
+	if (event.url.pathname === '/auth/setup') {
+		throw redirect(303, '/');
+	}
+
+	// Public paths don't need auth
+	if (isPublicPath(event.url.pathname)) {
+		return resolve(event);
+	}
+
+	// Not authenticated - redirect or return 401
+	if (!auth.user) {
+		if (event.url.pathname.startsWith('/api')) {
+			const ip = getClientIp(event);
+			void logger.warn('Unauthorized API access', {
+				source: 'Auth',
+				meta: { ip, endpoint: event.url.pathname, method: event.request.method }
+			});
+			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+				status: 401,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+		throw redirect(303, '/auth/login');
+	}
+
+	// Sliding expiration: extend session if past halfway point
+	if (auth.session) {
+		maybeExtendSession(auth.session);
+	}
+
+	// Authenticated - attach user to locals for use in routes
+	event.locals.user = auth.user;
+	event.locals.session = auth.session;
+
+	return resolve(event);
+};

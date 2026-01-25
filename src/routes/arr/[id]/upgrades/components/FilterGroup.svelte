@@ -166,7 +166,7 @@
 									name="value-{childIndex}"
 									value={child.value as number}
 									on:change={(e) => {
-										child.value = e.detail;
+										if (e.detail !== undefined) child.value = e.detail;
 										notifyChange();
 									}}
 									font="mono"
@@ -181,7 +181,7 @@
 											name="value-{childIndex}"
 											value={child.value as number}
 											on:change={(e) => {
-												child.value = e.detail;
+												if (e.detail !== undefined) child.value = e.detail;
 												notifyChange();
 											}}
 											min={1}

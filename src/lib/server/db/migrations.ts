@@ -37,6 +37,8 @@ import { migration as migration032 } from './migrations/032_add_filter_id_to_upg
 import { migration as migration033 } from './migrations/033_create_github_cache.ts';
 import { migration as migration034 } from './migrations/034_add_sync_status.ts';
 import { migration as migration035 } from './migrations/035_add_job_skipped_status.ts';
+import { migration as migration036 } from './migrations/036_create_auth_tables.ts';
+import { migration as migration037 } from './migrations/037_add_session_metadata.ts';
 
 export interface Migration {
 	version: number;
@@ -292,7 +294,9 @@ export function loadMigrations(): Migration[] {
 		migration032,
 		migration033,
 		migration034,
-		migration035
+		migration035,
+		migration036,
+		migration037
 	];
 
 	// Sort by version number

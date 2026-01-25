@@ -76,7 +76,9 @@
 			<GroupItem label="Logs" href="/settings/logs" />
 			<GroupItem label="Backups" href="/settings/backups" />
 			<GroupItem label="Notifications" href="/settings/notifications" />
+			<GroupItem label="Security" href="/settings/security" />
 			<GroupItem label="About" href="/settings/about" />
+			<GroupItem label="Log Out" href="/auth/logout" />
 		</Group>
 	</div>
 

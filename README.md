@@ -62,6 +62,16 @@
 - **Testing** - Validate regex patterns, custom format conditions, and quality
   profile behavior before syncing
 
+**Authentication**
+
+- `AUTH=on` (default) - Username/password login required
+- `AUTH=local` - Skip auth for local network requests
+- `AUTH=oidc` - SSO via OpenID Connect provider
+- `AUTH=off` - No authentication (use with external auth like Authentik/Authelia)
+
+API access via `X-Api-Key` header or `?apikey=` query param. See
+[auth docs](src/lib/server/utils/auth/README.md) for details.
+
 ## Discord
 
 We're most active on [Discord](https://discord.gg/2A89tXZMgA), where we post

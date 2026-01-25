@@ -10,6 +10,7 @@ export default defineConfig({
 	plugins: [deno(), tailwindcss(), sveltekit()],
 	server: {
 		port: 6969,
+		host: true,
 		watch: {
 			// Ignore temporary files created by editors
 			ignored: ['**/*.tmp.*', '**/*~', '**/.#*']

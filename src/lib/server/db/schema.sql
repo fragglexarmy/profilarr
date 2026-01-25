@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2026-01-22
+-- Last updated: 2026-01-24
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -648,3 +648,57 @@ CREATE TABLE github_cache (
 -- GitHub cache indexes (Migration: 033_create_github_cache.ts)
 CREATE INDEX idx_github_cache_type ON github_cache(cache_type);
 CREATE INDEX idx_github_cache_expires ON github_cache(expires_at);
+
+-- ==============================================================================
+-- TABLE: users
+-- Purpose: Store admin user credentials (single-user app)
+-- Migration: 036_create_auth_tables.ts
+-- ==============================================================================
+
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: sessions
+-- Purpose: Store user sessions (allows login from multiple devices)
+-- Migration: 036_create_auth_tables.ts, 037_add_session_metadata.ts
+-- ==============================================================================
+
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,                    -- UUID
+    user_id INTEGER NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    -- Session metadata (Migration 037)
+    ip_address TEXT,                        -- Client IP when session created
+    user_agent TEXT,                        -- Full user agent string
+    browser TEXT,                           -- Parsed browser name/version (e.g., "Chrome 120")
+    os TEXT,                                -- Parsed OS (e.g., "Windows 11")
+    device_type TEXT,                       -- Device category (Desktop, Mobile, Tablet)
+    last_active_at DATETIME,                            -- Updated on sliding expiration
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
+
+-- ==============================================================================
+-- TABLE: auth_settings
+-- Purpose: Store auth configuration (singleton pattern with id=1)
+-- Migration: 036_create_auth_tables.ts
+-- ==============================================================================
+
+CREATE TABLE auth_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    session_duration_hours INTEGER NOT NULL DEFAULT 168,  -- 7 days
+    api_key TEXT,                           -- For programmatic access
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

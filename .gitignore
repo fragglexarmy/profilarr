@@ -39,3 +39,9 @@ obj/
 
 # Bruno environments (contain API keys)
 bruno/environments/
+
+# OIDC testing (local Keycloak config)
+test/oidc/
+
+# Research repos
+research/
