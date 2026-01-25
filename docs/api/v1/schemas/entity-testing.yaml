@@ -86,12 +86,11 @@ ReleaseEvaluation:
 EvaluateRequest:
   type: object
   required:
-    - databaseId
     - releases
   properties:
     databaseId:
       type: integer
-      description: Database ID to use for custom format evaluation
+      description: Database ID to use for custom format evaluation. If omitted, only parsing is performed (no CF matching).
     releases:
       type: array
       items:

@@ -28,10 +28,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	const body: EvaluateRequest = await request.json();
 	const { databaseId, releases } = body;
 
-	if (!databaseId) {
-		throw error(400, 'Missing databaseId');
-	}
-
 	if (!releases || !Array.isArray(releases) || releases.length === 0) {
 		throw error(400, 'Missing or empty releases array');
 	}
@@ -49,15 +45,35 @@ export const POST: RequestHandler = async ({ request }) => {
 		} satisfies EvaluateResponse);
 	}
 
-	// Get the PCD cache
-	const cache = pcdManager.getCache(databaseId);
-	if (!cache) {
-		throw error(500, 'Database cache not available');
-	}
-
 	// Parse all releases in batch (uses cache)
 	const parseItems = releases.map((r) => ({ title: r.title, type: r.type }));
 	const parseResults = await parseWithCacheBatch(parseItems);
+
+	// If no databaseId, just return parsed info without CF evaluation
+	if (!databaseId) {
+		const evaluations: ReleaseEvaluation[] = releases.map((release) => {
+			const cacheKey = `${release.title}:${release.type}`;
+			const parsed = parseResults.get(cacheKey);
+
+			return {
+				releaseId: release.id,
+				title: release.title,
+				parsed: parsed ? getParsedInfo(parsed) : undefined,
+				cfMatches: {}
+			};
+		});
+
+		return json({
+			parserAvailable: true,
+			evaluations
+		} satisfies EvaluateResponse);
+	}
+
+	// Get the PCD cache for CF evaluation
+	const cache = pcdManager.getCache(databaseId);
+	if (!cache) {
+		throw error(404, 'Database not found or cache not available');
+	}
 
 	// Get all custom formats with conditions
 	const customFormats = await getAllConditionsForEvaluation(cache);
