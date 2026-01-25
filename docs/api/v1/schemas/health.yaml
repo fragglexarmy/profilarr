@@ -1,44 +1,45 @@
-DatabaseHealth:
+SqliteHealth:
   type: object
   required:
     - status
     - responseTimeMs
+    - migration
   properties:
     status:
       $ref: './common.yaml#/ComponentStatus'
     responseTimeMs:
       type: number
       description: Database query response time in milliseconds
+    migration:
+      type: integer
+      description: Current migration version
     message:
       type: string
       description: Error message if unhealthy
 
-DatabasesHealth:
+ReposHealth:
   type: object
   required:
     - status
-    - total
-    - enabled
-    - cached
-    - disabled
   properties:
     status:
       $ref: './common.yaml#/ComponentStatus'
-    total:
-      type: integer
-      description: Total number of PCD databases configured
-    enabled:
-      type: integer
-      description: Number of enabled databases
-    cached:
-      type: integer
-      description: Number of databases with compiled cache
-    disabled:
-      type: integer
-      description: Number of disabled databases (compilation errors)
     message:
       type: string
       description: Additional status information
+    # Verbose fields
+    total:
+      type: integer
+      description: Total number of PCD repos configured (verbose only)
+    enabled:
+      type: integer
+      description: Number of enabled repos (verbose only)
+    cached:
+      type: integer
+      description: Number of repos with compiled cache (verbose only)
+    disabled:
+      type: integer
+      description: Number of disabled repos (verbose only)
 
 JobsHealth:
   type: object
@@ -47,16 +48,17 @@ JobsHealth:
   properties:
     status:
       $ref: './common.yaml#/ComponentStatus'
+    message:
+      type: string
+      description: Additional status information
+    # Verbose fields
     lastRun:
       type: object
       additionalProperties:
         type: string
         format: date-time
         nullable: true
-      description: Last run time for each job
-    message:
-      type: string
-      description: Additional status information
+      description: Last run time for each job (verbose only)
 
 BackupsHealth:
   type: object
@@ -69,23 +71,24 @@ BackupsHealth:
     enabled:
       type: boolean
       description: Whether backups are enabled
+    message:
+      type: string
+      description: Additional status information
+    # Verbose fields
     lastBackup:
       type: string
       format: date-time
       nullable: true
-      description: Timestamp of last backup
+      description: Timestamp of last backup (verbose only)
     count:
       type: integer
-      description: Number of backup files
-    totalSizeBytes:
-      type: integer
-      description: Total size of all backups in bytes
+      description: Number of backup files (verbose only)
+    totalSize:
+      type: string
+      description: Human-readable total size of all backups (verbose only)
     retentionDays:
       type: integer
-      description: Configured retention period in days
-    message:
-      type: string
-      description: Additional status information
+      description: Configured retention period in days (verbose only)
 
 LogsHealth:
   type: object
@@ -94,25 +97,26 @@ LogsHealth:
   properties:
     status:
       $ref: './common.yaml#/ComponentStatus'
-    totalSizeBytes:
-      type: integer
-      description: Total size of log files in bytes
+    message:
+      type: string
+      description: Additional status information
+    # Verbose fields
+    totalSize:
+      type: string
+      description: Human-readable total size of log files (verbose only)
     fileCount:
       type: integer
-      description: Number of log files
+      description: Number of log files (verbose only)
     oldestLog:
       type: string
       format: date
       nullable: true
-      description: Date of oldest log file
+      description: Date of oldest log file (verbose only)
     newestLog:
       type: string
       format: date
       nullable: true
-      description: Date of newest log file
-    message:
-      type: string
-      description: Additional status information
+      description: Date of newest log file (verbose only)
 
 HealthResponse:
   type: object
@@ -138,16 +142,16 @@ HealthResponse:
     components:
       type: object
       required:
-        - database
-        - databases
+        - sqlite
+        - repos
         - jobs
         - backups
         - logs
       properties:
-        database:
-          $ref: '#/DatabaseHealth'
-        databases:
-          $ref: '#/DatabasesHealth'
+        sqlite:
+          $ref: '#/SqliteHealth'
+        repos:
+          $ref: '#/ReposHealth'
         jobs:
           $ref: '#/JobsHealth'
         backups:

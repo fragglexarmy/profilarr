@@ -9,8 +9,17 @@ health:
       - `healthy`: All components functioning normally
       - `degraded`: Core functionality works but some components have issues
       - `unhealthy`: Core functionality is broken
+
+      Use `?verbose=true` for detailed component information.
     tags:
       - System
+    parameters:
+      - name: verbose
+        in: query
+        description: Include detailed component information
+        schema:
+          type: boolean
+          default: false
     responses:
       '200':
         description: Health check response

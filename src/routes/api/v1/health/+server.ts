@@ -1,16 +1,15 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$db/db.ts';
+import { migrationRunner } from '$db/migrations.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { jobsQueries } from '$db/queries/jobs.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { appInfoQueries } from '$db/queries/appInfo.ts';
 import { getCache } from '$pcd/cache.ts';
 import { config } from '$config';
-import type { components } from '$api/v1.d.ts';
 
-type HealthResponse = components['schemas']['HealthResponse'];
-type ComponentStatus = components['schemas']['ComponentStatus'];
+type ComponentStatus = 'healthy' | 'degraded' | 'unhealthy';
 
 // Track startup time for uptime calculation
 const startupTime = Date.now();
@@ -19,19 +18,32 @@ const startupTime = Date.now();
 const LOG_SIZE_WARN_BYTES = 100 * 1024 * 1024; // 100MB
 const LOG_SIZE_CRITICAL_BYTES = 500 * 1024 * 1024; // 500MB
 
-export const GET: RequestHandler = async () => {
-	const response: HealthResponse = {
-		status: 'healthy',
+/**
+ * Format bytes to human-readable string
+ */
+function formatBytes(bytes: number): string {
+	if (bytes === 0) return '0 B';
+	const units = ['B', 'KB', 'MB', 'GB'];
+	const i = Math.floor(Math.log(bytes) / Math.log(1024));
+	const value = bytes / Math.pow(1024, i);
+	return `${value.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+}
+
+export const GET: RequestHandler = async ({ url }) => {
+	const verbose = url.searchParams.get('verbose') === 'true';
+
+	const sqlite = checkSqlite();
+	const repos = checkRepos(verbose);
+	const jobs = checkJobs(verbose);
+	const backups = await checkBackups(verbose);
+	const logs = await checkLogs(verbose);
+
+	const response = {
+		status: 'healthy' as ComponentStatus,
 		timestamp: new Date().toISOString(),
 		version: appInfoQueries.getVersion(),
 		uptime: Math.floor((Date.now() - startupTime) / 1000),
-		components: {
-			database: checkDatabase(),
-			databases: checkDatabases(),
-			jobs: checkJobs(),
-			backups: await checkBackups(),
-			logs: await checkLogs()
-		}
+		components: { sqlite, repos, jobs, backups, logs }
 	};
 
 	response.status = determineOverallStatus(response.components);
@@ -40,22 +52,30 @@ export const GET: RequestHandler = async () => {
 	return json(response, { status: httpStatus });
 };
 
-function determineOverallStatus(components: HealthResponse['components']): ComponentStatus {
+interface Components {
+	sqlite: { status: ComponentStatus };
+	repos: { status: ComponentStatus };
+	jobs: { status: ComponentStatus };
+	backups: { status: ComponentStatus };
+	logs: { status: ComponentStatus };
+}
+
+function determineOverallStatus(components: Components): ComponentStatus {
 	const statuses = [
-		components.database.status,
-		components.databases.status,
+		components.sqlite.status,
+		components.repos.status,
 		components.jobs.status,
 		components.backups.status,
 		components.logs.status
 	];
 
-	// If database is unhealthy, everything is unhealthy
-	if (components.database.status === 'unhealthy') {
+	// If sqlite is unhealthy, everything is unhealthy
+	if (components.sqlite.status === 'unhealthy') {
 		return 'unhealthy';
 	}
 
-	// If all PCD databases are unhealthy, system is unhealthy
-	if (components.databases.status === 'unhealthy') {
+	// If all PCD repos are unhealthy, system is unhealthy
+	if (components.repos.status === 'unhealthy') {
 		return 'unhealthy';
 	}
 
@@ -67,27 +87,30 @@ function determineOverallStatus(components: HealthResponse['components']): Compo
 	return 'healthy';
 }
 
-function checkDatabase(): HealthResponse['components']['database'] {
+function checkSqlite() {
 	const start = performance.now();
 
 	try {
 		db.queryFirst('SELECT 1');
 		const responseTimeMs = Math.round((performance.now() - start) * 100) / 100;
+		const migration = migrationRunner.getCurrentVersion();
 
 		return {
-			status: 'healthy',
-			responseTimeMs
+			status: 'healthy' as ComponentStatus,
+			responseTimeMs,
+			migration
 		};
 	} catch (error) {
 		return {
-			status: 'unhealthy',
+			status: 'unhealthy' as ComponentStatus,
 			responseTimeMs: -1,
+			migration: 0,
 			message: error instanceof Error ? error.message : 'Database query failed'
 		};
 	}
 }
 
-function checkDatabases(): HealthResponse['components']['databases'] {
+function checkRepos(verbose: boolean) {
 	try {
 		const allDatabases = databaseInstancesQueries.getAll();
 		const enabledDatabases = allDatabases.filter((d) => d.enabled === 1);
@@ -111,46 +134,42 @@ function checkDatabases(): HealthResponse['components']['databases'] {
 
 		if (total === 0) {
 			status = 'healthy';
-			message = 'No databases configured';
+			message = 'No repos configured';
 		} else if (enabled === 0) {
 			status = 'unhealthy';
-			message = 'All databases are disabled';
+			message = 'All repos are disabled';
 		} else if (disabled > 0) {
 			status = 'degraded';
-			message = `${disabled} database(s) disabled due to errors`;
+			message = `${disabled} repo(s) disabled due to errors`;
 		} else if (cachedCount < enabled) {
 			status = 'degraded';
-			message = `${enabled - cachedCount} database(s) not cached`;
+			message = `${enabled - cachedCount} repo(s) not cached`;
 		}
 
-		return {
-			status,
-			total,
-			enabled,
-			cached: cachedCount,
-			disabled,
-			message
-		};
+		// Minimal response
+		const result: Record<string, unknown> = { status };
+		if (message) result.message = message;
+
+		// Verbose adds counts
+		if (verbose) {
+			result.total = total;
+			result.enabled = enabled;
+			result.cached = cachedCount;
+			result.disabled = disabled;
+		}
+
+		return result as { status: ComponentStatus; message?: string };
 	} catch (error) {
 		return {
-			status: 'unhealthy',
-			total: 0,
-			enabled: 0,
-			cached: 0,
-			disabled: 0,
-			message: error instanceof Error ? error.message : 'Failed to check databases'
+			status: 'unhealthy' as ComponentStatus,
+			message: error instanceof Error ? error.message : 'Failed to check repos'
 		};
 	}
 }
 
-function checkJobs(): HealthResponse['components']['jobs'] {
+function checkJobs(verbose: boolean) {
 	try {
 		const jobs = jobsQueries.getAll();
-		const lastRun: Record<string, string | null> = {};
-
-		for (const job of jobs) {
-			lastRun[job.name] = job.last_run_at ?? null;
-		}
 
 		// Check if sync_arr job is stale (hasn't run in 5+ minutes when it should run every minute)
 		const syncArrJob = jobs.find((j) => j.name === 'sync_arr');
@@ -167,20 +186,29 @@ function checkJobs(): HealthResponse['components']['jobs'] {
 			}
 		}
 
-		return {
-			status,
-			lastRun,
-			message
-		};
+		// Minimal response
+		const result: Record<string, unknown> = { status };
+		if (message) result.message = message;
+
+		// Verbose adds lastRun for all jobs
+		if (verbose) {
+			const lastRun: Record<string, string | null> = {};
+			for (const job of jobs) {
+				lastRun[job.name] = job.last_run_at ?? null;
+			}
+			result.lastRun = lastRun;
+		}
+
+		return result as { status: ComponentStatus; message?: string };
 	} catch (error) {
 		return {
-			status: 'unhealthy',
+			status: 'unhealthy' as ComponentStatus,
 			message: error instanceof Error ? error.message : 'Failed to check jobs'
 		};
 	}
 }
 
-async function checkBackups(): Promise<HealthResponse['components']['backups']> {
+async function checkBackups(verbose: boolean) {
 	try {
 		const settings = backupSettingsQueries.get();
 		const enabled = settings?.enabled === 1;
@@ -188,7 +216,7 @@ async function checkBackups(): Promise<HealthResponse['components']['backups']> 
 
 		if (!enabled) {
 			return {
-				status: 'healthy',
+				status: 'healthy' as ComponentStatus,
 				enabled: false,
 				message: 'Backups disabled'
 			};
@@ -233,25 +261,29 @@ async function checkBackups(): Promise<HealthResponse['components']['backups']> 
 			}
 		}
 
-		return {
-			status,
-			enabled,
-			lastBackup,
-			count,
-			totalSizeBytes,
-			retentionDays,
-			message
-		};
+		// Minimal response
+		const result: Record<string, unknown> = { status, enabled };
+		if (message) result.message = message;
+
+		// Verbose adds details
+		if (verbose) {
+			result.lastBackup = lastBackup;
+			result.count = count;
+			result.totalSize = formatBytes(totalSizeBytes);
+			result.retentionDays = retentionDays;
+		}
+
+		return result as { status: ComponentStatus; enabled: boolean; message?: string };
 	} catch (error) {
 		return {
-			status: 'unhealthy',
+			status: 'unhealthy' as ComponentStatus,
 			enabled: false,
 			message: error instanceof Error ? error.message : 'Failed to check backups'
 		};
 	}
 }
 
-async function checkLogs(): Promise<HealthResponse['components']['logs']> {
+async function checkLogs(verbose: boolean) {
 	try {
 		const logPath = config.paths.logs;
 		let totalSizeBytes = 0;
@@ -289,23 +321,28 @@ async function checkLogs(): Promise<HealthResponse['components']['logs']> {
 
 		if (totalSizeBytes > LOG_SIZE_CRITICAL_BYTES) {
 			status = 'degraded';
-			message = `Log directory is very large (${Math.round(totalSizeBytes / 1024 / 1024)}MB)`;
+			message = `Log directory is very large (${formatBytes(totalSizeBytes)})`;
 		} else if (totalSizeBytes > LOG_SIZE_WARN_BYTES) {
 			status = 'degraded';
-			message = `Log directory is getting large (${Math.round(totalSizeBytes / 1024 / 1024)}MB)`;
+			message = `Log directory is getting large (${formatBytes(totalSizeBytes)})`;
 		}
 
-		return {
-			status,
-			totalSizeBytes,
-			fileCount,
-			oldestLog,
-			newestLog,
-			message
-		};
+		// Minimal response
+		const result: Record<string, unknown> = { status };
+		if (message) result.message = message;
+
+		// Verbose adds details
+		if (verbose) {
+			result.totalSize = formatBytes(totalSizeBytes);
+			result.fileCount = fileCount;
+			result.oldestLog = oldestLog;
+			result.newestLog = newestLog;
+		}
+
+		return result as { status: ComponentStatus; message?: string };
 	} catch (error) {
 		return {
-			status: 'unhealthy',
+			status: 'unhealthy' as ComponentStatus,
 			message: error instanceof Error ? error.message : 'Failed to check logs'
 		};
 	}
