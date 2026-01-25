@@ -15,7 +15,7 @@
   <a href="https://hub.docker.com/r/santiagosayshey/profilarr"><img src="https://img.shields.io/docker/pulls/santiagosayshey/profilarr?color=blue" alt="Docker Pulls"></a>
   <a href="https://github.com/Dictionarry-Hub/profilarr/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"></a>
   <a href="https://dictionarry.dev/"><img src="https://img.shields.io/badge/Website-dictionarry.dev-blue" alt="Website"></a>
-  <a href="https://discord.com/invite/Y9TYP6jeYZ"><img src="https://img.shields.io/discord/1202375791556431892?color=blue&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://discord.gg/2A89tXZMgA"><img src="https://img.shields.io/discord/1202375791556431892?color=blue&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://www.buymeacoffee.com/santiagosayshey"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-blue?logo=buy-me-a-coffee" alt="Buy Me A Coffee"></a>
   <a href="https://github.com/sponsors/Dictionarry-Hub"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support-blue?logo=github-sponsors" alt="GitHub Sponsors"></a>
 </p>
@@ -61,6 +61,13 @@
   auditable, diffable. Git-native version control with complete history
 - **Testing** - Validate regex patterns, custom format conditions, and quality
   profile behavior before syncing
+
+## Discord
+
+We're most active on [Discord], where we post announcements, help people
+troubleshoot their setups, and have the kind of conversations that don't fit
+neatly into GitHub issues. If you've got questions or want to follow along with
+development, that's where to find us.
 
 ## Documentation
 
@@ -122,17 +129,18 @@ This runs the parser service and Vite dev server concurrently. See
 
 ### Environment Variables
 
-| Variable        | Default              | Description                       |
-| --------------- | -------------------- | --------------------------------- |
-| `PUID`          | `1000`               | User ID for file permissions      |
-| `PGID`          | `1000`               | Group ID for file permissions     |
-| `UMASK`         | `022`                | File creation mask                |
-| `TZ`            | `Etc/UTC`            | Timezone for scheduling           |
-| `PORT`          | `6868`               | Web UI port                       |
-| `HOST`          | `0.0.0.0`            | Bind address                      |
-| `APP_BASE_PATH` | `/config`            | Base path for data, logs, backups |
-| `PARSER_HOST`   | `localhost`          | Parser service host               |
-| `PARSER_PORT`   | `5000`               | Parser service port               |
+| Variable        | Default     | Description                             |
+| --------------- | ----------- | --------------------------------------- |
+| `PUID`          | `1000`      | User ID for file permissions            |
+| `PGID`          | `1000`      | Group ID for file permissions           |
+| `UMASK`         | `022`       | File creation mask                      |
+| `TZ`            | `Etc/UTC`   | Timezone for scheduling                 |
+| `PORT`          | `6868`      | Web UI port                             |
+| `HOST`          | `0.0.0.0`   | Bind address                            |
+| `APP_BASE_PATH` | `/config`   | Base path for data, logs, backups       |
+| `AUTH`          | `on`        | Auth mode: `on`, `local`, `off`, `oidc` |
+| `PARSER_HOST`   | `localhost` | Parser service host                     |
+| `PARSER_PORT`   | `5000`      | Parser service port                     |
 
 ## License
 
