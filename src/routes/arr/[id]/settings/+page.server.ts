@@ -1,27 +1,7 @@
-import { error, redirect, fail } from '@sveltejs/kit';
-import type { ServerLoad, Actions } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
+import type { Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { logger } from '$logger/logger.ts';
-
-export const load: ServerLoad = ({ params }) => {
-	const id = parseInt(params.id || '', 10);
-
-	// Validate ID
-	if (isNaN(id)) {
-		error(404, `Invalid instance ID: ${params.id}`);
-	}
-
-	// Fetch the specific instance
-	const instance = arrInstancesQueries.getById(id);
-
-	if (!instance) {
-		error(404, `Instance not found: ${id}`);
-	}
-
-	return {
-		instance
-	};
-};
 
 export const actions: Actions = {
 	update: async ({ params, request }) => {
@@ -64,6 +44,11 @@ export const actions: Actions = {
 			return fail(400, { error: 'An instance with this name already exists' });
 		}
 
+		// Check if API key already exists (each Arr instance has a unique API key)
+		if (arrInstancesQueries.apiKeyExists(apiKey, id)) {
+			return fail(400, { error: 'This instance is already connected' });
+		}
+
 		// Parse tags
 		let tags: string[] = [];
 		if (tagsJson) {
@@ -84,19 +69,14 @@ export const actions: Actions = {
 			});
 
 			await logger.info(`Updated arr instance: ${name}`, {
-				source: 'arr/[id]/edit',
+				source: 'arr/[id]/settings',
 				meta: { id, name, type: instance.type, url }
 			});
 
-			redirect(303, `/arr/${id}`);
+			return { success: true };
 		} catch (err) {
-			// Re-throw redirect errors
-			if (err && typeof err === 'object' && 'status' in err && 'location' in err) {
-				throw err;
-			}
-
 			await logger.error('Failed to update arr instance', {
-				source: 'arr/[id]/edit',
+				source: 'arr/[id]/settings',
 				meta: { error: err instanceof Error ? err.message : String(err) }
 			});
 
@@ -110,7 +90,7 @@ export const actions: Actions = {
 		// Validate ID
 		if (isNaN(id)) {
 			await logger.warn('Delete failed: Invalid instance ID', {
-				source: 'arr/[id]/edit',
+				source: 'arr/[id]/settings',
 				meta: { id: params.id }
 			});
 			return fail(400, { error: 'Invalid instance ID' });
@@ -121,7 +101,7 @@ export const actions: Actions = {
 
 		if (!instance) {
 			await logger.warn('Delete failed: Instance not found', {
-				source: 'arr/[id]/edit',
+				source: 'arr/[id]/settings',
 				meta: { id }
 			});
 			return fail(404, { error: 'Instance not found' });
@@ -132,14 +112,14 @@ export const actions: Actions = {
 
 		if (!deleted) {
 			await logger.error('Failed to delete instance', {
-				source: 'arr/[id]/edit',
+				source: 'arr/[id]/settings',
 				meta: { id, name: instance.name, type: instance.type }
 			});
 			return fail(500, { error: 'Failed to delete instance' });
 		}
 
 		await logger.info(`Deleted ${instance.type} instance: ${instance.name}`, {
-			source: 'arr/[id]/edit',
+			source: 'arr/[id]/settings',
 			meta: { id, name: instance.name, type: instance.type, url: instance.url }
 		});
 

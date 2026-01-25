@@ -84,7 +84,7 @@
 		</p>
 	</div>
 	<div slot="right" class="flex items-center gap-2">
-		<Button text="Info" icon={Info} href="/arr/{data.instance.id}/upgrades/info" />
+		<Button text="Info" icon={Info} href="/arr/upgrades/info" />
 		{#if !isNewConfig && data.config?.dryRun}
 			<Button
 				text={clearing ? 'Clearing...' : 'Reset Cache'}

@@ -37,7 +37,7 @@
 </script>
 
 <div
-	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-2 transition-colors focus-within:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:focus-within:border-neutral-500"
+	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 transition-colors focus-within:border-neutral-400 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:focus-within:border-neutral-600"
 >
 	{#each tags as tag, index (tag)}
 		<span class="inline-flex items-center gap-1">

@@ -25,6 +25,8 @@
 	export let fixed: boolean = false;
 	// Custom width class (overrides fullWidth if set)
 	export let width: string | undefined = undefined;
+	// Disable the dropdown
+	export let disabled: boolean = false;
 
 	const dispatch = createEventDispatcher<{ change: string }>();
 
@@ -88,9 +90,10 @@
 			iconPosition="right"
 			size={buttonSize}
 			{fullWidth}
+			{disabled}
 			justify={fullWidth || width ? 'between' : 'center'}
 			textColor={isPlaceholder ? 'text-neutral-400 dark:text-neutral-500' : ''}
-			on:click={() => (open = !open)}
+			on:click={() => !disabled && (open = !open)}
 		/>
 		{#if open}
 			<Dropdown {position} {minWidth} compact={isCompactDropdown} {fixed} {triggerEl}>

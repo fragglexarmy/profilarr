@@ -84,7 +84,7 @@
 	}
 
 	function handleEdit() {
-		goto(`/arr/${data.instance.id}/edit`);
+		goto(`/arr/${data.instance.id}/settings`);
 	}
 
 	async function handleDelete() {

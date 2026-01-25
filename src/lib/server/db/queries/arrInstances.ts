@@ -162,5 +162,25 @@ export const arrInstancesQueries = {
 			name
 		);
 		return (result?.count ?? 0) > 0;
+	},
+
+	/**
+	 * Check if an instance with the same API key already exists
+	 */
+	apiKeyExists(apiKey: string, excludeId?: number): boolean {
+		if (excludeId !== undefined) {
+			const result = db.queryFirst<{ count: number }>(
+				'SELECT COUNT(*) as count FROM arr_instances WHERE api_key = ? AND id != ?',
+				apiKey,
+				excludeId
+			);
+			return (result?.count ?? 0) > 0;
+		}
+
+		const result = db.queryFirst<{ count: number }>(
+			'SELECT COUNT(*) as count FROM arr_instances WHERE api_key = ?',
+			apiKey
+		);
+		return (result?.count ?? 0) > 0;
 	}
 };

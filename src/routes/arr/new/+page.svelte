@@ -6,7 +6,13 @@
 	export let form: ActionData;
 
 	// Get type from URL params if provided
-	const typeFromUrl = $page.url.searchParams.get('type') || '';
+	$: typeFromUrl = $page.url.searchParams.get('type') || '';
 </script>
 
-<InstanceForm mode="create" {form} initialType={typeFromUrl} />
+<svelte:head>
+	<title>Add Instance - Profilarr</title>
+</svelte:head>
+
+<div class="p-8">
+	<InstanceForm mode="create" {form} initialType={typeFromUrl} />
+</div>

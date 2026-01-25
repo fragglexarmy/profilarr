@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { filterFields, filterModes } from '$lib/shared/filters';
 	import { selectors } from '$lib/shared/selectors';
 	import { ArrowLeft } from 'lucide-svelte';
@@ -8,8 +7,6 @@
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
-
-	export let data: PageData;
 
 	// Filter fields with type labels
 	const typeLabels: Record<string, string> = {
@@ -43,7 +40,7 @@
 				html: row.operators
 					.map((op) => `<span class="${badgeBase} ${badgeNeutral}">${op.label}</span>`)
 					.join(' ')
-			})
+				})
 		}
 	];
 
@@ -109,71 +106,77 @@
 		{ key: 'name', header: 'Concept', sortable: false },
 		{ key: 'summary', header: 'Summary', sortable: false }
 	];
+
+	function handleBack() {
+		history.back();
+	}
 </script>
 
 <svelte:head>
-	<title>{data.instance.name} - Upgrades Info - Profilarr</title>
+	<title>How Upgrades Work - Profilarr</title>
 </svelte:head>
 
-<StickyCard position="top">
-	<div slot="left">
-		<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">How Upgrades Work</h1>
-	</div>
-	<div slot="right">
-		<Button text="Back" icon={ArrowLeft} href="/arr/{data.instance.id}/upgrades" />
-	</div>
-</StickyCard>
+<div class="p-8">
+	<StickyCard position="top">
+		<div slot="left">
+			<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">How Upgrades Work</h1>
+		</div>
+		<div slot="right">
+			<Button text="Back" icon={ArrowLeft} on:click={handleBack} />
+		</div>
+	</StickyCard>
 
-<div class="mt-6 space-y-8 px-4">
-	<!-- Intro -->
-	<div class="text-neutral-600 dark:text-neutral-400">
-		<p>
-			Radarr and Sonarr don't search for the best release. They monitor RSS feeds and grab the
-			first thing that qualifies as an upgrade. To get optimal releases, you need manual searches.
-			This module automates that: <span class="font-medium text-neutral-700 dark:text-neutral-300"
-				>Filter</span
+	<div class="mt-6 space-y-8 px-4">
+		<!-- Intro -->
+		<div class="text-neutral-600 dark:text-neutral-400">
+			<p>
+				Radarr and Sonarr don't search for the best release. They monitor RSS feeds and grab the
+				first thing that qualifies as an upgrade. To get optimal releases, you need manual searches.
+				This module automates that: <span class="font-medium text-neutral-700 dark:text-neutral-300"
+					>Filter</span
+				>
+				your library,
+				<span class="font-medium text-neutral-700 dark:text-neutral-300">Select</span> items to search,
+				then
+				<span class="font-medium text-neutral-700 dark:text-neutral-300">Search</span> for better releases.
+			</p>
+		</div>
+
+		<!-- Concepts -->
+		<section>
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Concepts</h2>
+			<ExpandableTable
+				columns={conceptColumns}
+				data={concepts}
+				getRowId={(row) => row.id}
+				emptyMessage="No concepts"
+				chevronPosition="right"
+				flushExpanded
 			>
-			your library,
-			<span class="font-medium text-neutral-700 dark:text-neutral-300">Select</span> items to search,
-			then
-			<span class="font-medium text-neutral-700 dark:text-neutral-300">Search</span> for better releases.
-		</p>
+				<svelte:fragment slot="expanded" let:row>
+					<div class="px-6 py-4">
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">{row.details}</p>
+					</div>
+				</svelte:fragment>
+			</ExpandableTable>
+		</section>
+
+		<!-- Selectors Reference -->
+		<section>
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Selectors</h2>
+			<Table columns={selectorColumns} data={selectors} emptyMessage="No selectors" />
+		</section>
+
+		<!-- Filter Modes Reference -->
+		<section>
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Filter Modes</h2>
+			<Table columns={modeColumns} data={filterModes} emptyMessage="No modes" />
+		</section>
+
+		<!-- Filter Fields Reference -->
+		<section>
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Filter Fields</h2>
+			<Table columns={fieldColumns} data={filterFields} emptyMessage="No fields" />
+		</section>
 	</div>
-
-	<!-- Concepts -->
-	<section>
-		<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Concepts</h2>
-		<ExpandableTable
-			columns={conceptColumns}
-			data={concepts}
-			getRowId={(row) => row.id}
-			emptyMessage="No concepts"
-			chevronPosition="right"
-			flushExpanded
-		>
-			<svelte:fragment slot="expanded" let:row>
-				<div class="px-6 py-4">
-					<p class="text-sm text-neutral-600 dark:text-neutral-400">{row.details}</p>
-				</div>
-			</svelte:fragment>
-		</ExpandableTable>
-	</section>
-
-	<!-- Selectors Reference -->
-	<section>
-		<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Selectors</h2>
-		<Table columns={selectorColumns} data={selectors} emptyMessage="No selectors" />
-	</section>
-
-	<!-- Filter Modes Reference -->
-	<section>
-		<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Filter Modes</h2>
-		<Table columns={modeColumns} data={filterModes} emptyMessage="No modes" />
-	</section>
-
-	<!-- Filter Fields Reference -->
-	<section>
-		<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Filter Fields</h2>
-		<Table columns={fieldColumns} data={filterFields} emptyMessage="No fields" />
-	</section>
 </div>

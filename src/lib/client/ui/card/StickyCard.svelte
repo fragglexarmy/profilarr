@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 
 	export let position: 'top' | 'bottom' = 'top';
+	export let variant: 'default' | 'transparent' | 'blur' = 'default';
 
 	let isStuck = false;
 	let sentinel: HTMLDivElement;
@@ -18,6 +19,13 @@
 
 		return () => observer.disconnect();
 	});
+
+	$: bgClass =
+		variant === 'default'
+			? 'bg-neutral-50 dark:bg-neutral-900'
+			: variant === 'blur'
+				? 'backdrop-blur-sm bg-neutral-50/50 dark:bg-neutral-900/50'
+				: '';
 </script>
 
 <div
@@ -26,7 +34,7 @@
 ></div>
 
 <div
-	class="sticky z-10 -mx-8 bg-neutral-50 dark:bg-neutral-900
+	class="sticky z-10 -mx-8 {bgClass}
 		{position === 'top' ? 'top-0' : 'bottom-0'}"
 >
 	<div class="px-12 py-4">
@@ -35,17 +43,19 @@
 			<slot name="right" />
 		</div>
 	</div>
-	{#if position === 'top'}
-		<div
-			class="border-b border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
-				? ''
-				: 'mx-8'}"
-		></div>
-	{:else}
-		<div
-			class="border-t border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
-				? ''
-				: 'mx-8'}"
-		></div>
+	{#if variant === 'default'}
+		{#if position === 'top'}
+			<div
+				class="border-b border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
+					? ''
+					: 'mx-8'}"
+			></div>
+		{:else}
+			<div
+				class="border-t border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
+					? ''
+					: 'mx-8'}"
+			></div>
+		{/if}
 	{/if}
 </div>

@@ -1,10 +1,16 @@
 <script lang="ts">
-	import { Check, X, Loader2, Save, Wifi, Trash2 } from 'lucide-svelte';
+	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
+	import { Save, Wifi, Trash2 } from 'lucide-svelte';
+	import { alertStore } from '$alerts/store';
+	import { isDirty, initEdit, initCreate, update, current, clear } from '$lib/client/stores/dirty';
+	import type { ArrInstance } from '$db/queries/arrInstances.ts';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import { enhance } from '$app/forms';
-	import { alertStore } from '$alerts/store';
-	import type { ArrInstance } from '$db/queries/arrInstances.ts';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	// Props
 	export let mode: 'create' | 'edit';
@@ -23,37 +29,60 @@
 		}
 	};
 
-	// Form values
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let name = (form as any)?.values?.name ?? (mode === 'edit' ? instance?.name : '') ?? '';
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let type = mode === 'edit' ? instance?.type : ((form as any)?.values?.type ?? initialType ?? '');
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let url = (form as any)?.values?.url ?? (mode === 'edit' ? instance?.url : '') ?? '';
-	let apiKey = ''; // Never pre-populate API key for security
-	let tags: string[] = mode === 'edit' && instance ? parseTags(instance.tags) : [];
-	let enabled: boolean = mode === 'edit' ? Boolean(instance?.enabled) : true;
+	// Initialize dirty tracking on mount
+	onMount(() => {
+		if (mode === 'edit' && instance) {
+			initEdit({
+				name: instance.name,
+				type: instance.type,
+				url: instance.url,
+				apiKey: '', // Never pre-populate for security
+				enabled: instance.enabled ? 'true' : 'false',
+				tags: JSON.stringify(parseTags(instance.tags))
+			});
+		} else {
+			initCreate({
+				name: '',
+				type: initialType,
+				url: '',
+				apiKey: '',
+				enabled: 'true',
+				tags: '[]'
+			});
+		}
+		return () => clear();
+	});
 
-	// Connection test state
-	type ConnectionStatus = 'idle' | 'testing' | 'success' | 'error';
-	let connectionStatus: ConnectionStatus = 'idle';
-	let connectionError = '';
+	// Read current values from dirty store
+	$: name = ($current.name ?? '') as string;
+	$: type = ($current.type ?? '') as string;
+	$: url = ($current.url ?? '') as string;
+	$: apiKey = ($current.apiKey ?? '') as string;
+	$: enabled = ($current.enabled ?? 'true') as string;
+	$: tags = JSON.parse(($current.tags ?? '[]') as string) as string[];
 
-	// Delete modal state
+	// UI state
+	let saving = false;
+	let deleting = false;
 	let showDeleteModal = false;
-	let deleteFormElement: HTMLFormElement;
 
-	// Test connection function
+	// Options for dropdowns
+	const typeOptions = [
+		{ value: 'radarr', label: 'Radarr' },
+		{ value: 'sonarr', label: 'Sonarr' }
+	];
+
+	const enabledOptions = [
+		{ value: 'true', label: 'Enabled' },
+		{ value: 'false', label: 'Disabled' }
+	];
+
+	// Manual test connection
 	async function testConnection() {
-		// Validation
 		if (!type || !url || !apiKey) {
-			connectionError = 'Please fill in Type, URL, and API Key';
-			connectionStatus = 'error';
+			alertStore.add('error', 'Please fill in Type, URL, and API Key');
 			return;
 		}
-
-		connectionStatus = 'testing';
-		connectionError = '';
 
 		try {
 			const response = await fetch('/arr/test', {
@@ -62,356 +91,273 @@
 				body: JSON.stringify({ type, url, apiKey })
 			});
 
-			const data = await response.json();
+			const result = await response.json();
 
 			if (!response.ok) {
-				throw new Error(data.error || data.message || 'Connection test failed');
+				throw new Error(result.error || result.message || 'Connection test failed');
 			}
 
-			connectionStatus = 'success';
 			alertStore.add('success', 'Connection successful!');
 		} catch (error) {
-			connectionStatus = 'error';
-			connectionError = error instanceof Error ? error.message : 'Connection test failed';
+			const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
+			alertStore.add('error', errorMessage);
 		}
 	}
 
-	// Reset connection status when form fields change
-	function resetConnectionStatus() {
-		if (connectionStatus !== 'idle') {
-			connectionStatus = 'idle';
-			connectionError = '';
+	// Test connection and submit if successful
+	async function handleSave() {
+		if (!type || !url || !apiKey) {
+			alertStore.add('error', 'Please fill in Type, URL, and API Key');
+			return;
+		}
+
+		saving = true;
+
+		try {
+			const response = await fetch('/arr/test', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ type, url, apiKey })
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || result.message || 'Connection test failed');
+			}
+
+			// Connection successful, submit the form
+			const saveForm = document.getElementById('save-form');
+			if (saveForm instanceof HTMLFormElement) {
+				saveForm.requestSubmit();
+			}
+		} catch (error) {
+			saving = false;
+			const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
+			alertStore.add('error', errorMessage);
 		}
 	}
 
-	$: canSubmit = connectionStatus === 'success';
+	$: canSubmit = $isDirty && !!name && !!url && !!apiKey && (mode === 'edit' || !!type);
+
+	// Handle form response
+	let lastFormId: unknown = null;
+	$: if (form && form !== lastFormId) {
+		lastFormId = form;
+		if (form.success) {
+			alertStore.add('success', 'Settings saved successfully');
+			// Reset dirty state with new values (keep apiKey empty)
+			initEdit({
+				name,
+				type,
+				url,
+				apiKey: '',
+				enabled,
+				tags: JSON.stringify(tags)
+			});
+		}
+		if (form.error) {
+			alertStore.add('error', form.error);
+		}
+	}
 
 	// Display text based on mode
-	$: title = mode === 'create' ? 'Add Arr Instance' : 'Edit Instance';
-	$: description =
-		mode === 'create'
-			? 'Configure a new Radarr or Sonarr instance'
-			: `Update the configuration for ${instance?.name || 'this instance'}`;
-	$: submitButtonText = mode === 'create' ? 'Save' : 'Save';
-	$: successMessage =
-		mode === 'create' ? 'Instance created successfully!' : 'Instance updated successfully!';
-	$: errorMessage = mode === 'create' ? 'Failed to save instance' : 'Failed to update instance';
+	$: title = mode === 'create' ? 'Add Instance' : 'Settings';
+	$: description = mode === 'create'
+		? 'Configure a new Radarr or Sonarr instance.'
+		: `Configure connection and sync settings for ${instance?.name || 'this instance'}.`;
 </script>
 
-<div class="space-y-8 p-8">
-	<div class="space-y-3">
-		<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
-		<p class="text-lg text-neutral-600 dark:text-neutral-400">
-			{description}
-		</p>
+<div class="space-y-6" class:mt-6={mode === 'edit'}>
+	<!-- Header -->
+	<div class="flex items-start justify-between">
+		<div>
+			<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
+			<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
+		</div>
+		<div class="flex items-center gap-2">
+			{#if mode === 'edit'}
+				<Button
+					text="Delete"
+					icon={Trash2}
+					iconColor="text-red-600 dark:text-red-400"
+					disabled={saving || deleting}
+					on:click={() => (showDeleteModal = true)}
+				/>
+			{/if}
+			<Button
+				text={saving ? 'Saving...' : 'Save'}
+				icon={Save}
+				iconColor="text-blue-600 dark:text-blue-400"
+				disabled={saving || !canSubmit}
+				on:click={handleSave}
+			/>
+		</div>
 	</div>
 
+	<div
+		class="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+	>
+		<!-- Type Row -->
+		<div class="space-y-2">
+			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Type{#if mode === 'create'}<span class="text-red-500">*</span>{/if}
+			</label>
+			{#if mode === 'edit'}
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					Type cannot be changed after creation
+				</p>
+			{/if}
+			<DropdownSelect
+				value={type}
+				options={typeOptions}
+				placeholder="Select type..."
+				disabled={mode === 'edit'}
+				on:change={(e) => update('type', e.detail)}
+			/>
+		</div>
+		<!-- Name + Status Row -->
+		<div class="flex items-end gap-4">
+			<div class="flex-1">
+				<FormInput
+					label="Name"
+					name="name"
+					value={name}
+					placeholder="e.g., Main Radarr, 4K Sonarr"
+					required
+					on:input={(e) => update('name', e.detail)}
+				/>
+			</div>
+			<div class="flex items-center gap-2">
+				<DropdownSelect
+					label="Status:"
+					value={enabled}
+					options={enabledOptions}
+					responsiveButton
+					on:change={(e) => update('enabled', e.detail)}
+				/>
+			</div>
+		</div>
+		{#if enabled === 'false'}
+			<p class="text-xs text-amber-600 dark:text-amber-400">
+				Disabled instances are excluded from sync operations
+			</p>
+		{/if}
+		<!-- URL Row -->
+		<FormInput
+			label="URL"
+			name="url"
+			type="url"
+			value={url}
+			placeholder="http://localhost:7878"
+			description="Use container name if on the same Docker network, e.g. http://radarr:7878"
+			required
+			on:input={(e) => update('url', e.detail)}
+		/>
+		<!-- API Key + Test Connection Row -->
+		<div class="flex items-end gap-4">
+			<div class="flex-1">
+				<FormInput
+					label="API Key"
+					name="api_key"
+					value={apiKey}
+					placeholder="Enter API key"
+					description={mode === 'edit' ? 'Re-enter API key to save changes' : ''}
+					required
+					private_
+					on:input={(e) => update('apiKey', e.detail)}
+				/>
+			</div>
+			<Button
+				text="Test Connection"
+				icon={Wifi}
+				disabled={!apiKey || !url || (mode === 'create' && !type)}
+				on:click={testConnection}
+			/>
+		</div>
+		<!-- Tags Row -->
+		<div class="space-y-2">
+			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Tags
+			</label>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">
+				Press Enter to add a tag, Backspace to remove
+			</p>
+			<TagInput
+				{tags}
+				on:change={(e) => update('tags', JSON.stringify(e.detail))}
+			/>
+		</div>
+	</div>
+</div>
+
+<!-- Hidden save form -->
+<form
+	id="save-form"
+	method="POST"
+	action={mode === 'edit' ? '?/update' : undefined}
+	class="hidden"
+	use:enhance={() => {
+		saving = true;
+		return async ({ result, update: formUpdate }) => {
+			if (result.type === 'redirect') {
+				// For create mode, clear dirty state before redirect
+				clear();
+				alertStore.add('success', 'Instance created successfully');
+			}
+			await formUpdate({ reset: false });
+			saving = false;
+		};
+	}}
+>
+	<input type="hidden" name="name" value={name} />
+	<input type="hidden" name="type" value={type} />
+	<input type="hidden" name="url" value={url} />
+	<input type="hidden" name="api_key" value={apiKey} />
+	<input type="hidden" name="enabled" value={enabled === 'true' ? '1' : '0'} />
+	<input type="hidden" name="tags" value={JSON.stringify(tags)} />
+</form>
+
+<!-- Hidden delete form (edit mode only) -->
+{#if mode === 'edit'}
 	<form
+		id="delete-form"
 		method="POST"
-		action={mode === 'edit' ? '?/update' : undefined}
-		class="space-y-6"
+		action="?/delete"
+		class="hidden"
 		use:enhance={() => {
+			deleting = true;
 			return async ({ result, update }) => {
 				if (result.type === 'failure' && result.data) {
-					alertStore.add('error', (result.data as { error?: string }).error || errorMessage);
+					alertStore.add('error', (result.data as { error?: string }).error || 'Failed to delete');
 				} else if (result.type === 'redirect') {
-					alertStore.add('success', successMessage);
+					alertStore.add('success', 'Instance deleted successfully');
 				}
 				await update();
+				deleting = false;
 			};
 		}}
-	>
-		<!-- Instance Details -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-				Instance Details
-			</h2>
-
-			<div class="space-y-4">
-				<!-- Name -->
-				<div>
-					<label
-						for="name"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Name <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="text"
-						id="name"
-						name="name"
-						bind:value={name}
-						required
-						placeholder="e.g., Main Radarr, 4K Sonarr"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
-					/>
-				</div>
-
-				<!-- Type -->
-				<div>
-					<label
-						for="type"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Type <span class="text-red-500">*</span>
-					</label>
-					{#if mode === 'edit'}
-						<input
-							type="text"
-							id="type"
-							name="type"
-							value={type.charAt(0).toUpperCase() + type.slice(1)}
-							disabled
-							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 disabled:cursor-not-allowed dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
-						/>
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Type cannot be changed after creation
-						</p>
-						<input type="hidden" name="type" value={type} />
-					{:else}
-						<select
-							id="type"
-							name="type"
-							bind:value={type}
-							on:change={resetConnectionStatus}
-							required
-							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
-						>
-							<option value="">Select type...</option>
-							<option value="radarr">Radarr</option>
-							<option value="sonarr">Sonarr</option>
-						</select>
-					{/if}
-				</div>
-
-				<!-- Enabled Toggle -->
-				<div class="flex items-center justify-between">
-					<div>
-						<label
-							for="enabled"
-							class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-						>
-							Enabled
-						</label>
-						<p class="text-xs text-neutral-500 dark:text-neutral-400">
-							Disable to exclude this instance from sync operations
-						</p>
-					</div>
-					<button
-						type="button"
-						role="switch"
-						aria-checked={enabled}
-						aria-label="Toggle enabled status"
-						on:click={() => (enabled = !enabled)}
-						class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {enabled
-							? 'bg-blue-600 dark:bg-blue-500'
-							: 'bg-neutral-200 dark:bg-neutral-700'}"
-					>
-						<span
-							class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {enabled
-								? 'translate-x-5'
-								: 'translate-x-0'}"
-						></span>
-					</button>
-					<input type="hidden" name="enabled" value={enabled ? '1' : '0'} />
-				</div>
-			</div>
-		</div>
-
-		<!-- Connection -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-				Connection Settings
-			</h2>
-
-			<div class="space-y-4">
-				<!-- URL -->
-				<div>
-					<label for="url" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-						URL <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="url"
-						id="url"
-						name="url"
-						bind:value={url}
-						on:input={resetConnectionStatus}
-						required
-						placeholder="http://localhost:7878"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
-					/>
-				</div>
-
-				<!-- API Key -->
-				<div>
-					<label
-						for="api_key"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						API Key <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="text"
-						id="api_key"
-						name="api_key"
-						bind:value={apiKey}
-						on:input={resetConnectionStatus}
-						required
-						placeholder={mode === 'edit' ? 'Enter API key to test connection' : 'Enter API key'}
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
-					/>
-					{#if mode === 'edit'}
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Re-enter API key to update or test connection
-						</p>
-					{/if}
-				</div>
-			</div>
-
-			<div class="mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<div class="space-y-1 text-sm">
-					{#if connectionStatus === 'success'}
-						<p class="text-green-600 dark:text-green-400">
-							Connection test passed! You can now save this instance.
-						</p>
-					{/if}
-					{#if connectionStatus === 'error'}
-						<p class="text-red-600 dark:text-red-400">
-							{connectionError}
-						</p>
-					{/if}
-					{#if !canSubmit && connectionStatus !== 'success'}
-						<p class="text-neutral-600 dark:text-neutral-400">
-							Please test the connection before saving
-						</p>
-					{/if}
-				</div>
-
-				<button
-					type="button"
-					on:click={testConnection}
-					disabled={connectionStatus === 'testing'}
-					class="flex items-center gap-2 self-start rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-				>
-					{#if connectionStatus === 'testing'}
-						<Loader2 size={14} class="animate-spin" />
-						Testing...
-					{:else if connectionStatus === 'success'}
-						<Check size={14} class="text-green-600 dark:text-green-400" />
-						Connected
-					{:else if connectionStatus === 'error'}
-						<X size={14} class="text-red-600 dark:text-red-400" />
-						Test Again
-					{:else}
-						<Wifi size={14} />
-						Test Connection
-					{/if}
-				</button>
-			</div>
-		</div>
-
-		<!-- Tags -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Tags</h2>
-
-			<label
-				for="tags-input"
-				class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-			>
-				Optional Tags
-			</label>
-			<div class="mt-1">
-				<TagInput bind:tags />
-			</div>
-			<p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-				Press Enter to add a tag, Backspace to remove.
-			</p>
-			<input type="hidden" name="tags" value={tags.length > 0 ? JSON.stringify(tags) : ''} />
-		</div>
-
-		<!-- Actions -->
-		<div class="flex flex-wrap items-center justify-end gap-3">
-			{#if mode === 'edit'}
-				<a
-					href="/arr/{instance?.id}"
-					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-				>
-					Cancel
-				</a>
-			{/if}
-			<button
-				type="submit"
-				disabled={!canSubmit}
-				class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
-			>
-				<Save size={14} />
-				{submitButtonText}
-			</button>
-		</div>
-	</form>
-
-	<!-- Delete Section (Edit Mode Only) -->
-	{#if mode === 'edit'}
-		<div
-			class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/40"
-		>
-			<h2 class="text-lg font-semibold text-red-700 dark:text-red-300">Danger Zone</h2>
-			<p class="mt-2 text-sm text-red-600 dark:text-red-400">
-				Once you delete this instance, there is no going back. Please be certain.
-			</p>
-			<button
-				type="button"
-				on:click={() => (showDeleteModal = true)}
-				class="mt-4 flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900"
-			>
-				<Trash2 size={14} />
-				Delete Instance
-			</button>
-
-			<form
-				bind:this={deleteFormElement}
-				method="POST"
-				action="?/delete"
-				class="hidden"
-				use:enhance={() => {
-					return async ({ result, update }) => {
-						if (result.type === 'failure' && result.data) {
-							alertStore.add(
-								'error',
-								(result.data as { error?: string }).error || 'Failed to delete instance'
-							);
-						} else if (result.type === 'redirect') {
-							alertStore.add('success', 'Instance deleted successfully');
-						}
-						await update();
-					};
-				}}
-			>
-				<!-- Empty form, just for submission -->
-			</form>
-		</div>
-	{/if}
-</div>
+	></form>
+{/if}
 
 <!-- Delete Confirmation Modal -->
 {#if mode === 'edit'}
 	<Modal
 		open={showDeleteModal}
 		header="Delete Instance"
-		bodyMessage={`Are you sure you want to delete "${instance?.name}"? This action cannot be undone and all data will be permanently lost.`}
+		bodyMessage={`Are you sure you want to delete "${instance?.name}"? This action cannot be undone.`}
 		confirmText="Delete"
 		cancelText="Cancel"
 		confirmDanger={true}
 		on:confirm={() => {
 			showDeleteModal = false;
-			deleteFormElement?.requestSubmit();
+			const deleteForm = document.getElementById('delete-form');
+			if (deleteForm instanceof HTMLFormElement) {
+				deleteForm.requestSubmit();
+			}
 		}}
 		on:cancel={() => (showDeleteModal = false)}
 	/>
 {/if}
+
+<DirtyModal />

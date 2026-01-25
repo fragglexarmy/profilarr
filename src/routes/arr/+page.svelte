@@ -126,7 +126,7 @@
 
 			<svelte:fragment slot="actions" let:row>
 				<div class="flex items-center justify-end gap-1">
-					<a href="/arr/{row.id}/edit" on:click={(e) => e.stopPropagation()}>
+					<a href="/arr/{row.id}/settings" on:click={(e) => e.stopPropagation()}>
 						<TableActionButton icon={Pencil} title="Edit instance" />
 					</a>
 					<a

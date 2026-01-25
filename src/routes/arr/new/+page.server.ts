@@ -58,6 +58,19 @@ export const actions = {
 			});
 		}
 
+		// Check if API key already exists (each Arr instance has a unique API key)
+		if (arrInstancesQueries.apiKeyExists(apiKey)) {
+			await logger.warn('Attempted to create duplicate instance', {
+				source: 'arr/new',
+				meta: { name, type, url }
+			});
+
+			return fail(400, {
+				error: 'This instance is already connected',
+				values: { name, type, url }
+			});
+		}
+
 		// Parse tags
 		let tags: string[] = [];
 		if (tagsJson) {
@@ -132,6 +145,6 @@ export const actions = {
 		}
 
 		// Redirect to the new instance page (outside try-catch since redirect throws)
-		redirect(303, `/arr/${id}`);
+		redirect(303, `/arr/${id}/settings`);
 	}
 } satisfies Actions;
