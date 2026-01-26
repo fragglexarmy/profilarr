@@ -5,7 +5,6 @@
 		Lock,
 		Code,
 		Trash2,
-		Pencil,
 		ExternalLink,
 		ChevronRight,
 		Info
@@ -180,9 +179,6 @@
 
 			<svelte:fragment slot="actions" let:row>
 				<div class="flex items-center justify-end gap-1">
-					<a href="/databases/{row.id}/edit" on:click={(e) => e.stopPropagation()}>
-						<TableActionButton icon={Pencil} title="Edit database" />
-					</a>
 					<a
 						href={row.repository_url}
 						target="_blank"

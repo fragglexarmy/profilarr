@@ -11,18 +11,6 @@
 
 	$: tabs = [
 		{
-			label: 'Settings',
-			href: `/arr/${instanceId}/settings`,
-			active: currentPath.includes('/settings'),
-			icon: Settings
-		},
-		{
-			label: 'Library',
-			href: `/arr/${instanceId}/library`,
-			active: currentPath.includes('/library'),
-			icon: Library
-		},
-		{
 			label: 'Sync',
 			href: `/arr/${instanceId}/sync`,
 			active: currentPath.includes('/sync'),
@@ -41,10 +29,22 @@
 			icon: FileEdit
 		},
 		{
+			label: 'Library',
+			href: `/arr/${instanceId}/library`,
+			active: currentPath.includes('/library'),
+			icon: Library
+		},
+		{
 			label: 'Logs',
 			href: `/arr/${instanceId}/logs`,
 			active: currentPath.includes('/logs'),
 			icon: ScrollText
+		},
+		{
+			label: 'Settings',
+			href: `/arr/${instanceId}/settings`,
+			active: currentPath.includes('/settings'),
+			icon: Settings
 		}
 	];
 

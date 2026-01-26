@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Server, Plus, Trash2, Pencil, Check, X, Info, ExternalLink } from 'lucide-svelte';
+	import { Server, Plus, Trash2, Info, ExternalLink } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import EmptyState from '$ui/state/EmptyState.svelte';
@@ -16,6 +16,14 @@
 	import type { PageData } from './$types';
 	import type { Column } from '$ui/table/types';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';
+	import radarrLogo from '$lib/client/assets/Radarr.svg';
+	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
+
+	// Logo lookup by type
+	const logos: Record<string, string> = {
+		radarr: radarrLogo,
+		sonarr: sonarrLogo
+	};
 
 	export let data: PageData;
 
@@ -39,16 +47,22 @@
 	let selectedInstance: ArrInstance | null = null;
 	let deleteFormElement: HTMLFormElement;
 
+	// Track loaded images
+	let loadedImages: Set<number> = new Set();
+
+	// Get logo path based on arr type
+	function getLogoPath(type: string): string {
+		return logos[type] || '';
+	}
+
+	function handleImageLoad(id: number) {
+		loadedImages.add(id);
+		loadedImages = loadedImages;
+	}
+
 	// Format type for display with proper casing
 	function formatType(type: string): string {
 		return type.charAt(0).toUpperCase() + type.slice(1);
-	}
-
-	// Get badge variant for arr type
-	function getTypeVariant(type: string): 'warning' | 'accent' | 'neutral' {
-		if (type === 'radarr') return 'warning';
-		if (type === 'sonarr') return 'accent';
-		return 'neutral';
 	}
 
 	// Handle row click
@@ -66,7 +80,6 @@
 	// Define table columns
 	const columns: Column<ArrInstance>[] = [
 		{ key: 'name', header: 'Name', align: 'left' },
-		{ key: 'type', header: 'Type', align: 'left', width: 'w-32' },
 		{ key: 'url', header: 'URL', align: 'left' },
 		{ key: 'enabled', header: 'Enabled', align: 'center', width: 'w-24' }
 	];
@@ -98,27 +111,34 @@
 		<Table {columns} data={filteredInstances} hoverable={true} onRowClick={handleRowClick}>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'name'}
-					<div class="font-medium text-neutral-900 dark:text-neutral-50">
-						{row.name}
+					<div class="flex items-center gap-3">
+						<div class="relative h-8 w-8">
+							{#if !loadedImages.has(row.id)}
+								<div
+									class="absolute inset-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-700"
+								></div>
+							{/if}
+							<img
+								src={getLogoPath(row.type)}
+								alt="{formatType(row.type)} logo"
+								class="h-8 w-8 rounded-lg {loadedImages.has(row.id) ? 'opacity-100' : 'opacity-0'}"
+								on:load={() => handleImageLoad(row.id)}
+							/>
+						</div>
+						<div class="flex items-center gap-2">
+							<div class="font-medium text-neutral-900 dark:text-neutral-50">
+								{row.name}
+							</div>
+						</div>
 					</div>
-				{:else if column.key === 'type'}
-					<Badge variant={getTypeVariant(row.type)} mono>{formatType(row.type)}</Badge>
 				{:else if column.key === 'url'}
 					<Badge variant="neutral" mono>{row.url}</Badge>
 				{:else if column.key === 'enabled'}
 					<div class="flex justify-center">
 						{#if row.enabled}
-							<span
-								class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-							>
-								<Check size={14} />
-							</span>
+							<Badge variant="success">Enabled</Badge>
 						{:else}
-							<span
-								class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500"
-							>
-								<X size={14} />
-							</span>
+							<Badge variant="neutral">Disabled</Badge>
 						{/if}
 					</div>
 				{/if}
@@ -126,9 +146,6 @@
 
 			<svelte:fragment slot="actions" let:row>
 				<div class="flex items-center justify-end gap-1">
-					<a href="/arr/{row.id}/settings" on:click={(e) => e.stopPropagation()}>
-						<TableActionButton icon={Pencil} title="Edit instance" />
-					</a>
 					<a
 						href={row.url}
 						target="_blank"

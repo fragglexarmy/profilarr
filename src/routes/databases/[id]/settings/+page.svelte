@@ -6,4 +6,8 @@
 	export let data: PageData;
 </script>
 
-<InstanceForm mode="edit" {form} instance={data.instance} />
+<svelte:head>
+	<title>{data.database.name} - Settings - Profilarr</title>
+</svelte:head>
+
+<InstanceForm mode="edit" {form} instance={data.database} />

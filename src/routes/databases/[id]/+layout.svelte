@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
-	import { GitBranch, History, Wrench, Settings } from 'lucide-svelte';
+	import { GitBranch, History, Wrench, Settings, FileCog } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
 	$: database = $page.data.database;
@@ -31,21 +31,30 @@
 							{
 								label: 'Config',
 								href: `/databases/${database.id}/config`,
-								icon: Settings,
+								icon: FileCog,
 								active: currentPath.includes('/config')
 							}
 						]
-					: [])
+					: []),
+				{
+					label: 'Settings',
+					href: `/databases/${database.id}/settings`,
+					icon: Settings,
+					active: currentPath.includes('/settings')
+				}
 			]
 		: [];
 
-	$: backButton = {
-		label: 'Back',
-		href: '/databases'
+	$: breadcrumb = {
+		parent: {
+			label: 'Databases',
+			href: '/databases'
+		},
+		current: database?.name ?? ''
 	};
 </script>
 
 <div class="p-8">
-	<Tabs {tabs} {backButton} />
+	<Tabs {tabs} {breadcrumb} />
 	<slot />
 </div>

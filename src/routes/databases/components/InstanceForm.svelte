@@ -1,9 +1,15 @@
 <script lang="ts">
-	import { Save, Trash2, Loader2 } from 'lucide-svelte';
-	import Modal from '$ui/modal/Modal.svelte';
+	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { Save, Trash2 } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
+	import { isDirty, initEdit, initCreate, update, current, clear } from '$lib/client/stores/dirty';
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
+	import DirtyModal from '$ui/modal/DirtyModal.svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	// Props
 	export let mode: 'create' | 'edit';
@@ -13,329 +19,280 @@
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	export let data: any = undefined;
 
-	// Loading state
-	let isLoading = false;
+	// Initialize dirty tracking on mount
+	onMount(() => {
+		if (mode === 'edit' && instance) {
+			initEdit({
+				name: instance.name,
+				repositoryUrl: instance.repository_url,
+				personalAccessToken: '', // Never pre-populate for security
+				syncStrategy: String(instance.sync_strategy),
+				autoPull: instance.auto_pull ? 'true' : 'false'
+			});
+		} else {
+			initCreate({
+				name: data?.formData?.name ?? '',
+				repositoryUrl: '',
+				branch: data?.formData?.branch ?? '',
+				personalAccessToken: data?.formData?.personalAccessToken ?? '',
+				syncStrategy: data?.formData?.syncStrategy ? String(data.formData.syncStrategy) : '60',
+				autoPull: data?.formData?.autoPull === '0' ? 'false' : 'true'
+			});
+		}
+		return () => clear();
+	});
 
-	// Form values
-	 
-	let name =
-		(form as any)?.values?.name ?? (mode === 'edit' ? instance?.name : data?.formData?.name) ?? '';
-	 
-	let repositoryUrl =
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(form as any)?.values?.repository_url ??
-		(mode === 'edit' ? instance?.repository_url : '') ??
-		'';
-	let branch =
-		(form as any)?.values?.branch ?? (mode === 'create' ? data?.formData?.branch : '') ?? '';
-	let personalAccessToken =
-		(form as any)?.values?.personal_access_token ??
-		(mode === 'edit' ? instance?.personal_access_token : data?.formData?.personalAccessToken) ??
-		'';
-	 
-	let syncStrategy =
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(form as any)?.values?.sync_strategy ??
-		(mode === 'edit'
-			? instance?.sync_strategy
-			: data?.formData?.syncStrategy
-				? parseInt(data.formData.syncStrategy)
-				: 60) ??
-		60;
-	 
-	let autoPull =
-		(form as any)?.values?.auto_pull ??
-		(mode === 'edit'
-			? instance?.auto_pull
-			: data?.formData?.autoPull === '1'
-				? 1
-				: data?.formData?.autoPull === '0'
-					? 0
-					: 1) ??
-		1;
+	// Read current values from dirty store
+	$: name = ($current.name ?? '') as string;
+	$: repositoryUrl = ($current.repositoryUrl ?? '') as string;
+	$: branch = ($current.branch ?? '') as string;
+	$: personalAccessToken = ($current.personalAccessToken ?? '') as string;
+	$: syncStrategy = ($current.syncStrategy ?? '60') as string;
+	$: autoPull = ($current.autoPull ?? 'true') as string;
 
-	// Delete modal state
+	// UI state
+	let saving = false;
+	let deleting = false;
 	let showDeleteModal = false;
-	let deleteFormElement: HTMLFormElement;
+
+	// Options for dropdowns
+	const syncStrategyOptions = [
+		{ value: '0', label: 'Manual (no auto-sync)' },
+		{ value: '5', label: 'Every 5 minutes' },
+		{ value: '15', label: 'Every 15 minutes' },
+		{ value: '30', label: 'Every 30 minutes' },
+		{ value: '60', label: 'Every hour' },
+		{ value: '360', label: 'Every 6 hours' },
+		{ value: '720', label: 'Every 12 hours' },
+		{ value: '1440', label: 'Every 24 hours' }
+	];
+
+	const autoPullOptions = [
+		{ value: 'true', label: 'Enabled' },
+		{ value: 'false', label: 'Disabled' }
+	];
+
+	// Submit handler
+	function handleSave() {
+		if (!name) {
+			alertStore.add('error', 'Name is required');
+			return;
+		}
+		if (mode === 'create' && !repositoryUrl) {
+			alertStore.add('error', 'Repository URL is required');
+			return;
+		}
+
+		saving = true;
+		const saveForm = document.getElementById('save-form');
+		if (saveForm instanceof HTMLFormElement) {
+			saveForm.requestSubmit();
+		}
+	}
+
+	$: canSubmit = $isDirty && !!name && (mode === 'edit' || !!repositoryUrl);
+
+	// Handle form response
+	let lastFormId: unknown = null;
+	$: if (form && form !== lastFormId) {
+		lastFormId = form;
+		if (form.success) {
+			alertStore.add('success', 'Settings saved successfully');
+			// Reset dirty state with new values (keep personalAccessToken empty)
+			initEdit({
+				name,
+				repositoryUrl,
+				personalAccessToken: '',
+				syncStrategy,
+				autoPull
+			});
+		}
+		if (form.error) {
+			alertStore.add('error', form.error);
+		}
+	}
 
 	// Display text based on mode
-	$: title = mode === 'create' ? 'Link Database' : 'Edit Database';
+	$: title = mode === 'create' ? 'Link Database' : 'Settings';
 	$: description =
 		mode === 'create'
-			? 'Link a Profilarr Compliant Database from a Git repository'
-			: `Update the configuration for ${instance?.name || 'this database'}`;
-	$: submitButtonText = mode === 'create' ? 'Link Database' : 'Save Changes';
-	$: successMessage =
-		mode === 'create' ? 'Database linked successfully!' : 'Database updated successfully!';
-	$: errorMessage = mode === 'create' ? 'Failed to link database' : 'Failed to update database';
+			? 'Link a Profilarr Compliant Database from a Git repository.'
+			: `Configure settings for ${instance?.name || 'this database'}.`;
 </script>
 
-<div class="space-y-8 p-8">
-	<div class="space-y-3">
-		<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
-		<p class="text-lg text-neutral-600 dark:text-neutral-400">
-			{description}
-		</p>
+<div class="space-y-6" class:mt-6={mode === 'edit'}>
+	<!-- Header -->
+	<div class="flex items-start justify-between">
+		<div>
+			<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
+			<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
+		</div>
+		<div class="flex items-center gap-2">
+			{#if mode === 'edit'}
+				<Button
+					text="Unlink"
+					icon={Trash2}
+					iconColor="text-red-600 dark:text-red-400"
+					disabled={saving || deleting}
+					on:click={() => (showDeleteModal = true)}
+				/>
+			{/if}
+			<Button
+				text={saving ? 'Saving...' : 'Save'}
+				icon={Save}
+				iconColor="text-blue-600 dark:text-blue-400"
+				disabled={saving || !canSubmit}
+				on:click={handleSave}
+			/>
+		</div>
 	</div>
 
+	<div
+		class="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+	>
+		<!-- Name Row -->
+		<FormInput
+			label="Name"
+			name="name"
+			value={name}
+			placeholder="e.g., Main Database, 4K Profiles"
+			description="A friendly name to identify this database"
+			required
+			on:input={(e) => update('name', e.detail)}
+		/>
+
+		<!-- Repository URL Row -->
+		<FormInput
+			label="Repository URL"
+			name="repository_url"
+			type="url"
+			value={repositoryUrl}
+			placeholder="https://github.com/username/database"
+			description={mode === 'edit'
+				? 'Repository URL cannot be changed after linking'
+				: 'Git repository URL containing the PCD manifest'}
+			required
+			readonly={mode === 'edit'}
+			on:input={(e) => update('repositoryUrl', e.detail)}
+		/>
+
+		<!-- Branch Row (create mode only) -->
+		{#if mode === 'create'}
+			<FormInput
+				label="Branch"
+				name="branch"
+				value={branch}
+				placeholder="main"
+				description="Branch to checkout on link. Leave empty for the default branch."
+				on:input={(e) => update('branch', e.detail)}
+			/>
+		{/if}
+
+		<!-- Personal Access Token Row -->
+		<FormInput
+			label="Personal Access Token"
+			name="personal_access_token"
+			value={personalAccessToken}
+			placeholder="ghp_..."
+			description={mode === 'edit'
+				? 'Re-enter to update. Required for private repos and to push changes.'
+				: 'Required for private repositories and to push changes back to GitHub.'}
+			private_
+			on:input={(e) => update('personalAccessToken', e.detail)}
+		/>
+
+		<!-- Sync Strategy Row -->
+		<div class="space-y-2">
+			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Sync Strategy
+			</label>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">
+				How often to check for updates from the remote repository
+			</p>
+			<DropdownSelect
+				value={syncStrategy}
+				options={syncStrategyOptions}
+				fullWidth
+				on:change={(e) => update('syncStrategy', e.detail)}
+			/>
+		</div>
+
+		<!-- Auto Pull Row -->
+		<div class="space-y-2">
+			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Auto Pull
+			</label>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">
+				Automatically pull updates when available, or just receive notifications
+			</p>
+			<DropdownSelect
+				value={autoPull}
+				options={autoPullOptions}
+				on:change={(e) => update('autoPull', e.detail)}
+			/>
+		</div>
+		{#if autoPull === 'false'}
+			<p class="text-xs text-amber-600 dark:text-amber-400">
+				You will receive notifications when updates are available but they won't be applied
+				automatically
+			</p>
+		{/if}
+	</div>
+</div>
+
+<!-- Hidden save form -->
+<form
+	id="save-form"
+	method="POST"
+	action={mode === 'edit' ? '?/update' : undefined}
+	class="hidden"
+	use:enhance={() => {
+		saving = true;
+		return async ({ result, update: formUpdate }) => {
+			if (result.type === 'redirect') {
+				// For create mode, clear dirty state before redirect
+				clear();
+				alertStore.add('success', 'Database linked successfully');
+			}
+			await formUpdate({ reset: false });
+			saving = false;
+		};
+	}}
+>
+	<input type="hidden" name="name" value={name} />
+	<input type="hidden" name="repository_url" value={repositoryUrl} />
+	{#if mode === 'create'}
+		<input type="hidden" name="branch" value={branch} />
+	{/if}
+	<input type="hidden" name="personal_access_token" value={personalAccessToken} />
+	<input type="hidden" name="sync_strategy" value={syncStrategy} />
+	<input type="hidden" name="auto_pull" value={autoPull === 'true' ? '1' : '0'} />
+</form>
+
+<!-- Hidden delete form (edit mode only) -->
+{#if mode === 'edit'}
 	<form
+		id="delete-form"
 		method="POST"
-		action={mode === 'edit' ? '?/update' : undefined}
-		class="space-y-6"
+		action="?/delete"
+		class="hidden"
 		use:enhance={() => {
-			isLoading = true;
+			deleting = true;
 			return async ({ result, update }) => {
 				if (result.type === 'failure' && result.data) {
-					alertStore.add('error', (result.data as { error?: string }).error || errorMessage);
+					alertStore.add(
+						'error',
+						(result.data as { error?: string }).error || 'Failed to unlink database'
+					);
 				} else if (result.type === 'redirect') {
-					// Don't show success message if redirecting to bruh page
-					if (result.location && !result.location.includes('/databases/bruh')) {
-						alertStore.add('success', successMessage);
-					}
+					alertStore.add('success', 'Database unlinked successfully');
 				}
 				await update();
-				isLoading = false;
+				deleting = false;
 			};
 		}}
-	>
-		<!-- Database Details -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-				Database Details
-			</h2>
-
-			<div class="space-y-4">
-				<!-- Name -->
-				<div>
-					<label
-						for="name"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Name <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="text"
-						id="name"
-						name="name"
-						bind:value={name}
-						required
-						placeholder="e.g., Main Database, 4K Profiles"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
-					/>
-					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						A friendly name to identify this database
-					</p>
-				</div>
-
-				<!-- Repository URL -->
-				<div>
-					<label
-						for="repository_url"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Repository URL <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="url"
-						id="repository_url"
-						name="repository_url"
-						bind:value={repositoryUrl}
-						required
-						disabled={mode === 'edit'}
-						placeholder="https://github.com/username/database"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:disabled:bg-neutral-900"
-					/>
-					{#if mode === 'edit'}
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Repository URL cannot be changed after linking
-						</p>
-					{:else}
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Git repository URL containing the PCD manifest
-						</p>
-					{/if}
-				</div>
-
-				<!-- Branch -->
-				{#if mode === 'create'}
-					<div>
-						<label
-							for="branch"
-							class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-						>
-							Branch
-						</label>
-						<input
-							type="text"
-							id="branch"
-							name="branch"
-							bind:value={branch}
-							placeholder="main"
-							class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
-						/>
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							Branch to checkout on link. Leave empty to use the default branch. You can change this
-							later.
-						</p>
-					</div>
-				{/if}
-
-				<!-- Personal Access Token -->
-				<div>
-					<label
-						for="personal_access_token"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Personal Access Token (Optional)
-					</label>
-					<input
-						type="password"
-						id="personal_access_token"
-						name="personal_access_token"
-						bind:value={personalAccessToken}
-						placeholder="ghp_..."
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-neutral-500"
-					/>
-					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						Required for private repositories to clone and for developers to push back to GitHub.
-					</p>
-				</div>
-			</div>
-		</div>
-
-		<!-- Sync Settings -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-				Sync Settings
-			</h2>
-
-			<div class="space-y-4">
-				<!-- Sync Strategy -->
-				<div>
-					<label
-						for="sync_strategy"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Sync Strategy
-					</label>
-					<select
-						id="sync_strategy"
-						name="sync_strategy"
-						bind:value={syncStrategy}
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
-					>
-						<option value={0}>Manual (no auto-sync)</option>
-						<option value={5}>Every 5 minutes</option>
-						<option value={15}>Every 15 minutes</option>
-						<option value={30}>Every 30 minutes</option>
-						<option value={60}>Every hour</option>
-						<option value={360}>Every 6 hours</option>
-						<option value={720}>Every 12 hours</option>
-						<option value={1440}>Every 24 hours</option>
-					</select>
-					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						How often to check for updates from the remote repository
-					</p>
-				</div>
-
-				<!-- Auto Pull -->
-				<div class="flex items-start gap-3">
-					<input
-						type="checkbox"
-						id="auto_pull"
-						name="auto_pull"
-						bind:checked={autoPull}
-						value="1"
-						class="mt-0.5 h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-0 dark:border-neutral-700 dark:bg-neutral-800"
-					/>
-					<div>
-						<label
-							for="auto_pull"
-							class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-						>
-							Automatically pull updates
-						</label>
-						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-							If enabled, updates will be pulled automatically. If disabled, you'll only receive
-							notifications when updates are available.
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Actions -->
-		<div class="flex flex-wrap items-center justify-end gap-3">
-			{#if mode === 'edit'}
-				<a
-					href="/databases/{instance?.id}"
-					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-				>
-					Cancel
-				</a>
-			{/if}
-			<button
-				type="submit"
-				disabled={isLoading}
-				class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
-			>
-				{#if isLoading}
-					<Loader2 size={14} class="animate-spin" />
-					{mode === 'create' ? 'Linking...' : 'Saving...'}
-				{:else}
-					<Save size={14} />
-					{submitButtonText}
-				{/if}
-			</button>
-		</div>
-	</form>
-
-	<!-- Delete Section (Edit Mode Only) -->
-	{#if mode === 'edit'}
-		<div
-			class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/40"
-		>
-			<h2 class="text-lg font-semibold text-red-700 dark:text-red-300">Danger Zone</h2>
-			<p class="mt-2 text-sm text-red-600 dark:text-red-400">
-				Once you unlink this database, there is no going back. All local data will be removed.
-			</p>
-			<button
-				type="button"
-				on:click={() => (showDeleteModal = true)}
-				class="mt-4 flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900"
-			>
-				<Trash2 size={14} />
-				Unlink Database
-			</button>
-
-			<form
-				bind:this={deleteFormElement}
-				method="POST"
-				action="?/delete"
-				class="hidden"
-				use:enhance={() => {
-					return async ({ result, update }) => {
-						if (result.type === 'failure' && result.data) {
-							alertStore.add(
-								'error',
-								(result.data as { error?: string }).error || 'Failed to unlink database'
-							);
-						} else if (result.type === 'redirect') {
-							alertStore.add('success', 'Database unlinked successfully');
-						}
-						await update();
-					};
-				}}
-			>
-				<!-- Empty form, just for submission -->
-			</form>
-		</div>
-	{/if}
-</div>
+	></form>
+{/if}
 
 <!-- Delete Confirmation Modal -->
 {#if mode === 'edit'}
@@ -348,8 +305,13 @@
 		confirmDanger={true}
 		on:confirm={() => {
 			showDeleteModal = false;
-			deleteFormElement?.requestSubmit();
+			const deleteForm = document.getElementById('delete-form');
+			if (deleteForm instanceof HTMLFormElement) {
+				deleteForm.requestSubmit();
+			}
 		}}
 		on:cancel={() => (showDeleteModal = false)}
 	/>
 {/if}
+
+<DirtyModal />

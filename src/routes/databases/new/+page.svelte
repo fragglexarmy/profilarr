@@ -6,4 +6,10 @@
 	export let data: PageData;
 </script>
 
-<InstanceForm mode="create" {form} {data} />
+<svelte:head>
+	<title>Link Database - Profilarr</title>
+</svelte:head>
+
+<div class="p-8">
+	<InstanceForm mode="create" {form} {data} />
+</div>
