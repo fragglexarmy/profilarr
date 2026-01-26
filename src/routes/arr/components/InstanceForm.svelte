@@ -200,9 +200,9 @@
 	>
 		<!-- Type Row -->
 		<div class="space-y-2">
-			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
 				Type{#if mode === 'create'}<span class="text-red-500">*</span>{/if}
-			</label>
+			</span>
 			{#if mode === 'edit'}
 				<p class="text-xs text-neutral-500 dark:text-neutral-400">
 					Type cannot be changed after creation
@@ -277,9 +277,9 @@
 		</div>
 		<!-- Tags Row -->
 		<div class="space-y-2">
-			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
 				Tags
-			</label>
+			</span>
 			<p class="text-xs text-neutral-500 dark:text-neutral-400">
 				Press Enter to add a tag, Backspace to remove
 			</p>

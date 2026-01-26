@@ -260,6 +260,7 @@ export interface DelayProfilesTable {
 // ============================================================================
 
 export interface RadarrQualityDefinitionsTable {
+	name: string;
 	quality_name: string;
 	min_size: number;
 	max_size: number;
@@ -269,6 +270,7 @@ export interface RadarrQualityDefinitionsTable {
 }
 
 export interface SonarrQualityDefinitionsTable {
+	name: string;
 	quality_name: string;
 	min_size: number;
 	max_size: number;
@@ -278,7 +280,7 @@ export interface SonarrQualityDefinitionsTable {
 }
 
 export interface RadarrNamingTable {
-	id: number;
+	name: string;
 	rename: number;
 	movie_format: string;
 	movie_folder_format: string;
@@ -289,7 +291,7 @@ export interface RadarrNamingTable {
 }
 
 export interface SonarrNamingTable {
-	id: number;
+	name: string;
 	rename: number;
 	standard_episode_format: string;
 	daily_episode_format: string;
@@ -305,7 +307,7 @@ export interface SonarrNamingTable {
 }
 
 export interface RadarrMediaSettingsTable {
-	id: number;
+	name: string;
 	propers_repacks: string;
 	enable_media_info: number;
 	created_at: Generated<string>;
@@ -313,7 +315,7 @@ export interface RadarrMediaSettingsTable {
 }
 
 export interface SonarrMediaSettingsTable {
-	id: number;
+	name: string;
 	propers_repacks: string;
 	enable_media_info: number;
 	created_at: Generated<string>;

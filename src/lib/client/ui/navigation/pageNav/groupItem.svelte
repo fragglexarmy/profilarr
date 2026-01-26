@@ -4,13 +4,26 @@
 	interface Props {
 		label: string;
 		href: string;
+		/** Optional pattern to match against pathname for active state (supports string includes or regex) */
+		activePattern?: string | RegExp;
 	}
 
-	let { label, href }: Props = $props();
+	let { label, href, activePattern }: Props = $props();
 
-	const isActive = $derived(
-		$page.url.pathname === href || $page.url.pathname.startsWith(href + '/')
-	);
+	const isActive = $derived.by(() => {
+		const pathname = $page.url.pathname;
+
+		// Use custom pattern if provided
+		if (activePattern) {
+			if (typeof activePattern === 'string') {
+				return pathname.includes(activePattern);
+			}
+			return activePattern.test(pathname);
+		}
+
+		// Default behavior
+		return pathname === href || pathname.startsWith(href + '/');
+	});
 </script>
 
 <a

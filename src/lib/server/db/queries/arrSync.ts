@@ -29,8 +29,11 @@ export interface DelayProfilesSyncData {
 
 export interface MediaManagementSyncData {
 	namingDatabaseId: number | null;
+	namingConfigName: string | null;
 	qualityDefinitionsDatabaseId: number | null;
+	qualityDefinitionsConfigName: string | null;
 	mediaSettingsDatabaseId: number | null;
+	mediaSettingsConfigName: string | null;
 	trigger: SyncTrigger;
 	cron: string | null;
 	nextRunAt?: string | null;
@@ -60,8 +63,11 @@ interface DelayProfileConfigRow {
 interface MediaManagementRow {
 	instance_id: number;
 	naming_database_id: number | null;
+	naming_config_name: string | null;
 	quality_definitions_database_id: number | null;
+	quality_definitions_config_name: string | null;
 	media_settings_database_id: number | null;
+	media_settings_config_name: string | null;
 	trigger: string;
 	cron: string | null;
 }
@@ -176,8 +182,11 @@ export const arrSyncQueries = {
 
 		return {
 			namingDatabaseId: row?.naming_database_id ?? null,
+			namingConfigName: row?.naming_config_name ?? null,
 			qualityDefinitionsDatabaseId: row?.quality_definitions_database_id ?? null,
+			qualityDefinitionsConfigName: row?.quality_definitions_config_name ?? null,
 			mediaSettingsDatabaseId: row?.media_settings_database_id ?? null,
+			mediaSettingsConfigName: row?.media_settings_config_name ?? null,
 			trigger: (row?.trigger as SyncTrigger) ?? 'manual',
 			cron: row?.cron ?? null
 		};
@@ -186,25 +195,34 @@ export const arrSyncQueries = {
 	saveMediaManagementSync(instanceId: number, data: MediaManagementSyncData): void {
 		db.execute(
 			`INSERT INTO arr_sync_media_management
-			 (instance_id, naming_database_id, quality_definitions_database_id, media_settings_database_id, trigger, cron, next_run_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?)
+			 (instance_id, naming_database_id, naming_config_name, quality_definitions_database_id, quality_definitions_config_name, media_settings_database_id, media_settings_config_name, trigger, cron, next_run_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(instance_id) DO UPDATE SET
 			 naming_database_id = ?,
+			 naming_config_name = ?,
 			 quality_definitions_database_id = ?,
+			 quality_definitions_config_name = ?,
 			 media_settings_database_id = ?,
+			 media_settings_config_name = ?,
 			 trigger = ?,
 			 cron = ?,
 			 next_run_at = ?`,
 			instanceId,
 			data.namingDatabaseId,
+			data.namingConfigName,
 			data.qualityDefinitionsDatabaseId,
+			data.qualityDefinitionsConfigName,
 			data.mediaSettingsDatabaseId,
+			data.mediaSettingsConfigName,
 			data.trigger,
 			data.cron,
 			data.nextRunAt ?? null,
 			data.namingDatabaseId,
+			data.namingConfigName,
 			data.qualityDefinitionsDatabaseId,
+			data.qualityDefinitionsConfigName,
 			data.mediaSettingsDatabaseId,
+			data.mediaSettingsConfigName,
 			data.trigger,
 			data.cron,
 			data.nextRunAt ?? null
@@ -252,15 +270,15 @@ export const arrSyncQueries = {
 			databaseId
 		);
 		db.execute(
-			'UPDATE arr_sync_media_management SET naming_database_id = NULL WHERE naming_database_id = ?',
+			'UPDATE arr_sync_media_management SET naming_database_id = NULL, naming_config_name = NULL WHERE naming_database_id = ?',
 			databaseId
 		);
 		db.execute(
-			'UPDATE arr_sync_media_management SET quality_definitions_database_id = NULL WHERE quality_definitions_database_id = ?',
+			'UPDATE arr_sync_media_management SET quality_definitions_database_id = NULL, quality_definitions_config_name = NULL WHERE quality_definitions_database_id = ?',
 			databaseId
 		);
 		db.execute(
-			'UPDATE arr_sync_media_management SET media_settings_database_id = NULL WHERE media_settings_database_id = ?',
+			'UPDATE arr_sync_media_management SET media_settings_database_id = NULL, media_settings_config_name = NULL WHERE media_settings_database_id = ?',
 			databaseId
 		);
 	},

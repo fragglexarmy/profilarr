@@ -203,9 +203,9 @@
 
 		<!-- Sync Strategy Row -->
 		<div class="space-y-2">
-			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
 				Sync Strategy
-			</label>
+			</span>
 			<p class="text-xs text-neutral-500 dark:text-neutral-400">
 				How often to check for updates from the remote repository
 			</p>
@@ -219,9 +219,9 @@
 
 		<!-- Auto Pull Row -->
 		<div class="space-y-2">
-			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
 				Auto Pull
-			</label>
+			</span>
 			<p class="text-xs text-neutral-500 dark:text-neutral-400">
 				Automatically pull updates when available, or just receive notifications
 			</p>

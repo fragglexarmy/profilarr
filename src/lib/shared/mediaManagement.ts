@@ -14,7 +14,7 @@ export type PropersRepacks = 'doNotPrefer' | 'preferAndUpgrade' | 'doNotUpgradeA
 // ============================================================================
 
 export interface MediaSettings {
-	id: number;
+	name: string;
 	propers_repacks: PropersRepacks;
 	enable_media_info: boolean;
 }
@@ -204,7 +204,7 @@ export function radarrColonReplacementToDb(value: RadarrColonReplacementFormat):
 }
 
 export interface RadarrNaming {
-	id: number;
+	name: string;
 	rename: boolean;
 	movie_format: string;
 	movie_folder_format: string;
@@ -213,7 +213,7 @@ export interface RadarrNaming {
 }
 
 export interface SonarrNaming {
-	id: number;
+	name: string;
 	rename: boolean;
 	replace_illegal_characters: boolean;
 	colon_replacement_format: ColonReplacementFormat;

@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import type { ServerLoad } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load: ServerLoad = async ({ params }) => {
-	// Redirect to radarr by default
-	throw redirect(303, `/media-management/${params.databaseId}/radarr`);
+export const load: PageServerLoad = async ({ params }) => {
+	// Redirect to naming settings by default
+	throw redirect(302, `/media-management/${params.databaseId}/naming`);
 };

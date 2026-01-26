@@ -1,0 +1,130 @@
+/**
+ * Create naming config operations
+ */
+
+import type { PCDCache } from '../../../cache.ts';
+import { writeOperation, type OperationLayer } from '../../../writer.ts';
+import type { RadarrColonReplacementFormat, ColonReplacementFormat, MultiEpisodeStyle } from '$lib/shared/mediaManagement.ts';
+import { radarrColonReplacementToDb, colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
+
+export interface CreateRadarrNamingInput {
+	name: string;
+	rename: boolean;
+	movieFormat: string;
+	movieFolderFormat: string;
+	replaceIllegalCharacters: boolean;
+	colonReplacementFormat: RadarrColonReplacementFormat;
+}
+
+export interface CreateRadarrNamingOptions {
+	databaseId: number;
+	cache: PCDCache;
+	layer: OperationLayer;
+	input: CreateRadarrNamingInput;
+}
+
+export async function createRadarrNaming(options: CreateRadarrNamingOptions) {
+	const { databaseId, cache, layer, input } = options;
+	const db = cache.kb;
+
+	// Check if name already exists
+	const existing = await db
+		.selectFrom('radarr_naming')
+		.where('name', '=', input.name)
+		.select('name')
+		.executeTakeFirst();
+
+	if (existing) {
+		throw new Error(`A radarr naming config with name "${input.name}" already exists`);
+	}
+
+	const insertQuery = db
+		.insertInto('radarr_naming')
+		.values({
+			name: input.name,
+			rename: input.rename ? 1 : 0,
+			movie_format: input.movieFormat,
+			movie_folder_format: input.movieFolderFormat,
+			replace_illegal_characters: input.replaceIllegalCharacters ? 1 : 0,
+			colon_replacement_format: radarrColonReplacementToDb(input.colonReplacementFormat)
+		})
+		.compile();
+
+	return writeOperation({
+		databaseId,
+		layer,
+		description: `create-radarr-naming-${input.name}`,
+		queries: [insertQuery],
+		metadata: {
+			operation: 'create',
+			entity: 'radarr_naming',
+			name: input.name
+		}
+	});
+}
+
+export interface CreateSonarrNamingInput {
+	name: string;
+	rename: boolean;
+	standardEpisodeFormat: string;
+	dailyEpisodeFormat: string;
+	animeEpisodeFormat: string;
+	seriesFolderFormat: string;
+	seasonFolderFormat: string;
+	replaceIllegalCharacters: boolean;
+	colonReplacementFormat: ColonReplacementFormat;
+	customColonReplacementFormat: string | null;
+	multiEpisodeStyle: MultiEpisodeStyle;
+}
+
+export interface CreateSonarrNamingOptions {
+	databaseId: number;
+	cache: PCDCache;
+	layer: OperationLayer;
+	input: CreateSonarrNamingInput;
+}
+
+export async function createSonarrNaming(options: CreateSonarrNamingOptions) {
+	const { databaseId, cache, layer, input } = options;
+	const db = cache.kb;
+
+	// Check if name already exists
+	const existing = await db
+		.selectFrom('sonarr_naming')
+		.where('name', '=', input.name)
+		.select('name')
+		.executeTakeFirst();
+
+	if (existing) {
+		throw new Error(`A sonarr naming config with name "${input.name}" already exists`);
+	}
+
+	const insertQuery = db
+		.insertInto('sonarr_naming')
+		.values({
+			name: input.name,
+			rename: input.rename ? 1 : 0,
+			standard_episode_format: input.standardEpisodeFormat,
+			daily_episode_format: input.dailyEpisodeFormat,
+			anime_episode_format: input.animeEpisodeFormat,
+			series_folder_format: input.seriesFolderFormat,
+			season_folder_format: input.seasonFolderFormat,
+			replace_illegal_characters: input.replaceIllegalCharacters ? 1 : 0,
+			colon_replacement_format: colonReplacementToDb(input.colonReplacementFormat),
+			custom_colon_replacement_format: input.customColonReplacementFormat,
+			multi_episode_style: multiEpisodeStyleToDb(input.multiEpisodeStyle)
+		})
+		.compile();
+
+	return writeOperation({
+		databaseId,
+		layer,
+		description: `create-sonarr-naming-${input.name}`,
+		queries: [insertQuery],
+		metadata: {
+			operation: 'create',
+			entity: 'sonarr_naming',
+			name: input.name
+		}
+	});
+}

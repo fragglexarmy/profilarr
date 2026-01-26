@@ -17,9 +17,11 @@
 import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache, type PCDCache } from '$pcd/cache.ts';
-import { getRadarr, getSonarr } from '$pcd/queries/mediaManagement/get.ts';
+import type { QualityDefinition } from '$pcd/queries/mediaManagement/combined.ts';
+import { getRadarrByName as getRadarrMediaSettings, getSonarrByName as getSonarrMediaSettings } from '$pcd/queries/mediaManagement/media-settings/read.ts';
+import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/queries/mediaManagement/naming/read.ts';
+import { getRadarrByName as getRadarrQualityDefs, getSonarrByName as getSonarrQualityDefs } from '$pcd/queries/mediaManagement/quality-definitions/read.ts';
 import type { MediaSettings, RadarrNaming, SonarrNaming } from '$lib/shared/mediaManagement.ts';
-import type { QualityDefinition } from '$pcd/queries/mediaManagement/types.ts';
 import { colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
 import type {
 	ArrType,
@@ -58,16 +60,19 @@ export class MediaManagementSyncer extends BaseSyncer {
 			source: 'Sync:MediaManagement',
 			meta: {
 				instanceId: this.instanceId,
-				hasMediaSettings: !!syncConfig.mediaSettingsDatabaseId,
-				hasNaming: !!syncConfig.namingDatabaseId,
-				hasQualityDefs: !!syncConfig.qualityDefinitionsDatabaseId
+				hasMediaSettings: !!syncConfig.mediaSettingsDatabaseId && !!syncConfig.mediaSettingsConfigName,
+				hasNaming: !!syncConfig.namingDatabaseId && !!syncConfig.namingConfigName,
+				hasQualityDefs: !!syncConfig.qualityDefinitionsDatabaseId && !!syncConfig.qualityDefinitionsConfigName
 			}
 		});
 
-		// Sync media settings if configured
-		if (syncConfig.mediaSettingsDatabaseId) {
+		// Sync media settings if configured (both database and config name required)
+		if (syncConfig.mediaSettingsDatabaseId && syncConfig.mediaSettingsConfigName) {
 			try {
-				const synced = await this.syncMediaSettings(syncConfig.mediaSettingsDatabaseId);
+				const synced = await this.syncMediaSettings(
+					syncConfig.mediaSettingsDatabaseId,
+					syncConfig.mediaSettingsConfigName
+				);
 				if (synced) totalSynced++;
 			} catch (error) {
 				const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -79,10 +84,13 @@ export class MediaManagementSyncer extends BaseSyncer {
 			}
 		}
 
-		// Sync naming if configured
-		if (syncConfig.namingDatabaseId) {
+		// Sync naming if configured (both database and config name required)
+		if (syncConfig.namingDatabaseId && syncConfig.namingConfigName) {
 			try {
-				const synced = await this.syncNaming(syncConfig.namingDatabaseId);
+				const synced = await this.syncNaming(
+					syncConfig.namingDatabaseId,
+					syncConfig.namingConfigName
+				);
 				if (synced) totalSynced++;
 			} catch (error) {
 				const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -94,10 +102,13 @@ export class MediaManagementSyncer extends BaseSyncer {
 			}
 		}
 
-		// Sync quality definitions if configured
-		if (syncConfig.qualityDefinitionsDatabaseId) {
+		// Sync quality definitions if configured (both database and config name required)
+		if (syncConfig.qualityDefinitionsDatabaseId && syncConfig.qualityDefinitionsConfigName) {
 			try {
-				const synced = await this.syncQualityDefinitions(syncConfig.qualityDefinitionsDatabaseId);
+				const synced = await this.syncQualityDefinitions(
+					syncConfig.qualityDefinitionsDatabaseId,
+					syncConfig.qualityDefinitionsConfigName
+				);
 				if (synced) totalSynced++;
 			} catch (error) {
 				const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -128,7 +139,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 	// Media Settings
 	// =========================================================================
 
-	private async syncMediaSettings(databaseId: number): Promise<boolean> {
+	private async syncMediaSettings(databaseId: number, configName: string): Promise<boolean> {
 		const cache = getCache(databaseId);
 		if (!cache) {
 			await logger.warn(`PCD cache not found for database ${databaseId}`, {
@@ -138,18 +149,18 @@ export class MediaManagementSyncer extends BaseSyncer {
 			return false;
 		}
 
-		// Fetch from PCD
+		// Fetch from PCD by config name
 		let mediaSettings: MediaSettings | null = null;
 		if (this.instanceType === 'radarr') {
-			mediaSettings = (await getRadarr(cache)).mediaSettings;
+			mediaSettings = await getRadarrMediaSettings(cache, configName);
 		} else if (this.instanceType === 'sonarr') {
-			mediaSettings = (await getSonarr(cache)).mediaSettings;
+			mediaSettings = await getSonarrMediaSettings(cache, configName);
 		}
 
 		if (!mediaSettings) {
-			await logger.debug('No media settings found in PCD', {
+			await logger.debug(`Media settings config "${configName}" not found in PCD`, {
 				source: 'Sync:MediaSettings',
-				meta: { instanceId: this.instanceId }
+				meta: { instanceId: this.instanceId, configName }
 			});
 			return false;
 		}
@@ -168,6 +179,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 			source: 'Sync:MediaSettings',
 			meta: {
 				instanceId: this.instanceId,
+				configName,
 				propersRepacks: updatedConfig.downloadPropersAndRepacks,
 				enableMediaInfo: updatedConfig.enableMediaInfo
 			}
@@ -190,7 +202,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 	// Naming
 	// =========================================================================
 
-	private async syncNaming(databaseId: number): Promise<boolean> {
+	private async syncNaming(databaseId: number, configName: string): Promise<boolean> {
 		const cache = getCache(databaseId);
 		if (!cache) {
 			await logger.warn(`PCD cache not found for database ${databaseId}`, {
@@ -201,9 +213,9 @@ export class MediaManagementSyncer extends BaseSyncer {
 		}
 
 		if (this.instanceType === 'radarr') {
-			return this.syncRadarrNaming(cache, databaseId);
+			return this.syncRadarrNaming(cache, configName);
 		} else if (this.instanceType === 'sonarr') {
-			return this.syncSonarrNaming(cache, databaseId);
+			return this.syncSonarrNaming(cache, configName);
 		}
 
 		await logger.warn(`Unsupported instance type for naming sync: ${this.instanceType}`, {
@@ -214,16 +226,14 @@ export class MediaManagementSyncer extends BaseSyncer {
 	}
 
 	private async syncRadarrNaming(
-		cache: ReturnType<typeof getCache>,
-		databaseId: number
+		cache: PCDCache,
+		configName: string
 	): Promise<boolean> {
-		if (!cache) return false;
-
-		const naming = (await getRadarr(cache)).naming;
+		const naming = await getRadarrNaming(cache, configName);
 		if (!naming) {
-			await logger.debug('No Radarr naming found in PCD', {
+			await logger.debug(`Radarr naming config "${configName}" not found in PCD`, {
 				source: 'Sync:Naming',
-				meta: { instanceId: this.instanceId, databaseId }
+				meta: { instanceId: this.instanceId, configName }
 			});
 			return false;
 		}
@@ -245,6 +255,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 			source: 'Sync:Naming',
 			meta: {
 				instanceId: this.instanceId,
+				configName,
 				renameMovies: updatedConfig.renameMovies,
 				colonReplacementFormat: updatedConfig.colonReplacementFormat
 			}
@@ -255,16 +266,14 @@ export class MediaManagementSyncer extends BaseSyncer {
 	}
 
 	private async syncSonarrNaming(
-		cache: ReturnType<typeof getCache>,
-		databaseId: number
+		cache: PCDCache,
+		configName: string
 	): Promise<boolean> {
-		if (!cache) return false;
-
-		const naming = (await getSonarr(cache)).naming;
+		const naming = await getSonarrNaming(cache, configName);
 		if (!naming) {
-			await logger.debug('No Sonarr naming found in PCD', {
+			await logger.debug(`Sonarr naming config "${configName}" not found in PCD`, {
 				source: 'Sync:Naming',
-				meta: { instanceId: this.instanceId, databaseId }
+				meta: { instanceId: this.instanceId, configName }
 			});
 			return false;
 		}
@@ -291,6 +300,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 			source: 'Sync:Naming',
 			meta: {
 				instanceId: this.instanceId,
+				configName,
 				renameEpisodes: updatedConfig.renameEpisodes,
 				colonReplacementFormat: updatedConfig.colonReplacementFormat,
 				multiEpisodeStyle: updatedConfig.multiEpisodeStyle
@@ -305,7 +315,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 	// Quality Definitions
 	// =========================================================================
 
-	private async syncQualityDefinitions(databaseId: number): Promise<boolean> {
+	private async syncQualityDefinitions(databaseId: number, configName: string): Promise<boolean> {
 		const cache = getCache(databaseId);
 		if (!cache) {
 			await logger.warn(`PCD cache not found for database ${databaseId}`, {
@@ -315,18 +325,29 @@ export class MediaManagementSyncer extends BaseSyncer {
 			return false;
 		}
 
-		// Fetch quality definitions from PCD
-		let pcdDefinitions: QualityDefinition[] = [];
-		if (this.instanceType === 'radarr') {
-			pcdDefinitions = (await getRadarr(cache)).qualityDefinitions;
-		} else if (this.instanceType === 'sonarr') {
-			pcdDefinitions = (await getSonarr(cache)).qualityDefinitions;
+		// Fetch quality definitions from PCD by config name
+		const getByName = this.instanceType === 'radarr' ? getRadarrQualityDefs : getSonarrQualityDefs;
+		const qualityDefsConfig = await getByName(cache, configName);
+
+		if (!qualityDefsConfig) {
+			await logger.debug(`Quality definitions config "${configName}" not found in PCD`, {
+				source: 'Sync:QualityDefinitions',
+				meta: { instanceId: this.instanceId, configName }
+			});
+			return false;
 		}
 
+		const pcdDefinitions: QualityDefinition[] = qualityDefsConfig.entries.map(entry => ({
+			quality_name: entry.quality_name,
+			min_size: entry.min_size,
+			max_size: entry.max_size,
+			preferred_size: entry.preferred_size
+		}));
+
 		if (pcdDefinitions.length === 0) {
-			await logger.debug('No quality definitions found in PCD', {
+			await logger.debug(`Quality definitions config "${configName}" has no entries`, {
 				source: 'Sync:QualityDefinitions',
-				meta: { instanceId: this.instanceId }
+				meta: { instanceId: this.instanceId, configName }
 			});
 			return false;
 		}
@@ -369,23 +390,24 @@ export class MediaManagementSyncer extends BaseSyncer {
 			}
 
 			// Update the definition
+			// PCD uses 0 for "unlimited", Radarr API uses null
 			arrDef.minSize = pcdDef.min_size;
-			arrDef.maxSize = pcdDef.max_size;
-			arrDef.preferredSize = pcdDef.preferred_size;
+			arrDef.maxSize = pcdDef.max_size === 0 ? null : pcdDef.max_size;
+			arrDef.preferredSize = pcdDef.preferred_size === 0 ? null : pcdDef.preferred_size;
 			updatedCount++;
 		}
 
 		if (updatedCount === 0) {
 			await logger.debug('No quality definitions matched for update', {
 				source: 'Sync:QualityDefinitions',
-				meta: { instanceId: this.instanceId }
+				meta: { instanceId: this.instanceId, configName }
 			});
 			return false;
 		}
 
 		await logger.debug(`Updating ${updatedCount} quality definitions`, {
 			source: 'Sync:QualityDefinitions',
-			meta: { instanceId: this.instanceId, updatedCount }
+			meta: { instanceId: this.instanceId, configName, updatedCount }
 		});
 
 		// PUT the full array back

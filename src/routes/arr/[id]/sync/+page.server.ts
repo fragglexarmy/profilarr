@@ -6,6 +6,9 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { logger } from '$logger/logger.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
+import * as namingQueries from '$pcd/queries/mediaManagement/naming/index.ts';
+import * as qualityDefinitionsQueries from '$pcd/queries/mediaManagement/quality-definitions/index.ts';
+import * as mediaSettingsQueries from '$pcd/queries/mediaManagement/media-settings/index.ts';
 import { calculateNextRun } from '$lib/server/sync/utils.ts';
 import { updateSyncArrJobEnabled } from '$lib/server/jobs/init.ts';
 
@@ -24,8 +27,9 @@ export const load: ServerLoad = async ({ params }) => {
 
 	// Get all databases
 	const databases = pcdManager.getAll();
+	const arrType = instance.type as 'radarr' | 'sonarr';
 
-	// Fetch profiles from each database
+	// Fetch profiles and configs from each database
 	const databasesWithProfiles = await Promise.all(
 		databases.map(async (db) => {
 			const cache = pcdManager.getCache(db.id);
@@ -34,20 +38,40 @@ export const load: ServerLoad = async ({ params }) => {
 					id: db.id,
 					name: db.name,
 					qualityProfiles: [],
-					delayProfiles: []
+					delayProfiles: [],
+					namingConfigs: [],
+					qualityDefinitionsConfigs: [],
+					mediaSettingsConfigs: []
 				};
 			}
 
-			const [qualityProfiles, delayProfiles] = await Promise.all([
+			const [qualityProfiles, delayProfiles, allNamingConfigs, allQualityDefinitionsConfigs, allMediaSettingsConfigs] = await Promise.all([
 				qualityProfileQueries.list(cache),
-				delayProfileQueries.list(cache)
+				delayProfileQueries.list(cache),
+				namingQueries.list(cache),
+				qualityDefinitionsQueries.list(cache),
+				mediaSettingsQueries.list(cache)
 			]);
+
+			// Filter configs by arr type - only show configs for the instance's arr type
+			const namingConfigs = allNamingConfigs
+				.filter(c => c.arr_type === arrType)
+				.map(c => ({ name: c.name }));
+			const qualityDefinitionsConfigs = allQualityDefinitionsConfigs
+				.filter(c => c.arr_type === arrType)
+				.map(c => ({ name: c.name }));
+			const mediaSettingsConfigs = allMediaSettingsConfigs
+				.filter(c => c.arr_type === arrType)
+				.map(c => ({ name: c.name }));
 
 			return {
 				id: db.id,
 				name: db.name,
 				qualityProfiles,
-				delayProfiles
+				delayProfiles,
+				namingConfigs,
+				qualityDefinitionsConfigs,
+				mediaSettingsConfigs
 			};
 		})
 	);
@@ -154,10 +178,13 @@ export const actions: Actions = {
 		const instance = arrInstancesQueries.getById(id);
 		const formData = await request.formData();
 		const namingDatabaseId = formData.get('namingDatabaseId') as string | null;
+		const namingConfigName = formData.get('namingConfigName') as string | null;
 		const qualityDefinitionsDatabaseId = formData.get('qualityDefinitionsDatabaseId') as
 			| string
 			| null;
+		const qualityDefinitionsConfigName = formData.get('qualityDefinitionsConfigName') as string | null;
 		const mediaSettingsDatabaseId = formData.get('mediaSettingsDatabaseId') as string | null;
+		const mediaSettingsConfigName = formData.get('mediaSettingsConfigName') as string | null;
 		const trigger = formData.get('trigger') as SyncTrigger;
 		const cron = formData.get('cron') as string | null;
 
@@ -166,12 +193,15 @@ export const actions: Actions = {
 			const effectiveCron = cron || null;
 			arrSyncQueries.saveMediaManagementSync(id, {
 				namingDatabaseId: namingDatabaseId ? parseInt(namingDatabaseId, 10) : null,
+				namingConfigName: namingConfigName || null,
 				qualityDefinitionsDatabaseId: qualityDefinitionsDatabaseId
 					? parseInt(qualityDefinitionsDatabaseId, 10)
 					: null,
+				qualityDefinitionsConfigName: qualityDefinitionsConfigName || null,
 				mediaSettingsDatabaseId: mediaSettingsDatabaseId
 					? parseInt(mediaSettingsDatabaseId, 10)
 					: null,
+				mediaSettingsConfigName: mediaSettingsConfigName || null,
 				trigger: effectiveTrigger,
 				cron: effectiveCron,
 				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null

@@ -54,8 +54,13 @@
 			label={useEmoji ? '🏷️ Media Management' : 'Media Management'}
 			href="/media-management"
 			icon={useEmoji ? undefined : Tag}
-			initialOpen={false}
-		/>
+			initialOpen={true}
+			hasItems={true}
+		>
+			<GroupItem label="Naming Settings" href="/media-management?section=naming" activePattern="/naming" />
+			<GroupItem label="Quality Definitions" href="/media-management?section=quality-definitions" activePattern="/quality-definitions" />
+			<GroupItem label="Media Settings" href="/media-management?section=media-settings" activePattern="/media-settings" />
+		</Group>
 
 		<Group
 			label={useEmoji ? '⏱️ Delay Profiles' : 'Delay Profiles'}

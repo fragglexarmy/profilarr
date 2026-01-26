@@ -41,8 +41,11 @@
 
 	let mediaManagementState = {
 		namingDatabaseId: data.syncData.mediaManagement.namingDatabaseId,
+		namingConfigName: data.syncData.mediaManagement.namingConfigName,
 		qualityDefinitionsDatabaseId: data.syncData.mediaManagement.qualityDefinitionsDatabaseId,
-		mediaSettingsDatabaseId: data.syncData.mediaManagement.mediaSettingsDatabaseId
+		qualityDefinitionsConfigName: data.syncData.mediaManagement.qualityDefinitionsConfigName,
+		mediaSettingsDatabaseId: data.syncData.mediaManagement.mediaSettingsDatabaseId,
+		mediaSettingsConfigName: data.syncData.mediaManagement.mediaSettingsConfigName
 	};
 	let mediaManagementTrigger: SyncTrigger = data.syncData.mediaManagement.trigger;
 	let mediaManagementCron: string = data.syncData.mediaManagement.cron || '0 * * * *';
@@ -69,8 +72,11 @@
 
 	$: hasMediaManagement =
 		typeof mediaManagementState.namingDatabaseId === 'number' &&
+		typeof mediaManagementState.namingConfigName === 'string' &&
 		typeof mediaManagementState.qualityDefinitionsDatabaseId === 'number' &&
-		typeof mediaManagementState.mediaSettingsDatabaseId === 'number';
+		typeof mediaManagementState.qualityDefinitionsConfigName === 'string' &&
+		typeof mediaManagementState.mediaSettingsDatabaseId === 'number' &&
+		typeof mediaManagementState.mediaSettingsConfigName === 'string';
 
 	$: hasDelayProfile =
 		typeof delayProfileState.databaseId === 'number' &&
