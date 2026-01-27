@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { QualityProfileTableRow } from '$lib/server/pcd/queries/qualityProfiles';
+	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { BookOpenText, Gauge, Earth } from 'lucide-svelte';

@@ -2,16 +2,24 @@
  * Delete a quality profile operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface RemoveQualityProfileOptions {
+// ============================================================================
+// Input types
+// ============================================================================
+
+interface RemoveQualityProfileOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	profileId: number;
 	profileName: string;
 }
+
+// ============================================================================
+// Mutations
+// ============================================================================
 
 /**
  * Delete a quality profile by writing an operation to the specified layer

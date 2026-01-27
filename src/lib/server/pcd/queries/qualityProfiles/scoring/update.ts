@@ -2,30 +2,38 @@
  * Update quality profile scoring settings
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 import { logger } from '$logger/logger.ts';
 
-export interface CustomFormatScore {
+// ============================================================================
+// Input types
+// ============================================================================
+
+interface CustomFormatScore {
 	customFormatName: string;
 	arrType: string;
 	score: number | null;
 }
 
-export interface UpdateScoringInput {
+interface UpdateScoringInput {
 	minimumScore: number;
 	upgradeUntilScore: number;
 	upgradeScoreIncrement: number;
 	customFormatScores: CustomFormatScore[];
 }
 
-export interface UpdateScoringOptions {
+interface UpdateScoringOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	profileName: string;
 	input: UpdateScoringInput;
 }
+
+// ============================================================================
+// Mutations
+// ============================================================================
 
 /**
  * Update quality profile scoring settings

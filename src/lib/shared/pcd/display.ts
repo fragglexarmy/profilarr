@@ -204,3 +204,162 @@ export interface CustomFormatWithConditions {
 	name: string;
 	conditions: ConditionData[];
 }
+
+// ============================================================================
+// QUALITY PROFILES
+// ============================================================================
+
+import type { QualityProfilesRow } from './types.ts';
+
+// --- Select/Dropdown ---
+
+/** Quality profile option for select/dropdown */
+export type QualityProfileOption = Pick<QualityProfilesRow, 'id' | 'name'>;
+
+// --- List/Table View Helpers ---
+
+/** Quality/group item in the hierarchy */
+export interface QualityItem {
+	position: number;
+	type: 'quality' | 'group';
+	name: string;
+	is_upgrade_until: boolean;
+}
+
+/** Language configuration */
+export interface ProfileLanguage {
+	name: string;
+	type: 'must' | 'only' | 'not' | 'simple';
+}
+
+/** Custom format counts by arr type */
+export interface CustomFormatCounts {
+	all: number;
+	radarr: number;
+	sonarr: number;
+	total: number;
+}
+
+/** Quality profile data for table/card views (with JOINed data) */
+export type QualityProfileTableRow = Omit<
+	QualityProfilesRow,
+	'description' | 'upgrade_until_score' | 'upgrade_score_increment' | 'created_at' | 'updated_at'
+> & {
+	description: string; // Parsed HTML from markdown (non-nullable)
+	tags: Tag[];
+	upgrade_until_score?: number; // Only if upgrades_allowed
+	upgrade_score_increment?: number; // Only if upgrades_allowed
+	custom_formats: CustomFormatCounts;
+	qualities: QualityItem[];
+	language?: ProfileLanguage;
+};
+
+// --- General Tab ---
+
+/** Quality profile general information */
+export type QualityProfileGeneral = Pick<QualityProfilesRow, 'id' | 'name'> & {
+	description: string; // Raw markdown (non-nullable for form)
+	tags: Tag[];
+	language: string | null; // Language name, null means "Any"
+};
+
+/** Language configuration for a quality profile */
+export interface QualityProfileLanguage {
+	name: string;
+	type: 'must' | 'only' | 'not' | 'simple';
+}
+
+/** Quality profile languages information */
+export interface QualityProfileLanguages {
+	languages: QualityProfileLanguage[];
+}
+
+// --- Qualities Tab ---
+
+/** Single quality item for display */
+export interface QualitySingle {
+	name: string;
+	position: number;
+	enabled: boolean;
+	isUpgradeUntil: boolean;
+}
+
+/** Quality group with members for display */
+export interface QualityGroup {
+	name: string;
+	position: number;
+	enabled: boolean;
+	isUpgradeUntil: boolean;
+	members: { name: string }[];
+}
+
+/** Quality profile qualities information */
+export interface QualityProfileQualities {
+	singles: QualitySingle[];
+	groups: QualityGroup[];
+}
+
+/** Simple quality member (name only) */
+export interface QualityMember {
+	name: string;
+}
+
+/** Ordered quality/group item for qualities page */
+export interface OrderedItem {
+	type: 'quality' | 'group';
+	name: string;
+	position: number;
+	enabled: boolean;
+	upgradeUntil: boolean;
+	members?: QualityMember[];
+}
+
+/** Group with members (for qualities page) */
+export interface QualitiesGroup {
+	name: string;
+	members: QualityMember[];
+}
+
+/** Qualities page data */
+export interface QualitiesPageData {
+	orderedItems: OrderedItem[];
+	availableQualities: QualityMember[];
+	allQualities: QualityMember[];
+	groups: QualitiesGroup[];
+}
+
+// --- Scoring Tab ---
+
+/** Custom format scoring entry */
+export interface CustomFormatScoring {
+	name: string;
+	tags: string[];
+	scores: Record<string, number | null>;
+}
+
+/** Quality profile scoring data for the scoring page */
+export interface QualityProfileScoring {
+	databaseId: number;
+	arrTypes: string[];
+	customFormats: CustomFormatScoring[];
+	minimum_custom_format_score: number;
+	upgrade_until_score: number;
+	upgrade_score_increment: number;
+}
+
+// --- Entity Testing ---
+
+/** CF scores for a single profile */
+export interface ProfileCfScores {
+	profileName: string;
+	/** Map of custom format name to score (by arr type) */
+	scores: Record<string, { radarr: number | null; sonarr: number | null }>;
+}
+
+/** All CF scores result for entity testing */
+export interface AllCfScoresResult {
+	/** All custom formats with their names */
+	customFormats: Array<{ name: string }>;
+	/** CF scores per profile */
+	profiles: ProfileCfScores[];
+}

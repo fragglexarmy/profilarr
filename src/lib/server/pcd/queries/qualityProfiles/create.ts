@@ -2,22 +2,30 @@
  * Create a quality profile operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface CreateQualityProfileInput {
+// ============================================================================
+// Input types
+// ============================================================================
+
+interface CreateQualityProfileInput {
 	name: string;
 	description: string | null;
 	tags: string[];
 	language: string | null;
 }
 
-export interface CreateQualityProfileOptions {
+interface CreateQualityProfileOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	input: CreateQualityProfileInput;
 }
+
+// ============================================================================
+// Mutations
+// ============================================================================
 
 /**
  * Escape a string for SQL

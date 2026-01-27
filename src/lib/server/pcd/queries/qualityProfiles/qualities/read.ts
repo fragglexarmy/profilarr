@@ -2,32 +2,8 @@
  * Quality profile qualities queries
  */
 
-import type { PCDCache } from '../../cache.ts';
-
-export interface QualityMember {
-	name: string;
-}
-
-export interface OrderedItem {
-	type: 'quality' | 'group';
-	name: string; // quality_name or quality_group_name
-	position: number;
-	enabled: boolean;
-	upgradeUntil: boolean;
-	members?: QualityMember[];
-}
-
-export interface QualityGroup {
-	name: string;
-	members: QualityMember[];
-}
-
-export interface QualitiesPageData {
-	orderedItems: OrderedItem[];
-	availableQualities: QualityMember[];
-	allQualities: QualityMember[];
-	groups: QualityGroup[];
-}
+import type { PCDCache } from '$pcd/cache.ts';
+import type { QualitiesPageData, OrderedItem, QualitiesGroup } from '$shared/pcd/display.ts';
 
 /**
  * Get quality profile qualities data
@@ -58,7 +34,7 @@ export async function qualities(
 		.execute();
 
 	// Build groups with members
-	const groupsMap = new Map<string, QualityGroup>();
+	const groupsMap = new Map<string, QualitiesGroup>();
 	for (const group of groups) {
 		groupsMap.set(group.name, {
 			name: group.name,

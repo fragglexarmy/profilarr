@@ -2,34 +2,30 @@
  * Update quality profile qualities
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { OrderedItem } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 
-export interface QualityMember {
-	name: string;
-}
+// ============================================================================
+// Input types
+// ============================================================================
 
-export interface OrderedItem {
-	type: 'quality' | 'group';
-	name: string; // quality_name or quality_group_name
-	position: number;
-	enabled: boolean;
-	upgradeUntil: boolean;
-	members?: QualityMember[];
-}
-
-export interface UpdateQualitiesInput {
+interface UpdateQualitiesInput {
 	orderedItems: OrderedItem[];
 }
 
-export interface UpdateQualitiesOptions {
+interface UpdateQualitiesOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	profileName: string;
 	input: UpdateQualitiesInput;
 }
+
+// ============================================================================
+// Mutations
+// ============================================================================
 
 function esc(str: string): string {
 	return str.replace(/'/g, "''");

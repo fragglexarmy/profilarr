@@ -2,16 +2,16 @@
  * Quality profile list queries
  */
 
-import type { PCDCache } from '../../cache.ts';
-import type { Tag } from '$shared/pcd/display.ts';
+import type { PCDCache } from '$pcd/cache.ts';
 import type {
+	Tag,
 	QualityProfileTableRow,
 	QualityItem,
 	ProfileLanguage,
-	CustomFormatCounts
-} from './types.ts';
+	CustomFormatCounts,
+	QualityProfileOption
+} from '$shared/pcd/display.ts';
 import { parseMarkdown } from '$utils/markdown/markdown.ts';
-import { logger } from '$logger/logger.ts';
 
 /**
  * Get quality profiles with full data for table/card views
@@ -166,4 +166,34 @@ export async function list(cache: PCDCache): Promise<QualityProfileTableRow[]> {
 	});
 
 	return results;
+}
+
+/**
+ * Get all quality profile names from a cache
+ */
+export async function names(cache: PCDCache): Promise<string[]> {
+	const db = cache.kb;
+
+	const profiles = await db
+		.selectFrom('quality_profiles')
+		.select(['name'])
+		.orderBy('name')
+		.execute();
+
+	return profiles.map((p) => p.name);
+}
+
+/**
+ * Get quality profile options for select/dropdown components
+ */
+export async function select(cache: PCDCache): Promise<QualityProfileOption[]> {
+	const db = cache.kb;
+
+	const profiles = await db
+		.selectFrom('quality_profiles')
+		.select(['id', 'name'])
+		.orderBy('name')
+		.execute();
+
+	return profiles;
 }

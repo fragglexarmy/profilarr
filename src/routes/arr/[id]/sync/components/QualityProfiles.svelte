@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { QualityProfileTableRow } from '$pcd/queries/qualityProfiles/types.ts';
+	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import SyncFooter from './SyncFooter.svelte';
 	import { Check } from 'lucide-svelte';

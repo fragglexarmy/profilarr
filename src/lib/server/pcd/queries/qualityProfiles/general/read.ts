@@ -2,8 +2,8 @@
  * Quality profile general queries
  */
 
-import type { PCDCache } from '../../cache.ts';
-import type { QualityProfileGeneral } from './types.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import type { QualityProfileGeneral, QualityProfileLanguages } from '$shared/pcd/display.ts';
 
 /**
  * Get general information for a single quality profile
@@ -48,5 +48,30 @@ export async function general(
 			created_at: tag.tag_created_at
 		})),
 		language: languageRow?.language_name ?? null
+	};
+}
+
+/**
+ * Get languages for a quality profile
+ */
+export async function languages(
+	cache: PCDCache,
+	profileName: string
+): Promise<QualityProfileLanguages> {
+	const db = cache.kb;
+
+	const profileLanguages = await db
+		.selectFrom('quality_profile_languages as qpl')
+		.innerJoin('languages as l', 'qpl.language_name', 'l.name')
+		.select(['l.name as language_name', 'qpl.type'])
+		.where('qpl.quality_profile_name', '=', profileName)
+		.orderBy('l.name')
+		.execute();
+
+	return {
+		languages: profileLanguages.map((lang) => ({
+			name: lang.language_name,
+			type: lang.type as 'must' | 'only' | 'not' | 'simple'
+		}))
 	};
 }
