@@ -4,11 +4,11 @@ import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries, type SyncTrigger, type ProfileSelection } from '$db/queries/arrSync.ts';
 import { pcdManager } from '$pcd/pcd.ts';
 import { logger } from '$logger/logger.ts';
-import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
-import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
-import * as namingQueries from '$pcd/queries/mediaManagement/naming/index.ts';
-import * as qualityDefinitionsQueries from '$pcd/queries/mediaManagement/quality-definitions/index.ts';
-import * as mediaSettingsQueries from '$pcd/queries/mediaManagement/media-settings/index.ts';
+import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
+import * as delayProfileQueries from '$pcd/entities/delayProfiles/index.ts';
+import * as namingQueries from '$pcd/entities/mediaManagement/naming/index.ts';
+import * as qualityDefinitionsQueries from '$pcd/entities/mediaManagement/quality-definitions/index.ts';
+import * as mediaSettingsQueries from '$pcd/entities/mediaManagement/media-settings/index.ts';
 import { calculateNextRun } from '$lib/server/sync/utils.ts';
 import { updateSyncArrJobEnabled } from '$lib/server/jobs/init.ts';
 

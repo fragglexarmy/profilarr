@@ -16,7 +16,7 @@ import {
 	evaluateCustomFormat,
 	getParsedInfo,
 	extractAllPatterns
-} from '$pcd/queries/customFormats/index.ts';
+} from '$pcd/entities/customFormats/index.ts';
 import type { components } from '$api/v1.d.ts';
 
 type EvaluateRequest = components['schemas']['EvaluateRequest'];

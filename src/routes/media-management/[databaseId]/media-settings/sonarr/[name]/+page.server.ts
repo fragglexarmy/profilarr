@@ -3,7 +3,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import { getSonarrByName, updateSonarrMediaSettings, removeSonarrMediaSettings } from '$pcd/queries/mediaManagement/media-settings/index.ts';
+import { getSonarrByName, updateSonarrMediaSettings, removeSonarrMediaSettings } from '$pcd/entities/mediaManagement/media-settings/index.ts';
 import type { PropersRepacks } from '$shared/pcd/conversions.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {

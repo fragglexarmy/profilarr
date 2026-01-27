@@ -2,7 +2,7 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
-import * as customFormatQueries from '$pcd/queries/customFormats/index.ts';
+import * as customFormatQueries from '$pcd/entities/customFormats/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 
 export const load: ServerLoad = ({ params }) => {

@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { pcdManager } from '$pcd/pcd.ts';
-import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
+import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { cache } from '$cache/cache.ts';
 import { RadarrClient } from '$utils/arr/clients/radarr.ts';
 import type { RadarrLibraryItem } from '$utils/arr/types.ts';

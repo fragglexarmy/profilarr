@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
-import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
+import * as delayProfileQueries from '$pcd/entities/delayProfiles/index.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId } = params;

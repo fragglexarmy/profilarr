@@ -3,8 +3,8 @@ import type { PageServerLoad, Actions } from './$types';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import { getSonarrByName, getAvailableQualities } from '$pcd/queries/mediaManagement/quality-definitions/read.ts';
-import { updateSonarrQualityDefinitions, removeSonarrQualityDefinitions } from '$pcd/queries/mediaManagement/quality-definitions/index.ts';
+import { getSonarrByName, getAvailableQualities } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
+import { updateSonarrQualityDefinitions, removeSonarrQualityDefinitions } from '$pcd/entities/mediaManagement/quality-definitions/index.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;

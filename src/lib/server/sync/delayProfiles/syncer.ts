@@ -8,7 +8,7 @@
 import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache } from '$pcd/cache.ts';
-import { get as getDelayProfile } from '$pcd/queries/delayProfiles/index.ts';
+import { get as getDelayProfile } from '$pcd/entities/delayProfiles/index.ts';
 import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 import type { ArrDelayProfile } from '$arr/types.ts';
 import { logger } from '$logger/logger.ts';

@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
-import * as customFormatQueries from '$pcd/queries/customFormats/index.ts';
+import * as customFormatQueries from '$pcd/entities/customFormats/index.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId } = params;

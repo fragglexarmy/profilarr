@@ -2,7 +2,7 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
-import * as regularExpressionQueries from '$pcd/queries/regularExpressions/index.ts';
+import * as regularExpressionQueries from '$pcd/entities/regularExpressions/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import { logger } from '$logger/logger.ts';
 

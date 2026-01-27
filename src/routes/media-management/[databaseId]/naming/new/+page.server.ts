@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
-import { createRadarrNaming, createSonarrNaming } from '$pcd/queries/mediaManagement/naming/index.ts';
+import { createRadarrNaming, createSonarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const parentData = await parent();
