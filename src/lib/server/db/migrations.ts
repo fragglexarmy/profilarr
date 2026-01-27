@@ -40,6 +40,7 @@ import { migration as migration035 } from './migrations/035_add_job_skipped_stat
 import { migration as migration036 } from './migrations/036_create_auth_tables.ts';
 import { migration as migration037 } from './migrations/037_add_session_metadata.ts';
 import { migration as migration038 } from './migrations/038_add_media_management_config_names.ts';
+import { migration as migration039 } from './migrations/039_create_setup_state.ts';
 
 export interface Migration {
 	version: number;
@@ -298,7 +299,8 @@ export function loadMigrations(): Migration[] {
 		migration035,
 		migration036,
 		migration037,
-		migration038
+		migration038,
+		migration039
 	];
 
 	// Sort by version number

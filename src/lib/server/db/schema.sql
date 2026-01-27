@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2026-01-24
+-- Last updated: 2026-01-28
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -702,6 +702,19 @@ CREATE TABLE auth_settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     session_duration_hours INTEGER NOT NULL DEFAULT 168,  -- 7 days
     api_key TEXT,                           -- For programmatic access
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: setup_state
+-- Purpose: Track one-time setup operations (singleton pattern with id=1)
+-- Migration: 039_create_setup_state.ts
+-- ==============================================================================
+
+CREATE TABLE setup_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    default_database_linked INTEGER NOT NULL DEFAULT 0,  -- 1=default db has been linked
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

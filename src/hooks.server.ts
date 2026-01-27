@@ -16,6 +16,7 @@ import {
 	cleanupExpiredSessions
 } from '$auth/middleware.ts';
 import { getClientIp } from '$auth/network.ts';
+import { setupStateQueries } from '$db/queries/setupState.ts';
 
 // Initialize configuration on server startup
 await config.init();
@@ -34,6 +35,36 @@ await logContainerConfig();
 
 // Initialize PCD caches (must be after migrations and log settings)
 await pcdManager.initialize();
+
+// Auto-link default database on first startup (only once)
+if (!setupStateQueries.isDefaultDatabaseLinked()) {
+	try {
+		// TODO: Update to https://github.com/Dictionarry-Hub/database when ready
+		await pcdManager.link({
+			name: 'Dictionarry',
+			repositoryUrl: 'https://github.com/Dictionarry-Hub/db',
+			branch: undefined,
+			syncStrategy: 60,
+			autoPull: true,
+			personalAccessToken: undefined
+		});
+
+		setupStateQueries.markDefaultDatabaseLinked();
+
+		await logger.info('Default database auto-linked', {
+			source: 'Setup',
+			meta: { database: 'Dictionarry' }
+		});
+	} catch (error) {
+		// Don't fail startup, but mark as attempted so we don't retry every startup
+		setupStateQueries.markDefaultDatabaseLinked();
+
+		await logger.warn('Failed to auto-link default database', {
+			source: 'Setup',
+			meta: { error: String(error) }
+		});
+	}
+}
 
 // Initialize and start job system
 await initializeJobs();
