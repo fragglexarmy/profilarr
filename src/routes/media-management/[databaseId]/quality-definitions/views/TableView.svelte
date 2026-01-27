@@ -3,7 +3,7 @@
 	import type { Column } from '$ui/table/types';
 	import { goto } from '$app/navigation';
 	import { Tag } from 'lucide-svelte';
-	import type { QualityDefinitionListItem } from '$pcd/queries/mediaManagement/quality-definitions/types.ts';
+	import type { QualityDefinitionListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
 

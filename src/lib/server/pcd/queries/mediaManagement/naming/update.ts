@@ -4,8 +4,8 @@
 
 import type { PCDCache } from '../../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../../writer.ts';
-import type { ColonReplacementFormat, MultiEpisodeStyle, RadarrColonReplacementFormat } from '$lib/shared/mediaManagement.ts';
-import { colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
+import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
+import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/conversions.ts';
 
 export interface UpdateRadarrNamingInput {
 	name: string;
@@ -13,7 +13,7 @@ export interface UpdateRadarrNamingInput {
 	movieFormat: string;
 	movieFolderFormat: string;
 	replaceIllegalCharacters: boolean;
-	colonReplacementFormat: RadarrColonReplacementFormat;
+	colonReplacementFormat: RadarrNamingRow['colon_replacement_format'];
 }
 
 export interface UpdateRadarrNamingOptions {
@@ -76,9 +76,9 @@ export interface UpdateSonarrNamingInput {
 	seriesFolderFormat: string;
 	seasonFolderFormat: string;
 	replaceIllegalCharacters: boolean;
-	colonReplacementFormat: ColonReplacementFormat;
+	colonReplacementFormat: SonarrNamingRow['colon_replacement_format'];
 	customColonReplacementFormat: string | null;
-	multiEpisodeStyle: MultiEpisodeStyle;
+	multiEpisodeStyle: SonarrNamingRow['multi_episode_style'];
 }
 
 export interface UpdateSonarrNamingOptions {

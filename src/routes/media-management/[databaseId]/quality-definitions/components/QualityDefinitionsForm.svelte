@@ -14,13 +14,42 @@
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import { isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
-	import type { ArrType, QualityDefinitionsConfig, QualityDefinitionEntry } from '$pcd/queries/mediaManagement/quality-definitions/types.ts';
-	import {
-		type ResolutionGroup,
-		RESOLUTION_GROUP_ORDER,
-		RESOLUTION_GROUP_LABELS,
-		getResolutionGroup
-	} from '$lib/shared/mediaManagement.ts';
+	import type { ArrType } from '$shared/pcd/types.ts';
+	import type { QualityDefinitionsConfig, QualityDefinitionEntry } from '$shared/pcd/display.ts';
+
+	// Resolution grouping for quality definitions UI
+	type ResolutionGroup = 'SD' | '720p' | '1080p' | '2160p' | 'Prereleases' | 'Other';
+
+	const RESOLUTION_GROUP_ORDER: ResolutionGroup[] = [
+		'2160p',
+		'1080p',
+		'720p',
+		'SD',
+		'Prereleases',
+		'Other'
+	];
+
+	const RESOLUTION_GROUP_LABELS: Record<ResolutionGroup, string> = {
+		'2160p': '4K Ultra HD (2160p)',
+		'1080p': 'Full HD (1080p)',
+		'720p': 'HD (720p)',
+		SD: 'Standard Definition (SD)',
+		Prereleases: 'Prereleases',
+		Other: 'Other'
+	};
+
+	const PRERELEASE_QUALITIES = ['cam', 'dvdscr', 'regional', 'telecine', 'telesync', 'workprint'];
+	const OTHER_QUALITIES = ['raw-hd', 'unknown'];
+
+	function getResolutionGroup(qualityName: string): ResolutionGroup {
+		const name = qualityName.toLowerCase();
+		if (PRERELEASE_QUALITIES.some((q) => name === q || name.includes(q))) return 'Prereleases';
+		if (OTHER_QUALITIES.some((q) => name === q || name.includes(q))) return 'Other';
+		if (name.includes('2160') || name.includes('4k') || name.includes('uhd')) return '2160p';
+		if (name.includes('1080')) return '1080p';
+		if (name.includes('720')) return '720p';
+		return 'SD';
+	}
 
 	export let mode: 'create' | 'edit';
 	export let arrType: ArrType;

@@ -39,4 +39,4 @@ export { updateGeneral } from './updateGeneral.ts';
 export { updateScoring } from './updateScoring.ts';
 export { updateQualities } from './updateQualities.ts';
 export { updateLanguages } from './updateLanguages.ts';
-export { remove } from './remove.ts';
+export { remove } from './delete.ts';

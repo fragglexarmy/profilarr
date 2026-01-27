@@ -4,11 +4,11 @@
 
 import type { PCDCache } from '../../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../../writer.ts';
-import type { PropersRepacks } from '$lib/shared/mediaManagement.ts';
+import type { RadarrMediaSettingsRow } from '$shared/pcd/display.ts';
 
 export interface CreateMediaSettingsInput {
 	name: string;
-	propersRepacks: PropersRepacks;
+	propersRepacks: RadarrMediaSettingsRow['propers_repacks'];
 	enableMediaInfo: boolean;
 }
 

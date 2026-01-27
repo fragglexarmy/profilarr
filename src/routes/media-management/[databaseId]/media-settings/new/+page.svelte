@@ -4,7 +4,7 @@
 	import RadarrIcon from '$lib/client/assets/Radarr.svg';
 	import SonarrIcon from '$lib/client/assets/Sonarr.svg';
 	import type { PageData } from './$types';
-	import type { ArrType } from '$pcd/queries/mediaManagement/media-settings/types.ts';
+	import type { ArrType } from '$shared/pcd/types.ts';
 
 	export let data: PageData;
 

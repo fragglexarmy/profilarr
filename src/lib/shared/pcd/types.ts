@@ -3,10 +3,10 @@
  *
  * AUTO-GENERATED - DO NOT EDIT MANUALLY
  *
- * Generated from: https://github.com/Dictionarry-Hub/schema/blob/local/ops/0.schema.sql
- * Generated at: 2026-01-27T12:38:46.562Z
+ * Generated from: https://github.com/Dictionarry-Hub/schema/blob/1.0.0/ops/0.schema.sql
+ * Generated at: 2026-01-27T13:04:08.653Z
  *
- * To regenerate: deno task generate:pcd-types --version=local
+ * To regenerate: deno task generate:pcd-types --version=1.0.0
  */
 
 import type { Generated } from 'kysely';
@@ -226,7 +226,7 @@ export interface DelayProfilesTable {
 // MEDIA MANAGEMENT
 
 export interface RadarrNamingTable {
-	name: string | null;
+	name: string;
 	rename: Generated<number>;
 	movie_format: string;
 	movie_folder_format: string;
@@ -237,7 +237,7 @@ export interface RadarrNamingTable {
 }
 
 export interface SonarrNamingTable {
-	name: string | null;
+	name: string;
 	rename: Generated<number>;
 	standard_episode_format: string;
 	daily_episode_format: string;
@@ -253,7 +253,7 @@ export interface SonarrNamingTable {
 }
 
 export interface RadarrMediaSettingsTable {
-	name: string | null;
+	name: string;
 	propers_repacks: Generated<string>;
 	enable_media_info: Generated<number>;
 	created_at: Generated<string>;
@@ -261,7 +261,7 @@ export interface RadarrMediaSettingsTable {
 }
 
 export interface SonarrMediaSettingsTable {
-	name: string | null;
+	name: string;
 	propers_repacks: Generated<string>;
 	enable_media_info: Generated<number>;
 	created_at: Generated<string>;
@@ -574,7 +574,7 @@ export interface DelayProfilesRow {
 // MEDIA MANAGEMENT
 
 export interface RadarrNamingRow {
-	name: string | null;
+	name: string;
 	rename: boolean;
 	movie_format: string;
 	movie_folder_format: string;
@@ -585,7 +585,7 @@ export interface RadarrNamingRow {
 }
 
 export interface SonarrNamingRow {
-	name: string | null;
+	name: string;
 	rename: boolean;
 	standard_episode_format: string;
 	daily_episode_format: string;
@@ -601,7 +601,7 @@ export interface SonarrNamingRow {
 }
 
 export interface RadarrMediaSettingsRow {
-	name: string | null;
+	name: string;
 	propers_repacks: 'doNotPrefer' | 'preferAndUpgrade' | 'doNotUpgradeAutomatically';
 	enable_media_info: boolean;
 	created_at: string;
@@ -609,7 +609,7 @@ export interface RadarrMediaSettingsRow {
 }
 
 export interface SonarrMediaSettingsRow {
-	name: string | null;
+	name: string;
 	propers_repacks: 'doNotPrefer' | 'preferAndUpgrade' | 'doNotUpgradeAutomatically';
 	enable_media_info: boolean;
 	created_at: string;

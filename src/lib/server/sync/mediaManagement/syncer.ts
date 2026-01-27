@@ -17,12 +17,11 @@
 import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache, type PCDCache } from '$pcd/cache.ts';
-import type { QualityDefinition } from '$pcd/queries/mediaManagement/combined.ts';
 import { getRadarrByName as getRadarrMediaSettings, getSonarrByName as getSonarrMediaSettings } from '$pcd/queries/mediaManagement/media-settings/read.ts';
 import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/queries/mediaManagement/naming/read.ts';
 import { getRadarrByName as getRadarrQualityDefs, getSonarrByName as getSonarrQualityDefs } from '$pcd/queries/mediaManagement/quality-definitions/read.ts';
-import type { MediaSettings, RadarrNaming, SonarrNaming } from '$lib/shared/mediaManagement.ts';
-import { colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
+import type { RadarrMediaSettingsRow, SonarrMediaSettingsRow, RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
+import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/conversions.ts';
 import type {
 	ArrType,
 	ArrPropersAndRepacks,
@@ -150,7 +149,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 		}
 
 		// Fetch from PCD by config name
-		let mediaSettings: MediaSettings | null = null;
+		let mediaSettings: RadarrMediaSettingsRow | SonarrMediaSettingsRow | null = null;
 		if (this.instanceType === 'radarr') {
 			mediaSettings = await getRadarrMediaSettings(cache, configName);
 		} else if (this.instanceType === 'sonarr') {
@@ -337,14 +336,7 @@ export class MediaManagementSyncer extends BaseSyncer {
 			return false;
 		}
 
-		const pcdDefinitions: QualityDefinition[] = qualityDefsConfig.entries.map(entry => ({
-			quality_name: entry.quality_name,
-			min_size: entry.min_size,
-			max_size: entry.max_size,
-			preferred_size: entry.preferred_size
-		}));
-
-		if (pcdDefinitions.length === 0) {
+		if (qualityDefsConfig.entries.length === 0) {
 			await logger.debug(`Quality definitions config "${configName}" has no entries`, {
 				source: 'Sync:QualityDefinitions',
 				meta: { instanceId: this.instanceId, configName }
@@ -368,13 +360,13 @@ export class MediaManagementSyncer extends BaseSyncer {
 
 		// Update ARR definitions with PCD values
 		let updatedCount = 0;
-		for (const pcdDef of pcdDefinitions) {
+		for (const entry of qualityDefsConfig.entries) {
 			// Get the API name for this quality
-			const apiName = apiMappings.get(pcdDef.quality_name.toLowerCase());
+			const apiName = apiMappings.get(entry.quality_name.toLowerCase());
 			if (!apiName) {
-				await logger.debug(`No API mapping found for quality "${pcdDef.quality_name}"`, {
+				await logger.debug(`No API mapping found for quality "${entry.quality_name}"`, {
 					source: 'Sync:QualityDefinitions',
-					meta: { instanceId: this.instanceId, qualityName: pcdDef.quality_name }
+					meta: { instanceId: this.instanceId, qualityName: entry.quality_name }
 				});
 				continue;
 			}
@@ -390,10 +382,10 @@ export class MediaManagementSyncer extends BaseSyncer {
 			}
 
 			// Update the definition
-			// PCD uses 0 for "unlimited", Radarr API uses null
-			arrDef.minSize = pcdDef.min_size;
-			arrDef.maxSize = pcdDef.max_size === 0 ? null : pcdDef.max_size;
-			arrDef.preferredSize = pcdDef.preferred_size === 0 ? null : pcdDef.preferred_size;
+			// PCD stores 0 for "unlimited", arr API expects null
+			arrDef.minSize = entry.min_size;
+			arrDef.maxSize = entry.max_size === 0 ? null : entry.max_size;
+			arrDef.preferredSize = entry.preferred_size === 0 ? null : entry.preferred_size;
 			updatedCount++;
 		}
 

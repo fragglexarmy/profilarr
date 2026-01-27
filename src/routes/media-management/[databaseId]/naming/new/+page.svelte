@@ -5,13 +5,13 @@
 	import RadarrIcon from '$lib/client/assets/Radarr.svg';
 	import SonarrIcon from '$lib/client/assets/Sonarr.svg';
 	import type { PageData } from './$types';
-	import type { ArrType } from '$pcd/queries/mediaManagement/naming/types.ts';
+	import type { ArrType } from '$shared/pcd/types.ts';
 
 	export let data: PageData;
 
-	let selectedArrType: ArrType | null = null;
+	let selectedArrType: Exclude<ArrType, 'all'> | null = null;
 
-	const arrTypeOptions: { value: ArrType; label: string; description: string; icon: string }[] = [
+	const arrTypeOptions: { value: Exclude<ArrType, 'all'>; label: string; description: string; icon: string }[] = [
 		{
 			value: 'radarr',
 			label: 'Radarr',

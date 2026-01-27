@@ -37,3 +37,54 @@ export type { DelayProfilesRow } from './types.ts';
 
 /** Preferred protocol options - extracted for use in mutations */
 export type PreferredProtocol = DelayProfilesRow['preferred_protocol'];
+
+// ============================================================================
+// MEDIA MANAGEMENT
+// ============================================================================
+
+import type { ArrType } from './types.ts';
+
+// Naming
+export type { RadarrNamingRow, SonarrNamingRow } from './types.ts';
+
+export interface NamingListItem {
+	name: string;
+	arr_type: Exclude<ArrType, 'all'>;
+	rename: boolean;
+	updated_at: string;
+}
+
+// Media Settings
+export type { RadarrMediaSettingsRow, SonarrMediaSettingsRow } from './types.ts';
+
+export interface MediaSettingsListItem {
+	name: string;
+	arr_type: Exclude<ArrType, 'all'>;
+	propers_repacks: string;
+	enable_media_info: boolean;
+	updated_at: string;
+}
+
+// Quality Definitions
+export type { RadarrQualityDefinitionsRow, SonarrQualityDefinitionsRow } from './types.ts';
+
+export interface QualityDefinitionListItem {
+	name: string;
+	arr_type: Exclude<ArrType, 'all'>;
+	quality_count: number;
+	updated_at: string;
+}
+
+/** Single quality entry (Row without the config name) */
+export interface QualityDefinitionEntry {
+	quality_name: string;
+	min_size: number;
+	max_size: number;
+	preferred_size: number;
+}
+
+/** Aggregate config with all its entries */
+export interface QualityDefinitionsConfig {
+	name: string;
+	entries: QualityDefinitionEntry[];
+}

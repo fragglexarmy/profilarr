@@ -3,13 +3,8 @@
  */
 
 import type { PCDCache } from '../../../cache.ts';
-import type {
-	RadarrNaming,
-	SonarrNaming,
-	RadarrColonReplacementFormat
-} from '$lib/shared/mediaManagement.ts';
-import { colonReplacementFromDb, multiEpisodeStyleFromDb } from '$lib/shared/mediaManagement.ts';
-import type { NamingListItem } from './types.ts';
+import type { RadarrNamingRow, SonarrNamingRow, NamingListItem } from '$shared/pcd/display.ts';
+import { colonReplacementFromDb, multiEpisodeStyleFromDb } from '$shared/pcd/conversions.ts';
 
 // Note: name is PRIMARY KEY so never null, but Kysely types it as nullable
 // because the generator doesn't detect non-INTEGER primary keys
@@ -48,19 +43,12 @@ export async function list(cache: PCDCache): Promise<NamingListItem[]> {
 export async function getRadarrByName(
 	cache: PCDCache,
 	name: string
-): Promise<RadarrNaming | null> {
+): Promise<RadarrNamingRow | null> {
 	const db = cache.kb;
 
 	const row = await db
 		.selectFrom('radarr_naming')
-		.select([
-			'name',
-			'rename',
-			'movie_format',
-			'movie_folder_format',
-			'replace_illegal_characters',
-			'colon_replacement_format'
-		])
+		.selectAll()
 		.where('name', '=', name)
 		.executeTakeFirst();
 
@@ -72,31 +60,21 @@ export async function getRadarrByName(
 		movie_format: row.movie_format,
 		movie_folder_format: row.movie_folder_format,
 		replace_illegal_characters: row.replace_illegal_characters === 1,
-		colon_replacement_format: row.colon_replacement_format as RadarrColonReplacementFormat
+		colon_replacement_format: row.colon_replacement_format as RadarrNamingRow['colon_replacement_format'],
+		created_at: row.created_at,
+		updated_at: row.updated_at
 	};
 }
 
 export async function getSonarrByName(
 	cache: PCDCache,
 	name: string
-): Promise<SonarrNaming | null> {
+): Promise<SonarrNamingRow | null> {
 	const db = cache.kb;
 
 	const row = await db
 		.selectFrom('sonarr_naming')
-		.select([
-			'name',
-			'rename',
-			'standard_episode_format',
-			'daily_episode_format',
-			'anime_episode_format',
-			'series_folder_format',
-			'season_folder_format',
-			'replace_illegal_characters',
-			'colon_replacement_format',
-			'custom_colon_replacement_format',
-			'multi_episode_style'
-		])
+		.selectAll()
 		.where('name', '=', name)
 		.executeTakeFirst();
 
@@ -113,6 +91,8 @@ export async function getSonarrByName(
 		replace_illegal_characters: row.replace_illegal_characters === 1,
 		colon_replacement_format: colonReplacementFromDb(row.colon_replacement_format),
 		custom_colon_replacement_format: row.custom_colon_replacement_format,
-		multi_episode_style: multiEpisodeStyleFromDb(row.multi_episode_style)
+		multi_episode_style: multiEpisodeStyleFromDb(row.multi_episode_style),
+		created_at: row.created_at,
+		updated_at: row.updated_at
 	};
 }

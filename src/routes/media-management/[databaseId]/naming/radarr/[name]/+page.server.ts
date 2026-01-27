@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import { getRadarrByName, updateRadarrNaming, removeRadarrNaming } from '$pcd/queries/mediaManagement/naming/index.ts';
-import type { RadarrColonReplacementFormat } from '$lib/shared/mediaManagement.ts';
+import type { RadarrNamingRow } from '$shared/pcd/display.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;
@@ -80,7 +80,7 @@ export const actions: Actions = {
 		const replaceIllegalCharacters = formData.get('replaceIllegalCharacters') === 'true';
 		const colonReplacementFormat = formData.get(
 			'colonReplacementFormat'
-		) as RadarrColonReplacementFormat;
+		) as RadarrNamingRow['colon_replacement_format'];
 
 		const result = await updateRadarrNaming({
 			databaseId: currentDatabaseId,

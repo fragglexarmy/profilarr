@@ -3,8 +3,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import type { ArrType } from '$pcd/queries/mediaManagement/naming/types.ts';
-import type { RadarrColonReplacementFormat, ColonReplacementFormat, MultiEpisodeStyle } from '$lib/shared/mediaManagement.ts';
+import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
 import { createRadarrNaming, createSonarrNaming } from '$pcd/queries/mediaManagement/naming/index.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -33,7 +32,7 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const arrType = formData.get('arrType') as ArrType;
+		const arrType = formData.get('arrType') as 'radarr' | 'sonarr';
 		const name = formData.get('name') as string;
 		const layer = (formData.get('layer') as OperationLayer) || 'user';
 
@@ -56,7 +55,7 @@ export const actions: Actions = {
 			const replaceIllegalCharacters = formData.get('replaceIllegalCharacters') === 'true';
 			const colonReplacementFormat = formData.get(
 				'colonReplacementFormat'
-			) as RadarrColonReplacementFormat;
+			) as RadarrNamingRow['colon_replacement_format'];
 
 			const result = await createRadarrNaming({
 				databaseId: currentDatabaseId,
@@ -85,9 +84,9 @@ export const actions: Actions = {
 			const replaceIllegalCharacters = formData.get('replaceIllegalCharacters') === 'true';
 			const colonReplacementFormat = formData.get(
 				'colonReplacementFormat'
-			) as ColonReplacementFormat;
+			) as SonarrNamingRow['colon_replacement_format'];
 			const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
-			const multiEpisodeStyle = formData.get('multiEpisodeStyle') as MultiEpisodeStyle;
+			const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
 
 			const result = await createSonarrNaming({
 				databaseId: currentDatabaseId,

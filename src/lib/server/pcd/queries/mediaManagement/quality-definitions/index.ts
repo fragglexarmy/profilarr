@@ -2,8 +2,14 @@
  * Quality definitions queries
  */
 
-export * from './types.ts';
-export * from './read.ts';
-export * from './create.ts';
-export * from './update.ts';
-export * from './remove.ts';
+// Read
+export { list, getRadarrByName, getSonarrByName, getAvailableQualities } from './read.ts';
+
+// Create
+export { createRadarrQualityDefinitions, createSonarrQualityDefinitions } from './create.ts';
+
+// Update
+export { updateRadarrQualityDefinitions, updateSonarrQualityDefinitions } from './update.ts';
+
+// Delete
+export { removeRadarrQualityDefinitions, removeSonarrQualityDefinitions } from './delete.ts';

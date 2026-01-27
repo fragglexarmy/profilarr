@@ -8,8 +8,8 @@
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
-	import type { SonarrNaming, ColonReplacementFormat, MultiEpisodeStyle } from '$lib/shared/mediaManagement.ts';
-	import { COLON_REPLACEMENT_OPTIONS, MULTI_EPISODE_STYLE_OPTIONS } from '$lib/shared/mediaManagement.ts';
+	import type { SonarrNamingRow } from '$shared/pcd/display.ts';
+	import { SONARR_COLON_REPLACEMENT_OPTIONS, MULTI_EPISODE_STYLE_OPTIONS, type SonarrColonReplacementFormat, type MultiEpisodeStyle } from '$shared/pcd/conversions.ts';
 
 	interface SonarrNamingFormData {
 		name: string;
@@ -20,7 +20,7 @@
 		seriesFolderFormat: string;
 		seasonFolderFormat: string;
 		replaceIllegalCharacters: boolean;
-		colonReplacementFormat: ColonReplacementFormat;
+		colonReplacementFormat: SonarrColonReplacementFormat;
 		customColonReplacementFormat: string;
 		multiEpisodeStyle: MultiEpisodeStyle;
 		[key: string]: unknown;
@@ -30,7 +30,7 @@
 	export let databaseName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
-	export let initialData: SonarrNaming | null;
+	export let initialData: SonarrNamingRow | null;
 
 	const defaults: SonarrNamingFormData = {
 		name: '',
@@ -46,7 +46,7 @@
 		multiEpisodeStyle: 'extend'
 	};
 
-	function mapToFormData(data: SonarrNaming | null): SonarrNamingFormData {
+	function mapToFormData(data: SonarrNamingRow | null): SonarrNamingFormData {
 		if (!data) return defaults;
 		return {
 			name: data.name,
@@ -345,7 +345,7 @@
 						Colon Replacement
 					</span>
 					<div class="mt-2 grid gap-2">
-						{#each COLON_REPLACEMENT_OPTIONS as option}
+						{#each SONARR_COLON_REPLACEMENT_OPTIONS as option}
 							<button
 								type="button"
 								onclick={() => update('colonReplacementFormat', option.value)}

@@ -8,11 +8,11 @@
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
-	import type { MediaSettings, PropersRepacks } from '$lib/shared/mediaManagement.ts';
-	import { PROPERS_REPACKS_OPTIONS } from '$lib/shared/mediaManagement.ts';
-	import type { ArrType } from '$pcd/queries/mediaManagement/media-settings/types.ts';
+	import type { RadarrMediaSettingsRow } from '$shared/pcd/display.ts';
+	import type { ArrType } from '$shared/pcd/types.ts';
+	import { PROPERS_REPACKS_OPTIONS, type PropersRepacks } from '$shared/pcd/conversions.ts';
 
-	interface MediaSettingsFormData {
+	interface RadarrMediaSettingsRowFormData {
 		name: string;
 		propersRepacks: PropersRepacks;
 		enableMediaInfo: boolean;
@@ -24,15 +24,15 @@
 	export let databaseName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
-	export let initialData: MediaSettings | null;
+	export let initialData: RadarrMediaSettingsRow | null;
 
-	const defaults: MediaSettingsFormData = {
+	const defaults: RadarrMediaSettingsRowFormData = {
 		name: '',
 		propersRepacks: 'doNotPrefer',
 		enableMediaInfo: true
 	};
 
-	function mapToFormData(data: MediaSettings | null): MediaSettingsFormData {
+	function mapToFormData(data: RadarrMediaSettingsRow | null): RadarrMediaSettingsRowFormData {
 		if (!data) return defaults;
 		return {
 			name: data.name,
@@ -47,7 +47,7 @@
 		initEdit(mapToFormData(initialData));
 	}
 
-	$: formData = $current as MediaSettingsFormData;
+	$: formData = $current as RadarrMediaSettingsRowFormData;
 
 	let saving = false;
 	let deleting = false;

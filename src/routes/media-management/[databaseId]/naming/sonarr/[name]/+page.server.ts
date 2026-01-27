@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import { getSonarrByName, updateSonarrNaming, removeSonarrNaming } from '$pcd/queries/mediaManagement/naming/index.ts';
-import type { ColonReplacementFormat, MultiEpisodeStyle } from '$lib/shared/mediaManagement.ts';
+import type { SonarrNamingRow } from '$shared/pcd/display.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;
@@ -81,9 +81,9 @@ export const actions: Actions = {
 		const seriesFolderFormat = formData.get('seriesFolderFormat') as string;
 		const seasonFolderFormat = formData.get('seasonFolderFormat') as string;
 		const replaceIllegalCharacters = formData.get('replaceIllegalCharacters') === 'true';
-		const colonReplacementFormat = formData.get('colonReplacementFormat') as ColonReplacementFormat;
+		const colonReplacementFormat = formData.get('colonReplacementFormat') as SonarrNamingRow['colon_replacement_format'];
 		const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
-		const multiEpisodeStyle = formData.get('multiEpisodeStyle') as MultiEpisodeStyle;
+		const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
 
 		const result = await updateSonarrNaming({
 			databaseId: currentDatabaseId,

@@ -2,8 +2,14 @@
  * Media settings queries index
  */
 
-export * from './types.ts';
-export * from './read.ts';
-export * from './create.ts';
-export * from './update.ts';
-export * from './remove.ts';
+// Read
+export { list, getRadarrByName, getSonarrByName } from './read.ts';
+
+// Create
+export { createRadarrMediaSettings, createSonarrMediaSettings } from './create.ts';
+
+// Update
+export { updateRadarrMediaSettings, updateSonarrMediaSettings } from './update.ts';
+
+// Delete
+export { removeRadarrMediaSettings, removeSonarrMediaSettings } from './delete.ts';

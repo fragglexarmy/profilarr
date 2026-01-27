@@ -11,13 +11,29 @@
  */
 
 import { Database } from '@jsr/db__sqlite';
-import { columnTypeOverrides } from './pcd-type-overrides.ts';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 const SCHEMA_REPO = 'Dictionarry-Hub/schema';
+
+/**
+ * Manual type overrides for columns that store integers in the DB
+ * but need semantic string types for the UI/API layer.
+ *
+ * Columns with CHECK constraints don't need overrides - the generator
+ * parses those automatically. These are for Sonarr's integer enums.
+ *
+ * Runtime conversion functions are in: src/lib/shared/pcd/conversions.ts
+ */
+const COLUMN_TYPE_OVERRIDES: Record<string, string> = {
+	// Sonarr stores these as integers (0-5) but we want semantic strings in TS
+	'sonarr_naming.colon_replacement_format':
+		"'delete' | 'dash' | 'spaceDash' | 'spaceDashSpace' | 'smart' | 'custom'",
+	'sonarr_naming.multi_episode_style':
+		"'extend' | 'duplicate' | 'repeat' | 'scene' | 'range' | 'prefixedRange'"
+};
 const DEFAULT_VERSION = '1.0.0'; // Schema versions are branch names (e.g., 1.0.0, 1.1.0)
 const SCHEMA_PATH = 'ops/0.schema.sql';
 const OUTPUT_DIR = './src/lib/shared/pcd';
@@ -268,7 +284,7 @@ function getSemanticType(
 ): string {
 	// 1. Check for manual type override (for columns that store numbers but need string types)
 	const overrideKey = `${tableName}.${column.name}`;
-	const override = columnTypeOverrides[overrideKey];
+	const override = COLUMN_TYPE_OVERRIDES[overrideKey];
 	if (override) {
 		return nullable ? `(${override}) | null` : override;
 	}

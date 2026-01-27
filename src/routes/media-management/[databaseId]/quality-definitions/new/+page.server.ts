@@ -3,7 +3,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import type { ArrType } from '$pcd/queries/mediaManagement/quality-definitions/types.ts';
+import type { ArrType } from '$shared/pcd/types.ts';
 import { getAvailableQualities } from '$pcd/queries/mediaManagement/quality-definitions/read.ts';
 import { createRadarrQualityDefinitions, createSonarrQualityDefinitions } from '$pcd/queries/mediaManagement/quality-definitions/index.ts';
 

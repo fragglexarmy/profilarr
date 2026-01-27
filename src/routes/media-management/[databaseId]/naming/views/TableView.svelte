@@ -4,7 +4,7 @@
 	import type { Column } from '$ui/table/types';
 	import { goto } from '$app/navigation';
 	import { Tag, ToggleRight } from 'lucide-svelte';
-	import type { NamingListItem } from '$pcd/queries/mediaManagement/naming/types.ts';
+	import type { NamingListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
 
