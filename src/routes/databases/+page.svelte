@@ -4,7 +4,7 @@
 		Plus,
 		Lock,
 		Code,
-		Trash2,
+		Unlink,
 		ExternalLink,
 		ChevronRight,
 		Info
@@ -44,6 +44,7 @@
 	let showInfoModal = false;
 	let selectedDatabase: DatabaseInstance | null = null;
 	let unlinkFormElement: HTMLFormElement;
+	let unlinkLoading = false;
 
 	// Track loaded images
 	let loadedImages: Set<number> = new Set();
@@ -188,7 +189,7 @@
 						<TableActionButton icon={ExternalLink} title="View on GitHub" />
 					</a>
 					<TableActionButton
-						icon={Trash2}
+						icon={Unlink}
 						title="Unlink database"
 						variant="danger"
 						on:click={(e) => handleUnlinkClick(e, row)}
@@ -207,9 +208,10 @@
 	confirmText="Unlink"
 	cancelText="Cancel"
 	confirmDanger={true}
+	loading={unlinkLoading}
 	on:confirm={() => {
-		showUnlinkModal = false;
 		if (selectedDatabase) {
+			unlinkLoading = true;
 			unlinkFormElement?.requestSubmit();
 		}
 	}}
@@ -227,6 +229,8 @@
 	class="hidden"
 	use:enhance={() => {
 		return async ({ result, update }) => {
+			unlinkLoading = false;
+			showUnlinkModal = false;
 			if (result.type === 'failure' && result.data) {
 				alertStore.add(
 					'error',

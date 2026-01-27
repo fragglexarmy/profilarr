@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { X, Check } from 'lucide-svelte';
+	import { X, Check, Loader2 } from 'lucide-svelte';
 
 	// Props
 	export let open = false;
@@ -10,6 +10,7 @@
 	export let cancelText = 'Cancel';
 	export let confirmDanger = false; // If true, confirm button is styled as danger (red)
 	export let confirmDisabled = false;
+	export let loading = false; // Shows spinner and disables buttons
 	export let size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
 	export let height: 'auto' | 'md' | 'lg' | 'xl' | 'full' = 'auto';
 
@@ -95,7 +96,10 @@
 				<button
 					type="button"
 					on:click={handleCancel}
-					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+					disabled={loading}
+					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 {loading
+						? 'cursor-not-allowed opacity-50'
+						: ''}"
 				>
 					<X size={16} />
 					{cancelText}
@@ -103,14 +107,19 @@
 				<button
 					type="button"
 					on:click={handleConfirm}
-					disabled={confirmDisabled}
+					disabled={confirmDisabled || loading}
 					class="{confirmDanger
 						? 'border border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
-						: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled
+						: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled ||
+					loading
 						? 'cursor-not-allowed opacity-50'
 						: ''}"
 				>
-					<Check size={16} />
+					{#if loading}
+						<Loader2 size={16} class="animate-spin" />
+					{:else}
+						<Check size={16} />
+					{/if}
 					{confirmText}
 				</button>
 			</div>
