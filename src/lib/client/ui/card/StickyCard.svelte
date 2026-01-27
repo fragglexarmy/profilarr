@@ -34,12 +34,14 @@
 ></div>
 
 <div
-	class="sticky z-10 -mx-8 {bgClass}
+	class="sticky z-10 -mx-4 md:-mx-8 {bgClass}
 		{position === 'top' ? 'top-0' : 'bottom-0'}"
 >
-	<div class="px-12 py-4">
-		<div class="flex items-center justify-between gap-4">
-			<slot name="left" />
+	<div class="px-4 py-3 md:px-12 md:py-4">
+		<div class="flex items-center justify-between gap-3 md:gap-4">
+			<div class="[&_h1]:text-sm [&_h1]:md:text-xl [&_p]:text-xs [&_p]:md:text-sm">
+				<slot name="left" />
+			</div>
 			<slot name="right" />
 		</div>
 	</div>
@@ -48,13 +50,13 @@
 			<div
 				class="border-b border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
 					? ''
-					: 'mx-8'}"
+					: 'mx-4 md:mx-8'}"
 			></div>
 		{:else}
 			<div
 				class="border-t border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
 					? ''
-					: 'mx-8'}"
+					: 'mx-4 md:mx-8'}"
 			></div>
 		{/if}
 	{/if}

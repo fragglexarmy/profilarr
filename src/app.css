@@ -383,9 +383,8 @@
 		}
 	}
 
-	/* Overlay scrollbars - never reserve space, float on top like Firefox */
+	/* Overlay scrollbars - style scrollbars without forcing overflow */
 	* {
-		overflow: overlay; /* Chromium: float on top, no layout space */
 		scrollbar-width: thin;
 		scrollbar-color: rgba(163, 163, 163, 0.5) transparent;
 	}

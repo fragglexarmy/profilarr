@@ -8,7 +8,6 @@
 	import { page } from '$app/stores';
 	import logo from '$assets/logo-512.png';
 
-	export let collapsed: boolean = false;
 	export let version: string = '';
 
 	$: useEmoji = $navIconStore === 'emoji';
@@ -36,7 +35,7 @@
 <nav
 	class="fixed top-0 left-0 z-[70] flex h-full w-[90vw] flex-col border-r border-neutral-200 bg-neutral-50 transition-transform duration-200 dark:border-neutral-800 dark:bg-neutral-900
 		{$mobileNavOpen ? 'translate-x-0' : '-translate-x-full'}
-		md:top-16 md:h-[calc(100vh-4rem)] md:w-80 md:translate-x-0 {collapsed ? 'md:-translate-x-[calc(100%-24px)]' : ''}"
+		md:top-16 md:h-[calc(100vh-4rem)] md:w-80 md:translate-x-0 md:border-t"
 >
 	<!-- Mobile header with logo and close button -->
 	<div class="flex items-center justify-between border-b border-neutral-200 py-4 pl-8 pr-4 md:hidden dark:border-neutral-800">
@@ -125,6 +124,14 @@
 			<GroupItem label="Log Out" href="/auth/logout" />
 		</Group>
 
+		<!-- Version scrolls with content on mobile -->
+		<div class="mt-2 md:hidden">
+			<Version {version} />
+		</div>
+	</div>
+
+	<!-- Version pinned to bottom on desktop only -->
+	<div class="hidden shrink-0 p-4 md:block">
 		<Version {version} />
 	</div>
 </nav>

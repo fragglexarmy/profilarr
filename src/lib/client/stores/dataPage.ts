@@ -57,9 +57,11 @@ export function createDataPageStore<T>(
 	// Search store
 	const search = createSearchStore({ debounceMs });
 
-	// View store with localStorage persistence
+	// Determine initial view: localStorage > mobile detection > defaultView
 	const storedView = browser ? (localStorage.getItem(storageKey) as ViewMode | null) : null;
-	const view = writable<ViewMode>(storedView ?? defaultView);
+	const isMobile = browser ? window.innerWidth < 768 : false;
+	const initialView = storedView ?? (isMobile ? 'cards' : defaultView);
+	const view = writable<ViewMode>(initialView);
 
 	// Persist view changes to localStorage
 	if (browser) {

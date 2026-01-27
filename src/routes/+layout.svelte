@@ -4,8 +4,7 @@
 	import Navbar from '$ui/navigation/navbar/navbar.svelte';
 	import PageNav from '$ui/navigation/pageNav/pageNav.svelte';
 	import BottomNav from '$ui/navigation/bottomNav/BottomNav.svelte';
-		import AlertContainer from '$alerts/AlertContainer.svelte';
-	import { sidebarCollapsed } from '$lib/client/stores/sidebar';
+	import AlertContainer from '$alerts/AlertContainer.svelte';
 	import { page } from '$app/stores';
 
 	export let data;
@@ -20,29 +19,12 @@
 </svelte:head>
 
 {#if !isAuthPage}
-	<Navbar collapsed={$sidebarCollapsed} />
-	<PageNav collapsed={$sidebarCollapsed} version={data.version} />
+	<Navbar />
+	<PageNav version={data.version} />
 	<BottomNav />
 {/if}
 <AlertContainer />
 
-{#if !isAuthPage}
-	<!-- Sidebar collapse toggle button (desktop only) -->
-	<button
-		type="button"
-		on:click={() => sidebarCollapsed.toggle()}
-		class="fixed top-16 z-50 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/3 items-center justify-center rounded-md border border-neutral-300 bg-white shadow-sm transition-all hover:bg-neutral-50 md:flex dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-		style="left: {$sidebarCollapsed ? '24px' : '320px'}"
-		aria-label={$sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-	>
-		<div class="flex flex-col gap-[3px]">
-			<div class="h-[2px] w-3 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-			<div class="h-[2px] w-3 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-			<div class="h-[2px] w-3 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-		</div>
-	</button>
-{/if}
-
-<main class={isAuthPage ? '' : `pt-16 pb-16 transition-all duration-200 md:pb-0 md:pt-0 ${$sidebarCollapsed ? 'md:pl-[24px]' : 'md:pl-80'}`}>
+<main class={isAuthPage ? '' : 'pt-16 pb-16 md:pb-0 md:pt-0 md:pl-80'}>
 	<slot />
 </main>

@@ -4,12 +4,10 @@
 	import { Menu } from 'lucide-svelte';
 	import { mobileNavOpen } from '$stores/mobileNav';
 	import logo from '$assets/logo-512.png';
-
-	export let collapsed: boolean = false;
 </script>
 
 <nav
-	class="fixed top-0 left-0 z-50 w-full border-b border-neutral-200 bg-neutral-50 md:w-80 md:border-r md:transition-transform md:duration-200 dark:border-neutral-800 dark:bg-neutral-900 {collapsed ? 'md:-translate-x-[calc(100%-24px)]' : ''}"
+	class="fixed top-0 left-0 z-50 w-full border-b border-r-0 border-neutral-200 bg-neutral-50 md:z-[80] md:w-80 md:border-r dark:border-neutral-800 dark:bg-neutral-900"
 >
 	<div class="flex items-center justify-between px-4 py-4">
 		<!-- Left: Hamburger (mobile) + Brand name with logo (desktop) -->

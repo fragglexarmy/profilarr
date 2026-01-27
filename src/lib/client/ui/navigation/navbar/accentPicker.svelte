@@ -4,6 +4,7 @@
 	import { Check } from 'lucide-svelte';
 
 	let open = false;
+	let triggerEl: HTMLElement;
 
 	$: currentColor = accentColors.find((c) => c.value === $accentStore) ?? accentColors[0];
 
@@ -24,6 +25,7 @@
 
 <div class="accent-picker relative">
 	<button
+		bind:this={triggerEl}
 		on:click|stopPropagation={() => (open = !open)}
 		class="flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-800"
 		aria-label="Select accent color"
@@ -32,7 +34,7 @@
 	</button>
 
 	{#if open}
-		<Dropdown position="middle" minWidth="auto">
+		<Dropdown position="middle" minWidth="auto" fixed={true} {triggerEl}>
 			<div class="flex flex-wrap gap-2 p-2">
 				{#each accentColors as accent}
 					<button
