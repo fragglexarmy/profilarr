@@ -2,19 +2,19 @@
  * Update custom format general information
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { CustomFormatGeneral } from './types.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { CustomFormatGeneral } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 
-export interface UpdateGeneralInput {
+interface UpdateGeneralInput {
 	name: string;
 	description: string;
 	includeInRename: boolean;
 	tags: string[];
 }
 
-export interface UpdateGeneralOptions {
+interface UpdateGeneralOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;

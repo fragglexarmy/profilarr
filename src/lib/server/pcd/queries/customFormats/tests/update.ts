@@ -2,17 +2,17 @@
  * Update a custom format test operation
  */
 
-import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { CustomFormatTest } from './types.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { CustomFormatTest } from '$shared/pcd/display.ts';
 
-export interface UpdateTestInput {
+interface UpdateTestInput {
 	title: string;
 	type: 'movie' | 'series';
 	should_match: boolean;
 	description: string | null;
 }
 
-export interface UpdateTestOptions {
+interface UpdateTestOptions {
 	databaseId: number;
 	layer: OperationLayer;
 	formatName: string;

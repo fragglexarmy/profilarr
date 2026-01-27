@@ -2,9 +2,8 @@
  * Custom format list queries
  */
 
-import type { PCDCache } from '../../cache.ts';
-import type { Tag } from '$shared/pcd/display.ts';
-import type { CustomFormatTableRow, ConditionRef } from './types.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import type { Tag, CustomFormatTableRow, ConditionRef } from '$shared/pcd/display.ts';
 
 /**
  * Get custom formats with full data for table/card views

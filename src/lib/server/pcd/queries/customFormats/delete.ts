@@ -2,10 +2,10 @@
  * Delete a custom format operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface DeleteCustomFormatOptions {
+interface DeleteCustomFormatOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;

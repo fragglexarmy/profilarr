@@ -1,9 +1,9 @@
 /**
- * Custom format general queries
+ * Custom format general read queries
  */
 
-import type { PCDCache } from '../../cache.ts';
-import type { CustomFormatGeneral } from './types.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import type { CustomFormatGeneral } from '$shared/pcd/display.ts';
 
 /**
  * Get general information for a single custom format

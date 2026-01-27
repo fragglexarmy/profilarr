@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CustomFormatTableRow } from '$pcd/queries/customFormats';
+	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
 	import { Layers, FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';

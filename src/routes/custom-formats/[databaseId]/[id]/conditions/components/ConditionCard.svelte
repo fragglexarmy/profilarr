@@ -17,7 +17,7 @@
 		INDEXER_FLAG_VALUES,
 		type ArrType
 	} from '$lib/shared/conditionTypes';
-	import type { ConditionData } from '$pcd/queries/customFormats/index';
+	import type { ConditionData } from '$shared/pcd/display.ts';
 
 	const dispatch = createEventDispatcher<{
 		remove: void;

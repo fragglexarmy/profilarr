@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
-	import type { CustomFormatTableRow } from '$pcd/queries/customFormats';
+	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
 	import { Tag, FileText, Layers, FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';

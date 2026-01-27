@@ -11,12 +11,12 @@ import {
 	isParserHealthy,
 	matchPatternsBatch
 } from '$lib/server/utils/arr/parser/index.ts';
-import { getAllConditionsForEvaluation } from '$pcd/queries/customFormats/allConditions.ts';
 import {
+	getAllConditionsForEvaluation,
 	evaluateCustomFormat,
 	getParsedInfo,
 	extractAllPatterns
-} from '$pcd/queries/customFormats/evaluator.ts';
+} from '$pcd/queries/customFormats/index.ts';
 import type { components } from '$api/v1.d.ts';
 
 type EvaluateRequest = components['schemas']['EvaluateRequest'];

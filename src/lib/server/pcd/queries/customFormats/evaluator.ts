@@ -3,7 +3,6 @@
  * Evaluates conditions against parsed release titles
  */
 
-import { logger } from '$logger/logger.ts';
 import type { ParseResult } from '$lib/server/utils/arr/parser/types.ts';
 import {
 	QualitySource,
@@ -12,46 +11,13 @@ import {
 	ReleaseType,
 	Language
 } from '$lib/server/utils/arr/parser/types.ts';
-import type { ConditionData } from './conditions.ts';
-
-export interface ConditionResult {
-	conditionName: string;
-	conditionType: string;
-	matched: boolean;
-	required: boolean;
-	negate: boolean;
-	/** Final result after applying negate */
-	passes: boolean;
-	/** What the condition expected */
-	expected: string;
-	/** What was actually found in the parsed title */
-	actual: string;
-}
-
-export interface EvaluationResult {
-	/** Whether the custom format matches overall */
-	matches: boolean;
-	/** Individual condition results */
-	conditions: ConditionResult[];
-}
-
-/** Serializable parsed info for frontend display */
-export interface ParsedInfo {
-	source: string;
-	resolution: string;
-	modifier: string;
-	languages: string[];
-	releaseGroup: string | null;
-	year: number;
-	edition: string | null;
-	releaseType: string | null;
-}
-
-/** Custom format with conditions for evaluation */
-export interface CustomFormatWithConditions {
-	name: string;
-	conditions: ConditionData[];
-}
+import type {
+	ConditionData,
+	ConditionResult,
+	EvaluationResult,
+	ParsedInfo,
+	CustomFormatWithConditions
+} from '$shared/pcd/display.ts';
 
 /**
  * Extract all unique regex patterns from custom format conditions

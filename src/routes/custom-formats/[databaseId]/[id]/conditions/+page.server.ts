@@ -6,7 +6,7 @@ import * as customFormatQueries from '$pcd/queries/customFormats/index.ts';
 import * as regularExpressionQueries from '$pcd/queries/regularExpressions/index.ts';
 import { getLanguagesWithSupport } from '$lib/server/sync/mappings.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import type { ConditionData } from '$pcd/queries/customFormats/index.ts';
+import type { ConditionData } from '$shared/pcd/display.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;

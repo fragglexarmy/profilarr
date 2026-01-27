@@ -12,7 +12,7 @@
 	import { browser } from '$app/environment';
 	import { Info, Plus } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
-	import type { CustomFormatTableRow } from '$pcd/queries/customFormats';
+	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
 	import type { PageData } from './$types';
 
 	export let data: PageData;

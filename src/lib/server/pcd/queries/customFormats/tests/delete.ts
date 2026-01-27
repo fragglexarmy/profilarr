@@ -2,10 +2,10 @@
  * Delete a custom format test operation
  */
 
-import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { CustomFormatTest } from './types.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { CustomFormatTest } from '$shared/pcd/display.ts';
 
-export interface DeleteTestOptions {
+interface DeleteTestOptions {
 	databaseId: number;
 	layer: OperationLayer;
 	formatName: string;

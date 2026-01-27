@@ -11,7 +11,7 @@
 	import { sortConditions } from '$lib/shared/conditionTypes';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
-	import type { ConditionData } from '$pcd/queries/customFormats/index';
+	import type { ConditionData } from '$shared/pcd/display.ts';
 
 	// Extended type with stable key for Svelte keying
 	type KeyedCondition = ConditionData & { _key: string };

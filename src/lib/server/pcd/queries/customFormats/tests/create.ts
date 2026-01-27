@@ -2,16 +2,16 @@
  * Create a custom format test operation
  */
 
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface CreateTestInput {
+interface CreateTestInput {
 	title: string;
 	type: 'movie' | 'series';
 	should_match: boolean;
 	description: string | null;
 }
 
-export interface CreateTestOptions {
+interface CreateTestOptions {
 	databaseId: number;
 	layer: OperationLayer;
 	formatName: string;
