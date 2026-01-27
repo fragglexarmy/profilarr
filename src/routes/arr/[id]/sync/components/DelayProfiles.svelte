@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { DelayProfileTableRow } from '$pcd/queries/delayProfiles/types.ts';
+	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import SyncFooter from './SyncFooter.svelte';
 	import { Check } from 'lucide-svelte';
@@ -8,7 +8,7 @@
 	interface DatabaseWithProfiles {
 		id: number;
 		name: string;
-		delayProfiles: DelayProfileTableRow[];
+		delayProfiles: DelayProfilesRow[];
 	}
 
 	export let databases: DatabaseWithProfiles[];

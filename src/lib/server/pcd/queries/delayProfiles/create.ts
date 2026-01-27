@@ -4,9 +4,9 @@
 
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { PreferredProtocol } from './types.ts';
+import type { PreferredProtocol } from '$shared/pcd/display.ts';
 
-export interface CreateDelayProfileInput {
+interface CreateDelayProfileInput {
 	name: string;
 	preferredProtocol: PreferredProtocol;
 	usenetDelay: number;
@@ -16,7 +16,7 @@ export interface CreateDelayProfileInput {
 	minimumCfScore: number;
 }
 
-export interface CreateDelayProfileOptions {
+interface CreateDelayProfileOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;

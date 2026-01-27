@@ -4,10 +4,10 @@
 
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { PreferredProtocol, DelayProfileTableRow } from './types.ts';
+import type { DelayProfilesRow, PreferredProtocol } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 
-export interface UpdateDelayProfileInput {
+interface UpdateDelayProfileInput {
 	name: string;
 	preferredProtocol: PreferredProtocol;
 	usenetDelay: number;
@@ -17,12 +17,12 @@ export interface UpdateDelayProfileInput {
 	minimumCfScore: number;
 }
 
-export interface UpdateDelayProfileOptions {
+interface UpdateDelayProfileOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	/** The current profile data (for value guards) */
-	current: DelayProfileTableRow;
+	current: DelayProfilesRow;
 	/** The new values */
 	input: UpdateDelayProfileInput;
 }

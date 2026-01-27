@@ -4,14 +4,14 @@
 
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { DelayProfileTableRow } from './types.ts';
+import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 
-export interface DeleteDelayProfileOptions {
+interface DeleteDelayProfileOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	/** The current profile data (for value guards) */
-	current: DelayProfileTableRow;
+	current: DelayProfilesRow;
 }
 
 /**

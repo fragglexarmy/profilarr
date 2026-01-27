@@ -1,13 +1,13 @@
 <script lang="ts">
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
-	import type { DelayProfileTableRow } from '$pcd/queries/delayProfiles';
+	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 	import { Tag, Clock, Zap, Shield, Calendar } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { parseUTC } from '$shared/dates';
 
-	export let profiles: DelayProfileTableRow[];
+	export let profiles: DelayProfilesRow[];
 
 	function formatDate(dateString: string): string {
 		const date = parseUTC(dateString);
@@ -21,7 +21,7 @@
 		});
 	}
 
-	function handleRowClick(row: DelayProfileTableRow) {
+	function handleRowClick(row: DelayProfilesRow) {
 		const databaseId = $page.params.databaseId;
 		goto(`/delay-profiles/${databaseId}/${row.id}`);
 	}
@@ -50,14 +50,14 @@
 		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 	}
 
-	const columns: Column<DelayProfileTableRow>[] = [
+	const columns: Column<DelayProfilesRow>[] = [
 		{
 			key: 'name',
 			header: 'Name',
 			headerIcon: Tag,
 			align: 'left',
 			sortable: true,
-			cell: (row: DelayProfileTableRow) => ({
+			cell: (row: DelayProfilesRow) => ({
 				html: `<div class="font-medium">${row.name}</div>`
 			})
 		},
@@ -67,7 +67,7 @@
 			headerIcon: Zap,
 			align: 'left',
 			width: 'w-44',
-			cell: (row: DelayProfileTableRow) => ({
+			cell: (row: DelayProfilesRow) => ({
 				html: `<span class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">${formatProtocol(row.preferred_protocol)}</span>`
 			})
 		},
@@ -77,7 +77,7 @@
 			headerIcon: Clock,
 			align: 'left',
 			width: 'w-48',
-			cell: (row: DelayProfileTableRow) => ({
+			cell: (row: DelayProfilesRow) => ({
 				html: `
 					<div class="text-xs space-y-0.5">
 						${row.usenet_delay !== null ? `<div>Usenet: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${formatDelay(row.usenet_delay)}</span></div>` : ''}
@@ -92,7 +92,7 @@
 			headerIcon: Shield,
 			align: 'left',
 			width: 'w-56',
-			cell: (row: DelayProfileTableRow) => {
+			cell: (row: DelayProfilesRow) => {
 				const bypasses: string[] = [];
 				if (row.bypass_if_highest_quality) {
 					bypasses.push('Highest Quality');
@@ -121,7 +121,7 @@
 			align: 'left',
 			width: 'w-44',
 			sortable: true,
-			cell: (row: DelayProfileTableRow) => ({
+			cell: (row: DelayProfilesRow) => ({
 				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.updated_at)}</span>`
 			})
 		},
@@ -132,7 +132,7 @@
 			align: 'left',
 			width: 'w-44',
 			sortable: true,
-			cell: (row: DelayProfileTableRow) => ({
+			cell: (row: DelayProfilesRow) => ({
 				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.created_at)}</span>`
 			})
 		}

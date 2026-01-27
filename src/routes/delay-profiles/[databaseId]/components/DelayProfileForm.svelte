@@ -5,7 +5,7 @@
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2, Loader2 } from 'lucide-svelte';
-	import type { PreferredProtocol } from '$pcd/queries/delayProfiles';
+	import type { PreferredProtocol } from '$shared/pcd/display.ts';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 
 	// Form data shape

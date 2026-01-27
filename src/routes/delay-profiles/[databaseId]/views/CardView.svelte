@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { DelayProfileTableRow } from '$pcd/queries/delayProfiles';
+	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { Clock, Zap, Shield } from 'lucide-svelte';
 
-	export let profiles: DelayProfileTableRow[];
+	export let profiles: DelayProfilesRow[];
 
-	function handleCardClick(profile: DelayProfileTableRow) {
+	function handleCardClick(profile: DelayProfilesRow) {
 		const databaseId = $page.params.databaseId;
 		goto(`/delay-profiles/${databaseId}/${profile.id}`);
 	}

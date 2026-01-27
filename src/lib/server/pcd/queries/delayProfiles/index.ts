@@ -1,17 +1,15 @@
 /**
- * Delay Profile queries and mutations
+ * Delay Profile CRUD operations
  */
 
-// Export all types
-export type { DelayProfileTableRow, PreferredProtocol } from './types.ts';
-export type { CreateDelayProfileInput } from './create.ts';
-export type { UpdateDelayProfileInput } from './update.ts';
+// Read
+export { list, get } from './read.ts';
 
-// Export query functions
-export { list } from './list.ts';
-export { get } from './get.ts';
-
-// Export mutation functions
+// Create
 export { create } from './create.ts';
+
+// Update
 export { update } from './update.ts';
+
+// Delete
 export { remove } from './delete.ts';

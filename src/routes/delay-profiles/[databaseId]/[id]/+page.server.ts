@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import * as delayProfileQueries from '$pcd/queries/delayProfiles/index.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
-import type { PreferredProtocol } from '$pcd/queries/delayProfiles/index.ts';
+import type { PreferredProtocol } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = async ({ params }) => {
