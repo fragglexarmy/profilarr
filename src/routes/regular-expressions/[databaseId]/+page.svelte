@@ -14,7 +14,7 @@
 	import { browser } from '$app/environment';
 	import { Info, Plus, FileText, Users } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
-	import type { RegularExpressionTableRow } from '$pcd/queries/regularExpressions';
+	import type { RegularExpressionWithTags } from '$shared/pcd/display';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -74,10 +74,10 @@
 	$: filtered = filterExpressions(data.regularExpressions, $debouncedQuery, searchOptions);
 
 	function filterExpressions(
-		items: RegularExpressionTableRow[],
+		items: RegularExpressionWithTags[],
 		query: string,
 		options: typeof searchOptions
-	): RegularExpressionTableRow[] {
+	): RegularExpressionWithTags[] {
 		if (!query) return items;
 
 		const queryLower = query.toLowerCase();
@@ -89,7 +89,7 @@
 					// Search within tag names
 					return item.tags.some((tag) => tag.name.toLowerCase().includes(queryLower));
 				}
-				const value = item[key as keyof RegularExpressionTableRow];
+				const value = item[key as keyof RegularExpressionWithTags];
 				if (value == null) return false;
 				return String(value).toLowerCase().includes(queryLower);
 			});

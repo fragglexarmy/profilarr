@@ -1,17 +1,15 @@
 /**
- * Regular Expression queries and mutations
+ * Regular Expression CRUD operations
  */
 
-// Export all types
-export type { RegularExpressionTableRow } from './types.ts';
-export type { CreateRegularExpressionInput } from './create.ts';
-export type { UpdateRegularExpressionInput } from './update.ts';
+// Read
+export { list, get } from './read.ts';
 
-// Export query functions
-export { list } from './list.ts';
-export { get } from './get.ts';
-
-// Export mutation functions
+// Create
 export { create } from './create.ts';
+
+// Update
 export { update } from './update.ts';
+
+// Delete
 export { remove } from './delete.ts';

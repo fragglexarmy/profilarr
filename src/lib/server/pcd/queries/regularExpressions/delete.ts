@@ -4,14 +4,14 @@
 
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { RegularExpressionTableRow } from './types.ts';
+import type { RegularExpressionWithTags } from '$shared/pcd/display.ts';
 
-export interface DeleteRegularExpressionOptions {
+interface DeleteRegularExpressionOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	/** The current regular expression data (for value guards) */
-	current: RegularExpressionTableRow;
+	current: RegularExpressionWithTags;
 }
 
 /**

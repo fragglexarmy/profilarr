@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { RegularExpressionTableRow } from '$pcd/queries/regularExpressions';
+	import type { RegularExpressionWithTags } from '$shared/pcd/display';
 	import { ExternalLink } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
-	export let expressions: RegularExpressionTableRow[];
+	export let expressions: RegularExpressionWithTags[];
 
-	function handleCardClick(expression: RegularExpressionTableRow) {
+	function handleCardClick(expression: RegularExpressionWithTags) {
 		const databaseId = $page.params.databaseId;
 		goto(`/regular-expressions/${databaseId}/${expression.id}`);
 	}

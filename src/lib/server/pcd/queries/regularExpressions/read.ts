@@ -1,18 +1,17 @@
 /**
- * Regular expression list queries
+ * Regular expression read operations
  */
 
 import type { PCDCache } from '../../cache.ts';
-import type { Tag } from '../../types.ts';
-import type { RegularExpressionTableRow } from './types.ts';
+import type { Tag, RegularExpressionWithTags } from '$shared/pcd/display.ts';
 
 /**
- * Get regular expressions with full data for table/card views
+ * List all regular expressions with tags
  */
-export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]> {
+export async function list(cache: PCDCache): Promise<RegularExpressionWithTags[]> {
 	const db = cache.kb;
 
-	// 1. Get all regular expressions
+	// Get all regular expressions
 	const expressions = await db
 		.selectFrom('regular_expressions')
 		.select(['id', 'name', 'pattern', 'regex101_id', 'description', 'created_at', 'updated_at'])
@@ -23,7 +22,7 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 
 	const expressionNames = expressions.map((e) => e.name);
 
-	// 2. Get all tags for all expressions
+	// Get all tags for all expressions
 	const allTags = await db
 		.selectFrom('regular_expression_tags as ret')
 		.innerJoin('tags as t', 't.name', 'ret.tag_name')
@@ -47,13 +46,38 @@ export async function list(cache: PCDCache): Promise<RegularExpressionTableRow[]
 
 	// Build the final result
 	return expressions.map((expression) => ({
-		id: expression.id,
-		name: expression.name,
-		pattern: expression.pattern,
-		regex101_id: expression.regex101_id,
-		description: expression.description,
-		tags: tagsMap.get(expression.name) || [],
-		created_at: expression.created_at,
-		updated_at: expression.updated_at
+		...expression,
+		tags: tagsMap.get(expression.name) || []
 	}));
+}
+
+/**
+ * Get a single regular expression by ID with tags
+ */
+export async function get(cache: PCDCache, id: number): Promise<RegularExpressionWithTags | null> {
+	const db = cache.kb;
+
+	// Get the regular expression
+	const regex = await db
+		.selectFrom('regular_expressions')
+		.select(['id', 'name', 'pattern', 'regex101_id', 'description', 'created_at', 'updated_at'])
+		.where('id', '=', id)
+		.executeTakeFirst();
+
+	if (!regex) {
+		return null;
+	}
+
+	// Get tags for this regular expression
+	const tags = await db
+		.selectFrom('regular_expression_tags as ret')
+		.innerJoin('tags as t', 't.name', 'ret.tag_name')
+		.select(['t.name', 't.created_at'])
+		.where('ret.regular_expression_name', '=', regex.name)
+		.execute();
+
+	return {
+		...regex,
+		tags
+	};
 }

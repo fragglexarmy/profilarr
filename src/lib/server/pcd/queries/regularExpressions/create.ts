@@ -5,7 +5,7 @@
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
 
-export interface CreateRegularExpressionInput {
+interface CreateRegularExpressionInput {
 	name: string;
 	pattern: string;
 	tags: string[];
@@ -13,7 +13,7 @@ export interface CreateRegularExpressionInput {
 	regex101Id: string | null;
 }
 
-export interface CreateRegularExpressionOptions {
+interface CreateRegularExpressionOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;

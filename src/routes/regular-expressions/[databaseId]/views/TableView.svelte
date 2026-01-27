@@ -1,14 +1,14 @@
 <script lang="ts">
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
-	import type { RegularExpressionTableRow } from '$pcd/queries/regularExpressions';
+	import type { RegularExpressionWithTags } from '$shared/pcd/display';
 	import { Tag, Code, FileText, Link, Calendar } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { parseUTC } from '$shared/dates';
 
-	export let expressions: RegularExpressionTableRow[];
+	export let expressions: RegularExpressionWithTags[];
 
 	function formatDate(dateString: string): string {
 		const date = parseUTC(dateString);
@@ -22,7 +22,7 @@
 		});
 	}
 
-	function handleRowClick(row: RegularExpressionTableRow) {
+	function handleRowClick(row: RegularExpressionWithTags) {
 		const databaseId = $page.params.databaseId;
 		goto(`/regular-expressions/${databaseId}/${row.id}`);
 	}
@@ -41,7 +41,7 @@
 		return marked.parseInline(text) as string;
 	}
 
-	const columns: Column<RegularExpressionTableRow>[] = [
+	const columns: Column<RegularExpressionWithTags>[] = [
 		{
 			key: 'name',
 			header: 'Name',
@@ -49,7 +49,7 @@
 			align: 'left',
 			sortable: true,
 			width: 'w-48',
-			cell: (row: RegularExpressionTableRow) => ({
+			cell: (row: RegularExpressionWithTags) => ({
 				html: `
 					<div>
 						<div class="font-medium">${escapeHtml(row.name)}</div>
@@ -79,7 +79,7 @@
 			header: 'Pattern',
 			headerIcon: Code,
 			align: 'left',
-			cell: (row: RegularExpressionTableRow) => ({
+			cell: (row: RegularExpressionWithTags) => ({
 				html: `<code class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded break-all">${escapeHtml(row.pattern)}</code>`
 			})
 		},
@@ -88,7 +88,7 @@
 			header: 'Description',
 			headerIcon: FileText,
 			align: 'left',
-			cell: (row: RegularExpressionTableRow) => ({
+			cell: (row: RegularExpressionWithTags) => ({
 				html: row.description
 					? `<span class="text-sm text-neutral-600 dark:text-neutral-400 prose-inline">${parseMarkdown(row.description)}</span>`
 					: `<span class="text-neutral-400">-</span>`
@@ -100,7 +100,7 @@
 			headerIcon: Link,
 			align: 'left',
 			width: 'w-32',
-			cell: (row: RegularExpressionTableRow) => ({
+			cell: (row: RegularExpressionWithTags) => ({
 				html: row.regex101_id
 					? `<a href="https://regex101.com/r/${escapeHtml(row.regex101_id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-mono text-xs text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 hover:underline">${escapeHtml(row.regex101_id)}<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>`
 					: `<span class="text-neutral-400">-</span>`
@@ -113,7 +113,7 @@
 			align: 'left',
 			width: 'w-44',
 			sortable: true,
-			cell: (row: RegularExpressionTableRow) => ({
+			cell: (row: RegularExpressionWithTags) => ({
 				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.updated_at)}</span>`
 			})
 		},
@@ -124,7 +124,7 @@
 			align: 'left',
 			width: 'w-44',
 			sortable: true,
-			cell: (row: RegularExpressionTableRow) => ({
+			cell: (row: RegularExpressionWithTags) => ({
 				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.created_at)}</span>`
 			})
 		}

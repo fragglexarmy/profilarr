@@ -4,10 +4,10 @@
 
 import type { PCDCache } from '../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../writer.ts';
-import type { RegularExpressionTableRow } from './types.ts';
+import type { RegularExpressionWithTags } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 
-export interface UpdateRegularExpressionInput {
+interface UpdateRegularExpressionInput {
 	name: string;
 	pattern: string;
 	tags: string[];
@@ -15,12 +15,12 @@ export interface UpdateRegularExpressionInput {
 	regex101Id: string | null;
 }
 
-export interface UpdateRegularExpressionOptions {
+interface UpdateRegularExpressionOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
 	/** The current regular expression data (for value guards) */
-	current: RegularExpressionTableRow;
+	current: RegularExpressionWithTags;
 	/** The new values */
 	input: UpdateRegularExpressionInput;
 }

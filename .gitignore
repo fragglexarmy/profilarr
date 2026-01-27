@@ -4,6 +4,9 @@ node_modules
 CLAUDE.md
 .claudeignore
 
+# Local TODO/planning docs
+docs/todo/
+
 # Output
 .output
 .vercel
