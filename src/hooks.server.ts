@@ -8,7 +8,7 @@ import { db } from '$db/db.ts';
 import { runMigrations } from '$db/migrations.ts';
 import { initializeJobs } from '$jobs/init.ts';
 import { jobScheduler } from '$jobs/scheduler.ts';
-import { pcdManager } from '$pcd/pcd.ts';
+import { pcdManager } from '$pcd/index.ts';
 import {
 	getAuthState,
 	isPublicPath,

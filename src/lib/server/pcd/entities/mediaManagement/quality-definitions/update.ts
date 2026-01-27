@@ -2,8 +2,8 @@
  * Quality definitions update operations
  */
 
-import type { PCDCache } from '../../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../../writer.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { QualityDefinitionEntry } from '$shared/pcd/display.ts';
 
 export interface UpdateQualityDefinitionsInput {

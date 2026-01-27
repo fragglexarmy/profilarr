@@ -1,10 +1,10 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
-import { pcdManager } from '$pcd/pcd.ts';
-import { canWriteToBase } from '$pcd/writer.ts';
+import { pcdManager } from '$pcd/index.ts';
+import { canWriteToBase } from '$pcd/index.ts';
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { getRadarrLanguages } from '$lib/server/sync/mappings.ts';
-import type { OperationLayer } from '$pcd/writer.ts';
+import type { OperationLayer } from '$pcd/index.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;

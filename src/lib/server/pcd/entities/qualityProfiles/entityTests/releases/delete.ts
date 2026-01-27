@@ -2,8 +2,8 @@
  * Delete test release operation
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
-import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 
 interface DeleteReleaseOptions {
 	databaseId: number;

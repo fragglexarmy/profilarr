@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { pcdManager } from '$pcd/pcd.ts';
-import { canWriteToBase } from '$pcd/writer.ts';
+import { pcdManager } from '$pcd/index.ts';
+import { canWriteToBase } from '$pcd/index.ts';
 
 export const load: LayoutServerLoad = async ({ params }) => {
 	const { databaseId } = params;

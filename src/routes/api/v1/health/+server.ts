@@ -6,7 +6,7 @@ import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { jobsQueries } from '$db/queries/jobs.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { appInfoQueries } from '$db/queries/appInfo.ts';
-import { getCache } from '$pcd/cache.ts';
+import { getCache } from '$pcd/index.ts';
 import { config } from '$config';
 
 type ComponentStatus = 'healthy' | 'degraded' | 'unhealthy';

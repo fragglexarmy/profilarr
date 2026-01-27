@@ -2,7 +2,7 @@
  * Custom format condition read queries for test evaluation
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { ConditionData, ConditionListItem, CustomFormatWithConditions } from '$shared/pcd/display.ts';
 
 /**

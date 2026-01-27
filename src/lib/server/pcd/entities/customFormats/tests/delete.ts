@@ -2,7 +2,7 @@
  * Delete a custom format test operation
  */
 
-import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { CustomFormatTest } from '$shared/pcd/display.ts';
 
 interface DeleteTestOptions {

@@ -2,8 +2,8 @@
  * Quality definitions remove operations
  */
 
-import type { PCDCache } from '../../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../../writer.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 
 export interface RemoveQualityDefinitionsOptions {
 	databaseId: number;

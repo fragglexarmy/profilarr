@@ -3,7 +3,7 @@
  * Checks for databases that need syncing and pulls updates if auto_pull is enabled
  */
 
-import { pcdManager } from '$pcd/pcd.ts';
+import { pcdManager } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 

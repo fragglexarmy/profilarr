@@ -2,8 +2,8 @@
  * Update quality profile general information and languages
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
-import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { QualityProfileGeneral } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 

@@ -2,7 +2,7 @@
  * Quality definitions read operations
  */
 
-import type { PCDCache } from '../../../cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { ArrType } from '$shared/pcd/types.ts';
 import type {
 	QualityDefinitionListItem,

@@ -2,7 +2,7 @@
  * Custom format list queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { Tag, CustomFormatTableRow, ConditionRef } from '$shared/pcd/display.ts';
 
 /**

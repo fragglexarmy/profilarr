@@ -3,7 +3,7 @@
  * Transforms PCD custom format data to arr API format
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import {
 	type SyncArrType,
 	getSource,

@@ -126,6 +126,13 @@ export async function fetch(repoPath: string): Promise<void> {
 }
 
 /**
+ * Fetch tags from remote
+ */
+export async function fetchTags(repoPath: string): Promise<void> {
+	await execGitSafe(['fetch', '--tags', '--quiet'], repoPath);
+}
+
+/**
  * Pull from remote
  */
 export async function pull(repoPath: string): Promise<void> {

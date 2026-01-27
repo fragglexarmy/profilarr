@@ -2,7 +2,7 @@
  * Quality profile list queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type {
 	Tag,
 	QualityProfileTableRow,

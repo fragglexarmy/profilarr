@@ -2,7 +2,7 @@
  * Quality profile scoring queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { QualityProfileScoring, ProfileCfScores, AllCfScoresResult } from '$shared/pcd/display.ts';
 
 /**

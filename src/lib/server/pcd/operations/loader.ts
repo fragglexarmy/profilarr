@@ -1,14 +1,10 @@
 /**
+ * PCD Operations Loader
  * Utilities for loading and managing SQL operations from PCD layers
  */
 
-export interface Operation {
-	filename: string;
-	filepath: string;
-	sql: string;
-	order: number; // Extracted from numeric prefix
-	layer: 'schema' | 'base' | 'tweaks' | 'user';
-}
+import { config } from '$config';
+import type { Operation } from '../core/types.ts';
 
 /**
  * Check if a path exists
@@ -69,7 +65,7 @@ export async function loadOperationsFromDir(
  *   "10.advanced.sql" -> 10
  *   "allow-DV.sql" -> Infinity (no prefix)
  */
-function extractOrderFromFilename(filename: string): number {
+export function extractOrderFromFilename(filename: string): number {
 	const match = filename.match(/^(\d+)\./);
 	if (match) {
 		return parseInt(match[1], 10);
@@ -111,20 +107,6 @@ export async function loadAllOperations(pcdPath: string): Promise<Operation[]> {
 }
 
 /**
- * Get the user ops directory path for a PCD
- */
-export function getUserOpsPath(pcdPath: string): string {
-	return `${pcdPath}/user_ops`;
-}
-
-/**
- * Get the base ops directory path for a PCD
- */
-export function getBaseOpsPath(pcdPath: string): string {
-	return `${pcdPath}/ops`;
-}
-
-/**
  * Validate that operations can be executed
  * - Check for empty SQL
  * - Check for duplicate order numbers within a layer
@@ -151,4 +133,29 @@ export function validateOperations(operations: Operation[]): void {
 		}
 		orders.add(op.order);
 	}
+}
+
+// ============================================================================
+// PATH HELPERS
+// ============================================================================
+
+/**
+ * Get the filesystem path for a PCD repository
+ */
+export function getPCDPath(uuid: string): string {
+	return `${config.paths.databases}/${uuid}`;
+}
+
+/**
+ * Get the user ops directory path for a PCD
+ */
+export function getUserOpsPath(pcdPath: string): string {
+	return `${pcdPath}/user_ops`;
+}
+
+/**
+ * Get the base ops directory path for a PCD
+ */
+export function getBaseOpsPath(pcdPath: string): string {
+	return `${pcdPath}/ops`;
 }

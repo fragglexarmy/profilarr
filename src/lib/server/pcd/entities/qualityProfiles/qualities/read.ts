@@ -2,7 +2,7 @@
  * Quality profile qualities queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { QualitiesPageData, OrderedItem, QualitiesGroup } from '$shared/pcd/display.ts';
 
 /**

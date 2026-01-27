@@ -2,8 +2,8 @@
  * Update naming config operations
  */
 
-import type { PCDCache } from '../../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../../writer.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
 import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/mediaManagement.ts';
 

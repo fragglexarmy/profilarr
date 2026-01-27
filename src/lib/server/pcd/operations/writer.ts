@@ -1,107 +1,16 @@
 /**
- * PCD Operation Writer - Write operations to PCD layers using Kysely
+ * PCD Operation Writer
+ * Write operations to PCD layers using Kysely
  */
 
-import type { CompiledQuery } from 'kysely';
-import { getBaseOpsPath, getUserOpsPath } from './ops.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
-import { compile, getCache } from './cache.ts';
 import { isFileUncommitted } from '$utils/git/status.ts';
-
-export type OperationLayer = 'base' | 'user';
-export type OperationType = 'create' | 'update' | 'delete';
-
-/**
- * Metadata for an operation - used for optimization and tracking
- */
-export interface OperationMetadata {
-	/** The type of operation */
-	operation: OperationType;
-	/** The entity type (e.g., 'delay_profile', 'quality_profile') */
-	entity: string;
-	/** The entity name (current name for create/update, name being deleted for delete) */
-	name: string;
-	/** Previous name if this is a rename operation */
-	previousName?: string;
-}
-
-export interface WriteOptions {
-	/** The database instance ID */
-	databaseId: number;
-	/** Which layer to write to */
-	layer: OperationLayer;
-	/** Description for the operation (used in filename) */
-	description: string;
-	/** The compiled Kysely queries to write */
-	queries: CompiledQuery[];
-	/** Metadata for optimization and tracking */
-	metadata?: OperationMetadata;
-}
-
-export interface WriteResult {
-	success: boolean;
-	filepath?: string;
-	error?: string;
-}
-
-/**
- * Convert a compiled Kysely query to executable SQL
- * Replaces ? placeholders with actual values
- *
- * Note: We can't use simple string.replace() because parameter values
- * might contain '?' characters (e.g., regex patterns like '(?<=...)')
- * which would get incorrectly replaced on subsequent iterations.
- */
-function compiledQueryToSql(compiled: CompiledQuery): string {
-	const sql = compiled.sql;
-	const params = compiled.parameters as unknown[];
-
-	if (params.length === 0) {
-		return sql;
-	}
-
-	// Build result by finding each ? placeholder and replacing with the next param
-	// We track our position to avoid replacing ? inside already-substituted values
-	const result: string[] = [];
-	let paramIndex = 0;
-	let i = 0;
-
-	while (i < sql.length) {
-		if (sql[i] === '?' && paramIndex < params.length) {
-			// Replace this placeholder with the formatted parameter value
-			result.push(formatValue(params[paramIndex]));
-			paramIndex++;
-			i++;
-		} else {
-			result.push(sql[i]);
-			i++;
-		}
-	}
-
-	return result.join('');
-}
-
-/**
- * Format a value for SQL insertion
- */
-function formatValue(value: unknown): string {
-	if (value === null || value === undefined) {
-		return 'NULL';
-	}
-	if (typeof value === 'number') {
-		return String(value);
-	}
-	if (typeof value === 'boolean') {
-		return value ? '1' : '0';
-	}
-	if (typeof value === 'string') {
-		// Escape single quotes by doubling them
-		return `'${value.replace(/'/g, "''")}'`;
-	}
-	// For other types, convert to string and quote
-	return `'${String(value).replace(/'/g, "''")}'`;
-}
+import { getBaseOpsPath, getUserOpsPath } from './loader.ts';
+import { compiledQueryToSql } from './sql.ts';
+import { compile } from '../database/compiler.ts';
+import { getCache } from '../database/registry.ts';
+import type { OperationLayer, OperationMetadata, OperationType, WriteOptions, WriteResult } from '../core/types.ts';
 
 /**
  * Get the next available operation number for a directory
@@ -390,3 +299,6 @@ export function canWriteToBase(databaseId: number): boolean {
 	const instance = databaseInstancesQueries.getById(databaseId);
 	return !!instance?.personal_access_token;
 }
+
+// Re-export types for convenience
+export type { OperationLayer, OperationType, OperationMetadata, WriteOptions, WriteResult };

@@ -4,6 +4,7 @@
  */
 
 import { logger } from '$logger/logger.ts';
+import { ManifestValidationError } from '../core/errors.ts';
 
 export interface Manifest {
 	name: string;
@@ -23,13 +24,6 @@ export interface Manifest {
 	profilarr: {
 		minimum_version: string;
 	};
-}
-
-export class ManifestValidationError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = 'ManifestValidationError';
-	}
 }
 
 /**
@@ -165,3 +159,32 @@ export async function writeManifest(pcdPath: string, manifest: Manifest): Promis
 		meta: { path: pcdPath, manifest }
 	});
 }
+
+// ============================================================================
+// README HELPERS (merged from readme.ts)
+// ============================================================================
+
+/**
+ * Read README from a PCD repository
+ */
+export async function readReadme(pcdPath: string): Promise<string | null> {
+	try {
+		return await Deno.readTextFile(`${pcdPath}/README.md`);
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Write README to a PCD repository
+ */
+export async function writeReadme(pcdPath: string, content: string): Promise<void> {
+	await Deno.writeTextFile(`${pcdPath}/README.md`, content);
+	await logger.info('Wrote README', {
+		source: 'PCDManifest',
+		meta: { path: pcdPath, content }
+	});
+}
+
+// Re-export error for convenience
+export { ManifestValidationError };

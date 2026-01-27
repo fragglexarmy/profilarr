@@ -13,7 +13,7 @@
 
 import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { getCache, getCachedDatabaseIds } from '$pcd/cache.ts';
+import { getCache, getCachedDatabaseIds } from '$pcd/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
 import type { SyncArrType } from '../mappings.ts';

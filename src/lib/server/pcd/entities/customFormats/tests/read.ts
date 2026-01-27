@@ -2,7 +2,7 @@
  * Custom format test read queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { CustomFormatBasic, CustomFormatTest } from '$shared/pcd/display.ts';
 
 /**

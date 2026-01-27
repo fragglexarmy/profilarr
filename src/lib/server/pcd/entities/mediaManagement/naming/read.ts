@@ -2,7 +2,7 @@
  * Naming read operations (list and get)
  */
 
-import type { PCDCache } from '../../../cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { RadarrNamingRow, SonarrNamingRow, NamingListItem } from '$shared/pcd/display.ts';
 import { colonReplacementFromDb, multiEpisodeStyleFromDb } from '$shared/pcd/mediaManagement.ts';
 

@@ -2,8 +2,8 @@
  * Update quality profile qualities
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
-import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { OrderedItem } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 

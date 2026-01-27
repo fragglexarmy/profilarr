@@ -1,8 +1,8 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { pcdManager } from '$pcd/pcd.ts';
-import { canWriteToBase } from '$pcd/writer.ts';
-import type { OperationLayer } from '$pcd/writer.ts';
+import { pcdManager } from '$pcd/index.ts';
+import { canWriteToBase } from '$pcd/index.ts';
+import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, getAvailableQualities } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
 import { updateRadarrQualityDefinitions, removeRadarrQualityDefinitions } from '$pcd/entities/mediaManagement/quality-definitions/index.ts';
 

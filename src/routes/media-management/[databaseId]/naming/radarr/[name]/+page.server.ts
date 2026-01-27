@@ -1,8 +1,8 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { pcdManager } from '$pcd/pcd.ts';
-import { canWriteToBase } from '$pcd/writer.ts';
-import type { OperationLayer } from '$pcd/writer.ts';
+import { pcdManager } from '$pcd/index.ts';
+import { canWriteToBase } from '$pcd/index.ts';
+import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, updateRadarrNaming, removeRadarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
 import type { RadarrNamingRow } from '$shared/pcd/display.ts';
 

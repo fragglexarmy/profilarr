@@ -2,7 +2,7 @@
  * Custom format general read queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { CustomFormatGeneral } from '$shared/pcd/display.ts';
 
 /**

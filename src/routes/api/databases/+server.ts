@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { pcdManager } from '$pcd/pcd.ts';
+import { pcdManager } from '$pcd/index.ts';
 
 /**
  * GET /api/databases

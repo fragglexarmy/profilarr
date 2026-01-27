@@ -2,7 +2,7 @@
  * Entity test read queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { TestEntity } from '$shared/pcd/display.ts';
 
 /**

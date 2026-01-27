@@ -16,7 +16,7 @@
 
 import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { getCache, type PCDCache } from '$pcd/cache.ts';
+import { getCache, type PCDCache } from '$pcd/index.ts';
 import { getRadarrByName as getRadarrMediaSettings, getSonarrByName as getSonarrMediaSettings } from '$pcd/entities/mediaManagement/media-settings/read.ts';
 import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/entities/mediaManagement/naming/read.ts';
 import { getRadarrByName as getRadarrQualityDefs, getSonarrByName as getSonarrQualityDefs } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';

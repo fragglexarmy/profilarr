@@ -1,7 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from '@sveltejs/kit';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
-import { pcdManager } from '$pcd/pcd.ts';
+import { pcdManager } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
 
 export const actions: Actions = {

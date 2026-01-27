@@ -5,27 +5,14 @@
 import { Git, clone, type GitStatus, type UpdateInfo } from '$utils/git/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
-import { loadManifest, type Manifest } from './manifest.ts';
-import { getPCDPath } from './paths.ts';
-import { processDependencies, syncDependencies } from './deps.ts';
-import { compile, invalidate, startWatch, getCache } from './cache.ts';
+import { loadManifest, type Manifest } from '../manifest/manifest.ts';
+import { getPCDPath } from '../operations/loader.ts';
+import { processDependencies, syncDependencies, validateDependencies } from '../git/dependencies.ts';
+import { compile, invalidate } from '../database/compiler.ts';
+import { getCache } from '../database/registry.ts';
 import { logger } from '$logger/logger.ts';
 import { triggerSyncs } from '$sync/processor.ts';
-
-export interface LinkOptions {
-	repositoryUrl: string;
-	name: string;
-	branch?: string;
-	syncStrategy?: number;
-	autoPull?: boolean;
-	personalAccessToken?: string;
-}
-
-export interface SyncResult {
-	success: boolean;
-	commitsBehind: number;
-	error?: string;
-}
+import type { LinkOptions, SyncResult } from './types.ts';
 
 /**
  * PCD Manager - Manages the lifecycle of Profilarr Compliant Databases
@@ -81,11 +68,10 @@ class PCDManager {
 				throw new Error('Failed to retrieve created database instance');
 			}
 
-			// Compile cache and start watching (only if enabled)
+			// Compile cache (only if enabled)
 			if (instance.enabled) {
 				try {
 					const stats = await compile(localPath, id);
-					await startWatch(localPath, id);
 
 					await logger.debug(`Cache compiled for "${options.name}"`, {
 						source: 'PCDManager',
@@ -175,11 +161,10 @@ class PCDManager {
 			// Update last_synced_at
 			databaseInstancesQueries.updateSyncedAt(id);
 
-			// Recompile cache and restart watching (only if enabled)
+			// Recompile cache (only if enabled)
 			if (instance.enabled) {
 				try {
 					await compile(instance.local_path, id);
-					await startWatch(instance.local_path, id);
 				} catch (error) {
 					await logger.error('Failed to recompile PCD cache after sync', {
 						source: 'PCDManager',
@@ -290,6 +275,18 @@ class PCDManager {
 		const instances = databaseInstancesQueries.getAll();
 		const enabledInstances = instances.filter((instance) => instance.enabled);
 
+		// Validate dependencies for all instances first
+		for (const instance of enabledInstances) {
+			try {
+				await validateDependencies(instance.local_path);
+			} catch (error) {
+				await logger.error(`Failed to validate dependencies for "${instance.name}"`, {
+					source: 'PCDManager',
+					meta: { error: String(error), databaseId: instance.id }
+				});
+			}
+		}
+
 		// Collect results for aggregate logging
 		const results: Array<{
 			name: string;
@@ -300,11 +297,10 @@ class PCDManager {
 			error?: string;
 		}> = [];
 
-		// Compile and watch all enabled instances
+		// Compile all enabled instances
 		for (const instance of enabledInstances) {
 			try {
 				const stats = await compile(instance.local_path, instance.id);
-				await startWatch(instance.local_path, instance.id);
 
 				results.push({
 					name: instance.name,

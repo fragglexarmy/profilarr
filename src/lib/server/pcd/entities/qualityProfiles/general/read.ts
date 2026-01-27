@@ -2,7 +2,7 @@
  * Quality profile general queries
  */
 
-import type { PCDCache } from '$pcd/cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { QualityProfileGeneral, QualityProfileLanguages } from '$shared/pcd/display.ts';
 
 /**

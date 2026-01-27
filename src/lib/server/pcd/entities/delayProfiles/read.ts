@@ -6,7 +6,7 @@
  * Delay profile read operations
  */
 
-import type { PCDCache } from '../../cache.ts';
+import type { PCDCache } from '$pcd/index.ts';
 import type { DelayProfilesRow, PreferredProtocol } from '$shared/pcd/display.ts';
 
 /**

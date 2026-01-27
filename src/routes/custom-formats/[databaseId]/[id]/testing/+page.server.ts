@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
-import { pcdManager } from '$pcd/pcd.ts';
-import { canWriteToBase, type OperationLayer } from '$pcd/writer.ts';
+import { pcdManager } from '$pcd/index.ts';
+import { canWriteToBase, type OperationLayer } from '$pcd/index.ts';
 import * as customFormatQueries from '$pcd/entities/customFormats/index.ts';
 import type { ConditionResult, ParsedInfo } from '$shared/pcd/display.ts';
 import { parse, isParserHealthy } from '$lib/server/utils/arr/parser/client.ts';

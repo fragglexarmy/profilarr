@@ -4,9 +4,10 @@ import {
 	readManifest,
 	writeManifest,
 	validateManifest,
+	readReadme,
+	writeReadme,
 	type Manifest
-} from '$lib/server/pcd/manifest.ts';
-import { readReadme, writeReadme } from '$lib/server/pcd/readme.ts';
+} from '$pcd/index.ts';
 import { parseMarkdown } from '$utils/markdown/markdown.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 

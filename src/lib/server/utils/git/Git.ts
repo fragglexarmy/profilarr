@@ -19,6 +19,7 @@ export class Git {
 
 	// Repo commands
 	fetch = () => repo.fetch(this.repoPath);
+	fetchTags = () => repo.fetchTags(this.repoPath);
 	pull = () => repo.pull(this.repoPath);
 	push = () => repo.push(this.repoPath);
 	checkout = (branch: string) => repo.checkout(this.repoPath, branch);
