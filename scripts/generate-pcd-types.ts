@@ -119,32 +119,106 @@ interface ForeignKeyInfo {
 	on_delete: string;
 }
 
+interface CheckConstraint {
+	column: string;
+	values: string[];
+}
+
 interface TableInfo {
 	name: string;
 	columns: ColumnInfo[];
 	foreignKeys: ForeignKeyInfo[];
+	checkConstraints: CheckConstraint[];
+	createSql: string;
+}
+
+/**
+ * Parse CHECK constraints from CREATE TABLE SQL to extract enum values
+ * Looks for patterns like: CHECK (column IN ('val1', 'val2', 'val3'))
+ */
+function parseCheckConstraints(createSql: string): CheckConstraint[] {
+	const constraints: CheckConstraint[] = [];
+
+	// Match CHECK (column_name IN ('val1', 'val2', ...)) patterns
+	// Handles both quoted strings and unquoted identifiers
+	const checkPattern = /CHECK\s*\(\s*(\w+)\s+IN\s*\(\s*([^)]+)\s*\)\s*\)/gi;
+
+	let match;
+	while ((match = checkPattern.exec(createSql)) !== null) {
+		const column = match[1];
+		const valuesStr = match[2];
+
+		// Extract individual values (handles 'quoted' and unquoted)
+		const values: string[] = [];
+		const valuePattern = /'([^']+)'/g;
+		let valueMatch;
+		while ((valueMatch = valuePattern.exec(valuesStr)) !== null) {
+			values.push(valueMatch[1]);
+		}
+
+		if (values.length > 0) {
+			constraints.push({ column, values });
+		}
+	}
+
+	return constraints;
+}
+
+/**
+ * Check if a column name matches boolean naming patterns
+ */
+function isBooleanColumn(columnName: string, columnType: string): boolean {
+	// Must be INTEGER type
+	if (!columnType.toUpperCase().includes('INT')) {
+		return false;
+	}
+
+	const name = columnName.toLowerCase();
+
+	// Prefix patterns
+	const booleanPrefixes = ['is_', 'has_', 'bypass_', 'enable_', 'include_', 'except_', 'replace_'];
+	if (booleanPrefixes.some((prefix) => name.startsWith(prefix))) {
+		return true;
+	}
+
+	// Suffix patterns
+	const booleanSuffixes = ['_allowed', '_enabled'];
+	if (booleanSuffixes.some((suffix) => name.endsWith(suffix))) {
+		return true;
+	}
+
+	// Exact matches
+	const booleanExactNames = ['negate', 'required', 'enabled', 'rename', 'should_match', 'upgrades_allowed'];
+	if (booleanExactNames.includes(name)) {
+		return true;
+	}
+
+	return false;
 }
 
 function introspectDatabase(db: Database): TableInfo[] {
-	// Get all table names
+	// Get all table names and their CREATE statements
 	const tables = db
 		.prepare(
-			`SELECT name FROM sqlite_master
+			`SELECT name, sql FROM sqlite_master
        WHERE type='table' AND name NOT LIKE 'sqlite_%'
        ORDER BY name`
 		)
-		.all() as { name: string }[];
+		.all() as { name: string; sql: string }[];
 
 	const tableInfos: TableInfo[] = [];
 
-	for (const { name } of tables) {
+	for (const { name, sql } of tables) {
 		// Get column info
 		const columns = db.prepare(`PRAGMA table_info('${name}')`).all() as ColumnInfo[];
 
 		// Get foreign key info
 		const foreignKeys = db.prepare(`PRAGMA foreign_key_list('${name}')`).all() as ForeignKeyInfo[];
 
-		tableInfos.push({ name, columns, foreignKeys });
+		// Parse CHECK constraints from CREATE TABLE SQL
+		const checkConstraints = parseCheckConstraints(sql || '');
+
+		tableInfos.push({ name, columns, foreignKeys, checkConstraints, createSql: sql || '' });
 	}
 
 	return tableInfos;
@@ -179,6 +253,31 @@ function sqliteTypeToTs(sqliteType: string, nullable: boolean): string {
 	}
 
 	return nullable ? `${tsType} | null` : tsType;
+}
+
+/**
+ * Get the semantic TypeScript type for a column
+ * Uses CHECK constraints for union types and naming patterns for booleans
+ */
+function getSemanticType(
+	column: ColumnInfo,
+	checkConstraints: CheckConstraint[],
+	nullable: boolean
+): string {
+	// Check if this column has a CHECK IN constraint (union type)
+	const constraint = checkConstraints.find((c) => c.column === column.name);
+	if (constraint && constraint.values.length > 0) {
+		const unionType = constraint.values.map((v) => `'${v}'`).join(' | ');
+		return nullable ? `(${unionType}) | null` : unionType;
+	}
+
+	// Check if this is a boolean column based on naming patterns
+	if (isBooleanColumn(column.name, column.type)) {
+		return nullable ? 'boolean | null' : 'boolean';
+	}
+
+	// Fall back to standard SQLite type mapping
+	return sqliteTypeToTs(column.type, nullable);
 }
 
 /**
@@ -269,6 +368,7 @@ function generateDatabaseInterface(tables: TableInfo[]): string {
 
 /**
  * Generate row types (non-Generated versions for query results)
+ * Uses semantic types: booleans as boolean, CHECK IN as union types
  */
 function generateRowType(table: TableInfo): string {
 	const rowTypeName = `${toPascalCase(table.name)}Row`;
@@ -278,7 +378,7 @@ function generateRowType(table: TableInfo): string {
 
 	for (const column of table.columns) {
 		const nullable = isNullable(column);
-		const tsType = sqliteTypeToTs(column.type, nullable);
+		const tsType = getSemanticType(column, table.checkConstraints, nullable);
 		lines.push(`\t${column.name}: ${tsType};`);
 	}
 

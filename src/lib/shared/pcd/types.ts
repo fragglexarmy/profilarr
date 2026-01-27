@@ -3,10 +3,10 @@
  *
  * AUTO-GENERATED - DO NOT EDIT MANUALLY
  *
- * Generated from: https://github.com/Dictionarry-Hub/schema/blob/1.0.0/ops/0.schema.sql
- * Generated at: 2026-01-27T11:08:44.693Z
+ * Generated from: https://github.com/Dictionarry-Hub/schema/blob/local/ops/0.schema.sql
+ * Generated at: 2026-01-27T11:52:25.907Z
  *
- * To regenerate: deno task generate:pcd-types --version=1.0.0
+ * To regenerate: deno task generate:pcd-types --version=local
  */
 
 import type { Generated } from 'kysely';
@@ -370,7 +370,7 @@ export interface QualityProfilesRow {
 	id: number;
 	name: string;
 	description: string | null;
-	upgrades_allowed: number;
+	upgrades_allowed: boolean;
 	minimum_custom_format_score: number;
 	upgrade_until_score: number;
 	upgrade_score_increment: number;
@@ -403,7 +403,7 @@ export interface QualityProfileQualitiesRow {
 	quality_name: string | null;
 	quality_group_name: string | null;
 	position: number;
-	enabled: number;
+	enabled: boolean;
 	upgrade_until: number;
 }
 
@@ -422,7 +422,7 @@ export interface QualityProfileCustomFormatsRow {
 
 export interface TestEntitiesRow {
 	id: number;
-	type: string;
+	type: 'movie' | 'series';
 	tmdb_id: number;
 	title: string;
 	year: number | null;
@@ -433,7 +433,7 @@ export interface TestEntitiesRow {
 
 export interface TestReleasesRow {
 	id: number;
-	entity_type: string;
+	entity_type: 'movie' | 'series';
 	entity_tmdb_id: number;
 	title: string;
 	size_bytes: number | null;
@@ -450,7 +450,7 @@ export interface CustomFormatsRow {
 	id: number;
 	name: string;
 	description: string | null;
-	include_in_rename: number;
+	include_in_rename: boolean;
 	created_at: string;
 	updated_at: string;
 }
@@ -466,8 +466,8 @@ export interface CustomFormatConditionsRow {
 	name: string;
 	type: string;
 	arr_type: string;
-	negate: number;
-	required: number;
+	negate: boolean;
+	required: boolean;
 	created_at: string;
 	updated_at: string;
 }
@@ -477,7 +477,7 @@ export interface CustomFormatTestsRow {
 	custom_format_name: string;
 	title: string;
 	type: string;
-	should_match: number;
+	should_match: boolean;
 	description: string | null;
 	created_at: string;
 }
@@ -492,7 +492,7 @@ export interface ConditionLanguagesRow {
 	custom_format_name: string;
 	condition_name: string;
 	language_name: string;
-	except_language: number;
+	except_language: boolean;
 }
 
 export interface ConditionPatternsRow {
@@ -561,11 +561,11 @@ export interface RegularExpressionTagsRow {
 export interface DelayProfilesRow {
 	id: number;
 	name: string;
-	preferred_protocol: string;
+	preferred_protocol: 'prefer_usenet' | 'prefer_torrent' | 'only_usenet' | 'only_torrent';
 	usenet_delay: number | null;
 	torrent_delay: number | null;
-	bypass_if_highest_quality: number;
-	bypass_if_above_custom_format_score: number;
+	bypass_if_highest_quality: boolean;
+	bypass_if_above_custom_format_score: boolean;
 	minimum_custom_format_score: number | null;
 	created_at: string;
 	updated_at: string;
@@ -575,10 +575,10 @@ export interface DelayProfilesRow {
 
 export interface RadarrNamingRow {
 	name: string | null;
-	rename: number;
+	rename: boolean;
 	movie_format: string;
 	movie_folder_format: string;
-	replace_illegal_characters: number;
+	replace_illegal_characters: boolean;
 	colon_replacement_format: string;
 	created_at: string;
 	updated_at: string;
@@ -586,13 +586,13 @@ export interface RadarrNamingRow {
 
 export interface SonarrNamingRow {
 	name: string | null;
-	rename: number;
+	rename: boolean;
 	standard_episode_format: string;
 	daily_episode_format: string;
 	anime_episode_format: string;
 	series_folder_format: string;
 	season_folder_format: string;
-	replace_illegal_characters: number;
+	replace_illegal_characters: boolean;
 	colon_replacement_format: number;
 	custom_colon_replacement_format: string | null;
 	multi_episode_style: number;
@@ -603,7 +603,7 @@ export interface SonarrNamingRow {
 export interface RadarrMediaSettingsRow {
 	name: string | null;
 	propers_repacks: string;
-	enable_media_info: number;
+	enable_media_info: boolean;
 	created_at: string;
 	updated_at: string;
 }
@@ -611,7 +611,7 @@ export interface RadarrMediaSettingsRow {
 export interface SonarrMediaSettingsRow {
 	name: string | null;
 	propers_repacks: string;
-	enable_media_info: number;
+	enable_media_info: boolean;
 	created_at: string;
 	updated_at: string;
 }
