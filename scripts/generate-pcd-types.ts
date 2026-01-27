@@ -11,6 +11,7 @@
  */
 
 import { Database } from '@jsr/db__sqlite';
+import { columnTypeOverrides } from './pcd-type-overrides.ts';
 
 // ============================================================================
 // CONFIGURATION
@@ -257,26 +258,34 @@ function sqliteTypeToTs(sqliteType: string, nullable: boolean): string {
 
 /**
  * Get the semantic TypeScript type for a column
- * Uses CHECK constraints for union types and naming patterns for booleans
+ * Priority: 1) Manual overrides, 2) CHECK constraints, 3) Boolean patterns, 4) SQLite type
  */
 function getSemanticType(
+	tableName: string,
 	column: ColumnInfo,
 	checkConstraints: CheckConstraint[],
 	nullable: boolean
 ): string {
-	// Check if this column has a CHECK IN constraint (union type)
+	// 1. Check for manual type override (for columns that store numbers but need string types)
+	const overrideKey = `${tableName}.${column.name}`;
+	const override = columnTypeOverrides[overrideKey];
+	if (override) {
+		return nullable ? `(${override}) | null` : override;
+	}
+
+	// 2. Check if this column has a CHECK IN constraint (union type)
 	const constraint = checkConstraints.find((c) => c.column === column.name);
 	if (constraint && constraint.values.length > 0) {
 		const unionType = constraint.values.map((v) => `'${v}'`).join(' | ');
 		return nullable ? `(${unionType}) | null` : unionType;
 	}
 
-	// Check if this is a boolean column based on naming patterns
+	// 3. Check if this is a boolean column based on naming patterns
 	if (isBooleanColumn(column.name, column.type)) {
 		return nullable ? 'boolean | null' : 'boolean';
 	}
 
-	// Fall back to standard SQLite type mapping
+	// 4. Fall back to standard SQLite type mapping
 	return sqliteTypeToTs(column.type, nullable);
 }
 
@@ -378,7 +387,7 @@ function generateRowType(table: TableInfo): string {
 
 	for (const column of table.columns) {
 		const nullable = isNullable(column);
-		const tsType = getSemanticType(column, table.checkConstraints, nullable);
+		const tsType = getSemanticType(table.name, column, table.checkConstraints, nullable);
 		lines.push(`\t${column.name}: ${tsType};`);
 	}
 

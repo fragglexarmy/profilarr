@@ -4,7 +4,7 @@
  * AUTO-GENERATED - DO NOT EDIT MANUALLY
  *
  * Generated from: https://github.com/Dictionarry-Hub/schema/blob/local/ops/0.schema.sql
- * Generated at: 2026-01-27T11:52:25.907Z
+ * Generated at: 2026-01-27T12:38:46.562Z
  *
  * To regenerate: deno task generate:pcd-types --version=local
  */
@@ -579,7 +579,7 @@ export interface RadarrNamingRow {
 	movie_format: string;
 	movie_folder_format: string;
 	replace_illegal_characters: boolean;
-	colon_replacement_format: string;
+	colon_replacement_format: 'delete' | 'dash' | 'spaceDash' | 'spaceDashSpace' | 'smart';
 	created_at: string;
 	updated_at: string;
 }
@@ -593,16 +593,16 @@ export interface SonarrNamingRow {
 	series_folder_format: string;
 	season_folder_format: string;
 	replace_illegal_characters: boolean;
-	colon_replacement_format: number;
+	colon_replacement_format: 'delete' | 'dash' | 'spaceDash' | 'spaceDashSpace' | 'smart' | 'custom';
 	custom_colon_replacement_format: string | null;
-	multi_episode_style: number;
+	multi_episode_style: 'extend' | 'duplicate' | 'repeat' | 'scene' | 'range' | 'prefixedRange';
 	created_at: string;
 	updated_at: string;
 }
 
 export interface RadarrMediaSettingsRow {
 	name: string | null;
-	propers_repacks: string;
+	propers_repacks: 'doNotPrefer' | 'preferAndUpgrade' | 'doNotUpgradeAutomatically';
 	enable_media_info: boolean;
 	created_at: string;
 	updated_at: string;
@@ -610,7 +610,7 @@ export interface RadarrMediaSettingsRow {
 
 export interface SonarrMediaSettingsRow {
 	name: string | null;
-	propers_repacks: string;
+	propers_repacks: 'doNotPrefer' | 'preferAndUpgrade' | 'doNotUpgradeAutomatically';
 	enable_media_info: boolean;
 	created_at: string;
 	updated_at: string;
