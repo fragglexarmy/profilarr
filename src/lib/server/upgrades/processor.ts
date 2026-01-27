@@ -5,9 +5,9 @@
 
 import { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
 import type { ArrInstance } from '$lib/server/db/queries/arrInstances.ts';
-import type { UpgradeConfig, FilterConfig } from '$lib/shared/filters.ts';
-import { evaluateGroup } from '$lib/shared/filters.ts';
-import { getSelector } from '$lib/shared/selectors.ts';
+import type { UpgradeConfig, FilterConfig } from '$shared/upgrades/filters.ts';
+import { evaluateGroup } from '$shared/upgrades/filters.ts';
+import { getSelector } from '$shared/upgrades/selectors.ts';
 import type { UpgradeItem, UpgradeJobLog, UpgradeSelectionItem } from './types.ts';
 import { normalizeRadarrItems } from './normalize.ts';
 import {

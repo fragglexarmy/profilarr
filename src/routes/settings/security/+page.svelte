@@ -3,7 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { Copy, RefreshCw, LogOut, Check, Globe, Monitor, Smartphone, Network, Clock } from 'lucide-svelte';
-	import { parseUTC } from '$shared/dates';
+	import { parseUTC } from '$shared/utils/dates';
 	import Button from '$ui/button/Button.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Table from '$ui/table/Table.svelte';

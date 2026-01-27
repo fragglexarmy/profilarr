@@ -2,8 +2,7 @@
  * Condition types and their valid values for custom formats
  */
 
-// Arr type for filtering
-export type ArrType = 'all' | 'radarr' | 'sonarr';
+import type { ArrType } from './types.ts';
 
 // Condition type definitions (ordered for display sorting)
 export const CONDITION_TYPES = [

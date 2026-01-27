@@ -3,7 +3,7 @@
 	import { alertStore } from '$alerts/store';
 	import DiscordConfiguration from './DiscordConfiguration.svelte';
 	import { siDiscord } from 'simple-icons';
-	import { groupNotificationTypesByCategory } from '$shared/notificationTypes';
+	import { groupNotificationTypesByCategory } from '$shared/notifications/types';
 	import { Plus, Save, Check } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 

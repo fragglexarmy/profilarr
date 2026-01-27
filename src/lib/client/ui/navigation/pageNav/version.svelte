@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getPlatformLabel, getChannelLabel, shouldShowVersion } from '$shared/version.ts';
+	import { getPlatformLabel, getChannelLabel, shouldShowVersion } from '$shared/utils/version.ts';
 	import logo from '$assets/logo-512.png';
 
 	export let version: string = '';

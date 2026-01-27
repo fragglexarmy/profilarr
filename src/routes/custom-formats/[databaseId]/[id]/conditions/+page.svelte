@@ -8,7 +8,7 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
-	import { sortConditions } from '$lib/shared/conditionTypes';
+	import { sortConditions } from '$shared/pcd/conditions';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 	import type { ConditionData } from '$shared/pcd/display.ts';

@@ -9,7 +9,7 @@
 	import { Check, Save, Trash2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { RadarrNamingRow } from '$shared/pcd/display.ts';
-	import { RADARR_COLON_REPLACEMENT_OPTIONS, type RadarrColonReplacementFormat } from '$shared/pcd/conversions.ts';
+	import { RADARR_COLON_REPLACEMENT_OPTIONS, type RadarrColonReplacementFormat } from '$shared/pcd/mediaManagement.ts';
 
 	interface RadarrNamingFormData {
 		name: string;

@@ -3,7 +3,7 @@
  */
 
 import type { RadarrMovie } from '$lib/server/utils/arr/types.ts';
-import type { FilterGroup } from '$lib/shared/filters.ts';
+import type { FilterGroup } from '$shared/upgrades/filters.ts';
 
 /**
  * Normalized item interface that matches filter field names

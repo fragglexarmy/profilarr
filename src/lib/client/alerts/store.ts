@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { uuid } from '$shared/uuid';
+import { uuid } from '$shared/utils/uuid';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 

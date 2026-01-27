@@ -14,9 +14,9 @@
 		RESOLUTION_VALUES,
 		QUALITY_MODIFIER_VALUES,
 		RELEASE_TYPE_VALUES,
-		INDEXER_FLAG_VALUES,
-		type ArrType
-	} from '$lib/shared/conditionTypes';
+		INDEXER_FLAG_VALUES
+	} from '$shared/pcd/conditions';
+	import type { ArrType } from '$shared/pcd/types.ts';
 	import type { ConditionData } from '$shared/pcd/display.ts';
 
 	const dispatch = createEventDispatcher<{

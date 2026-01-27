@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
-	import type { FilterConfig, FilterMode } from '$lib/shared/filters';
+	import type { FilterConfig, FilterMode } from '$shared/upgrades/filters';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';

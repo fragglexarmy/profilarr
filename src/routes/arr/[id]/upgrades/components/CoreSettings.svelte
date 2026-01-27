@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { filterModes, type FilterMode } from '$lib/shared/filters';
-	import { parseUTC } from '$shared/dates';
+	import { filterModes, type FilterMode } from '$shared/upgrades/filters';
+	import { parseUTC } from '$shared/utils/dates';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let enabled: boolean = true;

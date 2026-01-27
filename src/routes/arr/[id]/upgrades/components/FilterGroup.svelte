@@ -10,7 +10,7 @@
 		isGroup,
 		type FilterGroup,
 		type FilterRule
-	} from '$lib/shared/filters';
+	} from '$shared/upgrades/filters';
 	import Input from '$ui/form/Input.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import Button from '$ui/button/Button.svelte';

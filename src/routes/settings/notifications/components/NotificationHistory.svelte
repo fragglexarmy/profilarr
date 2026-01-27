@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Bell } from 'lucide-svelte';
-	import { parseUTC } from '$shared/dates';
+	import { parseUTC } from '$shared/utils/dates';
 	import type { NotificationHistoryRecord } from '$db/queries/notificationHistory.ts';
 
 	export let history: NotificationHistoryRecord[];

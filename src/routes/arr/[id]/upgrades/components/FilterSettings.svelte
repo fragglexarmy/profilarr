@@ -9,9 +9,9 @@
 		ClipboardPaste,
 		Trash2
 	} from 'lucide-svelte';
-	import { createEmptyFilterConfig, type FilterConfig } from '$lib/shared/filters';
-	import { uuid } from '$shared/uuid';
-	import { selectors } from '$lib/shared/selectors';
+	import { createEmptyFilterConfig, type FilterConfig } from '$shared/upgrades/filters';
+	import { uuid } from '$shared/utils/uuid';
+	import { selectors } from '$shared/upgrades/selectors';
 	import { createSearchStore } from '$lib/client/stores/search';
 	import FilterGroupComponent from './FilterGroup.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';

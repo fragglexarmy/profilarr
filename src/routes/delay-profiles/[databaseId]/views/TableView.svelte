@@ -5,7 +5,7 @@
 	import { Tag, Clock, Zap, Shield, Calendar } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { parseUTC } from '$shared/dates';
+	import { parseUTC } from '$shared/utils/dates';
 
 	export let profiles: DelayProfilesRow[];
 

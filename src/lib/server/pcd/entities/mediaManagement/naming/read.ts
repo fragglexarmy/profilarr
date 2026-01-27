@@ -4,7 +4,7 @@
 
 import type { PCDCache } from '../../../cache.ts';
 import type { RadarrNamingRow, SonarrNamingRow, NamingListItem } from '$shared/pcd/display.ts';
-import { colonReplacementFromDb, multiEpisodeStyleFromDb } from '$shared/pcd/conversions.ts';
+import { colonReplacementFromDb, multiEpisodeStyleFromDb } from '$shared/pcd/mediaManagement.ts';
 
 // Note: name is PRIMARY KEY so never null, but Kysely types it as nullable
 // because the generator doesn't detect non-INTEGER primary keys

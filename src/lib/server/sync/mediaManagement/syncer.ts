@@ -21,7 +21,7 @@ import { getRadarrByName as getRadarrMediaSettings, getSonarrByName as getSonarr
 import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/entities/mediaManagement/naming/read.ts';
 import { getRadarrByName as getRadarrQualityDefs, getSonarrByName as getSonarrQualityDefs } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
 import type { RadarrMediaSettingsRow, SonarrMediaSettingsRow, RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
-import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/conversions.ts';
+import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/mediaManagement.ts';
 import type {
 	ArrType,
 	ArrPropersAndRepacks,

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { parseUTC } from '$shared/dates';
+	import { parseUTC } from '$shared/utils/dates';
 	import Input from '$ui/form/Input.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { filterFields, filterModes } from '$lib/shared/filters';
-	import { selectors } from '$lib/shared/selectors';
+	import { filterFields, filterModes } from '$shared/upgrades/filters';
+	import { selectors } from '$shared/upgrades/selectors';
 	import { ArrowLeft } from 'lucide-svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';

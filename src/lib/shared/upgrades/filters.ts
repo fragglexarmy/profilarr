@@ -3,7 +3,7 @@
  * Defines all available filter fields for upgrade filtering
  */
 
-import { uuid } from './uuid.ts';
+import { uuid } from '../utils/uuid.ts';
 
 export interface FilterOperator {
 	id: string;

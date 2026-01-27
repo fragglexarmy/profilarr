@@ -7,7 +7,7 @@ import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { logger } from '$logger/logger.ts';
 import { processUpgradeConfig } from '$lib/server/upgrades/processor.ts';
-import type { UpgradeConfig } from '$lib/shared/filters.ts';
+import type { UpgradeConfig } from '$shared/upgrades/filters.ts';
 
 export interface UpgradeInstanceStatus {
 	instanceId: number;

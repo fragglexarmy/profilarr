@@ -6,7 +6,7 @@
 	import { marked } from 'marked';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { sortConditions } from '$lib/shared/conditionTypes';
+	import { sortConditions } from '$shared/pcd/conditions';
 
 	export let formats: CustomFormatTableRow[];
 

@@ -22,7 +22,7 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import { createSearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
-	import { parseUTC } from '$shared/dates';
+	import { parseUTC } from '$shared/utils/dates';
 	import type { PageData } from './$types';
 	import type { Column } from '$ui/table/types';
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';

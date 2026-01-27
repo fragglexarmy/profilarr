@@ -4,7 +4,7 @@ import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { upgradeRunsQueries } from '$db/queries/upgradeRuns.ts';
 import { logger } from '$logger/logger.ts';
-import type { FilterConfig, FilterMode } from '$lib/shared/filters.ts';
+import type { FilterConfig, FilterMode } from '$shared/upgrades/filters.ts';
 import { processUpgradeConfig, clearDryRunExclusions } from '$lib/server/upgrades/processor.ts';
 import { logDryRunCacheCleared } from '$lib/server/upgrades/logger.ts';
 

@@ -5,7 +5,7 @@
 import type { PCDCache } from '../../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../../writer.ts';
 import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
-import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/conversions.ts';
+import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/mediaManagement.ts';
 
 export interface CreateRadarrNamingInput {
 	name: string;

@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import type { OperationLayer } from '$pcd/writer.ts';
 import { getRadarrByName, updateRadarrMediaSettings, removeRadarrMediaSettings } from '$pcd/entities/mediaManagement/media-settings/index.ts';
-import type { PropersRepacks } from '$shared/pcd/conversions.ts';
+import type { PropersRepacks } from '$shared/pcd/mediaManagement.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;

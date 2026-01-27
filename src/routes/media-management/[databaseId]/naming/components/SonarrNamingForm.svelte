@@ -9,7 +9,7 @@
 	import { Check, Save, Trash2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { SonarrNamingRow } from '$shared/pcd/display.ts';
-	import { SONARR_COLON_REPLACEMENT_OPTIONS, MULTI_EPISODE_STYLE_OPTIONS, type SonarrColonReplacementFormat, type MultiEpisodeStyle } from '$shared/pcd/conversions.ts';
+	import { SONARR_COLON_REPLACEMENT_OPTIONS, MULTI_EPISODE_STYLE_OPTIONS, type SonarrColonReplacementFormat, type MultiEpisodeStyle } from '$shared/pcd/mediaManagement.ts';
 
 	interface SonarrNamingFormData {
 		name: string;
