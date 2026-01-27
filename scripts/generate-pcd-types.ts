@@ -446,6 +446,15 @@ import type { Generated } from 'kysely';
 		}
 	}
 
+	// Generate common types
+	lines.push('// ============================================================================');
+	lines.push('// COMMON TYPES');
+	lines.push('// ============================================================================');
+	lines.push('');
+	lines.push('/** Which arr application the data applies to */');
+	lines.push("export type ArrType = 'radarr' | 'sonarr' | 'all';");
+	lines.push('');
+
 	// Generate helper types
 	lines.push('// ============================================================================');
 	lines.push('// HELPER TYPES');

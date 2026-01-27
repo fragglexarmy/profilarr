@@ -4,7 +4,7 @@
  * AUTO-GENERATED - DO NOT EDIT MANUALLY
  *
  * Generated from: https://github.com/Dictionarry-Hub/schema/blob/1.0.0/ops/0.schema.sql
- * Generated at: 2026-01-27T11:00:15.108Z
+ * Generated at: 2026-01-27T11:08:44.693Z
  *
  * To regenerate: deno task generate:pcd-types --version=1.0.0
  */
@@ -664,6 +664,13 @@ export interface QualityApiMappingsRow {
 	api_name: string;
 	created_at: string;
 }
+
+// ============================================================================
+// COMMON TYPES
+// ============================================================================
+
+/** Which arr application the data applies to */
+export type ArrType = 'radarr' | 'sonarr' | 'all';
 
 // ============================================================================
 // HELPER TYPES
