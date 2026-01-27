@@ -24,8 +24,8 @@
 	<title>Login - Profilarr</title>
 </svelte:head>
 
-<div class="flex min-h-screen items-center justify-center bg-neutral-100 dark:bg-neutral-900">
-	<div class="w-full max-w-sm p-8">
+<div class="flex min-h-screen items-center justify-center bg-neutral-100 p-4 dark:bg-neutral-900">
+	<div class="w-full max-w-sm">
 		<div class="mb-8 flex items-center gap-4">
 			<img src={logo} alt="Profilarr logo" class="h-12 w-12" />
 			<div>
