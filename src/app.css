@@ -383,21 +383,41 @@
 		}
 	}
 
-	/* Custom scrollbar for Chromium and Safari */
+	/* Overlay scrollbars - never reserve space, float on top like Firefox */
+	* {
+		overflow: overlay; /* Chromium: float on top, no layout space */
+		scrollbar-width: thin;
+		scrollbar-color: rgba(163, 163, 163, 0.5) transparent;
+	}
+
+	.dark * {
+		scrollbar-color: rgba(82, 82, 82, 0.6) transparent;
+	}
+
+	/* Webkit (Chrome/Safari) */
 	::-webkit-scrollbar {
-		width: 12px;
-		height: 12px;
+		width: 8px;
+		height: 8px;
 	}
 
 	::-webkit-scrollbar-track {
-		@apply bg-neutral-100 dark:bg-neutral-900;
+		background: transparent;
 	}
 
 	::-webkit-scrollbar-thumb {
-		@apply rounded bg-neutral-300 dark:bg-neutral-700;
+		background-color: rgba(163, 163, 163, 0.5);
+		border-radius: 9999px;
 	}
 
 	::-webkit-scrollbar-thumb:hover {
-		@apply bg-neutral-400 dark:bg-neutral-600;
+		background-color: rgba(163, 163, 163, 0.8);
+	}
+
+	.dark ::-webkit-scrollbar-thumb {
+		background-color: rgba(82, 82, 82, 0.6);
+	}
+
+	.dark ::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(82, 82, 82, 0.9);
 	}
 }
