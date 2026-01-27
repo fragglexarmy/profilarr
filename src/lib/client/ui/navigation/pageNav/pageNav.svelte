@@ -2,19 +2,58 @@
 	import Group from './group.svelte';
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
-	import { Home, Sliders, Palette, Microscope, Tag, Clock, Settings } from 'lucide-svelte';
+	import { Home, Sliders, Palette, Microscope, Tag, Clock, Settings, X } from 'lucide-svelte';
 	import { navIconStore } from '$stores/navIcons';
+	import { mobileNavOpen } from '$stores/mobileNav';
+	import { page } from '$app/stores';
+	import logo from '$assets/logo-512.png';
 
 	export let collapsed: boolean = false;
 	export let version: string = '';
 
 	$: useEmoji = $navIconStore === 'emoji';
+
+	// Close mobile nav when page changes
+	$: $page.url.pathname, mobileNavOpen.close();
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && $mobileNavOpen) mobileNavOpen.close();
+	}
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
+
+<!-- Mobile backdrop -->
+{#if $mobileNavOpen}
+	<button
+		type="button"
+		class="fixed inset-0 z-[60] bg-black/50 md:hidden"
+		on:click={() => mobileNavOpen.close()}
+		aria-label="Close menu"
+	></button>
+{/if}
+
 <nav
-	class="fixed top-16 left-0 flex h-[calc(100vh-4rem)] w-72 flex-col border-r border-neutral-200 bg-neutral-50 transition-transform duration-200 dark:border-neutral-800 dark:bg-neutral-900"
-	class:-translate-x-[calc(100%-24px)]={collapsed}
+	class="fixed top-0 left-0 z-[70] flex h-full w-[90vw] flex-col border-r border-neutral-200 bg-neutral-50 transition-transform duration-200 dark:border-neutral-800 dark:bg-neutral-900
+		{$mobileNavOpen ? 'translate-x-0' : '-translate-x-full'}
+		md:top-16 md:h-[calc(100vh-4rem)] md:w-80 md:translate-x-0 {collapsed ? 'md:-translate-x-[calc(100%-24px)]' : ''}"
 >
+	<!-- Mobile header with logo and close button -->
+	<div class="flex items-center justify-between border-b border-neutral-200 py-4 pl-8 pr-4 md:hidden dark:border-neutral-800">
+		<div class="flex items-center gap-2">
+			<img src={logo} alt="Profilarr logo" class="h-5 w-5" />
+			<span class="text-xl font-bold text-neutral-900 dark:text-neutral-100">profilarr</span>
+		</div>
+		<button
+			type="button"
+			on:click={() => mobileNavOpen.close()}
+			class="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+			aria-label="Close menu"
+		>
+			<X size={20} />
+		</button>
+	</div>
+
 	<div class="flex-1 overflow-y-auto p-4">
 		<Group
 			label={useEmoji ? '🏠 Home' : 'Home'}
@@ -85,7 +124,7 @@
 			<GroupItem label="About" href="/settings/about" />
 			<GroupItem label="Log Out" href="/auth/logout" />
 		</Group>
-	</div>
 
-	<Version {version} />
+		<Version {version} />
+	</div>
 </nav>

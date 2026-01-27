@@ -1,24 +1,33 @@
 <script lang="ts">
 	import AccentPicker from './accentPicker.svelte';
 	import ThemeToggle from './themeToggle.svelte';
+	import { Menu } from 'lucide-svelte';
+	import { mobileNavOpen } from '$stores/mobileNav';
 	import logo from '$assets/logo-512.png';
 
 	export let collapsed: boolean = false;
 </script>
 
 <nav
-	class="fixed top-0 left-0 z-50 w-72 border-r border-b border-neutral-200 bg-neutral-50 transition-transform duration-200 dark:border-neutral-800 dark:bg-neutral-900"
-	class:-translate-x-[calc(100%-24px)]={collapsed}
+	class="fixed top-0 left-0 z-50 w-full border-b border-neutral-200 bg-neutral-50 md:w-80 md:border-r md:transition-transform md:duration-200 dark:border-neutral-800 dark:bg-neutral-900 {collapsed ? 'md:-translate-x-[calc(100%-24px)]' : ''}"
 >
 	<div class="flex items-center justify-between px-4 py-4">
-		<!-- Left: Brand name with logo -->
-		<div class="ml-4 flex items-center gap-2">
-			<img src={logo} alt="Profilarr logo" class="h-5 w-5 translate-y-[2px]" />
-			<div class="text-xl font-bold text-neutral-900 dark:text-neutral-100">profilarr</div>
+		<!-- Left: Hamburger (mobile) + Brand name with logo (desktop) -->
+		<div class="flex items-center gap-2">
+			<button
+				type="button"
+				on:click={() => mobileNavOpen.open()}
+				class="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700 md:hidden dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+				aria-label="Open menu"
+			>
+				<Menu size={20} />
+			</button>
+			<img src={logo} alt="Profilarr logo" class="hidden h-5 w-5 translate-y-[2px] md:ml-4 md:block" />
+			<div class="hidden text-xl font-bold text-neutral-900 md:block dark:text-neutral-100">profilarr</div>
 		</div>
 
-		<!-- Right: Accent picker and Theme toggle -->
-		<div class="flex items-center gap-1">
+		<!-- Right: Accent picker and Theme toggle (desktop only) -->
+		<div class="hidden items-center gap-1 md:flex">
 			<AccentPicker />
 			<ThemeToggle />
 		</div>

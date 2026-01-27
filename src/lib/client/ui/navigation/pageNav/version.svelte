@@ -9,10 +9,9 @@
 	const showVersion = shouldShowVersion();
 </script>
 
-<div class="p-4">
-	<div
-		class="flex items-center gap-2.5 rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700"
-	>
+<div
+	class="mt-2 flex items-center gap-2.5 rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700"
+>
 		<img src={logo} alt="Profilarr logo" class="h-5 w-5 flex-shrink-0" />
 
 		<div class="flex-1">
@@ -24,4 +23,3 @@
 			</div>
 		</div>
 	</div>
-</div>
