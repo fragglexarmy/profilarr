@@ -110,6 +110,7 @@ export const GET: RequestHandler = async (event) => {
 		path: '/',
 		httpOnly: true,
 		sameSite: 'lax',
+		secure: false,
 		expires
 	});
 

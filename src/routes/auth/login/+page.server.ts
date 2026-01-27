@@ -90,6 +90,7 @@ export const actions: Actions = {
 			path: '/',
 			httpOnly: true,
 			sameSite: 'lax',
+			secure: false,
 			expires
 		});
 
