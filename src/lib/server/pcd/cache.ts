@@ -12,7 +12,7 @@ import {
 	disableDatabaseInstance,
 	databaseInstancesQueries
 } from '$db/queries/databaseInstances.ts';
-import type { PCDDatabase } from './schema.ts';
+import type { PCDDatabase } from '$shared/pcd/types.ts';
 import { triggerSyncs } from '$sync/processor.ts';
 
 /**

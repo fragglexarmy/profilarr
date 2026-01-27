@@ -2,7 +2,7 @@
  * Custom Format query-specific types
  */
 
-import type { Tag } from '../../types.ts';
+import type { Tag } from '$shared/pcd/display.ts';
 
 /** Condition reference for display */
 export interface ConditionRef {

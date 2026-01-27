@@ -5,7 +5,7 @@
 import type { PCDCache } from '../../../cache.ts';
 import { writeOperation, type OperationLayer } from '../../../writer.ts';
 import type { RadarrColonReplacementFormat, ColonReplacementFormat, MultiEpisodeStyle } from '$lib/shared/mediaManagement.ts';
-import { radarrColonReplacementToDb, colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
+import { colonReplacementToDb, multiEpisodeStyleToDb } from '$lib/shared/mediaManagement.ts';
 
 export interface CreateRadarrNamingInput {
 	name: string;
@@ -46,7 +46,7 @@ export async function createRadarrNaming(options: CreateRadarrNamingOptions) {
 			movie_format: input.movieFormat,
 			movie_folder_format: input.movieFolderFormat,
 			replace_illegal_characters: input.replaceIllegalCharacters ? 1 : 0,
-			colon_replacement_format: radarrColonReplacementToDb(input.colonReplacementFormat)
+			colon_replacement_format: input.colonReplacementFormat
 		})
 		.compile();
 

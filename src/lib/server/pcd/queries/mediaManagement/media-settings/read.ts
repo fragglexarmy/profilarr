@@ -18,7 +18,7 @@ export async function list(cache: PCDCache): Promise<MediaSettingsListItem[]> {
 
 	for (const row of radarrRows) {
 		items.push({
-			name: row.name,
+			name: row.name!,
 			arr_type: 'radarr',
 			propers_repacks: row.propers_repacks,
 			enable_media_info: row.enable_media_info === 1,
@@ -28,7 +28,7 @@ export async function list(cache: PCDCache): Promise<MediaSettingsListItem[]> {
 
 	for (const row of sonarrRows) {
 		items.push({
-			name: row.name,
+			name: row.name!,
 			arr_type: 'sonarr',
 			propers_repacks: row.propers_repacks,
 			enable_media_info: row.enable_media_info === 1,
@@ -54,7 +54,7 @@ export async function getRadarrByName(
 	if (!row) return null;
 
 	return {
-		name: row.name,
+		name: row.name!,
 		propers_repacks: row.propers_repacks as PropersRepacks,
 		enable_media_info: row.enable_media_info === 1
 	};
@@ -75,7 +75,7 @@ export async function getSonarrByName(
 	if (!row) return null;
 
 	return {
-		name: row.name,
+		name: row.name!,
 		propers_repacks: row.propers_repacks as PropersRepacks,
 		enable_media_info: row.enable_media_info === 1
 	};

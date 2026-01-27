@@ -3,7 +3,7 @@
  */
 
 import type { PCDCache } from '../../cache.ts';
-import type { Tag } from '../../types.ts';
+import type { Tag } from '$shared/pcd/display.ts';
 import type {
 	QualityProfileTableRow,
 	QualityItem,

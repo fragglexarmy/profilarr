@@ -3,7 +3,7 @@
  */
 
 import type { PCDCache } from '../../cache.ts';
-import type { QualityProfileScoring } from '../../types.ts';
+import type { QualityProfileScoring } from './types.ts';
 
 /**
  * Get quality profile scoring data

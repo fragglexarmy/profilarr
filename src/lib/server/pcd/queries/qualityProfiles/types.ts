@@ -2,7 +2,7 @@
  * Quality Profile query-specific types
  */
 
-import type { Tag } from '../../types.ts';
+import type { Tag } from '$shared/pcd/display.ts';
 
 // ============================================================================
 // INTERNAL TYPES (used within queries)
@@ -77,6 +77,23 @@ export interface QualityGroup {
 export interface QualityProfileQualities {
 	singles: QualitySingle[];
 	groups: QualityGroup[];
+}
+
+/** Custom format scoring entry */
+export interface CustomFormatScoring {
+	name: string;
+	tags: string[];
+	scores: Record<string, number | null>;
+}
+
+/** Quality profile scoring data for the scoring page */
+export interface QualityProfileScoring {
+	databaseId: number;
+	arrTypes: string[];
+	customFormats: CustomFormatScoring[];
+	minimum_custom_format_score: number;
+	upgrade_until_score: number;
+	upgrade_score_increment: number;
 }
 
 /** Quality profile data for table view with all relationships */

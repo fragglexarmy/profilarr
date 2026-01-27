@@ -52,6 +52,7 @@ export async function list(cache: PCDCache) {
 	// Build the final result
 	return entities.map((entity) => ({
 		...entity,
+		type: entity.type as 'movie' | 'series',
 		releases: (releasesMap.get(`${entity.type}-${entity.tmdb_id}`) || []).map((r) => ({
 			id: r.id,
 			title: r.title,
