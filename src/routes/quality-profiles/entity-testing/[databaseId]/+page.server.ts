@@ -4,7 +4,7 @@ import { pcdManager } from '$pcd/pcd.ts';
 import { canWriteToBase } from '$pcd/writer.ts';
 import { tmdbSettingsQueries } from '$db/queries/tmdbSettings.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
-import * as entityTestQueries from '$pcd/queries/entityTests/index.ts';
+import * as entityTestQueries from '$pcd/queries/qualityProfiles/entityTests/index.ts';
 import * as qualityProfileQueries from '$pcd/queries/qualityProfiles/index.ts';
 import { isParserHealthy } from '$lib/server/utils/arr/parser/index.ts';
 import { logger } from '$logger/logger.ts';

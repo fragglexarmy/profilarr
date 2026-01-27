@@ -19,10 +19,24 @@
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { Column } from '$ui/table/types';
-	import type { TestRelease, ProfileCfScores, CustomFormatInfo } from './types';
+	import type { TestRelease } from '$shared/pcd/display.ts';
 	import type { components } from '$api/v1.d.ts';
 
 	type ReleaseEvaluation = components['schemas']['ReleaseEvaluation'];
+
+	interface CfScore {
+		radarr: number | null;
+		sonarr: number | null;
+	}
+
+	interface ProfileCfScores {
+		profileName: string;
+		scores: Record<string, CfScore>;
+	}
+
+	interface CustomFormatInfo {
+		name: string;
+	}
 
 	export let entityType: 'movie' | 'series';
 	export let entityTmdbId: number;

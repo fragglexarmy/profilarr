@@ -2,10 +2,10 @@
  * Delete test release operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface DeleteTestReleaseOptions {
+interface DeleteReleaseOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
@@ -15,7 +15,7 @@ export interface DeleteTestReleaseOptions {
 /**
  * Delete a test release by writing an operation to the specified layer
  */
-export async function deleteRelease(options: DeleteTestReleaseOptions) {
+export async function deleteRelease(options: DeleteReleaseOptions) {
 	const { databaseId, cache, layer, releaseId } = options;
 	const db = cache.kb;
 

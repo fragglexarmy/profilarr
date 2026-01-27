@@ -7,10 +7,24 @@
 	import ReleaseTable from './ReleaseTable.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { Column } from '$ui/table/types';
-	import type { TestEntity, TestRelease, ProfileCfScores, CustomFormatInfo } from './types';
+	import type { TestEntity, TestRelease } from '$shared/pcd/display.ts';
 	import type { components } from '$api/v1.d.ts';
 
 	type ReleaseEvaluation = components['schemas']['ReleaseEvaluation'];
+
+	interface CfScore {
+		radarr: number | null;
+		sonarr: number | null;
+	}
+
+	interface ProfileCfScores {
+		profileName: string;
+		scores: Record<string, CfScore>;
+	}
+
+	interface CustomFormatInfo {
+		name: string;
+	}
 
 	export let entities: TestEntity[];
 	export let evaluations: Record<number, ReleaseEvaluation>;

@@ -17,7 +17,7 @@
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { PageData } from './$types';
-	import type { TestEntity, TestRelease } from './components/types';
+	import type { TestEntity, TestRelease } from '$shared/pcd/display.ts';
 	import type { components } from '$api/v1.d.ts';
 
 	type EvaluateResponse = components['schemas']['EvaluateResponse'];

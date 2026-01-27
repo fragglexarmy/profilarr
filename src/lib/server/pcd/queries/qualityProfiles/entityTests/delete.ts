@@ -2,10 +2,10 @@
  * Delete test entity operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface DeleteTestEntityOptions {
+interface DeleteEntityOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
@@ -18,7 +18,7 @@ export interface DeleteTestEntityOptions {
  * Delete a test entity and its releases by writing an operation to the specified layer
  * Uses stable composite key (type, tmdb_id) instead of auto-generated id
  */
-export async function remove(options: DeleteTestEntityOptions) {
+export async function remove(options: DeleteEntityOptions) {
 	const { databaseId, cache, layer, entityType, entityTmdbId, entityTitle } = options;
 	const db = cache.kb;
 

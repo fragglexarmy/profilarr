@@ -1,13 +1,14 @@
 /**
- * Entity test list queries
+ * Entity test read queries
  */
 
-import type { PCDCache } from '../../cache.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import type { TestEntity } from '$shared/pcd/display.ts';
 
 /**
  * Get all test entities with their releases
  */
-export async function list(cache: PCDCache) {
+export async function list(cache: PCDCache): Promise<TestEntity[]> {
 	const db = cache.kb;
 
 	// 1. Get all test entities

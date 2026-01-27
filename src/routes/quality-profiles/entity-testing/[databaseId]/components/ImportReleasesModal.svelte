@@ -22,7 +22,7 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import { createSearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
-	import type { TestEntity } from './types';
+	import type { TestEntity } from '$shared/pcd/display.ts';
 
 	export let open = false;
 	export let entity: TestEntity | null = null;

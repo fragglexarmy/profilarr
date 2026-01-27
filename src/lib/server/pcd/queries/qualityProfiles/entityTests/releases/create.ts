@@ -1,11 +1,11 @@
 /**
- * Bulk create test releases operation
+ * Create test release operations
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface CreateTestReleasesInput {
+interface CreateReleaseInput {
 	entityType: 'movie' | 'series';
 	entityTmdbId: number;
 	title: string;
@@ -15,18 +15,60 @@ export interface CreateTestReleasesInput {
 	flags: string[];
 }
 
-export interface CreateTestReleasesOptions {
+interface CreateReleaseOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
-	inputs: CreateTestReleasesInput[];
+	input: CreateReleaseInput;
+}
+
+interface CreateReleasesOptions {
+	databaseId: number;
+	cache: PCDCache;
+	layer: OperationLayer;
+	inputs: CreateReleaseInput[];
+}
+
+/**
+ * Create a test release by writing an operation to the specified layer
+ */
+export async function createRelease(options: CreateReleaseOptions) {
+	const { databaseId, cache, layer, input } = options;
+	const db = cache.kb;
+
+	const insertRelease = db
+		.insertInto('test_releases')
+		.values({
+			entity_type: input.entityType,
+			entity_tmdb_id: input.entityTmdbId,
+			title: input.title,
+			size_bytes: input.size_bytes,
+			languages: JSON.stringify(input.languages),
+			indexers: JSON.stringify(input.indexers),
+			flags: JSON.stringify(input.flags)
+		})
+		.compile();
+
+	const result = await writeOperation({
+		databaseId,
+		layer,
+		description: `create-test-release`,
+		queries: [insertRelease],
+		metadata: {
+			operation: 'create',
+			entity: 'test_release',
+			name: input.title.substring(0, 50)
+		}
+	});
+
+	return result;
 }
 
 /**
  * Bulk create test releases by writing operations to the specified layer
  * Skips releases that already exist (by title within the same entity)
  */
-export async function createReleases(options: CreateTestReleasesOptions) {
+export async function createReleases(options: CreateReleasesOptions) {
 	const { databaseId, cache, layer, inputs } = options;
 	const db = cache.kb;
 

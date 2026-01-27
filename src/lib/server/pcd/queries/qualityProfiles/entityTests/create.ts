@@ -2,10 +2,10 @@
  * Create test entity operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface CreateTestEntityInput {
+interface CreateEntityInput {
 	type: 'movie' | 'series';
 	tmdbId: number;
 	title: string;
@@ -13,18 +13,18 @@ export interface CreateTestEntityInput {
 	posterPath: string | null;
 }
 
-export interface CreateTestEntitiesOptions {
+interface CreateEntitiesOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
-	inputs: CreateTestEntityInput[];
+	inputs: CreateEntityInput[];
 }
 
 /**
  * Create test entities by writing an operation to the specified layer
  * Skips entities that already exist (by type + tmdb_id)
  */
-export async function create(options: CreateTestEntitiesOptions) {
+export async function create(options: CreateEntitiesOptions) {
 	const { databaseId, cache, layer, inputs } = options;
 	const db = cache.kb;
 

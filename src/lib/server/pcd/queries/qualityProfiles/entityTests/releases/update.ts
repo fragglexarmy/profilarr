@@ -2,10 +2,10 @@
  * Update test release operation
  */
 
-import type { PCDCache } from '../../cache.ts';
-import { writeOperation, type OperationLayer } from '../../writer.ts';
+import type { PCDCache } from '$pcd/cache.ts';
+import { writeOperation, type OperationLayer } from '$pcd/writer.ts';
 
-export interface UpdateTestReleaseInput {
+interface UpdateReleaseInput {
 	id: number;
 	title: string;
 	size_bytes: number | null;
@@ -14,17 +14,17 @@ export interface UpdateTestReleaseInput {
 	flags: string[];
 }
 
-export interface UpdateTestReleaseOptions {
+interface UpdateReleaseOptions {
 	databaseId: number;
 	cache: PCDCache;
 	layer: OperationLayer;
-	input: UpdateTestReleaseInput;
+	input: UpdateReleaseInput;
 }
 
 /**
  * Update a test release by writing an operation to the specified layer
  */
-export async function updateRelease(options: UpdateTestReleaseOptions) {
+export async function updateRelease(options: UpdateReleaseOptions) {
 	const { databaseId, cache, layer, input } = options;
 	const db = cache.kb;
 
