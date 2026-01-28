@@ -66,7 +66,7 @@
 			on:focus={() => (isFocused = true)}
 			on:blur={() => (isFocused = false)}
 			placeholder={activeQuery ? '' : placeholder}
-			class="h-full w-full bg-transparent pr-10 text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
+			class="h-full w-full bg-transparent pr-10 text-base sm:text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
 				? 'pl-2'
 				: 'pl-10'}"
 		/>
