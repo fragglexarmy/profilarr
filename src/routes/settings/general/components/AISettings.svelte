@@ -30,7 +30,7 @@
 >
 	<!-- Header -->
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">AI Configuration</h2>
+		<h2 class="text-lg font-semibold text-neutral-900 md:text-xl dark:text-neutral-50">AI Configuration</h2>
 		<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 			Configure AI-powered features like commit message generation. Works with OpenAI, Ollama, LM
 			Studio, or any OpenAI-compatible API.
@@ -161,7 +161,7 @@
 
 		<!-- Action buttons -->
 		<div
-			class="mt-6 flex items-center justify-between border-t border-neutral-200 pt-6 dark:border-neutral-800"
+			class="mt-6 flex flex-col gap-3 border-t border-neutral-200 pt-6 md:flex-row md:items-center md:justify-between dark:border-neutral-800"
 		>
 			<button
 				type="button"
