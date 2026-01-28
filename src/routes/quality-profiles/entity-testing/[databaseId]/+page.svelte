@@ -372,7 +372,7 @@
 
 	<!-- Actions Bar -->
 	<ActionsBar>
-		<SearchAction searchStore={search} placeholder={searchPlaceholder} />
+		<SearchAction searchStore={search} placeholder={searchPlaceholder} responsive />
 		<ActionButton icon={Plus} on:click={() => (showAddModal = true)} />
 		<ActionButton
 			icon={Sliders}

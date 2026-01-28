@@ -110,7 +110,7 @@
 
 	<!-- Actions Bar -->
 	<ActionsBar>
-		<SearchAction searchStore={search} placeholder="Search custom formats..." />
+		<SearchAction searchStore={search} placeholder="Search custom formats..." responsive />
 		<ActionButton
 			icon={Plus}
 			on:click={() => goto(`/custom-formats/${data.currentDatabase.id}/new`)}
