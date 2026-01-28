@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { ExternalLink, Trash2, Link } from 'lucide-svelte';
+	import { ExternalLink, Trash2 } from 'lucide-svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
@@ -32,11 +32,6 @@
 		loadedImages = loadedImages;
 	}
 
-	// Format type for display with proper casing
-	function formatType(type: string): string {
-		return type.charAt(0).toUpperCase() + type.slice(1);
-	}
-
 	// Handle card click
 	function handleCardClick(instance: ArrInstance) {
 		goto(`/arr/${instance.id}`);
@@ -49,17 +44,17 @@
 	}
 </script>
 
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<div class="grid grid-cols-1 gap-3">
 	{#each instances as instance}
 		<div
 			on:click={() => handleCardClick(instance)}
 			on:keydown={(e) => e.key === 'Enter' && handleCardClick(instance)}
 			role="button"
 			tabindex="0"
-			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+			class="group flex cursor-pointer items-center gap-4 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-all hover:border-neutral-300 hover:shadow-md active:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 dark:active:bg-neutral-800"
 		>
-			<!-- Header with logo, name, and status -->
-			<div class="flex items-start gap-3">
+			<!-- Left: Logo + Name -->
+			<div class="flex min-w-0 flex-1 items-center gap-3">
 				<div class="relative h-10 w-10 flex-shrink-0">
 					{#if !loadedImages.has(instance.id)}
 						<div
@@ -68,51 +63,44 @@
 					{/if}
 					<img
 						src={getLogoPath(instance.type)}
-						alt="{formatType(instance.type)} logo"
+						alt="{instance.type} logo"
 						class="h-10 w-10 rounded-lg {loadedImages.has(instance.id)
 							? 'opacity-100'
 							: 'opacity-0'}"
 						on:load={() => handleImageLoad(instance.id)}
 					/>
 				</div>
-				<div class="min-w-0 flex-1">
+				<div class="min-w-0">
 					<h3 class="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 						{instance.name}
 					</h3>
-					<div class="mt-1">
+					<div class="mt-1 flex flex-wrap items-center gap-1">
 						{#if instance.enabled}
 							<Badge variant="success">Enabled</Badge>
 						{:else}
 							<Badge variant="neutral">Disabled</Badge>
 						{/if}
+						<Badge variant="neutral" mono>{instance.url}</Badge>
 					</div>
 				</div>
 			</div>
 
-			<!-- URL -->
-			<div class="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-				<Link size={12} class="flex-shrink-0" />
-				<span class="truncate">{instance.url}</span>
-			</div>
-
-			<!-- Action buttons (absolute positioned) -->
-			<div
-				class="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-			>
+			<!-- Action buttons - always visible, mobile-friendly -->
+			<div class="flex flex-shrink-0 flex-col gap-1">
 				<a
 					href={instance.url}
 					target="_blank"
 					rel="noopener noreferrer"
 					on:click={(e) => e.stopPropagation()}
-					class="rounded p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+					class="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-neutral-600 transition-colors hover:bg-neutral-100 active:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:active:bg-neutral-600"
 				>
-					<ExternalLink size={14} />
+					<ExternalLink size={18} />
 				</a>
 				<button
 					on:click={(e) => handleDeleteClick(e, instance)}
-					class="rounded p-1.5 text-neutral-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+					class="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-neutral-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:border-red-300 active:bg-red-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-400 dark:active:bg-red-900/50"
 				>
-					<Trash2 size={14} />
+					<Trash2 size={18} />
 				</button>
 			</div>
 		</div>
