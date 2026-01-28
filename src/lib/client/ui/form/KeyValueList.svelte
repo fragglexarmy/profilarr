@@ -129,9 +129,9 @@
 
 	<div class="space-y-2">
 		{#if entries.length > 0}
-			<!-- Header -->
+			<!-- Header (desktop only) -->
 			<div
-				class="grid grid-cols-[1fr_auto_auto] gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400"
+				class="hidden text-xs font-medium text-neutral-500 md:grid md:grid-cols-[1fr_auto_auto] md:gap-2 dark:text-neutral-400"
 			>
 				<span>{keyLabel}</span>
 				<span>{valueLabel}</span>
@@ -143,7 +143,81 @@
 		{#each entries as entry, index (index)}
 			{@const isLocked = lockedFirst && index === 0}
 			{@const [vMajor, vMinor, vPatch] = parseVersion(entry.value)}
-			<div class="grid grid-cols-[1fr_auto_auto] gap-2">
+			<!-- Mobile: stacked layout -->
+			<div class="space-y-2 rounded-lg border border-neutral-200 p-3 md:hidden dark:border-neutral-700">
+				<div class="flex items-center justify-between">
+					<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{keyLabel}</span>
+					<button
+						type="button"
+						onclick={() => (isLocked ? onLockedDeleteAttempt?.() : removeEntry(index))}
+						class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+						aria-label="Remove entry"
+					>
+						<Trash2 size={16} />
+					</button>
+				</div>
+				<input
+					type="text"
+					value={entry.key}
+					placeholder={keyPlaceholder}
+					oninput={(e) => updateKey(index, (e.target as HTMLInputElement).value)}
+					onfocus={(e) => {
+						if (isLocked) {
+							onLockedEditAttempt?.();
+							(e.target as HTMLInputElement).blur();
+						}
+					}}
+					class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
+				/>
+				<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{valueLabel}</span>
+				{#if valueType === 'version'}
+					<div class="flex items-center gap-1">
+						<div class="w-16">
+							<NumberInput
+								name="version-major-{index}-mobile"
+								value={vMajor}
+								min={isLocked && lockedFirst?.minMajor !== undefined
+									? lockedFirst.minMajor
+									: versionMinMajor}
+								font="mono"
+								onchange={(v) => updateValue(index, updateVersionPart(entry.value, 0, v))}
+								onMinBlocked={isLocked ? onLockedVersionMinBlocked : undefined}
+							/>
+						</div>
+						<span class="text-lg font-medium text-neutral-400 dark:text-neutral-500">.</span>
+						<div class="w-16">
+							<NumberInput
+								name="version-minor-{index}-mobile"
+								value={vMinor}
+								min={0}
+								font="mono"
+								onchange={(v) => updateValue(index, updateVersionPart(entry.value, 1, v))}
+							/>
+						</div>
+						<span class="text-lg font-medium text-neutral-400 dark:text-neutral-500">.</span>
+						<div class="w-16">
+							<NumberInput
+								name="version-patch-{index}-mobile"
+								value={vPatch}
+								min={0}
+								font="mono"
+								onchange={(v) => updateValue(index, updateVersionPart(entry.value, 2, v))}
+							/>
+						</div>
+					</div>
+				{:else}
+					<input
+						type="text"
+						value={entry.value}
+						placeholder={valuePlaceholder}
+						oninput={(e) => updateValue(index, (e.target as HTMLInputElement).value)}
+						class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
+					/>
+				{/if}
+			</div>
+
+			<!-- Desktop: grid layout -->
+			<div class="hidden md:grid md:grid-cols-[1fr_auto_auto] md:gap-2">
 				<input
 					type="text"
 					value={entry.key}

@@ -147,6 +147,7 @@
 			getRowId={(row) => row.hash}
 			emptyMessage="No commits found"
 			defaultSort={{ key: 'date', direction: 'desc' }}
+			responsive
 		>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'shortHash'}
@@ -176,7 +177,7 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="expanded" let:row>
-				<div class="space-y-2">
+				<div class="space-y-2 p-4">
 					<div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
 						<FileText size={14} />
 						<span>{row.files.length} file{row.files.length !== 1 ? 's' : ''} changed</span>

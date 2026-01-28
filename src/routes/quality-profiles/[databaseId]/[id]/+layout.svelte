@@ -35,7 +35,7 @@
 	};
 </script>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<Tabs {tabs} {backButton} responsive />
 	<slot />
 </div>

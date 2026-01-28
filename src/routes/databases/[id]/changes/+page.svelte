@@ -3,6 +3,7 @@
 	import StatusCard from './components/StatusCard.svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import { Check, ArrowDown, ExternalLink, FileText } from 'lucide-svelte';
+	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
@@ -260,7 +261,7 @@
 
 	<!-- Incoming Changes Section -->
 	<section>
-		<div class="mb-3 flex items-center justify-between">
+		<div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<h2
 				class="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
 			>
@@ -272,7 +273,7 @@
 					type="button"
 					on:click={handlePull}
 					disabled={pulling}
-					class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+					class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 				>
 					{#if pulling}
 						<div
@@ -312,6 +313,7 @@
 				data={incomingChanges.commits}
 				getRowId={(row) => row.hash}
 				emptyMessage="No incoming changes"
+				responsive
 			>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'shortHash'}
@@ -474,24 +476,69 @@
 					<p class="text-neutral-600 dark:text-neutral-400">No uncommitted changes</p>
 				</div>
 			{:else}
-				<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+				<!-- Mobile: Card view -->
+				<div class="space-y-2 md:hidden">
+					<!-- Select all header -->
+					<button
+						type="button"
+						on:click={toggleAll}
+						class="flex w-full items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-800"
+					>
+						<IconCheckbox checked={allSelected} icon={Check} color="blue" />
+						<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+							Select all ({uncommittedOps.length})
+						</span>
+					</button>
+
+					<!-- Cards -->
+					{#each uncommittedOps as op}
+						<button
+							type="button"
+							on:click={() => toggleRow(op.filepath)}
+							class="w-full rounded-lg border border-neutral-200 bg-white p-4 text-left transition-colors dark:border-neutral-800 dark:bg-neutral-900"
+						>
+							<div class="flex items-start gap-3">
+								<div class="mt-0.5 shrink-0">
+									<IconCheckbox checked={selected.has(op.filepath)} icon={Check} color="blue" />
+								</div>
+								<div class="min-w-0 flex-1">
+									<div class="flex items-center gap-2">
+										<span
+											class="inline-flex rounded px-2 py-0.5 font-mono text-xs {getOperationClass(op.operation)}"
+										>
+											{formatOperation(op.operation)}
+										</span>
+										<span class="text-xs text-neutral-500 dark:text-neutral-400">
+											{op.entity || '-'}
+										</span>
+									</div>
+									<div class="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-100">
+										{#if op.previousName && op.previousName !== op.name}
+											<span class="text-neutral-400 line-through">{op.previousName}</span>
+											→
+											{op.name || '-'}
+										{:else}
+											{op.name || '-'}
+										{/if}
+									</div>
+									<div class="mt-1 truncate font-mono text-xs text-neutral-500 dark:text-neutral-400">
+										{op.filename}
+									</div>
+								</div>
+							</div>
+						</button>
+					{/each}
+				</div>
+
+				<!-- Desktop: Table view -->
+				<div class="hidden overflow-x-auto rounded-lg border border-neutral-200 md:block dark:border-neutral-800">
 					<table class="w-full">
 						<thead
 							class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
 						>
 							<tr>
 								<th class="w-12 px-4 py-3 text-center">
-									<button type="button" on:click={toggleAll} class="inline-flex">
-										<div
-											class="flex h-5 w-5 items-center justify-center rounded border-2 transition-all {allSelected
-												? 'border-blue-600 bg-blue-600 dark:border-blue-500 dark:bg-blue-500'
-												: 'border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}"
-										>
-											{#if allSelected}
-												<Check size={14} class="text-white" />
-											{/if}
-										</div>
-									</button>
+									<IconCheckbox checked={allSelected} icon={Check} color="blue" on:click={toggleAll} />
 								</th>
 								<th
 									class="px-4 py-3 text-left text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300"
@@ -524,17 +571,7 @@
 									on:click={() => toggleRow(op.filepath)}
 								>
 									<td class="px-4 py-3 text-center">
-										<div
-											class="mx-auto flex h-5 w-5 items-center justify-center rounded border-2 transition-all {selected.has(
-												op.filepath
-											)
-												? 'border-blue-600 bg-blue-600 dark:border-blue-500 dark:bg-blue-500'
-												: 'border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'}"
-										>
-											{#if selected.has(op.filepath)}
-												<Check size={14} class="text-white" />
-											{/if}
-										</div>
+										<IconCheckbox checked={selected.has(op.filepath)} icon={Check} color="blue" />
 									</td>
 									<td class="px-4 py-3">
 										<span

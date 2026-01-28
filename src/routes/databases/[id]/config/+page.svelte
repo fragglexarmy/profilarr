@@ -2,11 +2,14 @@
 	import type { PageData } from './$types';
 	import { onMount, onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { Save } from 'lucide-svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import KeyValueList from '$ui/form/KeyValueList.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import {
 		isDirty,
@@ -95,13 +98,29 @@
 			}
 		};
 	}}
-	class="mt-6"
 >
 	<input type="hidden" name="manifest" value={JSON.stringify(manifest)} />
 	<input type="hidden" name="readme" value={readme} />
 
 	{#if manifest}
 		<div class="space-y-5">
+			<!-- Header -->
+			<StickyCard position="top">
+				<svelte:fragment slot="left">
+					<h1 class="text-neutral-900 dark:text-neutral-50">Config</h1>
+					<p class="text-neutral-600 dark:text-neutral-400">Edit the database manifest and README</p>
+				</svelte:fragment>
+				<svelte:fragment slot="right">
+					<Button
+						text={saving ? 'Saving...' : 'Save'}
+						icon={Save}
+						iconColor="text-blue-600 dark:text-blue-400"
+						disabled={saving || !$isDirty}
+						type="submit"
+					/>
+				</svelte:fragment>
+			</StickyCard>
+
 			<!-- Name -->
 			<div class="space-y-1">
 				<label for="name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -361,18 +380,6 @@
 						autoResize={false}
 					/>
 				</div>
-			</div>
-			<!-- Save Button -->
-			<div
-				class="sticky bottom-0 -mx-6 border-t border-neutral-200 bg-neutral-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-900"
-			>
-				<button
-					type="submit"
-					disabled={!$isDirty || saving}
-					class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-600 dark:hover:bg-accent-500"
-				>
-					{saving ? 'Saving...' : 'Save Changes'}
-				</button>
 			</div>
 		</div>
 	{:else}
