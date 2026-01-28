@@ -10,7 +10,7 @@
 	export let data: PageData;
 </script>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<div class="mb-8">
 		<h1 class="text-2xl font-bold text-neutral-900 md:text-3xl dark:text-neutral-50">General Settings</h1>
 		<p class="mt-3 text-base text-neutral-600 md:text-lg dark:text-neutral-400">

@@ -8,6 +8,7 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { Column } from '$ui/table/types';
 	import { siDiscord } from 'simple-icons';
+	import Button from '$ui/button/Button.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -100,7 +101,7 @@
 	}
 </script>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<!-- Header -->
 	<div class="mb-8">
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -112,13 +113,13 @@
 			</div>
 
 			<!-- Add Service Button -->
-			<a
+			<Button
 				href="/settings/notifications/new"
-				class="flex w-fit items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
-			>
-				<Plus size={16} />
-				Add Service
-			</a>
+				icon={Plus}
+				iconColor="text-blue-600 dark:text-blue-400"
+				text="Add Service"
+				variant="secondary"
+			/>
 		</div>
 	</div>
 

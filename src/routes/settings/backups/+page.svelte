@@ -101,7 +101,7 @@
 	}
 </script>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<!-- Header -->
 	<div class="mb-8">
 		<h1 class="text-2xl font-bold text-neutral-900 md:text-3xl dark:text-neutral-50">Backups</h1>
