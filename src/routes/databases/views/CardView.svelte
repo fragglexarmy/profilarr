@@ -113,21 +113,21 @@
 			</div>
 
 			<!-- Action buttons -->
-			<div class="flex flex-shrink-0 flex-col gap-1">
+			<div class="flex flex-shrink-0 items-center gap-1">
 				<a
 					href={database.repository_url}
 					target="_blank"
 					rel="noopener noreferrer"
 					on:click={(e) => e.stopPropagation()}
-					class="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-neutral-600 transition-colors active:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:active:bg-neutral-700"
+					class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
 				>
-					<ExternalLink size={18} />
+					<ExternalLink size={16} />
 				</a>
 				<button
 					on:click={(e) => handleUnlinkClick(e, database)}
-					class="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-neutral-600 transition-colors active:border-red-200 active:bg-red-100 active:text-red-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:active:border-red-800 dark:active:bg-red-900 dark:active:text-red-400"
+					class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400"
 				>
-					<Unlink size={18} />
+					<Unlink size={16} />
 				</button>
 			</div>
 		</div>

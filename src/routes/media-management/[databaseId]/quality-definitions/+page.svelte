@@ -2,7 +2,9 @@
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import ViewToggle from '$ui/actions/ViewToggle.svelte';
 	import TableView from './views/TableView.svelte';
+	import CardView from './views/CardView.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import { goto } from '$app/navigation';
 	import { Plus } from 'lucide-svelte';
@@ -11,7 +13,7 @@
 	export let data: PageData;
 
 	// Initialize data page store
-	const { search, filtered, setItems } = createDataPageStore(data.qualityDefinitionsConfigs, {
+	const { search, view, filtered, setItems } = createDataPageStore(data.qualityDefinitionsConfigs, {
 		storageKey: 'qualityDefinitionsView',
 		searchKeys: ['name']
 	});
@@ -27,6 +29,7 @@
 		icon={Plus}
 		on:click={() => goto(`/media-management/${data.currentDatabase.id}/quality-definitions/new`)}
 	/>
+	<ViewToggle bind:value={$view} />
 </ActionsBar>
 
 <!-- Quality Definitions Content -->
@@ -45,7 +48,9 @@
 		>
 			<p class="text-neutral-600 dark:text-neutral-400">No quality definitions configs match your search</p>
 		</div>
-	{:else}
+	{:else if $view === 'table'}
 		<TableView configs={$filtered} databaseId={data.currentDatabase.id} />
+	{:else}
+		<CardView configs={$filtered} databaseId={data.currentDatabase.id} />
 	{/if}
 </div>

@@ -74,7 +74,7 @@
 					<h3 class="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 						{instance.name}
 					</h3>
-					<div class="mt-1 flex flex-wrap items-center gap-1">
+					<div class="mt-1 flex flex-col items-start gap-1">
 						{#if instance.enabled}
 							<Badge variant="success">Enabled</Badge>
 						{:else}
@@ -85,22 +85,22 @@
 				</div>
 			</div>
 
-			<!-- Action buttons - always visible, mobile-friendly -->
-			<div class="flex flex-shrink-0 flex-col gap-1">
+			<!-- Action buttons -->
+			<div class="flex flex-shrink-0 items-center gap-1">
 				<a
 					href={instance.url}
 					target="_blank"
 					rel="noopener noreferrer"
 					on:click={(e) => e.stopPropagation()}
-					class="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-neutral-600 transition-colors hover:bg-neutral-100 active:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:active:bg-neutral-600"
+					class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
 				>
-					<ExternalLink size={18} />
+					<ExternalLink size={16} />
 				</a>
 				<button
 					on:click={(e) => handleDeleteClick(e, instance)}
-					class="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-neutral-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:border-red-300 active:bg-red-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-400 dark:active:bg-red-900/50"
+					class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400"
 				>
-					<Trash2 size={18} />
+					<Trash2 size={16} />
 				</button>
 			</div>
 		</div>
