@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import type { ComponentType } from 'svelte';
 
 	export let icon: ComponentType | undefined = undefined;
@@ -62,7 +62,7 @@
 	</button>
 
 	{#if hasDropdown && isHovered}
-		<div class="z-50" transition:fly={{ y: -8, duration: 150 }}>
+		<div class="z-50" transition:fade={{ duration: 150 }}>
 			<slot name="dropdown" {dropdownPosition} open={isHovered} />
 		</div>
 	{/if}

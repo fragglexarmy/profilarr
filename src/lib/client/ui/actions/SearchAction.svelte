@@ -101,18 +101,21 @@
 
 {#if useMobileMode}
 	<!-- Mobile: Search button -->
-	<div class="relative flex">
+	<div class="relative flex flex-1 min-w-0">
 		<button
 			type="button"
 			on:click={openModal}
-			class="flex h-10 w-10 items-center justify-center border border-neutral-200 bg-white transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+			class="relative flex h-10 w-full items-center justify-between border border-neutral-200 bg-white px-3 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			title="Search"
 		>
-			<Search size={20} class="text-neutral-700 dark:text-neutral-300" />
+			<span class="flex items-center gap-2">
+				<Search size={20} class="text-neutral-700 dark:text-neutral-300" />
+				<span class="max-w-[14rem] truncate text-sm text-neutral-600 dark:text-neutral-300">
+					{query || activeQuery || 'Search'}
+				</span>
+			</span>
 			{#if query || activeQuery}
-				<span
-					class="absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full bg-accent-500"
-				></span>
+				<span class="h-2.5 w-2.5 rounded-full bg-accent-500"></span>
 			{/if}
 		</button>
 	</div>
