@@ -26,12 +26,14 @@
 	<title>New Delay Profile - {data.currentDatabase.name} - Profilarr</title>
 </svelte:head>
 
-<DelayProfileForm
-	mode="create"
-	databaseName={data.currentDatabase.name}
-	canWriteToBase={data.canWriteToBase}
-	{initialData}
-	onCancel={handleCancel}
-/>
+<div class="p-4 md:p-8">
+	<DelayProfileForm
+		mode="create"
+		databaseName={data.currentDatabase.name}
+		canWriteToBase={data.canWriteToBase}
+		{initialData}
+		onCancel={handleCancel}
+	/>
+</div>
 
 <DirtyModal />
