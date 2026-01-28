@@ -24,7 +24,7 @@
 
 <!-- Actions Bar -->
 <ActionsBar>
-	<SearchAction searchStore={search} placeholder="Search naming configs..." />
+	<SearchAction searchStore={search} placeholder="Search naming configs..." responsive />
 	<ActionButton
 		icon={Plus}
 		on:click={() => goto(`/media-management/${data.currentDatabase.id}/naming/new`)}

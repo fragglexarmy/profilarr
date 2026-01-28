@@ -24,7 +24,7 @@
 
 <!-- Actions Bar -->
 <ActionsBar>
-	<SearchAction searchStore={search} placeholder="Search quality definitions..." />
+	<SearchAction searchStore={search} placeholder="Search quality definitions..." responsive />
 	<ActionButton
 		icon={Plus}
 		on:click={() => goto(`/media-management/${data.currentDatabase.id}/quality-definitions/new`)}
@@ -46,7 +46,9 @@
 		<div
 			class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 		>
-			<p class="text-neutral-600 dark:text-neutral-400">No quality definitions configs match your search</p>
+			<p class="text-neutral-600 dark:text-neutral-400">
+				No quality definitions configs match your search
+			</p>
 		</div>
 	{:else if $view === 'table'}
 		<TableView configs={$filtered} databaseId={data.currentDatabase.id} />

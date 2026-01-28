@@ -24,7 +24,7 @@
 
 <!-- Actions Bar -->
 <ActionsBar>
-	<SearchAction searchStore={search} placeholder="Search media settings..." />
+	<SearchAction searchStore={search} placeholder="Search media settings..." responsive />
 	<ActionButton
 		icon={Plus}
 		on:click={() => goto(`/media-management/${data.currentDatabase.id}/media-settings/new`)}
