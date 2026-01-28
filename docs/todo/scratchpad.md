@@ -5,6 +5,7 @@
 - font is too small in some places / too squished
 - rethink job polling architecture
 - adding a database requires double click??? im not running into this personally
+- set auth settings using GUI, not env vars
 
 # Adaptive Backoff
 
