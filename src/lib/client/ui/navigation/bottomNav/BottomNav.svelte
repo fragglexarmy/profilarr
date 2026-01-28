@@ -3,7 +3,7 @@
 	import { navIconStore } from '$stores/navIcons';
 	import {
 		Database,
-		MonitorPlay,
+		Link,
 		Sliders,
 		Palette,
 		Settings,
@@ -22,14 +22,14 @@
 	};
 
 	const items: NavItem[] = [
-		{ href: '/databases', label: 'Databases', icon: Database, emoji: '💾', priority: 'always' },
-		{ href: '/arr', label: 'Arrs', icon: MonitorPlay, emoji: '📺', priority: 'always' },
+		{ href: '/databases', label: 'Databases', icon: Database, emoji: '📦', priority: 'always' },
+		{ href: '/arr', label: 'Arrs', icon: Link, emoji: '🔗', priority: 'always' },
 		{ href: '/quality-profiles', label: 'Profiles', icon: Sliders, emoji: '⚡', priority: 'always' },
 		{ href: '/custom-formats', label: 'Formats', icon: Palette, emoji: '🎨', priority: 'always' },
 		{ href: '/settings', label: 'Settings', icon: Settings, emoji: '⚙️', priority: 'always' },
 		{ href: '/regular-expressions', label: 'Regex', icon: Microscope, emoji: '🔬', priority: 'medium' },
 		{ href: '/media-management', label: 'Media', icon: Tag, emoji: '🏷️', priority: 'low' },
-		{ href: '/delay-profiles', label: 'Delay', icon: Clock, emoji: '⏱️', priority: 'low' }
+		{ href: '/delay-profiles', label: 'Delay', icon: Clock, emoji: '⏳', priority: 'low' }
 	];
 
 	$: useEmoji = $navIconStore === 'emoji';

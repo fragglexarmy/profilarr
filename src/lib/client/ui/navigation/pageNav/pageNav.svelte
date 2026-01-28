@@ -2,7 +2,7 @@
 	import Group from './group.svelte';
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
-	import { Home, Sliders, Palette, Microscope, Tag, Clock, Settings, X } from 'lucide-svelte';
+	import { Database, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X } from 'lucide-svelte';
 	import { navIconStore } from '$stores/navIcons';
 	import { mobileNavOpen } from '$stores/mobileNav';
 	import { page } from '$app/stores';
@@ -55,14 +55,16 @@
 
 	<div class="flex-1 overflow-y-auto p-4">
 		<Group
-			label={useEmoji ? '🏠 Home' : 'Home'}
-			href="/"
-			icon={useEmoji ? undefined : Home}
-			hasItems={true}
-		>
-			<GroupItem label="Databases" href="/databases" />
-			<GroupItem label="Arrs" href="/arr" />
-		</Group>
+			label={useEmoji ? '📦 Databases' : 'Databases'}
+			href="/databases"
+			icon={useEmoji ? undefined : Database}
+		/>
+
+		<Group
+			label={useEmoji ? '🔗 Arrs' : 'Arrs'}
+			href="/arr"
+			icon={useEmoji ? undefined : Link}
+		/>
 
 		<Group
 			label={useEmoji ? '⚡ Quality Profiles' : 'Quality Profiles'}
@@ -101,7 +103,7 @@
 		</Group>
 
 		<Group
-			label={useEmoji ? '⏱️ Delay Profiles' : 'Delay Profiles'}
+			label={useEmoji ? '⏳ Delay Profiles' : 'Delay Profiles'}
 			href="/delay-profiles"
 			icon={useEmoji ? undefined : Clock}
 			initialOpen={false}
