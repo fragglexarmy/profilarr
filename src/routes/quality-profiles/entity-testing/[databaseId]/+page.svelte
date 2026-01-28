@@ -366,18 +366,18 @@
 	<title>Entity Testing - {data.currentDatabase.name} - Profilarr</title>
 </svelte:head>
 
-<div class="space-y-6 px-8 pt-4 pb-8">
+<div class="space-y-6 px-4 pt-4 pb-8 md:px-8">
 	<!-- Database Tabs -->
-	<Tabs {tabs} />
+	<Tabs {tabs} responsive />
 
 	<!-- Actions Bar -->
-	<ActionsBar>
+	<ActionsBar className="w-full justify-center md:w-full md:mx-auto">
 		<SearchAction searchStore={search} placeholder={searchPlaceholder} responsive />
 		<ActionButton icon={Plus} on:click={() => (showAddModal = true)} />
 		<ActionButton
 			icon={Sliders}
 			hasDropdown={true}
-			dropdownPosition="right"
+			dropdownPosition="middle"
 			square={!selectedProfile}
 		>
 			{#if selectedProfile}
@@ -385,7 +385,7 @@
 					>{selectedProfile.name}</span
 				>
 			{/if}
-			<Dropdown slot="dropdown" position="right">
+			<Dropdown slot="dropdown" position="middle">
 				<DropdownItem
 					label="No Profile"
 					selected={selectedProfileId === null}
@@ -400,8 +400,8 @@
 				{/each}
 			</Dropdown>
 		</ActionButton>
-		<ActionButton icon={Clapperboard} hasDropdown={true} dropdownPosition="right">
-			<Dropdown slot="dropdown" position="right">
+		<ActionButton icon={Clapperboard} hasDropdown={true} dropdownPosition="middle">
+			<Dropdown slot="dropdown" position="middle">
 				<DropdownItem
 					icon={Film}
 					label="Movies"
