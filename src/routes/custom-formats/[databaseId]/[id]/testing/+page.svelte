@@ -6,6 +6,9 @@
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { PageData } from './$types';
 	import type { TestWithResult } from './+page.server';
@@ -87,58 +90,63 @@
 	<title>{data.format.name} - Testing - Profilarr</title>
 </svelte:head>
 
-<div class="mt-6 space-y-6">
-	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<div>
-			<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Test Cases</h2>
-			<p class="text-sm text-neutral-600 dark:text-neutral-400">
-				Test release titles against this custom format
-			</p>
-		</div>
-		<button
-			on:click={handleAddTest}
-			class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white hover:bg-accent-700"
-		>
-			<Plus size={16} />
-			Add Test
-		</button>
-	</div>
-
-	<!-- Parser Warning -->
-	{#if !data.parserAvailable}
-		<div
-			class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
-		>
-			<AlertTriangle size={20} class="text-amber-600 dark:text-amber-400" />
+<div class="space-y-6">
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
 			<div>
-				<p class="text-sm font-medium text-amber-800 dark:text-amber-200">
-					Parser service unavailable
-				</p>
-				<p class="text-xs text-amber-600 dark:text-amber-400">
-					Test results cannot be evaluated. Start the parser microservice to see pass/fail status.
+				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Test Cases</h2>
+				<p class="text-sm text-neutral-600 dark:text-neutral-400">
+					Test release titles against this custom format
 				</p>
 			</div>
-		</div>
-	{/if}
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<Button
+				text="Add Test"
+				icon={Plus}
+				iconColor="text-blue-600 dark:text-blue-400"
+				variant="secondary"
+				on:click={handleAddTest}
+			/>
+		</svelte:fragment>
+	</StickyCard>
 
-	<!-- Tests List -->
-	{#if data.tests.length === 0}
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<p class="text-neutral-600 dark:text-neutral-400">
-				No test cases yet. Add a test to verify this custom format works correctly.
-			</p>
-		</div>
-	{:else}
-		<ExpandableTable
-			{columns}
-			data={data.tests}
-			{getRowId}
-			emptyMessage="No test cases found"
-			flushExpanded={true}
-		>
+	<div class="mt-6 space-y-6 pb-12 md:px-4">
+		<!-- Parser Warning -->
+		{#if !data.parserAvailable}
+			<div
+				class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+			>
+				<AlertTriangle size={20} class="text-amber-600 dark:text-amber-400" />
+				<div>
+					<p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+						Parser service unavailable
+					</p>
+					<p class="text-xs text-amber-600 dark:text-amber-400">
+						Test results cannot be evaluated. Start the parser microservice to see pass/fail status.
+					</p>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Tests List -->
+		{#if data.tests.length === 0}
+			<div
+				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
+			>
+				<p class="text-neutral-600 dark:text-neutral-400">
+					No test cases yet. Add a test to verify this custom format works correctly.
+				</p>
+			</div>
+		{:else}
+			<ExpandableTable
+				{columns}
+				data={data.tests}
+				{getRowId}
+				emptyMessage="No test cases found"
+				flushExpanded={true}
+				responsive={true}
+			>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'title'}
 					<code class="font-mono text-sm">{row.title}</code>
@@ -524,38 +532,35 @@
 
 			<svelte:fragment slot="actions" let:row>
 				<div class="flex items-center justify-end gap-1">
-					<button
-						type="button"
+					<TableActionButton
+						icon={Pencil}
+						title="Edit test case"
+						variant="accent"
 						on:click={() =>
 							goto(
 								`/custom-formats/${$page.params.databaseId}/${$page.params.id}/testing/edit?title=${encodeURIComponent(row.title)}&type=${encodeURIComponent(row.type)}`
 							)}
-						class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-						title="Edit test case"
-					>
-						<Pencil size={14} />
-					</button>
+					/>
 					<form method="POST" action="?/delete" use:enhance>
 						<input type="hidden" name="testTitle" value={row.title} />
 						<input type="hidden" name="testType" value={row.type} />
 						<input type="hidden" name="formatName" value={data.format.name} />
 						<input type="hidden" name="layer" value={data.canWriteToBase ? 'base' : 'user'} />
-						<button
-							type="button"
+						<TableActionButton
+							icon={Trash2}
+							title="Delete test case"
+							variant="danger"
 							on:click={(e) => {
 								const form = e.currentTarget.closest('form');
 								if (form) handleDeleteClick(row, form);
 							}}
-							class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-							title="Delete test case"
-						>
-							<Trash2 size={14} />
-						</button>
+						/>
 					</form>
 				</div>
 			</svelte:fragment>
-		</ExpandableTable>
-	{/if}
+			</ExpandableTable>
+		{/if}
+	</div>
 </div>
 
 <!-- Delete Confirmation Modal -->

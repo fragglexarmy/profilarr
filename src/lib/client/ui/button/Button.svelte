@@ -18,6 +18,8 @@
 	export let fullWidth: boolean = false;
 	// Optional href - renders as anchor instead of button
 	export let href: string | undefined = undefined;
+	export let target: string | undefined = undefined;
+	export let rel: string | undefined = undefined;
 	// Alignment for content (center or between for dropdowns)
 	export let justify: 'center' | 'between' = 'center';
 
@@ -72,7 +74,7 @@
 </script>
 
 {#if href}
-	<a {href} class={classes} on:click on:mouseenter on:mouseleave>
+	<a {href} {target} {rel} class={classes} on:click on:mouseenter on:mouseleave>
 		{#if icon && iconPosition === 'left'}
 			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
 		{/if}

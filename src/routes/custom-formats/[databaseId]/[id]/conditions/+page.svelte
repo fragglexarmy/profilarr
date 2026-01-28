@@ -104,7 +104,35 @@
 	}
 
 	// Sort conditions by status (required -> negated -> optional), then type, then alphabetical
-	$: sortedConditions = sortConditions(conditions);
+	let sortSnapshot: string[] = [];
+	let sortedConditions: KeyedCondition[] = [];
+
+	function orderBySnapshot(items: KeyedCondition[], order: string[]) {
+		const map = new Map(items.map((item) => [item._key, item]));
+		const ordered: KeyedCondition[] = [];
+
+		for (const key of order) {
+			const item = map.get(key);
+			if (item) {
+				ordered.push(item);
+				map.delete(key);
+			}
+		}
+
+		// Append any new items (e.g., drafts confirmed while dirty)
+		for (const item of map.values()) {
+			ordered.push(item);
+		}
+
+		return ordered;
+	}
+
+	$: if (!$isDirty) {
+		sortedConditions = sortConditions(conditions);
+		sortSnapshot = sortedConditions.map((c) => c._key);
+	} else {
+		sortedConditions = orderBySnapshot(conditions, sortSnapshot);
+	}
 
 	function handleRemove(key: string) {
 		update(
@@ -210,7 +238,7 @@
 			</div>
 		</svelte:fragment>
 		<svelte:fragment slot="right">
-			<div class="flex items-center gap-3">
+			<div class="flex flex-col gap-2">
 				{#if hasDuplicateNames}
 					<span class="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
 						<AlertTriangle size={14} class="shrink-0" />
@@ -227,14 +255,23 @@
 						Missing required values
 					</span>
 				{/if}
-				<Button text="Add Condition" icon={Plus} variant="secondary" on:click={addDraftCondition} />
-				<Button
-					text={saving ? 'Saving...' : 'Save Changes'}
-					icon={saving ? Loader2 : Save}
-					variant="primary"
-					disabled={saving || !$isDirty || hasDrafts || hasInvalidConditions || hasDuplicateNames}
-					on:click={handleSaveClick}
-				/>
+				<div class="flex items-center gap-2">
+					<Button
+						text="Add Condition"
+						icon={Plus}
+						iconColor="text-blue-600 dark:text-blue-400"
+						variant="secondary"
+						on:click={addDraftCondition}
+					/>
+					<Button
+						text={saving ? 'Saving...' : 'Save Changes'}
+						icon={saving ? Loader2 : Save}
+						iconColor="text-green-600 dark:text-green-400"
+						variant="secondary"
+						disabled={saving || !$isDirty || hasDrafts || hasInvalidConditions || hasDuplicateNames}
+						on:click={handleSaveClick}
+					/>
+				</div>
 			</div>
 		</svelte:fragment>
 	</StickyCard>
@@ -247,18 +284,23 @@
 					<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Drafts</span>
 					<Badge variant="neutral" size="sm">{draftConditions.length}</Badge>
 				</div>
-
-				{#each draftConditions as draft (draft._key)}
-					<ConditionCard
-						mode="draft"
-						condition={draft}
-						availablePatterns={data.availablePatterns}
-						availableLanguages={data.availableLanguages}
-						on:confirm={() => confirmDraft(draft)}
-						on:discard={() => discardDraft(draft._key)}
-						on:change={(e) => handleDraftChange(e.detail, draft._key)}
-					/>
-				{/each}
+				<div class="space-y-2 md:space-y-0 md:divide-y md:divide-neutral-200 md:dark:divide-neutral-800">
+					{#each draftConditions as draft (draft._key)}
+						<div
+							class="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-900 md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-0"
+						>
+							<ConditionCard
+								mode="draft"
+								condition={draft}
+								availablePatterns={data.availablePatterns}
+								availableLanguages={data.availableLanguages}
+								on:confirm={() => confirmDraft(draft)}
+								on:discard={() => discardDraft(draft._key)}
+								on:change={(e) => handleDraftChange(e.detail, draft._key)}
+							/>
+						</div>
+					{/each}
+				</div>
 			</div>
 		{/if}
 
@@ -271,18 +313,24 @@
 					<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Conditions</span>
 					<Badge variant="neutral" size="sm">{conditions.length}</Badge>
 				</div>
-				{#each sortedConditions as condition (condition._key)}
-					<ConditionCard
-						{condition}
-						availablePatterns={data.availablePatterns}
-						availableLanguages={data.availableLanguages}
-						invalid={!isConditionValid(condition)}
-						nameConflict={hasNameConflict(condition)}
-						{hasDrafts}
-						on:remove={() => handleRemove(condition._key)}
-						on:change={(e) => handleConditionChange(e.detail, condition._key)}
-					/>
-				{/each}
+				<div class="space-y-2 md:space-y-0 md:divide-y md:divide-neutral-200 md:dark:divide-neutral-800">
+					{#each sortedConditions as condition (condition._key)}
+						<div
+							class="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-900 md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-0"
+						>
+							<ConditionCard
+								{condition}
+								availablePatterns={data.availablePatterns}
+								availableLanguages={data.availableLanguages}
+								invalid={!isConditionValid(condition)}
+								nameConflict={hasNameConflict(condition)}
+								{hasDrafts}
+								on:remove={() => handleRemove(condition._key)}
+								on:change={(e) => handleConditionChange(e.detail, condition._key)}
+							/>
+						</div>
+					{/each}
+				</div>
 			</div>
 		{/if}
 	</div>

@@ -7,6 +7,8 @@
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import { alertStore } from '$alerts/store';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 
@@ -114,20 +116,42 @@
 </script>
 
 <div class="space-y-6">
-	<!-- Header (only shown in create mode, edit mode uses layout tabs) -->
-	{#if mode === 'create'}
-		<div class="space-y-2">
-			<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
-			<p class="text-sm text-neutral-600 dark:text-neutral-400">
-				{description_}
-			</p>
-		</div>
-	{/if}
+	<!-- Header with actions -->
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{title}</h2>
+			<p class="text-sm text-neutral-600 dark:text-neutral-400">{description_}</p>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<div class="flex items-center gap-2">
+				{#if mode === 'edit'}
+					<Button
+						disabled={deleting}
+						icon={deleting ? Loader2 : Trash2}
+						iconColor="text-red-600 dark:text-red-400"
+						text={deleting ? 'Deleting...' : 'Delete'}
+						on:click={handleDeleteClick}
+					/>
+				{/if}
+				{#if onCancel}
+					<Button text="Cancel" on:click={onCancel} />
+				{/if}
+				<Button
+					disabled={saving || !isValid || !$isDirty}
+					icon={saving ? Loader2 : Save}
+					iconColor="text-blue-600 dark:text-blue-400"
+					text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
+					on:click={handleSaveClick}
+				/>
+			</div>
+		</svelte:fragment>
+	</StickyCard>
 
 	<form
 		bind:this={mainFormElement}
 		method="POST"
 		action={actionUrl}
+		class="md:px-4"
 		use:enhance={() => {
 			saving = true;
 			return async ({ result, update: formUpdate }) => {
@@ -202,61 +226,13 @@
 					<IconCheckbox
 						icon={Check}
 						checked={includeInRename}
+						color="blue"
+						shape="circle"
 						on:click={() => update('includeInRename', !includeInRename)}
 					/>
 					<span class="text-sm text-neutral-700 dark:text-neutral-300">
 						{includeInRename ? 'Enabled' : 'Disabled'}
 					</span>
-				</div>
-			</div>
-
-			<!-- Actions -->
-			<div class="flex items-center justify-between pt-4">
-				<!-- Left side: Delete (only in edit mode) -->
-				<div>
-					{#if mode === 'edit'}
-						<button
-							type="button"
-							disabled={deleting}
-							onclick={handleDeleteClick}
-							class="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900/20"
-						>
-							{#if deleting}
-								<Loader2 size={14} class="animate-spin" />
-								Deleting...
-							{:else}
-								<Trash2 size={14} />
-								Delete
-							{/if}
-						</button>
-					{/if}
-				</div>
-
-				<!-- Right side: Cancel and Save -->
-				<div class="flex gap-3">
-					{#if onCancel}
-						<button
-							type="button"
-							onclick={onCancel}
-							class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-						>
-							Cancel
-						</button>
-					{/if}
-					<button
-						type="button"
-						disabled={saving || !isValid || !$isDirty}
-						onclick={handleSaveClick}
-						class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-					>
-						{#if saving}
-							<Loader2 size={14} class="animate-spin" />
-							{mode === 'create' ? 'Creating...' : 'Saving...'}
-						{:else}
-							<Save size={14} />
-							{submitButtonText}
-						{/if}
-					</button>
 				</div>
 			</div>
 		</div>

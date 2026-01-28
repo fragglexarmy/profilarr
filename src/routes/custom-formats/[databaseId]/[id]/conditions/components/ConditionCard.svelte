@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Check, X, Trash2 } from 'lucide-svelte';
+	import { Check, X, Trash2, ShieldCheck, Ban } from 'lucide-svelte';
+	import RadarrIcon from '$lib/client/assets/Radarr.svg';
+	import SonarrIcon from '$lib/client/assets/Sonarr.svg';
 	import { createEventDispatcher } from 'svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import Autocomplete from '$ui/form/Autocomplete.svelte';
@@ -39,7 +41,7 @@
 
 	// Computed states based on mode
 	$: isDraft = mode === 'draft';
-	$: rightPadding = isDraft ? 'pr-14' : hasDrafts ? 'pr-14' : 'pr-3';
+	$: rightPaddingClass = isDraft || hasDrafts ? 'pr-3 md:pr-14' : 'pr-3';
 
 	// Helper to emit changes - creates new object to maintain immutability
 	function emitChange(updates: Partial<ConditionData>) {
@@ -258,9 +260,9 @@
 		'w-full rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm font-mono text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100';
 </script>
 
-<div class="relative flex items-center gap-3 py-2 pl-3 {rightPadding}">
+<div class="relative flex flex-col gap-3 py-3 px-3 {rightPaddingClass} md:flex-row md:items-center">
 	<!-- Name -->
-	<div class="w-48 shrink-0" title={nameConflict ? 'Duplicate condition name' : ''}>
+	<div class="w-full min-w-0 shrink-0 md:w-48" title={nameConflict ? 'Duplicate condition name' : ''}>
 		<Input
 			value={condition.name}
 			placeholder="Condition name"
@@ -270,172 +272,178 @@
 		/>
 	</div>
 
-	<!-- Type dropdown -->
-	<div class="w-52 shrink-0">
-		<DropdownSelect
-			options={typeOptions}
-			value={condition.type}
-			fullWidth
-			on:change={(e) => handleTypeChange(e.detail)}
-		/>
-	</div>
-
-	<!-- Value input - changes based on type -->
-	<div class="min-w-0 flex-1">
-		{#if isPatternType}
-			<Autocomplete
-				options={patternOptions}
-				selected={selectedPatterns}
-				max={1}
-				placeholder="Select pattern..."
-				mono
-				on:change={handlePatternChange}
-			/>
-		{:else if condition.type === 'language'}
-			<div class="flex items-center gap-2">
-				<div class="min-w-0 flex-1">
-					<Autocomplete
-						options={languageOptions}
-						selected={selectedLanguages}
-						max={1}
-						placeholder="Select language..."
-						mono
-						customItems
-						fullWidth
-						on:change={handleLanguageChange}
-					>
-						<svelte:fragment slot="item" let:option>
-							<span class="flex items-center justify-between w-full">
-								<span>{option.label}</span>
-								<span class="flex gap-1">
-									{#if option.radarr}
-										<Badge variant="warning" size="sm">Radarr</Badge>
-									{/if}
-									{#if option.sonarr}
-										<Badge variant="info" size="sm">Sonarr</Badge>
-									{/if}
-								</span>
-							</span>
-						</svelte:fragment>
-					</Autocomplete>
-				</div>
-				<button
-					type="button"
-					class="relative z-10 flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors dark:border-neutral-600 dark:bg-neutral-800 {hasLanguage
-						? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700'
-						: 'cursor-not-allowed opacity-50'}"
-					disabled={!hasLanguage}
-					on:click={toggleLanguageExcept}
-				>
-					<span class="text-sm text-neutral-700 dark:text-neutral-300">Except</span>
-					<IconCheckbox icon={X} checked={languageExcept} color="red" shape="rounded" />
-				</button>
-			</div>
-		{:else if condition.type === 'size'}
-			<div class="flex items-center gap-2">
-				<div class="flex-1">
-					<NumberInput
-						name="minSize"
-						value={minSizeGB}
-						min={0}
-						step={1}
-						font="mono"
-						placeholder="Min GB"
-						on:change={(e) => handleMinSizeChange(e.detail)}
-					/>
-				</div>
-				<span class="text-sm text-neutral-500">-</span>
-				<div class="flex-1">
-					<NumberInput
-						name="maxSize"
-						value={maxSizeGB}
-						min={0}
-						step={1}
-						font="mono"
-						placeholder="Max GB"
-						on:change={(e) => handleMaxSizeChange(e.detail)}
-					/>
-				</div>
-			</div>
-		{:else if condition.type === 'year'}
-			<div class="flex items-center gap-2">
-				<div class="flex-1">
-					<NumberInput
-						name="minYear"
-						value={minYear}
-						min={1900}
-						max={2100}
-						step={1}
-						font="mono"
-						placeholder="Min Year"
-						on:change={(e) => handleMinYearChange(e.detail)}
-					/>
-				</div>
-				<span class="text-sm text-neutral-500">-</span>
-				<div class="flex-1">
-					<NumberInput
-						name="maxYear"
-						value={maxYear}
-						min={1900}
-						max={2100}
-						step={1}
-						font="mono"
-						placeholder="Max Year"
-						on:change={(e) => handleMaxYearChange(e.detail)}
-					/>
-				</div>
-			</div>
-		{:else}
-			<!-- Enum-based types -->
+	<div class="flex w-full min-w-0 flex-row gap-3 md:contents">
+		<!-- Type dropdown -->
+		<div class="w-36 min-w-0 shrink-0 md:w-52">
 			<DropdownSelect
-				options={valueOptions}
-				value={selectedValue}
+				options={typeOptions}
+				value={condition.type}
 				fullWidth
-				on:change={(e) => handleSelectChange(e.detail)}
+				on:change={(e) => handleTypeChange(e.detail)}
 			/>
-		{/if}
+		</div>
+
+		<!-- Value input - changes based on type -->
+		<div class="min-w-0 flex-1">
+			{#if isPatternType}
+				<Autocomplete
+					options={patternOptions}
+					selected={selectedPatterns}
+					max={1}
+					placeholder="Select pattern..."
+					mono
+					on:change={handlePatternChange}
+				/>
+			{:else if condition.type === 'language'}
+				<div class="flex flex-col gap-2 md:flex-row md:items-center">
+					<div class="min-w-0 flex-1">
+						<Autocomplete
+							options={languageOptions}
+							selected={selectedLanguages}
+							max={1}
+							placeholder="Select language..."
+							mono
+							customItems
+							fullWidth
+							on:change={handleLanguageChange}
+						>
+							<svelte:fragment slot="item" let:option>
+								<span class="flex items-center justify-between w-full">
+									<span>{option.label}</span>
+									<span class="flex gap-1">
+										{#if option.radarr}
+											<Badge variant="warning" size="sm">Radarr</Badge>
+										{/if}
+										{#if option.sonarr}
+											<Badge variant="info" size="sm">Sonarr</Badge>
+										{/if}
+									</span>
+								</span>
+							</svelte:fragment>
+						</Autocomplete>
+					</div>
+					<button
+						type="button"
+						class="relative z-10 flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left text-xs md:text-sm transition-colors dark:border-neutral-600 dark:bg-neutral-800 {hasLanguage
+							? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700'
+							: 'cursor-not-allowed opacity-50'}"
+						disabled={!hasLanguage}
+						on:click={toggleLanguageExcept}
+					>
+						<span class="text-sm text-neutral-700 dark:text-neutral-300">Except</span>
+						<IconCheckbox icon={X} checked={languageExcept} color="red" shape="rounded" />
+					</button>
+				</div>
+			{:else if condition.type === 'size'}
+				<div class="flex flex-col gap-2 md:flex-row md:items-center">
+					<div class="w-full flex-1">
+						<NumberInput
+							name="minSize"
+							value={minSizeGB}
+							min={0}
+							step={1}
+							font="mono"
+							responsive
+							placeholder="Min GB"
+							on:change={(e) => handleMinSizeChange(e.detail)}
+						/>
+					</div>
+					<span class="hidden text-sm text-neutral-500 md:inline">-</span>
+					<div class="w-full flex-1">
+						<NumberInput
+							name="maxSize"
+							value={maxSizeGB}
+							min={0}
+							step={1}
+							font="mono"
+							responsive
+							placeholder="Max GB"
+							on:change={(e) => handleMaxSizeChange(e.detail)}
+						/>
+					</div>
+				</div>
+			{:else if condition.type === 'year'}
+				<div class="flex flex-col gap-2 md:flex-row md:items-center">
+					<div class="w-full flex-1">
+						<NumberInput
+							name="minYear"
+							value={minYear}
+							min={1900}
+							max={2100}
+							step={1}
+							font="mono"
+							responsive
+							placeholder="Min Year"
+							on:change={(e) => handleMinYearChange(e.detail)}
+						/>
+					</div>
+					<span class="hidden text-sm text-neutral-500 md:inline">-</span>
+					<div class="w-full flex-1">
+						<NumberInput
+							name="maxYear"
+							value={maxYear}
+							min={1900}
+							max={2100}
+							step={1}
+							font="mono"
+							responsive
+							placeholder="Max Year"
+							on:change={(e) => handleMaxYearChange(e.detail)}
+						/>
+					</div>
+				</div>
+			{:else}
+				<!-- Enum-based types -->
+				<DropdownSelect
+					options={valueOptions}
+					value={selectedValue}
+					fullWidth
+					on:change={(e) => handleSelectChange(e.detail)}
+				/>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Controls - right aligned -->
-	<div class="ml-auto flex shrink-0 items-center gap-2">
+	<div class="flex flex-wrap items-center gap-2 md:ml-auto md:shrink-0">
 		<!-- Negate -->
 		<button
 			type="button"
-			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 py-2 transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ negate: !condition.negate })}
 		>
-			<span class="text-sm text-neutral-700 dark:text-neutral-300">Negate</span>
-			<IconCheckbox icon={X} checked={condition.negate} color="red" shape="rounded" />
+			<Ban size={16} class="text-red-600 dark:text-red-400" />
+			<IconCheckbox icon={Check} checked={condition.negate} color="red" shape="circle" />
 		</button>
 
 		<!-- Required -->
 		<button
 			type="button"
-			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 py-2 transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ required: !condition.required })}
 		>
-			<span class="text-sm text-neutral-700 dark:text-neutral-300">Required</span>
-			<IconCheckbox icon={Check} checked={condition.required} color="green" shape="rounded" />
+			<ShieldCheck size={16} class="text-green-600 dark:text-green-400" />
+			<IconCheckbox icon={Check} checked={condition.required} color="green" shape="circle" />
 		</button>
 
 		<!-- Radarr -->
 		<button
 			type="button"
-			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 py-2 transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ arrType: getArrType(!radarrEnabled, sonarrEnabled) })}
 		>
-			<span class="text-sm text-neutral-700 dark:text-neutral-300">Radarr</span>
-			<IconCheckbox icon={Check} checked={radarrEnabled} color={ARR_COLORS.radarr} shape="rounded" />
+			<img src={RadarrIcon} alt="Radarr" class="h-4 w-4" />
+			<IconCheckbox icon={Check} checked={radarrEnabled} color={ARR_COLORS.radarr} shape="circle" />
 		</button>
 
 		<!-- Sonarr -->
 		<button
 			type="button"
-			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+			class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 py-2 transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 			on:click={() => emitChange({ arrType: getArrType(radarrEnabled, !sonarrEnabled) })}
 		>
-			<span class="text-sm text-neutral-700 dark:text-neutral-300">Sonarr</span>
-			<IconCheckbox icon={Check} checked={sonarrEnabled} color={ARR_COLORS.sonarr} shape="rounded" />
+			<img src={SonarrIcon} alt="Sonarr" class="h-4 w-4" />
+			<IconCheckbox icon={Check} checked={sonarrEnabled} color={ARR_COLORS.sonarr} shape="circle" />
 		</button>
 
 		<!-- Action buttons based on mode -->
@@ -460,6 +468,17 @@
 				<Trash2 size={14} class="text-red-500 dark:text-red-400" />
 			</button>
 		{/if}
+
+		{#if isDraft}
+			<button
+				type="button"
+				on:click={() => dispatch('confirm', condition)}
+				class="flex cursor-pointer items-center rounded-lg border border-neutral-300 bg-white p-2 transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20 md:hidden"
+				title="Confirm condition"
+			>
+				<Check size={14} class="text-emerald-500 dark:text-emerald-400" />
+			</button>
+		{/if}
 	</div>
 
 	<!-- Confirm button for draft mode - positioned in right padding -->
@@ -467,7 +486,7 @@
 		<button
 			type="button"
 			on:click={() => dispatch('confirm', condition)}
-			class="absolute right-3 top-1/2 -translate-y-1/2 flex cursor-pointer items-center rounded-lg border border-neutral-300 bg-white p-2 transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20"
+			class="absolute right-3 top-1/2 -translate-y-1/2 hidden cursor-pointer items-center rounded-lg border border-neutral-300 bg-white p-2 transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20 md:flex"
 			title="Confirm condition"
 		>
 			<Check size={14} class="text-emerald-500 dark:text-emerald-400" />

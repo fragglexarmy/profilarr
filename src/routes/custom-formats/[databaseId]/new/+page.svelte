@@ -23,7 +23,7 @@
 	<title>New Custom Format - {data.currentDatabase.name} - Profilarr</title>
 </svelte:head>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<GeneralForm
 		mode="create"
 		canWriteToBase={data.canWriteToBase}

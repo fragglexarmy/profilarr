@@ -104,12 +104,12 @@
 	<title>Custom Formats - {data.currentDatabase.name} - Profilarr</title>
 </svelte:head>
 
-<div class="space-y-6 px-8 pt-4 pb-8">
+<div class="space-y-6 px-4 pt-4 pb-8 md:px-8">
 	<!-- Tabs -->
-	<Tabs {tabs} />
+	<Tabs {tabs} responsive />
 
 	<!-- Actions Bar -->
-	<ActionsBar>
+	<ActionsBar className="w-full justify-center mx-auto md:w-auto md:mx-0">
 		<SearchAction searchStore={search} placeholder="Search custom formats..." responsive />
 		<ActionButton
 			icon={Plus}

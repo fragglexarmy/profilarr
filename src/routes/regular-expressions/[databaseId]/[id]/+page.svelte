@@ -24,13 +24,15 @@
 	<title>{data.regularExpression.name} - Regular Expressions - Profilarr</title>
 </svelte:head>
 
-<RegularExpressionForm
-	mode="edit"
-	databaseName={data.currentDatabase.name}
-	canWriteToBase={data.canWriteToBase}
-	actionUrl="?/update"
-	{initialData}
-	onCancel={handleCancel}
-/>
+<div class="p-4 md:p-8">
+	<RegularExpressionForm
+		mode="edit"
+		databaseName={data.currentDatabase.name}
+		canWriteToBase={data.canWriteToBase}
+		actionUrl="?/update"
+		{initialData}
+		onCancel={handleCancel}
+	/>
+</div>
 
 <DirtyModal />
