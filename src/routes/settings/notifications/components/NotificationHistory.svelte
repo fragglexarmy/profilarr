@@ -1,14 +1,40 @@
 <script lang="ts">
-	import { Bell } from 'lucide-svelte';
+	import { Bell, CheckCircle, XCircle } from 'lucide-svelte';
 	import { parseUTC } from '$shared/utils/dates';
 	import type { NotificationHistoryRecord } from '$db/queries/notificationHistory.ts';
+	import Table from '$ui/table/Table.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
+	import type { Column } from '$ui/table/types';
 
 	export let history: NotificationHistoryRecord[];
 	export let services: Array<{ id: string; name: string }>;
 
+	const columns: Column<NotificationHistoryRecord>[] = [
+		{ key: 'title', header: 'Title', sortable: true },
+		{ key: 'service_id', header: 'Service', sortable: true },
+		{ key: 'notification_type', header: 'Type', sortable: true },
+		{ key: 'status', header: 'Status', sortable: true },
+		{ key: 'sent_at', header: 'Time', sortable: true }
+	];
+
 	function formatDateTime(date: string): string {
 		const d = parseUTC(date);
 		return d ? d.toLocaleString() : '-';
+	}
+
+	function getRelativeTime(date: string): string {
+		const d = parseUTC(date);
+		if (!d) return '-';
+		const now = new Date();
+		const diff = now.getTime() - d.getTime();
+		const minutes = Math.floor(diff / 60000);
+		const hours = Math.floor(minutes / 60);
+		const days = Math.floor(hours / 24);
+
+		if (days > 0) return `${days}d ago`;
+		if (hours > 0) return `${hours}h ago`;
+		if (minutes > 0) return `${minutes}m ago`;
+		return 'Just now';
 	}
 
 	function getServiceName(serviceId: string): string {
@@ -17,7 +43,6 @@
 	}
 
 	function formatNotificationType(type: string): string {
-		// Convert 'job.create_backup.success' to 'Backup Success'
 		const parts = type.split('.');
 		if (parts.length >= 3) {
 			const action = parts[1].replace(/_/g, ' ');
@@ -28,112 +53,38 @@
 	}
 </script>
 
-<div
-	class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
->
-	<!-- Header -->
-	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-		<div class="flex items-center gap-2">
-			<Bell size={18} class="text-neutral-600 dark:text-neutral-400" />
-			<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-				Recent Notifications
-			</h2>
-		</div>
+<div class="space-y-4">
+	<div class="flex items-center gap-2">
+		<Bell size={18} class="text-neutral-600 dark:text-neutral-400" />
+		<h2 class="text-lg font-semibold text-neutral-900 md:text-xl dark:text-neutral-50">
+			Recent Notifications
+		</h2>
 	</div>
 
-	<!-- Table -->
-	<div class="overflow-x-auto">
-		<table class="w-full text-xs">
-			<thead>
-				<tr>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Time
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Service
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Type
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Title
-					</th>
-					<th
-						class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-					>
-						Status
-					</th>
-				</tr>
-			</thead>
-			<tbody class="[&_tr:last-child_td]:border-b-0">
-				{#each history as record (record.id)}
-					<tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-						<!-- Time -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							{formatDateTime(record.sent_at)}
-						</td>
-
-						<!-- Service -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							{getServiceName(record.service_id)}
-						</td>
-
-						<!-- Type -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-						>
-							<span
-								class="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
-							>
-								{formatNotificationType(record.notification_type)}
-							</span>
-						</td>
-
-						<!-- Title -->
-						<td
-							class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							{record.title}
-						</td>
-
-						<!-- Status -->
-						<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
-							{#if record.status === 'success'}
-								<span
-									class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
-								>
-									Success
-								</span>
-							{:else}
-								<span
-									class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-200"
-									title={record.error || 'Unknown error'}
-								>
-									Failed
-								</span>
-							{/if}
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="5" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-							No notification history available yet.
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
+	<Table
+		{columns}
+		data={history}
+		emptyMessage="No notification history available yet."
+		compact
+		responsive
+	>
+		<svelte:fragment slot="cell" let:row let:column>
+			{#if column.key === 'title'}
+				<span class="font-medium">{row.title}</span>
+			{:else if column.key === 'service_id'}
+				{getServiceName(row.service_id)}
+			{:else if column.key === 'notification_type'}
+				<Badge variant="neutral">{formatNotificationType(row.notification_type)}</Badge>
+			{:else if column.key === 'status'}
+				<Badge
+					variant={row.status === 'success' ? 'success' : 'danger'}
+					icon={row.status === 'success' ? CheckCircle : XCircle}
+				>
+					{row.status === 'success' ? 'Success' : 'Failed'}
+				</Badge>
+			{:else if column.key === 'sent_at'}
+				<Badge variant="neutral" mono>{getRelativeTime(row.sent_at)}</Badge>
+			{/if}
+		</svelte:fragment>
+	</Table>
 </div>

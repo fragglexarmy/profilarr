@@ -4,10 +4,22 @@
 	import { Plus, Trash2, Bell, BellOff, MessageSquare, Send, Loader2, Pencil } from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import NotificationHistory from './components/NotificationHistory.svelte';
+	import Table from '$ui/table/Table.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
+	import type { Column } from '$ui/table/types';
 	import { siDiscord } from 'simple-icons';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+
+	type Service = (typeof data.services)[0];
+
+	const columns: Column<Service>[] = [
+		{ key: 'name', header: 'Service', sortable: true },
+		{ key: 'service_type', header: 'Type', sortable: true },
+		{ key: 'enabled', header: 'Status', sortable: true },
+		{ key: 'stats', header: 'Stats' }
+	];
 
 	// Modal state
 	let showDeleteModal = false;
@@ -91,10 +103,10 @@
 <div class="p-8">
 	<!-- Header -->
 	<div class="mb-8">
-		<div class="flex items-center justify-between">
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 			<div>
-				<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Notifications</h1>
-				<p class="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
+				<h1 class="text-2xl font-bold text-neutral-900 md:text-3xl dark:text-neutral-50">Notifications</h1>
+				<p class="mt-2 text-base text-neutral-600 md:mt-3 md:text-lg dark:text-neutral-400">
 					Manage notification services and delivery settings
 				</p>
 			</div>
@@ -102,7 +114,7 @@
 			<!-- Add Service Button -->
 			<a
 				href="/settings/notifications/new"
-				class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
+				class="flex w-fit items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600"
 			>
 				<Plus size={16} />
 				Add Service
@@ -110,252 +122,134 @@
 		</div>
 	</div>
 
-	<!-- Services List -->
-	<div
-		class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+	<!-- Services Table -->
+	<Table
+		{columns}
+		data={data.services}
+		emptyMessage="No notification services configured. Click 'Add Service' to get started."
+		compact
+		responsive
 	>
-		<!-- Header -->
-		<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-			<div class="flex items-center gap-2">
-				<Bell size={18} class="text-neutral-600 dark:text-neutral-400" />
-				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-					Notification Services
-				</h2>
-			</div>
-		</div>
-
-		<!-- Table -->
-		<div class="overflow-x-auto">
-			<table class="w-full text-xs">
-				<thead>
-					<tr>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
+		<svelte:fragment slot="cell" let:row let:column>
+			{#if column.key === 'name'}
+				<span class="font-medium">{row.name}</span>
+			{:else if column.key === 'service_type'}
+				<div class="flex items-center gap-2">
+					{#if row.service_type === 'discord'}
+						<svg
+							role="img"
+							viewBox="0 0 24 24"
+							class="h-4 w-4 text-neutral-600 dark:text-neutral-400"
+							fill="currentColor"
 						>
-							Service
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Type
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Status
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Enabled Types
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Statistics
-						</th>
-						<th
-							class="border-b border-neutral-200 px-4 py-3 text-left font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-						>
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody class="[&_tr:last-child_td]:border-b-0">
-					{#each data.services as service (service.id)}
-						<tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-							<!-- Service Name -->
-							<td
-								class="border-b border-neutral-200 px-4 py-2 text-neutral-900 dark:border-neutral-800 dark:text-neutral-50"
-							>
-								<span class="font-medium">{service.name}</span>
-							</td>
-
-							<!-- Type -->
-							<td
-								class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-							>
-								<div class="flex items-center gap-2">
-									{#if service.service_type === 'discord'}
-										<svg
-											role="img"
-											viewBox="0 0 24 24"
-											class="h-4 w-4 text-neutral-600 dark:text-neutral-400"
-											fill="currentColor"
-										>
-											<path d={siDiscord.path} />
-										</svg>
-									{:else}
-										<svelte:component
-											this={getServiceIcon(service.service_type)}
-											size={16}
-											class="text-neutral-600 dark:text-neutral-400"
-										/>
-									{/if}
-									<span>{getServiceTypeName(service.service_type)}</span>
-								</div>
-							</td>
-
-							<!-- Status -->
-							<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
-								<form
-									method="POST"
-									action="?/toggleEnabled"
-									use:enhance={() => {
-										return async ({ result, update }) => {
-											if (result.type === 'failure' && result.data) {
-												alertStore.add(
-													'error',
-													(result.data as { error?: string }).error || 'Failed to update service'
-												);
-											} else if (result.type === 'success') {
-												alertStore.add('success', 'Service updated successfully');
-											}
-											await update();
-										};
-									}}
-								>
-									<input type="hidden" name="id" value={service.id} />
-									<input type="hidden" name="enabled" value={service.enabled ? 'false' : 'true'} />
-									<button
-										type="submit"
-										class="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors {service.enabled
-											? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200'
-											: 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200'}"
-									>
-										<svelte:component this={service.enabled ? Bell : BellOff} size={12} />
-										{service.enabled ? 'Enabled' : 'Disabled'}
-									</button>
-								</form>
-							</td>
-
-							<!-- Enabled Types -->
-							<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
-								<div class="flex max-w-sm flex-wrap gap-1">
-									{#each getEnabledTypes(service.enabled_types) as type}
-										<span
-											class="inline-flex items-center rounded-full bg-accent-100 px-2 py-0.5 text-xs font-medium text-accent-800 dark:bg-accent-900 dark:text-accent-200"
-										>
-											{formatNotificationType(type)}
-										</span>
-									{:else}
-										<span class="text-xs text-neutral-400 dark:text-neutral-500">None</span>
-									{/each}
-								</div>
-							</td>
-
-							<!-- Statistics -->
-							<td
-								class="border-b border-neutral-200 px-4 py-2 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400"
-							>
-								{#if service.successCount + service.failedCount > 0}
-									<div class="text-xs">
-										<span class="text-green-600 dark:text-green-400"
-											>{service.successCount} sent</span
-										>
-										•
-										<span class="text-red-600 dark:text-red-400">{service.failedCount} failed</span>
-										•
-										<span>{formatSuccessRate(service.successRate)}</span>
-									</div>
-								{:else}
-									<span class="text-neutral-400 dark:text-neutral-500">No notifications sent</span>
-								{/if}
-							</td>
-
-							<!-- Actions -->
-							<td class="border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
-								<div class="flex items-center gap-2">
-									<!-- Test Button -->
-									<form
-										method="POST"
-										action="?/testNotification"
-										use:enhance={() => {
-											testingServiceId = service.id;
-											return async ({ result, update }) => {
-												if (result.type === 'failure' && result.data) {
-													alertStore.add(
-														'error',
-														(result.data as { error?: string }).error ||
-															'Failed to send test notification'
-													);
-												} else if (result.type === 'success') {
-													alertStore.add('success', 'Test notification sent successfully');
-												}
-												testingServiceId = null;
-												await update();
-											};
-										}}
-									>
-										<input type="hidden" name="id" value={service.id} />
-										<button
-											type="submit"
-											disabled={testingServiceId === service.id}
-											class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-accent-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
-											title="Send test notification"
-										>
-											{#if testingServiceId === service.id}
-												<Loader2 size={14} class="animate-spin" />
-											{:else}
-												<Send size={14} />
-											{/if}
-										</button>
-									</form>
-
-									<!-- Edit Button -->
-									<a
-										href="/settings/notifications/edit/{service.id}"
-										class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-										title="Edit service"
-									>
-										<Pencil size={14} />
-									</a>
-
-									<!-- Delete Button -->
-									<form
-										method="POST"
-										action="?/delete"
-										use:enhance={() => {
-											return async ({ result, update }) => {
-												if (result.type === 'failure' && result.data) {
-													alertStore.add(
-														'error',
-														(result.data as { error?: string }).error || 'Failed to delete service'
-													);
-												} else if (result.type === 'success') {
-													alertStore.add('success', 'Service deleted successfully');
-												}
-												await update();
-											};
-										}}
-									>
-										<input type="hidden" name="id" value={service.id} />
-										<button
-											type="button"
-											on:click={(e) => {
-												const form = e.currentTarget.closest('form');
-												if (form) openDeleteModal(service.id, service.name, form);
-											}}
-											class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 bg-white text-red-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:bg-neutral-700"
-											title="Delete service"
-										>
-											<Trash2 size={14} />
-										</button>
-									</form>
-								</div>
-							</td>
-						</tr>
+							<path d={siDiscord.path} />
+						</svg>
 					{:else}
-						<tr>
-							<td colspan="6" class="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-								No notification services configured. Click "Add Service" to get started.
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	</div>
+						<svelte:component
+							this={getServiceIcon(row.service_type)}
+							size={16}
+							class="text-neutral-600 dark:text-neutral-400"
+						/>
+					{/if}
+					<span>{getServiceTypeName(row.service_type)}</span>
+				</div>
+			{:else if column.key === 'enabled'}
+				<Badge variant={row.enabled ? 'success' : 'neutral'} icon={row.enabled ? Bell : BellOff}>
+					{row.enabled ? 'Enabled' : 'Disabled'}
+				</Badge>
+			{:else if column.key === 'stats'}
+				{#if row.successCount + row.failedCount > 0}
+					<span class="text-xs">
+						<span class="text-green-600 dark:text-green-400">{row.successCount}</span>
+						/
+						<span class="text-red-600 dark:text-red-400">{row.failedCount}</span>
+					</span>
+				{:else}
+					<span class="text-neutral-400 dark:text-neutral-500">-</span>
+				{/if}
+			{/if}
+		</svelte:fragment>
+
+		<svelte:fragment slot="actions" let:row>
+			<div class="flex items-center gap-1">
+				<!-- Test Button -->
+				<form
+					method="POST"
+					action="?/testNotification"
+					use:enhance={() => {
+						testingServiceId = row.id;
+						return async ({ result, update }) => {
+							if (result.type === 'failure' && result.data) {
+								alertStore.add(
+									'error',
+									(result.data as { error?: string }).error || 'Failed to send test notification'
+								);
+							} else if (result.type === 'success') {
+								alertStore.add('success', 'Test notification sent successfully');
+							}
+							testingServiceId = null;
+							await update();
+						};
+					}}
+				>
+					<input type="hidden" name="id" value={row.id} />
+					<button
+						type="submit"
+						disabled={testingServiceId === row.id}
+						class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-accent-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
+						title="Send test notification"
+					>
+						{#if testingServiceId === row.id}
+							<Loader2 size={12} class="animate-spin" />
+						{:else}
+							<Send size={12} />
+						{/if}
+					</button>
+				</form>
+
+				<!-- Edit Button -->
+				<a
+					href="/settings/notifications/edit/{row.id}"
+					class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+					title="Edit service"
+				>
+					<Pencil size={12} />
+				</a>
+
+				<!-- Delete Button -->
+				<form
+					method="POST"
+					action="?/delete"
+					use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'failure' && result.data) {
+								alertStore.add(
+									'error',
+									(result.data as { error?: string }).error || 'Failed to delete service'
+								);
+							} else if (result.type === 'success') {
+								alertStore.add('success', 'Service deleted successfully');
+							}
+							await update();
+						};
+					}}
+				>
+					<input type="hidden" name="id" value={row.id} />
+					<button
+						type="button"
+						on:click={(e) => {
+							const form = e.currentTarget.closest('form');
+							if (form) openDeleteModal(row.id, row.name, form);
+						}}
+						class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-red-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:bg-neutral-700"
+						title="Delete service"
+					>
+						<Trash2 size={12} />
+					</button>
+				</form>
+			</div>
+		</svelte:fragment>
+	</Table>
 
 	<!-- Notification History Component -->
 	<div class="mt-8">
