@@ -31,6 +31,8 @@
 	export let backButton: BackButton | undefined = undefined;
 	export let breadcrumb: Breadcrumb | undefined = undefined;
 	export let responsive: boolean = false;
+	export let hideWhenSingle: boolean = true;
+	export let hiddenSpacerClass: string = 'h-1';
 
 	// Mobile detection
 	let isMobile = false;
@@ -67,7 +69,9 @@
 	}
 </script>
 
-{#if useMobileMode}
+{#if hideWhenSingle && tabs.length <= 1 && !backButton && !breadcrumb}
+	<div class={hiddenSpacerClass}></div>
+{:else if useMobileMode}
 	<!-- Mobile: Custom dropdown with icons -->
 	<div class="border-b border-neutral-200 py-3 dark:border-neutral-800">
 		<div class="relative" bind:this={triggerEl} use:clickOutside={() => (dropdownOpen = false)}>
