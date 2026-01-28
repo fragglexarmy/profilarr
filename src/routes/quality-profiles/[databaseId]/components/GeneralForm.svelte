@@ -7,6 +7,7 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
 	import { alertStore } from '$alerts/store';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 
@@ -174,20 +175,42 @@
 </script>
 
 <div class="space-y-6">
-	<!-- Header (only shown in create mode, edit mode uses layout tabs) -->
-	{#if mode === 'create'}
-		<div class="space-y-2">
-			<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
-			<p class="text-sm text-neutral-600 dark:text-neutral-400">
-				{description_}
-			</p>
-		</div>
-	{/if}
+	<!-- Header with actions -->
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<h1 class="text-neutral-900 dark:text-neutral-50">{title}</h1>
+			<p class="text-neutral-600 dark:text-neutral-400">{description_}</p>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<div class="flex items-center gap-2">
+				{#if mode === 'edit'}
+					<Button
+						disabled={deleting}
+						icon={deleting ? Loader2 : Trash2}
+						iconColor="text-red-600 dark:text-red-400"
+						text={deleting ? 'Deleting...' : 'Delete'}
+						on:click={handleDeleteClick}
+					/>
+				{/if}
+				{#if onCancel}
+					<Button text="Cancel" on:click={onCancel} />
+				{/if}
+				<Button
+					disabled={saving || !isValid || !$isDirty}
+					icon={saving ? Loader2 : Save}
+					iconColor="text-blue-600 dark:text-blue-400"
+					text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
+					on:click={handleSaveClick}
+				/>
+			</div>
+		</svelte:fragment>
+	</StickyCard>
 
 	<form
 		bind:this={mainFormElement}
 		method="POST"
 		action={actionUrl}
+		class="md:px-4"
 		use:enhance={() => {
 			saving = true;
 			return async ({ result, update: formUpdate }) => {
@@ -302,39 +325,6 @@
 				</div>
 			{/if}
 
-			<!-- Actions -->
-			<div class="flex items-center justify-between pt-4">
-				<!-- Left side: Delete (only in edit mode) -->
-				<div>
-					{#if mode === 'edit'}
-						<Button
-							variant="danger"
-							disabled={deleting}
-							icon={deleting ? Loader2 : Trash2}
-							text={deleting ? 'Deleting...' : 'Delete'}
-							on:click={handleDeleteClick}
-						/>
-					{/if}
-				</div>
-
-				<!-- Right side: Cancel and Save -->
-				<div class="flex gap-3">
-					{#if onCancel}
-						<Button
-							variant="secondary"
-							text="Cancel"
-							on:click={onCancel}
-						/>
-					{/if}
-					<Button
-						variant="primary"
-						disabled={saving || !isValid || !$isDirty}
-						icon={saving ? Loader2 : Save}
-						text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
-						on:click={handleSaveClick}
-					/>
-				</div>
-			</div>
 		</div>
 	</form>
 

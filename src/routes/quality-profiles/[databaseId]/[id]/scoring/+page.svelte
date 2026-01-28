@@ -17,6 +17,8 @@
 	} from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -415,7 +417,7 @@
 			return true;
 		}) || [];
 
-	$: sortedCustomFormats = sortFormats(filteredCustomFormats, customFormatScores, sortState);
+	$: sortedCustomFormats = sortFormats(filteredCustomFormats, initialData.customFormatScores, sortState);
 	$: groupedFormats = groupFormats(sortedCustomFormats, selectedGroups);
 
 	// Apply default sort
@@ -429,20 +431,22 @@
 	}
 
 	// Build custom format scores array for form submission
-	function buildCustomFormatScoresArray(): Array<{
+	function buildCustomFormatScoresArray(
+		currentScores: Record<string, Record<string, number | null>>,
+		initialScores: Record<string, Record<string, number | null>>
+	): Array<{
 		customFormatName: string;
 		arrType: string;
 		score: number | null;
 	}> {
 		const result: Array<{ customFormatName: string; arrType: string; score: number | null }> = [];
-		const initial = initialData.customFormatScores;
 
-		for (const [cfName, arrTypeScores] of Object.entries(customFormatScores)) {
-			const initialScores = initial[cfName] || {};
+		for (const [cfName, arrTypeScores] of Object.entries(currentScores)) {
+			const initialScoresForFormat = initialScores[cfName] || {};
 
 			for (const [arrType, score] of Object.entries(arrTypeScores)) {
 				// Only include if different from initial
-				if (score !== initialScores[arrType]) {
+				if (score !== initialScoresForFormat[arrType]) {
 					result.push({ customFormatName: cfName, arrType, score });
 				}
 			}
@@ -450,6 +454,10 @@
 
 		return result;
 	}
+
+	$: customFormatScoresPayload = JSON.stringify(
+		buildCustomFormatScoresArray(customFormatScores, initialData.customFormatScores)
+	);
 
 	// Handlers for score changes from ScoringTable
 	function handleScoreChange(
@@ -573,70 +581,57 @@
 </svelte:head>
 
 {#if scoring}
-	<!-- Save Bar -->
-	{#if $isDirty}
-		<div
-			class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95"
-		>
-			<div class="flex items-center gap-3">
-				<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
-				{#if saveError}
-					<span class="text-sm text-red-600 dark:text-red-400">{saveError}</span>
-				{/if}
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<h1 class="text-neutral-900 dark:text-neutral-50">Scoring</h1>
+			<p class="text-neutral-600 dark:text-neutral-400">Configure custom format scores</p>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<div class="flex items-center gap-2">
+				<Button text="Scoring" icon={Info} on:click={() => (showInfoModal = true)} />
+				<Button text="Options" icon={Info} on:click={() => (showOptionsInfoModal = true)} />
+				<Button
+					disabled={isSaving || !$isDirty}
+					icon={isSaving ? Loader2 : Save}
+					iconColor="text-blue-600 dark:text-blue-400"
+					text={isSaving ? 'Saving...' : 'Save'}
+					on:click={handleSaveClick}
+				/>
 			</div>
+		</svelte:fragment>
+	</StickyCard>
 
-			<button
-				type="button"
-				disabled={isSaving}
-				on:click={handleSaveClick}
-				class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-			>
-				{#if isSaving}
-					<Loader2 size={14} class="animate-spin" />
-					Saving...
-				{:else}
-					<Save size={14} />
-					Save
-				{/if}
-			</button>
-		</div>
+	<!-- Hidden form for submission -->
+	<form
+		bind:this={formElement}
+		method="POST"
+		action="?/update"
+		class="hidden"
+		use:enhance={() => {
+			isSaving = true;
+			saveError = null;
+			return async ({ result, update: formUpdate }) => {
+				isSaving = false;
+				if (result.type === 'success') {
+					alertStore.add('success', 'Scoring saved!');
+					// Mark as clean so navigation guard doesn't trigger
+					initEdit(initialData);
+					await formUpdate();
+				} else if (result.type === 'failure') {
+					saveError = (result.data as { error?: string })?.error || 'Failed to save';
+					alertStore.add('error', saveError);
+				}
+			};
+		}}
+	>
+		<input type="hidden" name="minimumScore" value={minimumScore} />
+		<input type="hidden" name="upgradeUntilScore" value={upgradeUntilScore} />
+		<input type="hidden" name="upgradeScoreIncrement" value={upgradeScoreIncrement} />
+		<input type="hidden" name="customFormatScores" value={customFormatScoresPayload} />
+		<input type="hidden" name="layer" value={selectedLayer} />
+	</form>
 
-		<!-- Hidden form for submission -->
-		<form
-			bind:this={formElement}
-			method="POST"
-			action="?/update"
-			class="hidden"
-			use:enhance={() => {
-				isSaving = true;
-				saveError = null;
-				return async ({ result, update: formUpdate }) => {
-					isSaving = false;
-					if (result.type === 'success') {
-						alertStore.add('success', 'Scoring saved!');
-						// Mark as clean so navigation guard doesn't trigger
-						initEdit(initialData);
-						await formUpdate();
-					} else if (result.type === 'failure') {
-						saveError = (result.data as { error?: string })?.error || 'Failed to save';
-						alertStore.add('error', saveError);
-					}
-				};
-			}}
-		>
-			<input type="hidden" name="minimumScore" value={minimumScore} />
-			<input type="hidden" name="upgradeUntilScore" value={upgradeUntilScore} />
-			<input type="hidden" name="upgradeScoreIncrement" value={upgradeScoreIncrement} />
-			<input
-				type="hidden"
-				name="customFormatScores"
-				value={JSON.stringify(buildCustomFormatScoresArray())}
-			/>
-			<input type="hidden" name="layer" value={selectedLayer} />
-		</form>
-	{/if}
-
-	<div class="mt-6 space-y-6">
+	<div class="mt-6 space-y-6 md:px-4">
 		<!-- Profile-level Score Settings -->
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 			<div class="space-y-2">
@@ -697,31 +692,13 @@
 			</div>
 		</div>
 
-		<!-- Section Header -->
-		<div class="flex items-start justify-between">
-			<div>
-				<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-					Custom Format Scoring
-				</div>
-				<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-					Configure custom format scores for each Arr type
-				</p>
-			</div>
-			<button
-				type="button"
-				on:click={() => (showInfoModal = true)}
-				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<Info size={14} />
-				Info
-			</button>
-		</div>
+		<!-- Custom Format Scoring -->
 
-		<ActionsBar className="w-full">
-			<SearchAction {searchStore} placeholder="Search custom formats..." />
+		<ActionsBar className="md:w-full">
+			<SearchAction {searchStore} placeholder="Search custom formats..." responsive />
 			<ActionButton icon={ArrowUpDown} hasDropdown={true} dropdownPosition="right">
 				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-					<Dropdown position={dropdownPosition} minWidth="10rem">
+					<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="10rem">
 						<div class="py-1">
 							<button
 								type="button"
@@ -783,7 +760,7 @@
 			</ActionButton>
 			<ActionButton icon={Layers} hasDropdown={true} dropdownPosition="right">
 				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-					<Dropdown position={dropdownPosition} minWidth="14rem">
+					<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="14rem">
 						<div class="py-1">
 							<button
 								type="button"
@@ -833,7 +810,7 @@
 			</ActionButton>
 			<ActionButton icon={LayoutGrid} hasDropdown={true} dropdownPosition="right">
 				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-					<Dropdown position={dropdownPosition} minWidth="10rem">
+					<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="10rem">
 						<div class="py-1">
 							{#each [1, 2, 3] as columns}
 								<button
@@ -861,7 +838,7 @@
 			</ActionButton>
 			<ActionButton icon={Settings} hasDropdown={true} dropdownPosition="right">
 				<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-					<Dropdown position={dropdownPosition} minWidth="14rem">
+					<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="14rem">
 						<div class="py-1">
 							<button
 								type="button"
@@ -969,7 +946,6 @@
 					</Dropdown>
 				</svelte:fragment>
 			</ActionButton>
-			<ActionButton icon={Info} on:click={() => (showOptionsInfoModal = true)} />
 		</ActionsBar>
 
 		<!-- Custom Format Scores Tables -->

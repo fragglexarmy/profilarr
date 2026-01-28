@@ -12,6 +12,7 @@
 	export let placeholder: string = 'Select...';
 	export let minWidth: string = '8rem';
 	export let position: 'left' | 'right' | 'middle' = 'left';
+	export let mobilePosition: 'left' | 'right' | 'middle' | null = null;
 	// Separate compact controls - compact is shorthand for both
 	export let compact: boolean = false;
 	export let compactButton: boolean | undefined = undefined;
@@ -96,7 +97,7 @@
 			on:click={() => !disabled && (open = !open)}
 		/>
 		{#if open}
-			<Dropdown {position} {minWidth} compact={isCompactDropdown} {fixed} {triggerEl}>
+			<Dropdown {position} {mobilePosition} {minWidth} compact={isCompactDropdown} {fixed} {triggerEl}>
 				{#each options as option}
 					<DropdownItem
 						label={option.label}

@@ -1,29 +1,25 @@
 <script lang="ts">
-	import { tick } from 'svelte';
-	import { X, Check, ArrowUp, Info, Eye, EyeOff, Save, Loader2 } from 'lucide-svelte';
+	import { tick, onMount, onDestroy } from 'svelte';
+	import { X, Check, ArrowUp, Info, Save, Loader2, Layers, ChevronUp, ChevronDown } from 'lucide-svelte';
 	import IconCheckbox from '$lib/client/ui/form/IconCheckbox.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
-	import ActionsBar from '$ui/actions/ActionsBar.svelte';
-	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
 	let showInfoModal = false;
-	let showLegacyQualities = true;
 
 	type OrderedItem = PageData['qualities']['orderedItems'][number];
-	type QualityMember = PageData['qualities']['availableQualities'][number];
-
 	// Form data shape
 	interface QualitiesFormData {
 		orderedItems: OrderedItem[];
-		availableQualities: QualityMember[];
 		[key: string]: unknown;
 	}
 
@@ -32,27 +28,59 @@
 
 	function buildInitialData(qualities: typeof data.qualities): QualitiesFormData {
 		return {
-			orderedItems: structuredClone(qualities.orderedItems),
-			availableQualities: structuredClone(qualities.availableQualities)
+			orderedItems: structuredClone(qualities.orderedItems)
 		};
+	}
+
+	function buildMergedOrderedItems(qualities: typeof data.qualities): OrderedItem[] {
+		const orderedItems = structuredClone(qualities.orderedItems);
+		const additional = qualities.availableQualities.map((quality, index) => ({
+			type: 'quality' as const,
+			name: quality.name,
+			position: orderedItems.length + index,
+			enabled: false,
+			upgradeUntil: false
+		}));
+
+		const merged = [...orderedItems, ...additional];
+		merged.forEach((item, index) => {
+			item.position = index;
+		});
+
+		return merged;
 	}
 
 	// Initialize dirty tracking
 	$: initEdit(initialData);
 
+	let lastAutoMergeKey = '';
+	let lastQualitiesRef: typeof data.qualities | null = null;
+	$: if (data.qualities) {
+		if (data.qualities !== lastQualitiesRef) {
+			lastAutoMergeKey = '';
+			lastQualitiesRef = data.qualities;
+		}
+		const availableNames = data.qualities.availableQualities.map((q) => q.name).join('|');
+		if (availableNames && availableNames !== lastAutoMergeKey) {
+			update('orderedItems', buildMergedOrderedItems(data.qualities));
+		}
+		lastAutoMergeKey = availableNames;
+	}
+
 	// Reactive getters for current values
 	$: mainBucket = ($current.orderedItems ?? []) as OrderedItem[];
-	$: legacyBucket = ($current.availableQualities ?? []) as QualityMember[];
 
 	// Save state
 	let isSaving = false;
-	let saveError: string | null = null;
 	let selectedLayer: 'user' | 'base' = 'user';
 	let showSaveTargetModal = false;
 	let formElement: HTMLFormElement;
 
+	// Mobile detection
+	let isMobile = false;
+	let mediaQuery: MediaQueryList | null = null;
+
 	// Drag state (local, not tracked for dirty)
-	let draggedFromLegacy: QualityMember | null = null;
 	let draggedQualityFromMain: { item: OrderedItem; index: number } | null = null;
 	let lastTargetIndex: number | null = null;
 	let hoverTargetIndex: number | null = null;
@@ -62,14 +90,36 @@
 	let editingGroupName: string = '';
 	let groupingMode: boolean = false;
 
+	// Group creation modal state
+	let showGroupModal = false;
+	let groupNameInput = '';
+	let selectedGroupNames = new Set<string>();
+
+	$: groupableItems = mainBucket.filter((item) => item.type === 'quality');
+	$: selectedGroupCount = selectedGroupNames.size;
+	$: canCreateGroup = selectedGroupCount >= 2;
+
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			mediaQuery = window.matchMedia('(max-width: 767px)');
+			isMobile = mediaQuery.matches;
+			mediaQuery.addEventListener('change', handleMediaChange);
+		}
+	});
+
+	onDestroy(() => {
+		if (mediaQuery) {
+			mediaQuery.removeEventListener('change', handleMediaChange);
+		}
+	});
+
+	function handleMediaChange(e: MediaQueryListEvent) {
+		isMobile = e.matches;
+	}
+
 	// Helper to update mainBucket in the store
 	function updateMainBucket(newBucket: OrderedItem[]) {
 		update('orderedItems', newBucket);
-	}
-
-	// Helper to update legacyBucket in the store
-	function updateLegacyBucket(newBucket: QualityMember[]) {
-		update('availableQualities', newBucket);
 	}
 
 	function handleQualityDragStart(item: OrderedItem, index: number) {
@@ -196,6 +246,20 @@
 		willAddToGroup = false;
 	}
 
+	function moveItem(index: number, direction: 'up' | 'down') {
+		const targetIndex = direction === 'up' ? index - 1 : index + 1;
+		if (targetIndex < 0 || targetIndex >= mainBucket.length) return;
+
+		const newBucket = [...mainBucket];
+		const [movedItem] = newBucket.splice(index, 1);
+		newBucket.splice(targetIndex, 0, movedItem);
+
+		newBucket.forEach((item, idx) => {
+			item.position = idx;
+		});
+		updateMainBucket(newBucket);
+	}
+
 	function startEditingGroupName(item: OrderedItem, index: number) {
 		if (item.type === 'group') {
 			editingGroupIndex = index;
@@ -252,42 +316,6 @@
 		updateMainBucket(newBucket);
 	}
 
-	function handleDragStart(item: QualityMember) {
-		draggedFromLegacy = item;
-	}
-
-	function handleDragOverMain(e: DragEvent) {
-		e.preventDefault();
-	}
-
-	function handleDropOnMain(e: DragEvent) {
-		e.preventDefault();
-		if (!draggedFromLegacy) return;
-
-		const newLegacyBucket = legacyBucket.filter((q) => q.name !== draggedFromLegacy!.name);
-		updateLegacyBucket(newLegacyBucket);
-
-		const newItem: OrderedItem = {
-			type: 'quality',
-			name: draggedFromLegacy.name,
-			position: mainBucket.length,
-			enabled: false,
-			upgradeUntil: false
-		};
-
-		const newBucket = [...mainBucket, newItem];
-		newBucket.forEach((item, index) => {
-			item.position = index;
-		});
-		updateMainBucket(newBucket);
-
-		draggedFromLegacy = null;
-	}
-
-	function handleDragEnd() {
-		draggedFromLegacy = null;
-	}
-
 	function collapseGroup(group: OrderedItem) {
 		if (group.type !== 'group' || !group.members) return;
 
@@ -314,6 +342,66 @@
 		updateMainBucket(newBucket);
 	}
 
+	function openGroupModal() {
+		showGroupModal = true;
+		groupNameInput = '';
+		selectedGroupNames = new Set();
+	}
+
+	function closeGroupModal() {
+		showGroupModal = false;
+		groupNameInput = '';
+		selectedGroupNames = new Set();
+	}
+
+	function toggleGroupSelection(name: string) {
+		if (selectedGroupNames.has(name)) {
+			selectedGroupNames.delete(name);
+		} else {
+			selectedGroupNames.add(name);
+		}
+		selectedGroupNames = selectedGroupNames;
+	}
+
+	function handleCreateGroup() {
+		if (!canCreateGroup) return;
+
+		const selectedItems = mainBucket.filter(
+			(item) => item.type === 'quality' && selectedGroupNames.has(item.name)
+		) as OrderedItem[];
+
+		if (selectedItems.length < 2) return;
+
+		const insertIndex = mainBucket.findIndex(
+			(item) => item.type === 'quality' && selectedGroupNames.has(item.name)
+		);
+		if (insertIndex === -1) return;
+
+		const groupName =
+			groupNameInput.trim() || selectedItems.map((item) => item.name).join(' + ');
+
+		const newGroup: OrderedItem = {
+			type: 'group',
+			name: groupName,
+			position: insertIndex,
+			enabled: selectedItems.every((item) => item.enabled),
+			upgradeUntil: selectedItems.some((item) => item.upgradeUntil),
+			members: selectedItems.map((item) => ({ name: item.name }))
+		};
+
+		const newBucket = mainBucket.filter(
+			(item) => !(item.type === 'quality' && selectedGroupNames.has(item.name))
+		);
+		newBucket.splice(insertIndex, 0, newGroup);
+
+		newBucket.forEach((item, index) => {
+			item.position = index;
+		});
+
+		updateMainBucket(newBucket);
+		closeGroupModal();
+	}
+
 	async function handleSaveClick() {
 		if (data.canWriteToBase) {
 			showSaveTargetModal = true;
@@ -330,267 +418,232 @@
 		await tick();
 		formElement?.requestSubmit();
 	}
+
 </script>
 
 <svelte:head>
 	<title>Qualities - Profilarr</title>
 </svelte:head>
 
-<!-- Save Bar -->
-{#if $isDirty}
-	<div
-		class="sticky top-0 z-40 -mx-8 mb-6 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-8 py-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95"
-	>
-		<div class="flex items-center gap-3">
-			<span class="text-sm font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>
-			{#if saveError}
-				<span class="text-sm text-red-600 dark:text-red-400">{saveError}</span>
-			{/if}
+<StickyCard position="top">
+	<svelte:fragment slot="left">
+		<h1 class="text-neutral-900 dark:text-neutral-50">Qualities</h1>
+		<p class="text-neutral-600 dark:text-neutral-400">
+			Configure ordering, grouping, and upgrade behavior.
+		</p>
+	</svelte:fragment>
+	<svelte:fragment slot="right">
+		<div class="flex items-center gap-2">
+			<Button text="Info" icon={Info} on:click={() => (showInfoModal = true)} />
+			<Button text="Create Group" icon={Layers} on:click={openGroupModal} />
+			<Button
+				disabled={isSaving || !$isDirty}
+				icon={isSaving ? Loader2 : Save}
+				iconColor="text-blue-600 dark:text-blue-400"
+				text={isSaving ? 'Saving...' : 'Save'}
+				on:click={handleSaveClick}
+			/>
 		</div>
+	</svelte:fragment>
+</StickyCard>
 
-		<button
-			type="button"
-			disabled={isSaving}
-			on:click={handleSaveClick}
-			class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-		>
-			{#if isSaving}
-				<Loader2 size={14} class="animate-spin" />
-				Saving...
-			{:else}
-				<Save size={14} />
-				Save
-			{/if}
-		</button>
-	</div>
+<!-- Hidden form for submission -->
+<form
+	bind:this={formElement}
+	method="POST"
+	action="?/update"
+	class="hidden"
+	use:enhance={() => {
+		isSaving = true;
+		return async ({ result, update: formUpdate }) => {
+			isSaving = false;
+			if (result.type === 'success') {
+				alertStore.add('success', 'Qualities saved!');
+				await formUpdate();
+			} else if (result.type === 'failure') {
+				const message = (result.data as { error?: string })?.error || 'Failed to save';
+				alertStore.add('error', message);
+			}
+		};
+	}}
+>
+	<input type="hidden" name="orderedItems" value={JSON.stringify(mainBucket)} />
+	<input type="hidden" name="layer" value={selectedLayer} />
+</form>
 
-	<!-- Hidden form for submission -->
-	<form
-		bind:this={formElement}
-		method="POST"
-		action="?/update"
-		class="hidden"
-		use:enhance={() => {
-			isSaving = true;
-			saveError = null;
-			return async ({ result, update: formUpdate }) => {
-				isSaving = false;
-				if (result.type === 'success') {
-					alertStore.add('success', 'Qualities saved!');
-					initEdit(initialData);
-					await formUpdate();
-				} else if (result.type === 'failure') {
-					saveError = (result.data as { error?: string })?.error || 'Failed to save';
-					alertStore.add('error', saveError);
-				}
-			};
-		}}
-	>
-		<input type="hidden" name="orderedItems" value={JSON.stringify(mainBucket)} />
-		<input type="hidden" name="layer" value={selectedLayer} />
-	</form>
-{/if}
-
-<div class="mt-6 space-y-6">
-	<ActionsBar>
-		<ActionButton icon={Info} on:click={() => (showInfoModal = true)} />
-		<ActionButton
-			icon={showLegacyQualities ? EyeOff : Eye}
-			on:click={() => (showLegacyQualities = !showLegacyQualities)}
-		/>
-	</ActionsBar>
-
+<div class="mt-6 space-y-6 md:px-4">
 	<div
-		class="grid gap-6"
-		class:grid-cols-2={showLegacyQualities}
-		class:grid-cols-1={!showLegacyQualities}
+		class="min-h-[36rem] rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
+		role="region"
+		aria-label="Main quality configuration"
 	>
-		<!-- Main Bucket -->
-		<div>
-			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Qualities</h2>
+		{#if mainBucket.length === 0}
 			<div
-				class="min-h-[36rem] rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
-				on:dragover={handleDragOverMain}
-				on:drop={handleDropOnMain}
-				role="region"
-				aria-label="Main quality configuration"
+				class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400"
 			>
-				{#if mainBucket.length === 0}
+				No qualities found
+			</div>
+		{:else}
+			<div class="space-y-4">
+				{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.name}-${index}` : `group-${item.name}-${index}`)}
 					<div
-						class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400"
+						draggable={!isMobile}
+						on:dragstart={() => handleQualityDragStart(item, index)}
+						on:dragover={(e) => handleQualityDragOver(e, item, index)}
+						on:dragleave={handleQualityDragLeave}
+						on:drop={(e) => handleQualityDrop(e, item, index)}
+						on:dragend={resetDragState}
+						on:click={() => toggleEnabled(index)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								toggleEnabled(index);
+							}
+						}}
+						class="relative rounded-lg border border-neutral-200 bg-neutral-50 p-3 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {isMobile
+							? 'cursor-pointer'
+							: 'cursor-move'} {draggedQualityFromMain?.index ===
+						index
+							? 'scale-95 opacity-50'
+							: ''}"
+						style="transition: opacity 100ms, transform 100ms;"
+						role="button"
+						tabindex="0"
 					>
-						Drop qualities here
-					</div>
-				{:else}
-					<div class="space-y-4">
-						{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.name}-${index}` : `group-${item.name}-${index}`)}
+						{#if hoverTargetIndex === index && willCreateGroup}
 							<div
-								draggable={true}
-								on:dragstart={() => handleQualityDragStart(item, index)}
-								on:dragover={(e) => handleQualityDragOver(e, item, index)}
-								on:dragleave={handleQualityDragLeave}
-								on:drop={(e) => handleQualityDrop(e, item, index)}
-								on:dragend={resetDragState}
-								on:click={() => toggleEnabled(index)}
-								on:keydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										toggleEnabled(index);
-									}
-								}}
-								class="relative cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {draggedQualityFromMain?.index ===
-								index
-									? 'scale-95 opacity-50'
-									: ''}"
-								style="transition: opacity 100ms, transform 100ms;"
-								role="button"
-								tabindex="0"
-							>
-								{#if hoverTargetIndex === index && willCreateGroup}
-									<div
-										class="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-green-500 bg-green-50/30 dark:border-green-400 dark:bg-green-950/30"
-									></div>
-								{/if}
-								{#if hoverTargetIndex === index && willAddToGroup}
-									<div
-										class="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-accent-500 bg-accent-50/30 dark:border-accent-400 dark:bg-accent-950/30"
-									></div>
-								{/if}
-								<div class="relative flex items-center justify-between">
-									<div class="flex-1">
-										{#if item.type === 'group' && editingGroupIndex === index}
-											<input
-												type="text"
-												bind:value={editingGroupName}
-												on:blur={saveGroupName}
-												on:click={(e) => e.stopPropagation()}
-												on:keydown={(e) => {
-													if (e.key === 'Enter') saveGroupName();
-													if (e.key === 'Escape') cancelEditingGroupName();
-												}}
-												class="max-w-xs rounded border border-accent-500 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:ring-2 focus:ring-accent-500 focus:outline-none dark:bg-neutral-800 dark:text-neutral-100"
-											/>
-										{:else}
-											<div class="font-medium text-neutral-900 dark:text-neutral-100">
-												{#if item.type === 'group'}
-													<span
-														class="cursor-pointer hover:text-accent-600 dark:hover:text-accent-400"
-														on:click={(e) => {
-															e.stopPropagation();
-															startEditingGroupName(item, index);
-														}}
-														on:keydown={(e) => {
-															if (e.key === 'Enter' || e.key === ' ') {
-																e.preventDefault();
-																e.stopPropagation();
-																startEditingGroupName(item, index);
-															}
-														}}
-														role="button"
-														tabindex="0"
-													>
-														{item.name}
-													</span>
-													<span class="ml-2 text-xs text-neutral-500 dark:text-neutral-400"
-														>(Group)</span
-													>
-												{:else}
-													{item.name}
-												{/if}
-											</div>
-											{#if item.type === 'group' && item.members}
-												<div class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-													{item.members.map((m) => m.name).join(', ')}
-												</div>
-											{/if}
-										{/if}
-									</div>
-									<div class="flex items-center gap-3">
-										{#if hoverTargetIndex === index && willCreateGroup}
-											<div class="text-xs font-medium text-green-600 dark:text-green-400">
-												Create Group
-											</div>
-										{:else if hoverTargetIndex === index && willAddToGroup}
-											<div class="text-xs font-medium text-accent-600 dark:text-accent-400">
-												Add to Group
-											</div>
-										{/if}
+								class="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-green-500 bg-green-50/30 dark:border-green-400 dark:bg-green-950/30"
+							></div>
+						{/if}
+						{#if hoverTargetIndex === index && willAddToGroup}
+							<div
+								class="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-accent-500 bg-accent-50/30 dark:border-accent-400 dark:bg-accent-950/30"
+							></div>
+						{/if}
+						<div class="relative flex items-center justify-between">
+							<div class="flex-1">
+								{#if item.type === 'group' && editingGroupIndex === index}
+									<input
+										type="text"
+										bind:value={editingGroupName}
+										on:blur={saveGroupName}
+										on:click={(e) => e.stopPropagation()}
+										on:keydown={(e) => {
+											if (e.key === 'Enter') saveGroupName();
+											if (e.key === 'Escape') cancelEditingGroupName();
+										}}
+										class="max-w-xs rounded border border-accent-500 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:ring-2 focus:ring-accent-500 focus:outline-none dark:bg-neutral-800 dark:text-neutral-100"
+									/>
+								{:else}
+									<div class="font-medium text-neutral-900 dark:text-neutral-100">
 										{#if item.type === 'group'}
-											<button
+											<span
+												class="cursor-pointer hover:text-accent-600 dark:hover:text-accent-400"
 												on:click={(e) => {
 													e.stopPropagation();
-													collapseGroup(item);
+													startEditingGroupName(item, index);
 												}}
-												class="rounded p-1 text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
-												title="Collapse group into individual qualities"
+												on:keydown={(e) => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault();
+														e.stopPropagation();
+														startEditingGroupName(item, index);
+													}
+												}}
+												role="button"
+												tabindex="0"
 											>
-												<X size={16} />
-											</button>
+												{item.name}
+											</span>
+											<span class="ml-2 text-xs text-neutral-500 dark:text-neutral-400">(Group)</span>
+										{:else}
+											{item.name}
 										{/if}
-										<IconCheckbox
-											checked={item.upgradeUntil}
-											icon={ArrowUp}
-											color="#07CA07"
-											shape="circle"
-											on:click={(e) => {
-												e.stopPropagation();
-												toggleUpgradeUntil(index);
-											}}
-										/>
-										<IconCheckbox
-											checked={item.enabled}
-											icon={Check}
-											color="blue"
-											shape="circle"
-											on:click={(e) => {
-												e.stopPropagation();
-												toggleEnabled(index);
-											}}
-										/>
 									</div>
+									{#if item.type === 'group' && item.members}
+										<div class="mt-1 hidden text-xs text-neutral-600 dark:text-neutral-400 md:block">
+											{item.members.map((m) => m.name).join(', ')}
+										</div>
+									{/if}
+								{/if}
+							</div>
+							<div class="flex items-center gap-3">
+								<div class="flex items-center gap-1 md:hidden">
+									<button
+										type="button"
+										disabled={index === 0}
+										on:click|stopPropagation={() => moveItem(index, 'up')}
+										class="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+									>
+										<ChevronUp size={16} />
+									</button>
+									<button
+										type="button"
+										disabled={index === mainBucket.length - 1}
+										on:click|stopPropagation={() => moveItem(index, 'down')}
+										class="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+									>
+										<ChevronDown size={16} />
+									</button>
+								</div>
+								{#if hoverTargetIndex === index && willCreateGroup}
+									<div class="text-xs font-medium text-green-600 dark:text-green-400">
+										Create Group
+									</div>
+								{:else if hoverTargetIndex === index && willAddToGroup}
+									<div class="text-xs font-medium text-accent-600 dark:text-accent-400">
+										Add to Group
+									</div>
+								{/if}
+								{#if item.type === 'group'}
+									<button
+										on:click={(e) => {
+											e.stopPropagation();
+											collapseGroup(item);
+										}}
+										class="rounded p-1 text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
+										title="Collapse group into individual qualities"
+									>
+										<X size={16} />
+									</button>
+								{/if}
+								<IconCheckbox
+									checked={item.upgradeUntil}
+									icon={ArrowUp}
+									color="#07CA07"
+									shape="circle"
+									on:click={(e) => {
+										e.stopPropagation();
+										toggleUpgradeUntil(index);
+									}}
+								/>
+								<IconCheckbox
+									checked={item.enabled}
+									icon={Check}
+									color="blue"
+									shape="circle"
+									on:click={(e) => {
+										e.stopPropagation();
+										toggleEnabled(index);
+									}}
+								/>
+							</div>
+						</div>
+						{#if item.type === 'group' && item.members}
+							<div
+								class="mt-3 border-t border-neutral-200 pt-3 text-xs text-neutral-600 dark:border-neutral-700 dark:text-neutral-400 md:hidden"
+							>
+								<div class="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+									Group Members
+								</div>
+								<div class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
+									{item.members.map((m) => m.name).join(', ')}
 								</div>
 							</div>
-						{/each}
-						<div class="h-[30px]"></div>
+						{/if}
 					</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Legacy Bucket -->
-		{#if showLegacyQualities}
-			<div>
-				<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-					Unmigrated Qualities
-				</h2>
-				<div
-					class="min-h-96 rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
-				>
-					{#if legacyBucket.length === 0}
-						<div
-							class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-400"
-						>
-							All qualities added!
-						</div>
-					{:else}
-						<div class="space-y-2">
-							{#each legacyBucket as quality}
-								<div
-									draggable={true}
-									on:dragstart={() => handleDragStart(quality)}
-									on:dragend={handleDragEnd}
-									class="cursor-move rounded-lg border border-neutral-200 bg-neutral-50 p-3 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-									role="button"
-									tabindex="0"
-								>
-									<div class="font-medium text-neutral-900 dark:text-neutral-100">
-										{quality.name}
-									</div>
-								</div>
-							{/each}
-						</div>
-					{/if}
-				</div>
+				{/each}
+				<div class="h-[30px]"></div>
 			</div>
 		{/if}
 	</div>
@@ -603,7 +656,8 @@
 			<div class="mt-1">
 				Define the order, grouping, and configuration of qualities. In previous versions, only
 				enabled qualities were tracked. The new system stores all qualities (enabled and disabled)
-				to maintain proper ordering across your entire quality profile.
+				to maintain proper ordering across your entire quality profile. Missing qualities are
+				automatically appended as disabled.
 			</div>
 		</div>
 
@@ -619,9 +673,10 @@
 		<div>
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Creating Groups</div>
 			<div class="mt-1">
-				Hold Ctrl (or Cmd on Mac) while dragging a quality onto another quality to create a group.
-				Groups allow multiple qualities to be treated as equal priority. You can also drag a quality
-				onto an existing group to add it to that group.
+				On desktop, hold Ctrl (or Cmd on Mac) while dragging a quality onto another quality to create
+				a group. Groups allow multiple qualities to be treated as equal priority. You can also drag
+				a quality onto an existing group to add it to that group. On mobile, use the Create Group
+				button in the header.
 			</div>
 		</div>
 
@@ -659,16 +714,75 @@
 			</div>
 		</div>
 
-		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Unmigrated Qualities</div>
-			<div class="mt-1">
-				When migrating from older profile versions, qualities that weren't previously enabled appear
-				in the "Unmigrated Qualities" section. Drag these into your main configuration to include
-				them in your quality profile ordering. These start as disabled by default.
-			</div>
-		</div>
 	</div>
 </InfoModal>
+
+<Modal
+	open={showGroupModal}
+	header="Create Group"
+	confirmText="Create Group"
+	cancelText="Cancel"
+	confirmDisabled={!canCreateGroup}
+	on:confirm={handleCreateGroup}
+	on:cancel={closeGroupModal}
+>
+	<div slot="body" class="space-y-4">
+		<p class="text-sm text-neutral-600 dark:text-neutral-400">
+			Select at least two qualities to combine into a group. Groups share the same priority.
+		</p>
+
+		<div>
+			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Group Name (optional)
+			</label>
+			<input
+				type="text"
+				bind:value={groupNameInput}
+				placeholder="e.g. Web + Bluray"
+				class="mt-2 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-2 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+			/>
+		</div>
+
+		<div class="max-h-72 overflow-auto rounded-lg border border-neutral-200 p-2 dark:border-neutral-700">
+			{#if groupableItems.length < 2}
+				<div class="px-3 py-4 text-sm text-neutral-500 dark:text-neutral-400">
+					At least two qualities are required to create a group.
+				</div>
+			{:else}
+				<div class="space-y-2">
+					{#each groupableItems as item}
+						<button
+							type="button"
+							on:click={() => toggleGroupSelection(item.name)}
+							class="flex w-full items-center justify-between gap-3 rounded-md border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+						>
+							<div class="flex items-center gap-3">
+								<IconCheckbox
+									checked={selectedGroupNames.has(item.name)}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+								<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+									{item.name}
+								</div>
+							</div>
+							<span
+								class="text-xs text-neutral-500 dark:text-neutral-400"
+							>
+								{item.enabled ? 'Enabled' : 'Disabled'}
+							</span>
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<div class="text-xs text-neutral-500 dark:text-neutral-400">
+			Selected: {selectedGroupCount}
+		</div>
+	</div>
+</Modal>
 
 <!-- Save Target Modal -->
 {#if data.canWriteToBase}
