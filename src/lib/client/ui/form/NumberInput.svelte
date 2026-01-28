@@ -44,9 +44,12 @@
 	}
 
 	$: isCompact = compact || (responsive && isSmallScreen);
+	$: hideButtons = responsive && isSmallScreen;
 	$: fontClass = font === 'mono' ? 'font-mono' : font === 'sans' ? 'font-sans' : '';
 	$: inputSizeClasses = isCompact
-		? 'rounded px-2 py-1 pr-7 text-xs'
+		? hideButtons
+			? 'rounded px-2 py-1 text-xs'
+			: 'rounded px-2 py-1 pr-7 text-xs'
 		: 'rounded-lg px-3 py-2 pr-10';
 	$: buttonSizeClasses = isCompact ? 'h-2.5 w-4' : 'h-4 w-6';
 	$: iconSize = isCompact ? 10 : 12;
@@ -121,23 +124,25 @@
 		class="block w-full [appearance:textfield] border border-neutral-300 bg-white text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {inputSizeClasses} {fontClass}"
 	/>
 
-	<!-- Custom increment/decrement buttons -->
-	<div class="absolute top-1/2 right-1 flex -translate-y-1/2 flex-col">
-		<button
-			type="button"
-			on:click={increment}
-			{disabled}
-			class="flex {buttonSizeClasses} items-center justify-center rounded-t border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
-		>
-			<ChevronUp size={iconSize} />
-		</button>
-		<button
-			type="button"
-			on:click={decrement}
-			{disabled}
-			class="flex {buttonSizeClasses} items-center justify-center rounded-b border border-t-0 border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
-		>
-			<ChevronDown size={iconSize} />
-		</button>
-	</div>
+	<!-- Custom increment/decrement buttons (hidden on mobile when responsive) -->
+	{#if !hideButtons}
+		<div class="absolute top-1/2 right-1 flex -translate-y-1/2 flex-col">
+			<button
+				type="button"
+				on:click={increment}
+				{disabled}
+				class="flex {buttonSizeClasses} items-center justify-center rounded-t border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
+			>
+				<ChevronUp size={iconSize} />
+			</button>
+			<button
+				type="button"
+				on:click={decrement}
+				{disabled}
+				class="flex {buttonSizeClasses} items-center justify-center rounded-b border border-t-0 border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
+			>
+				<ChevronDown size={iconSize} />
+			</button>
+		</div>
+	{/if}
 </div>

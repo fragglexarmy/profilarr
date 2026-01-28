@@ -289,8 +289,8 @@
 		<p class="text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
 	</div>
 	<div slot="right" class="flex items-center gap-2">
-		<!-- Unit selector -->
-		<div class="relative">
+		<!-- Unit selector (hidden on mobile) -->
+		<div class="relative hidden md:block">
 			<button
 				type="button"
 				on:click={() => (showUnitDropdown = !showUnitDropdown)}
@@ -427,6 +427,7 @@
 										min={0}
 										max={markers[1].value}
 										step={1}
+										responsive
 										onchange={() => syncToEntry(entry.quality_name)}
 									/>
 								</div>
@@ -442,6 +443,7 @@
 										min={markers[0].value}
 										max={markers[2].value}
 										step={1}
+										responsive
 										onchange={() => syncToEntry(entry.quality_name)}
 									/>
 								</div>
@@ -456,6 +458,7 @@
 										bind:value={markers[2].value}
 										min={markers[1].value}
 										step={1}
+										responsive
 										onchange={() => syncToEntry(entry.quality_name)}
 									/>
 								</div>
