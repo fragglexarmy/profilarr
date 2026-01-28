@@ -69,10 +69,10 @@
 			on:keydown={(e) => e.key === 'Enter' && handleCardClick(database)}
 			role="button"
 			tabindex="0"
-			class="group flex cursor-pointer items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+			class="group cursor-pointer rounded-lg border border-neutral-200 bg-white p-4 transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
-			<!-- Left: Avatar + Name -->
-			<div class="flex min-w-0 flex-1 items-center gap-3">
+			<!-- Top row: Avatar, Name, Action buttons -->
+			<div class="flex items-center gap-3">
 				<div class="relative h-10 w-10 flex-shrink-0">
 					{#if !loadedImages.has(database.id)}
 						<div
@@ -88,7 +88,7 @@
 						on:load={() => handleImageLoad(database.id)}
 					/>
 				</div>
-				<div class="min-w-0">
+				<div class="min-w-0 flex-1">
 					<div class="flex items-center gap-2">
 						<span class="truncate font-medium text-neutral-900 dark:text-neutral-100">
 							{database.name}
@@ -101,34 +101,33 @@
 						{/if}
 					</div>
 				</div>
+				<!-- Action buttons -->
+				<div class="flex flex-shrink-0 items-center gap-1">
+					<a
+						href={database.repository_url}
+						target="_blank"
+						rel="noopener noreferrer"
+						on:click={(e) => e.stopPropagation()}
+						class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+					>
+						<ExternalLink size={16} />
+					</a>
+					<button
+						on:click={(e) => handleUnlinkClick(e, database)}
+						class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400"
+					>
+						<Unlink size={16} />
+					</button>
+				</div>
 			</div>
 
-			<!-- Right: Badges (stacked vertically) -->
-			<div class="flex flex-shrink-0 flex-col items-end gap-1">
+			<!-- Bottom row: Badges (horizontal wrap) -->
+			<div class="mt-3 flex flex-wrap items-center gap-2">
 				<Badge variant="neutral" mono>
 					{database.repository_url.replace('https://github.com/', '')}
 				</Badge>
 				<Badge variant="neutral" mono>{formatSyncStrategy(database.sync_strategy)}</Badge>
 				<Badge variant="neutral" mono>{formatLastSynced(database.last_synced_at)}</Badge>
-			</div>
-
-			<!-- Action buttons -->
-			<div class="flex flex-shrink-0 items-center gap-1">
-				<a
-					href={database.repository_url}
-					target="_blank"
-					rel="noopener noreferrer"
-					on:click={(e) => e.stopPropagation()}
-					class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-				>
-					<ExternalLink size={16} />
-				</a>
-				<button
-					on:click={(e) => handleUnlinkClick(e, database)}
-					class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400"
-				>
-					<Unlink size={16} />
-				</button>
 			</div>
 		</div>
 	{/each}
