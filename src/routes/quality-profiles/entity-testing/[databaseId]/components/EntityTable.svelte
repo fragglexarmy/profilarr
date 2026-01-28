@@ -101,6 +101,7 @@
 	flushExpanded={true}
 	emptyMessage="No entities match your search"
 	chevronPosition="right"
+	responsive={true}
 	bind:expandedRows
 >
 	<svelte:fragment slot="cell" let:row let:column>

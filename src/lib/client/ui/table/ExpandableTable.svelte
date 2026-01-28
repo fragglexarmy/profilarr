@@ -150,13 +150,13 @@
 						on:click={() => toggleRow(rowId)}
 					>
 						<!-- Primary row: first column as title + actions + chevron -->
-						<div class="flex items-center justify-between gap-3 px-4 py-3">
-							<div class="min-w-0 flex-1 font-medium text-neutral-900 dark:text-neutral-100">
+						<div class="flex items-start justify-between gap-3 px-4 py-3">
+							<div class="min-w-0 flex-1 break-all font-medium text-neutral-900 dark:text-neutral-100">
 								<slot name="cell" {row} column={columns[0]} {index} expanded={expandedRows.has(rowId)}>
 									{getCellValue(row, columns[0].key)}
 								</slot>
 							</div>
-							<div class="flex shrink-0 items-center gap-2">
+							<div class="flex shrink-0 items-center gap-2 pt-0.5">
 								{#if $$slots.actions}
 									<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 									<div on:click|stopPropagation>

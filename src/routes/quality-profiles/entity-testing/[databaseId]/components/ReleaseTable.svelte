@@ -148,6 +148,7 @@
 				flushExpanded={true}
 				emptyMessage="No releases"
 				chevronPosition="right"
+				responsive={true}
 				defaultSort={{ key: 'score', direction: 'desc' }}
 				bind:expandedRows
 			>
