@@ -131,8 +131,8 @@
 
 <div class="p-8">
 	<div class="mb-8">
-		<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Security</h1>
-		<p class="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
+		<h1 class="text-2xl font-bold text-neutral-900 md:text-3xl dark:text-neutral-50">Security</h1>
+		<p class="mt-2 text-base text-neutral-600 md:mt-3 md:text-lg dark:text-neutral-400">
 			Manage your password, API key, and active sessions
 		</p>
 	</div>
@@ -141,7 +141,7 @@
 		<!-- Change Password -->
 		<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
 			<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-				<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Change Password</h2>
+				<h2 class="text-lg font-semibold text-neutral-900 md:text-xl dark:text-neutral-50">Change Password</h2>
 				<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 					Update your account password
 				</p>
@@ -177,18 +177,16 @@
 						private_
 						bind:value={newPassword}
 					/>
-					<div class="flex items-end gap-2">
-						<div class="flex-1">
-							<FormInput
-								name="confirmPassword"
-								label="Confirm New Password"
-								type="password"
-								placeholder="Re-enter new password"
-								autocomplete="new-password"
-								private_
-								bind:value={confirmPassword}
-							/>
-						</div>
+					<FormInput
+						name="confirmPassword"
+						label="Confirm New Password"
+						type="password"
+						placeholder="Re-enter new password"
+						autocomplete="new-password"
+						private_
+						bind:value={confirmPassword}
+					/>
+					<div class="flex justify-end">
 						<Button
 							type="submit"
 							variant="secondary"
@@ -206,7 +204,7 @@
 		<!-- API Key -->
 		<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
 			<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-				<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">API Key</h2>
+				<h2 class="text-lg font-semibold text-neutral-900 md:text-xl dark:text-neutral-50">API Key</h2>
 				<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 					Authenticate API requests via <code class="rounded bg-neutral-100 px-1 py-0.5 text-xs dark:bg-neutral-800">X-Api-Key</code> header
 				</p>
@@ -262,9 +260,9 @@
 
 		<!-- Active Sessions -->
 		<div class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
-			<div class="flex items-start justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
+			<div class="flex flex-col gap-3 border-b border-neutral-200 px-6 py-4 md:flex-row md:items-start md:justify-between dark:border-neutral-800">
 				<div>
-					<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Active Sessions</h2>
+					<h2 class="text-lg font-semibold text-neutral-900 md:text-xl dark:text-neutral-50">Active Sessions</h2>
 					<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 						Manage your logged-in sessions across devices
 					</p>
@@ -293,6 +291,7 @@
 						columns={sessionColumns}
 						data={data.sessions}
 						compact
+						responsive
 						actionsHeader="Status"
 					>
 						<svelte:fragment slot="actions" let:row>
