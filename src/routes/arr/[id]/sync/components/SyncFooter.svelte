@@ -25,9 +25,10 @@
 	$: syncDisabled = syncing || isDirty;
 </script>
 
-<div class="border-t border-neutral-200 px-6 py-4 dark:border-neutral-800">
-	<div class="flex items-center justify-between">
-		<div class="flex items-center gap-4">
+<div class="border-t border-neutral-200 px-4 py-4 md:px-6 dark:border-neutral-800">
+	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+		<!-- Trigger options -->
+		<div class="flex flex-wrap items-center gap-3 md:gap-4">
 			<span class="text-sm text-neutral-500 dark:text-neutral-400">Trigger</span>
 			{#each triggerOptions as option}
 				<div class="flex items-center gap-2">
@@ -51,40 +52,43 @@
 			{/if}
 		</div>
 
-		<div class="flex items-center gap-3">
+		<!-- Warning + Buttons -->
+		<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
 			{#if warning}
 				<div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
 					<AlertTriangle size={14} class="flex-shrink-0" />
 					<span>{warning}</span>
 				</div>
 			{/if}
-			<button
-				type="button"
-				disabled={syncDisabled}
-				on:click={() => dispatch('sync')}
-				title={isDirty ? 'Save changes before syncing' : ''}
-				class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				{#if syncing}
-					<Loader2 size={14} class="animate-spin" />
-				{:else}
-					<RefreshCw size={14} />
-				{/if}
-				Sync Now
-			</button>
-			<button
-				type="button"
-				disabled={saveDisabled}
-				on:click={() => dispatch('save')}
-				class="flex items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
-			>
-				{#if saving}
-					<Loader2 size={14} class="animate-spin" />
-				{:else}
-					<Save size={14} />
-				{/if}
-				Save
-			</button>
+			<div class="flex items-center gap-3">
+				<button
+					type="button"
+					disabled={syncDisabled}
+					on:click={() => dispatch('sync')}
+					title={isDirty ? 'Save changes before syncing' : ''}
+					class="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				>
+					{#if syncing}
+						<Loader2 size={14} class="animate-spin" />
+					{:else}
+						<RefreshCw size={14} />
+					{/if}
+					Sync Now
+				</button>
+				<button
+					type="button"
+					disabled={saveDisabled}
+					on:click={() => dispatch('save')}
+					class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+				>
+					{#if saving}
+						<Loader2 size={14} class="animate-spin" />
+					{:else}
+						<Save size={14} />
+					{/if}
+					Save
+				</button>
+			</div>
 		</div>
 	</div>
 </div>

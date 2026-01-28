@@ -34,7 +34,7 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
 		on:click={handleBackdropClick}
 		role="dialog"
 		aria-modal="true"
@@ -42,11 +42,11 @@
 	>
 		<!-- Modal -->
 		<div
-			class="relative w-full max-w-lg rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
+			class="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
 		>
 			<!-- Header -->
 			<div
-				class="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800"
+				class="flex flex-shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800"
 			>
 				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{header}</h2>
 				<button
@@ -59,7 +59,7 @@
 			</div>
 
 			<!-- Body -->
-			<div class="px-6 py-4">
+			<div class="overflow-auto px-6 py-4">
 				<slot />
 			</div>
 		</div>

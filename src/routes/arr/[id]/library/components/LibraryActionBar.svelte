@@ -4,17 +4,13 @@
 		SlidersHorizontal,
 		TableProperties,
 		RefreshCw,
-		ExternalLink,
-		Pencil,
-		Trash2,
-		Info
+		ExternalLink
 	} from 'lucide-svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import Modal from '$ui/modal/Modal.svelte';
 	import { type SearchStore } from '$stores/search';
 
 	type FilterOperator = 'eq' | 'neq';
@@ -34,7 +30,6 @@
 	export let activeFilters: ActiveFilter[];
 	export let uniqueQualities: string[];
 	export let uniqueProfiles: string[];
-	export let instanceName: string = '';
 
 	export let onToggleColumn: (key: string) => void;
 	export let onToggleFilter: (
@@ -45,18 +40,13 @@
 	) => void;
 	export let onRefresh: () => void;
 	export let onOpen: () => void;
-	export let onEdit: () => void;
-	export let onDelete: () => void;
-	export let onInfo: () => void;
-
-	let showDeleteModal = false;
 </script>
 
 <ActionsBar>
-	<SearchAction {searchStore} placeholder="Search movies..." />
+	<SearchAction {searchStore} placeholder="Search movies..." responsive />
 	<ActionButton icon={SlidersHorizontal} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="16rem">
+			<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="16rem">
 				<div class="border-b border-neutral-100 px-4 py-3 dark:border-neutral-700">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">
 						Filter movies by quality or profile
@@ -130,7 +120,7 @@
 	</ActionButton>
 	<ActionButton icon={TableProperties} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="14rem">
+			<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="14rem">
 				<div class="border-b border-neutral-100 px-4 py-3 dark:border-neutral-700">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">Toggle visible table columns</p>
 				</div>
@@ -155,19 +145,6 @@
 						</button>
 					{/each}
 				</div>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
-	<ActionButton icon={Info} hasDropdown={true} dropdownPosition="right">
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="10rem">
-				<button
-					type="button"
-					on:click={onInfo}
-					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					About this page
-				</button>
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
@@ -197,44 +174,4 @@
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
-	<ActionButton icon={Pencil} hasDropdown={true} dropdownPosition="right">
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="10rem">
-				<button
-					type="button"
-					on:click={onEdit}
-					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					Edit instance
-				</button>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
-	<ActionButton icon={Trash2} hasDropdown={true} dropdownPosition="right">
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="10rem">
-				<button
-					type="button"
-					on:click={() => (showDeleteModal = true)}
-					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					Delete instance
-				</button>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
 </ActionsBar>
-
-<Modal
-	open={showDeleteModal}
-	header="Delete Instance"
-	bodyMessage={`Are you sure you want to delete "${instanceName}"? This action cannot be undone.`}
-	confirmText="Delete"
-	cancelText="Cancel"
-	confirmDanger={true}
-	on:confirm={() => {
-		showDeleteModal = false;
-		onDelete();
-	}}
-	on:cancel={() => (showDeleteModal = false)}
-/>

@@ -11,8 +11,10 @@
 	export let textColor: string = '';
 	export let iconPosition: 'left' | 'right' = 'left';
 	export let type: 'button' | 'submit' = 'button';
-	// Responsive: auto-switch to xs on smaller screens (< 1280px)
+	// Responsive: auto-switch to xs on smaller screens (< 768px)
 	export let responsive: boolean = false;
+	// Hide text on mobile (show icon only)
+	export let hideTextOnMobile: boolean = false;
 	export let fullWidth: boolean = false;
 	// Optional href - renders as anchor instead of button
 	export let href: string | undefined = undefined;
@@ -75,7 +77,7 @@
 			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
 		{/if}
 		{#if text}
-			<span class={baseTextColor}>{text}</span>
+			<span class="{baseTextColor} {hideTextOnMobile ? 'hidden md:inline' : ''}">{text}</span>
 		{/if}
 		<slot />
 		{#if icon && iconPosition === 'right'}
@@ -88,7 +90,7 @@
 			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
 		{/if}
 		{#if text}
-			<span class={baseTextColor}>{text}</span>
+			<span class="{baseTextColor} {hideTextOnMobile ? 'hidden md:inline' : ''}">{text}</span>
 		{/if}
 		<slot />
 		{#if icon && iconPosition === 'right'}

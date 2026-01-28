@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { AlertTriangle, Film } from 'lucide-svelte';
-	import { alertStore } from '$alerts/store';
+	import { AlertTriangle, Film, ExternalLink } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 	import { goto, invalidateAll } from '$app/navigation';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
@@ -14,7 +13,6 @@
 	import LibraryActionBar from './components/LibraryActionBar.svelte';
 	import MovieRow from './components/MovieRow.svelte';
 	import MovieRowSkeleton from './components/MovieRowSkeleton.svelte';
-	import InfoModal from '$ui/modal/InfoModal.svelte';
 
 	export let data: PageData;
 
@@ -81,27 +79,6 @@
 	function handleOpen() {
 		const baseUrl = data.instance.url.replace(/\/$/, '');
 		window.open(baseUrl, '_blank', 'noopener,noreferrer');
-	}
-
-	function handleEdit() {
-		goto(`/arr/${data.instance.id}/settings`);
-	}
-
-	async function handleDelete() {
-		if (!confirm('Are you sure you want to delete this instance?')) return;
-
-		const response = await fetch(`/api/arr/${data.instance.id}`, { method: 'DELETE' });
-		if (response.ok) {
-			goto('/arr');
-		} else {
-			alertStore.add('error', 'Failed to delete instance');
-		}
-	}
-
-	let infoModalOpen = false;
-
-	function handleInfo() {
-		infoModalOpen = true;
 	}
 
 	let currentInstanceId: number | null = null;
@@ -280,15 +257,13 @@
 			sortable: true,
 			sortAccessor: (row) => (row.dateAdded ? new Date(row.dateAdded).getTime() : 0),
 			defaultSortDirection: 'desc'
-		},
-		{ key: 'actions', header: '', align: 'center', width: 'w-12' }
+		}
 	];
 
 	$: columns = allColumns.filter(
 		(col) =>
 			col.key === 'title' ||
 			col.key === 'qualityProfileName' ||
-			col.key === 'actions' ||
 			visibleColumns.has(col.key as ToggleableColumn)
 	);
 
@@ -358,14 +333,10 @@
 			{activeFilters}
 			uniqueQualities={loading ? [] : uniqueQualities}
 			uniqueProfiles={loading ? [] : uniqueProfiles}
-			instanceName={data.instance.name}
 			onToggleColumn={toggleColumn}
 			onToggleFilter={toggleFilter}
 			onRefresh={handleRefresh}
 			onOpen={handleOpen}
-			onEdit={handleEdit}
-			onDelete={handleDelete}
-			onInfo={handleInfo}
 		/>
 
 		{#if allMoviesWithFiles.length === 0 && !loading}
@@ -390,6 +361,7 @@
 					getRowId={(row) => row.id}
 					compact={true}
 					{defaultSort}
+					responsive
 					emptyMessage={activeFilters.length > 0 || debouncedQuery
 						? 'No movies match the current filters'
 						: 'No movies with files'}
@@ -399,6 +371,21 @@
 							<MovieRowSkeleton {column} />
 						{:else}
 							<MovieRow {row} {column} {baseUrl} mode="cell" />
+						{/if}
+					</svelte:fragment>
+
+					<svelte:fragment slot="actions" let:row>
+						{#if !loading && row.tmdbId}
+							<a
+								href="{baseUrl}/movie/{row.tmdbId}"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+								title="Open in Radarr"
+								on:click|stopPropagation
+							>
+								<ExternalLink size={14} />
+							</a>
 						{/if}
 					</svelte:fragment>
 
@@ -412,9 +399,3 @@
 		{/if}
 	{/if}
 </div>
-
-<InfoModal bind:open={infoModalOpen} header="Library">
-	<p class="text-sm text-neutral-600 dark:text-neutral-400">
-		Placeholder content. More information coming soon.
-	</p>
-</InfoModal>

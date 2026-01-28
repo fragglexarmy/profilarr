@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, ExternalLink, CircleAlert } from 'lucide-svelte';
+	import { Check, CircleAlert } from 'lucide-svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
@@ -79,25 +79,10 @@
 		<Badge variant="neutral" mono>{row.popularity?.toFixed(1) ?? '-'}</Badge>
 	{:else if column.key === 'dateAdded'}
 		<Badge variant="neutral" mono>{formatDate(row.dateAdded)}</Badge>
-	{:else if column.key === 'actions'}
-		<div class="flex items-center justify-center">
-			{#if row.tmdbId}
-				<a
-					href="{baseUrl}/movie/{row.tmdbId}"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-					title="Open in Radarr"
-					on:click|stopPropagation
-				>
-					<ExternalLink size={14} />
-				</a>
-			{/if}
-		</div>
 	{/if}
 {:else}
 	<!-- Expanded content -->
-	<div class="flex flex-col gap-3">
+	<div class="flex flex-col gap-3 p-4">
 		<!-- File Name -->
 		{#if row.fileName}
 			<code class="font-mono text-xs break-all text-neutral-600 dark:text-neutral-400"

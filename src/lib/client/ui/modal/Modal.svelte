@@ -73,7 +73,7 @@
 	>
 		<!-- Modal -->
 		<div
-			class="relative flex w-full flex-col {sizeClasses[size]} {heightClasses[
+			class="relative flex max-h-[90vh] w-full flex-col {sizeClasses[size]} {heightClasses[
 				height
 			]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
 		>

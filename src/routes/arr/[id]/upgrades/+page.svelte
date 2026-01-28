@@ -87,7 +87,7 @@
 		<Button text="Info" icon={Info} href="/arr/upgrades/info" />
 		{#if !isNewConfig && data.config?.dryRun}
 			<Button
-				text={clearing ? 'Clearing...' : 'Reset Cache'}
+				text={clearing ? 'Clearing...' : 'Reset'}
 				icon={RotateCcw}
 				disabled={clearing || running || saving}
 				on:click={() => {
@@ -98,7 +98,7 @@
 				}}
 			/>
 			<Button
-				text={running ? 'Running...' : 'Test Run'}
+				text={running ? 'Running...' : 'Test'}
 				icon={Play}
 				iconColor="text-amber-600 dark:text-amber-400"
 				disabled={running || saving || clearing || $isDirty}

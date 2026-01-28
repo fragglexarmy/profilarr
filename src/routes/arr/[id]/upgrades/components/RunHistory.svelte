@@ -168,14 +168,14 @@
 	}
 </script>
 
-<div class="-mx-8 bg-neutral-50 px-8 pt-2 pb-6 dark:bg-neutral-900">
+<div class="-mx-4 bg-neutral-50 px-4 pt-2 pb-6 md:-mx-8 md:px-8 dark:bg-neutral-900">
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search runs..." />
 
 			<!-- Date Filter -->
 			<ActionButton icon={Calendar} hasDropdown square title="Filter by date">
-				<Dropdown slot="dropdown" position="right">
+				<Dropdown slot="dropdown" position="right" mobilePosition="middle">
 					{#each [{ value: 'all', label: 'All time' }, { value: 'today', label: 'Today' }, { value: 'yesterday', label: 'Yesterday' }, { value: 'week', label: 'Last 7 days' }, { value: 'month', label: 'Last 30 days' }] as const as option}
 						<DropdownItem
 							label={option.label}
@@ -188,7 +188,7 @@
 
 			<!-- Filter Name Filter -->
 			<ActionButton icon={Filter} hasDropdown square title="Filter by filter name">
-				<Dropdown slot="dropdown" position="right">
+				<Dropdown slot="dropdown" position="right" mobilePosition="middle">
 					<DropdownItem
 						label="All filters"
 						selected={filterFilter === 'all'}
@@ -206,7 +206,7 @@
 
 			<!-- Status Filter -->
 			<ActionButton icon={CircleDot} hasDropdown square title="Filter by status">
-				<Dropdown slot="dropdown" position="right">
+				<Dropdown slot="dropdown" position="right" mobilePosition="middle">
 					{#each [{ value: 'all', label: 'All' }, { value: 'success', label: 'Success' }, { value: 'partial', label: 'Partial' }, { value: 'failed', label: 'Failed' }, { value: 'skipped', label: 'Skipped' }] as const as option}
 						<DropdownItem
 							label={option.label}
@@ -227,6 +227,7 @@
 		chevronPosition="right"
 		flushExpanded={true}
 		emptyMessage="No upgrade runs yet. Configure and enable upgrades to start."
+		responsive
 	>
 		<svelte:fragment slot="cell" let:row let:column>
 			{#if column.key === 'runNumber'}
@@ -377,6 +378,7 @@
 							getRowId={(item) => item.id}
 							compact={true}
 							emptyMessage="No items"
+							responsive
 						>
 							<svelte:fragment slot="cell" let:row={item} let:column>
 								{#if column.key === 'title'}

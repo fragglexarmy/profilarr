@@ -56,7 +56,7 @@
 </script>
 
 <ActionsBar className="justify-end">
-	<SearchAction {searchStore} placeholder="Search logs..." />
+	<SearchAction {searchStore} placeholder="Search logs..." responsive />
 
 	<!-- Log File Selector -->
 	<ActionButton icon={FileText} hasDropdown={true} dropdownPosition="right">

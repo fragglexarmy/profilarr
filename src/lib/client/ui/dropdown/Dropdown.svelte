@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 
 	export let position: 'left' | 'right' | 'middle' = 'left';
+	export let mobilePosition: 'left' | 'right' | 'middle' | null = null;
 	export let minWidth: string = '12rem';
 	export let compact: boolean = false;
 	// Fixed positioning to escape overflow containers
@@ -11,13 +12,24 @@
 	let dropdownEl: HTMLElement;
 	let fixedStyle = '';
 
+	const positionClasses = {
+		left: 'left-0',
+		right: 'right-0',
+		middle: 'left-1/2 -translate-x-1/2'
+	};
+
+	const responsivePositionClasses = {
+		'middle-to-right': 'left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0',
+		'middle-to-left': 'left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0',
+		'left-to-right': 'left-0 md:left-auto md:right-0',
+		'right-to-left': 'right-0 md:right-auto md:left-0'
+	};
+
 	$: positionClass = fixed
 		? ''
-		: {
-				left: 'left-0',
-				right: 'right-0',
-				middle: 'left-1/2 -translate-x-1/2'
-			}[position];
+		: mobilePosition && mobilePosition !== position
+			? responsivePositionClasses[`${mobilePosition}-to-${position}`] || positionClasses[position]
+			: positionClasses[position];
 
 	$: marginClass = compact ? 'mt-1' : 'mt-3';
 	$: gap = compact ? 4 : 12; // pixels gap below trigger

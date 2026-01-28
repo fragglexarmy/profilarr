@@ -139,14 +139,14 @@
 	}
 </script>
 
-<div class="-mx-8 bg-neutral-50 px-8 pt-2 pb-6 dark:bg-neutral-900">
+<div class="-mx-4 bg-neutral-50 px-4 pt-2 pb-6 md:-mx-8 md:px-8 dark:bg-neutral-900">
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search runs..." />
 
 			<!-- Date Filter -->
 			<ActionButton icon={Calendar} hasDropdown square title="Filter by date">
-				<Dropdown slot="dropdown" position="right">
+				<Dropdown slot="dropdown" position="right" mobilePosition="middle">
 					{#each [{ value: 'all', label: 'All time' }, { value: 'today', label: 'Today' }, { value: 'yesterday', label: 'Yesterday' }, { value: 'week', label: 'Last 7 days' }, { value: 'month', label: 'Last 30 days' }] as const as option}
 						<DropdownItem
 							label={option.label}
@@ -159,7 +159,7 @@
 
 			<!-- Status Filter -->
 			<ActionButton icon={CircleDot} hasDropdown square title="Filter by status">
-				<Dropdown slot="dropdown" position="right">
+				<Dropdown slot="dropdown" position="right" mobilePosition="middle">
 					{#each [{ value: 'all', label: 'All' }, { value: 'success', label: 'Success' }, { value: 'partial', label: 'Partial' }, { value: 'failed', label: 'Failed' }, { value: 'skipped', label: 'Skipped' }] as const as option}
 						<DropdownItem
 							label={option.label}
@@ -180,6 +180,7 @@
 		chevronPosition="right"
 		flushExpanded={true}
 		emptyMessage="No rename runs yet. Configure and enable rename to start."
+		responsive
 	>
 		<svelte:fragment slot="cell" let:row let:column>
 			{#if column.key === 'runNumber'}
@@ -313,6 +314,7 @@
 							getRowId={(item) => item.id}
 							compact={true}
 							emptyMessage="No items"
+							responsive
 						>
 							<svelte:fragment slot="cell" let:row={item} let:column>
 								{#if column.key === 'title'}
@@ -323,7 +325,7 @@
 							</svelte:fragment>
 
 							<svelte:fragment slot="expanded" let:row={item}>
-								<div class="space-y-2 py-2 pl-2">
+								<div class="space-y-3 p-4">
 									{#each item.files as file}
 										<div class="space-y-1">
 											<div class="flex gap-2">
@@ -332,8 +334,7 @@
 													>From:</span
 												>
 												<span
-													class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
-													title={file.existingPath}
+													class="break-all font-mono text-xs text-neutral-700 dark:text-neutral-300"
 												>
 													{getFileName(file.existingPath)}
 												</span>
@@ -344,8 +345,7 @@
 													>To:</span
 												>
 												<span
-													class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
-													title={file.newPath}
+													class="break-all font-mono text-xs text-neutral-700 dark:text-neutral-300"
 												>
 													{getFileName(file.newPath)}
 												</span>

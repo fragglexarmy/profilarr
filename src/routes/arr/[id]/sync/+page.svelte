@@ -4,6 +4,8 @@
 	import { Info } from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import QualityProfiles from './components/QualityProfiles.svelte';
 	import DelayProfiles from './components/DelayProfiles.svelte';
 	import MediaManagement from './components/MediaManagement.svelte';
@@ -115,22 +117,21 @@
 
 <div class="mt-6 space-y-6 pb-32">
 	<!-- Header -->
-	<div class="flex items-start justify-between">
-		<div>
-			<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">Sync Configuration</h1>
-			<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<h1 class="text-neutral-900 dark:text-neutral-50">Sync Configuration</h1>
+			<p class="text-neutral-600 dark:text-neutral-400">
 				Configure which profiles and settings to sync to this instance.
 			</p>
-		</div>
-		<button
-			type="button"
-			on:click={() => (showInfoModal = true)}
-			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<Info size={14} />
-			How it works
-		</button>
-	</div>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<Button
+				text="How it works"
+				icon={Info}
+				on:click={() => (showInfoModal = true)}
+			/>
+		</svelte:fragment>
+	</StickyCard>
 
 	<MediaManagement
 		databases={data.databases}

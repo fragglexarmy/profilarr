@@ -57,7 +57,7 @@
 	};
 </script>
 
-<div class="p-8">
-	<Tabs {tabs} {breadcrumb} />
+<div class="p-4 md:p-8">
+	<Tabs {tabs} {breadcrumb} responsive />
 	<slot />
 </div>

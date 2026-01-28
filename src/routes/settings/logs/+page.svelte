@@ -204,7 +204,7 @@
 	}
 </script>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<!-- Header -->
 	<div class="mb-8">
 		<h1 class="text-2xl font-bold text-neutral-900 md:text-3xl dark:text-neutral-50">Logs</h1>
@@ -229,87 +229,41 @@
 		onDownload={downloadLogs}
 	/>
 
-	<!-- Stats and Pagination Controls (Top) -->
-	<!-- Mobile layout -->
-	<div class="mt-6 mb-4 flex items-center justify-between gap-2 md:hidden">
-		<!-- Stats -->
-		<div class="text-xs text-neutral-600 dark:text-neutral-400">
-			Showing {startIndex + 1}-{endIndex} of {filteredLogs.length}
-		</div>
-
-		<!-- Page navigation -->
-		<div class="flex items-center gap-1">
-			<button
-				type="button"
-				on:click={goToPreviousPage}
-				disabled={currentPage <= 1}
-				class="flex h-6 w-6 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<ChevronLeft size={14} />
-			</button>
-			<span class="min-w-[50px] text-center text-xs text-neutral-600 dark:text-neutral-400">
-				{currentPage}/{totalPages}
-			</span>
-			<button
-				type="button"
-				on:click={goToNextPage}
-				disabled={currentPage >= totalPages}
-				class="flex h-6 w-6 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<ChevronRight size={14} />
-			</button>
-		</div>
-	</div>
-
-	<!-- Desktop layout -->
-	<div class="mt-6 mb-4 hidden md:grid md:grid-cols-3 md:items-center">
-		<!-- Stats (Left) -->
-		<div class="text-sm text-neutral-600 dark:text-neutral-400">
+	<!-- Stats -->
+	<div
+		class="mt-6 mb-4 flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-400"
+	>
+		<span>
 			Showing {startIndex + 1}-{endIndex} of {filteredLogs.length} logs
 			{#if filteredLogs.length !== data.logs.length}
 				(filtered from {data.logs.length})
 			{/if}
-			{#if data.selectedFile}
-				from {data.selectedFile}
-			{/if}
-		</div>
+		</span>
 
-		<!-- Page navigation (Center) -->
-		<div class="flex items-center justify-center gap-2">
-			<button
-				type="button"
-				on:click={goToPreviousPage}
-				disabled={currentPage <= 1}
-				class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<ChevronLeft size={16} />
-			</button>
-			<span class="min-w-[80px] text-center text-sm text-neutral-600 dark:text-neutral-400">
-				Page {currentPage} of {totalPages}
-			</span>
-			<button
-				type="button"
-				on:click={goToNextPage}
-				disabled={currentPage >= totalPages}
-				class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-			>
-				<ChevronRight size={16} />
-			</button>
-		</div>
-
-		<!-- Items per page (Right) -->
-		<div class="flex items-center justify-end gap-2">
-			<span class="text-sm text-neutral-600 dark:text-neutral-400">Per page:</span>
-			<div class="w-24">
-				<NumberInput
-					name="itemsPerPage"
-					bind:value={itemsPerPage}
-					min={10}
-					max={500}
-					step={10}
-				/>
+		<!-- Pagination -->
+		{#if totalPages > 1}
+			<div class="flex items-center gap-2">
+				<button
+					type="button"
+					disabled={currentPage <= 1}
+					on:click={goToPreviousPage}
+					class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+				>
+					<ChevronLeft size={20} />
+				</button>
+				<span class="text-sm">
+					Page {currentPage} of {totalPages}
+				</span>
+				<button
+					type="button"
+					disabled={currentPage >= totalPages}
+					on:click={goToNextPage}
+					class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+				>
+					<ChevronRight size={20} />
+				</button>
 			</div>
-		</div>
+		{/if}
 	</div>
 
 	<!-- Log Table -->
@@ -332,28 +286,30 @@
 		</svelte:fragment>
 	</Table>
 
-	<!-- Pagination Controls (Bottom) - hidden on mobile since we have top controls -->
-	<div class="mt-4 hidden items-center justify-center gap-2 md:flex">
-		<button
-			type="button"
-			on:click={goToPreviousPage}
-			disabled={currentPage <= 1}
-			class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<ChevronLeft size={16} />
-		</button>
-		<span class="min-w-[80px] text-center text-sm text-neutral-600 dark:text-neutral-400">
-			Page {currentPage} of {totalPages}
-		</span>
-		<button
-			type="button"
-			on:click={goToNextPage}
-			disabled={currentPage >= totalPages}
-			class="flex h-8 w-8 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		>
-			<ChevronRight size={16} />
-		</button>
-	</div>
+	<!-- Bottom Pagination -->
+	{#if totalPages > 1}
+		<div class="mt-4 flex items-center justify-center gap-2">
+			<button
+				type="button"
+				disabled={currentPage <= 1}
+				on:click={goToPreviousPage}
+				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+			>
+				Previous
+			</button>
+			<span class="text-sm text-neutral-600 dark:text-neutral-400">
+				Page {currentPage} of {totalPages}
+			</span>
+			<button
+				type="button"
+				disabled={currentPage >= totalPages}
+				on:click={goToNextPage}
+				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+			>
+				Next
+			</button>
+		</div>
+	{/if}
 </div>
 
 <!-- Meta Modal -->

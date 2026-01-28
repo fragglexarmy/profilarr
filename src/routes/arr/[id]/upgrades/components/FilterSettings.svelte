@@ -204,7 +204,7 @@
 	}
 </script>
 
-<div class="-mx-8 bg-neutral-50 px-8 pt-2 pb-6 dark:bg-neutral-900">
+<div class="-mx-4 bg-neutral-50 px-4 pt-2 pb-6 md:-mx-8 md:px-8 dark:bg-neutral-900">
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search filters..." />
@@ -220,41 +220,97 @@
 		chevronPosition="right"
 		flushExpanded={true}
 		emptyMessage="No filters configured. Add a filter to start."
+		responsive
 	>
 		<svelte:fragment slot="cell" let:row let:column>
 			{#if column.key === 'name'}
-				{#if editingId === row.id}
-					<!-- svelte-ignore a11y_autofocus -->
-					<input
-						type="text"
-						bind:value={editingName}
-						on:click|stopPropagation
-						on:keydown={(e) => e.key === 'Enter' && saveEditing()}
-						on:blur={() => saveEditing()}
-						class="w-40 rounded border border-neutral-300 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:border-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-						autofocus
-					/>
-				{:else}
-					<span
-						class={row.enabled
-							? 'text-neutral-900 dark:text-neutral-100'
-							: 'text-neutral-400 dark:text-neutral-500'}
-					>
-						{row.name}
-					</span>
-					{#if !row.enabled}
-						<span
-							class="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"
-						>
-							Disabled
-						</span>
-					{/if}
-				{/if}
+				<div class="flex flex-col gap-2">
+					<div class="flex items-center">
+						{#if editingId === row.id}
+							<!-- svelte-ignore a11y_autofocus -->
+							<input
+								type="text"
+								bind:value={editingName}
+								on:click|stopPropagation
+								on:keydown={(e) => e.key === 'Enter' && saveEditing()}
+								on:blur={() => saveEditing()}
+								class="w-40 rounded border border-neutral-300 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:border-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+								autofocus
+							/>
+						{:else}
+							<span
+								class={row.enabled
+									? 'text-neutral-900 dark:text-neutral-100'
+									: 'text-neutral-400 dark:text-neutral-500'}
+							>
+								{row.name}
+							</span>
+							{#if !row.enabled}
+								<span
+									class="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"
+								>
+									Disabled
+								</span>
+							{/if}
+						{/if}
+					</div>
+					<!-- Mobile: buttons below name -->
+					<div class="flex flex-wrap items-center gap-1 md:hidden">
+						{#if editingId === row.id}
+							<Button
+								text="Save"
+								icon={Check}
+								iconColor="text-green-600 dark:text-green-400"
+								on:click={() => saveEditing()}
+							/>
+						{:else}
+							<Button
+								text={row.enabled ? 'Disable' : 'Enable'}
+								icon={Power}
+								iconColor={row.enabled
+									? 'text-green-600 dark:text-green-400'
+									: 'text-neutral-400 dark:text-neutral-500'}
+								on:click={() => toggleEnabled(row.id)}
+							/>
+							<Button
+								text="Rename"
+								icon={Pencil}
+								iconColor="text-blue-600 dark:text-blue-400"
+								on:click={() => startEditing(row)}
+							/>
+							<Button
+								text="Copy"
+								icon={ClipboardCopy}
+								iconColor="text-amber-600 dark:text-amber-400"
+								on:click={() => copyFilter(row.id)}
+							/>
+							<Button
+								text="Paste"
+								icon={ClipboardPaste}
+								iconColor="text-amber-600 dark:text-amber-400"
+								on:click={() => pasteIntoFilter(row.id)}
+							/>
+							<Button
+								text="Duplicate"
+								icon={Copy}
+								iconColor="text-violet-600 dark:text-violet-400"
+								on:click={() => duplicateFilter(row.id)}
+							/>
+						{/if}
+						<Button
+							text="Delete"
+							icon={Trash2}
+							iconColor="text-red-600 dark:text-red-400"
+							on:click={() => confirmDelete(row)}
+						/>
+					</div>
+				</div>
 			{/if}
 		</svelte:fragment>
 
+		<!-- Desktop: buttons in actions slot -->
 		<svelte:fragment slot="actions" let:row>
-			<div class="flex items-center gap-1">
+			<div class="hidden items-center gap-1 md:flex">
 				{#if editingId === row.id}
 					<Button
 						text="Save"
@@ -351,7 +407,6 @@
 									label: `${s.label} - ${s.description}`
 								}))}
 								minWidth="14rem"
-								responsiveButton
 								compactDropdownThreshold={7}
 								fullWidth
 								fixed

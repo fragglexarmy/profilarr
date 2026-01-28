@@ -100,92 +100,101 @@
 <div
 	class="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
 >
-	<div class="flex flex-wrap items-center justify-between gap-y-3">
-		<!-- Left: Settings -->
-		<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-			<!-- Status -->
+	<!-- Mobile: 2-column grid, Desktop: inline flex -->
+	<div class="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 md:flex md:flex-wrap md:gap-x-6">
+		<!-- Status -->
+		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span>
+		<div class="md:flex md:items-center md:gap-2">
+			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Status:</span>
 			<DropdownSelect
-				label="Status:"
 				value={enabled ? 'true' : 'false'}
 				options={enabledOptions}
-				responsiveButton
 				on:change={(e) => onEnabledChange?.(e.detail === 'true')}
 			/>
-
-			<!-- Dry Run -->
-			<DropdownSelect
-				label="Dry Run:"
-				value={dryRun ? 'true' : 'false'}
-				options={enabledOptions}
-				responsiveButton
-				on:change={(e) => onDryRunChange?.(e.detail === 'true')}
-			/>
-
-			<!-- Rename Folders -->
-			<DropdownSelect
-				label="Folders:"
-				value={renameFolders ? 'true' : 'false'}
-				options={enabledOptions}
-				responsiveButton
-				on:change={(e) => onRenameFoldersChange?.(e.detail === 'true')}
-			/>
-
-			<!-- Summary Notifications -->
-			<DropdownSelect
-				label="Summary:"
-				value={summaryNotifications ? 'true' : 'false'}
-				options={enabledOptions}
-				responsiveButton
-				on:change={(e) => onSummaryNotificationsChange?.(e.detail === 'true')}
-			/>
-
-			<!-- Divider -->
-			<div class="hidden h-6 w-px bg-neutral-200 sm:block dark:bg-neutral-700"></div>
-
-			<!-- Schedule -->
-			<DropdownSelect
-				label="Schedule:"
-				value={schedule}
-				options={scheduleOptions}
-				responsiveButton
-				on:change={(e) => onScheduleChange?.(e.detail)}
-			/>
-
-			<!-- Ignore Tag -->
-			<div class="flex items-center gap-2">
-				<span class="text-sm text-neutral-500 dark:text-neutral-400">Ignore Tag:</span>
-				<Input value={ignoreTag} placeholder="no-rename" on:input={(e) => onIgnoreTagChange?.(e.detail)} />
-			</div>
 		</div>
 
-		<!-- Right: Status -->
-		{#if lastRunAt}
-			<div class="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
-				{#if !enabled}
-					<span
-						class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
-						>Paused</span
-					>
-				{:else if timeUntilNext !== null && timeUntilNext <= 0}
-					<span
-						class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400"
-						>Ready</span
-					>
-				{:else if timeUntilNext !== null}
-					<span>
-						Next Run: <span
-							class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-							>{formatTimeRemaining(timeUntilNext)}</span
-						>
-					</span>
-				{/if}
+		<!-- Dry Run -->
+		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Dry Run</span>
+		<div class="md:flex md:items-center md:gap-2">
+			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Dry Run:</span>
+			<DropdownSelect
+				value={dryRun ? 'true' : 'false'}
+				options={enabledOptions}
+				on:change={(e) => onDryRunChange?.(e.detail === 'true')}
+			/>
+		</div>
+
+		<!-- Rename Folders -->
+		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Folders</span>
+		<div class="md:flex md:items-center md:gap-2">
+			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Folders:</span>
+			<DropdownSelect
+				value={renameFolders ? 'true' : 'false'}
+				options={enabledOptions}
+				on:change={(e) => onRenameFoldersChange?.(e.detail === 'true')}
+			/>
+		</div>
+
+		<!-- Summary Notifications -->
+		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Summary</span>
+		<div class="md:flex md:items-center md:gap-2">
+			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Summary:</span>
+			<DropdownSelect
+				value={summaryNotifications ? 'true' : 'false'}
+				options={enabledOptions}
+				on:change={(e) => onSummaryNotificationsChange?.(e.detail === 'true')}
+			/>
+		</div>
+
+		<!-- Divider (desktop only) -->
+		<div class="hidden h-6 w-px bg-neutral-200 md:block dark:bg-neutral-700"></div>
+
+		<!-- Schedule -->
+		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Schedule</span>
+		<div class="md:flex md:items-center md:gap-2">
+			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Schedule:</span>
+			<DropdownSelect
+				value={schedule}
+				options={scheduleOptions}
+				on:change={(e) => onScheduleChange?.(e.detail)}
+			/>
+		</div>
+
+		<!-- Ignore Tag -->
+		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Ignore Tag</span>
+		<div class="md:flex md:items-center md:gap-2">
+			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Ignore Tag:</span>
+			<Input value={ignoreTag} placeholder="no-rename" on:input={(e) => onIgnoreTagChange?.(e.detail)} />
+		</div>
+	</div>
+
+	<!-- Status info -->
+	{#if lastRunAt}
+		<div class="mt-4 flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-4 text-xs text-neutral-500 md:mt-3 md:border-0 md:pt-0 dark:border-neutral-700 dark:text-neutral-400">
+			{#if !enabled}
+				<span
+					class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
+					>Paused</span
+				>
+			{:else if timeUntilNext !== null && timeUntilNext <= 0}
+				<span
+					class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400"
+					>Ready</span
+				>
+			{:else if timeUntilNext !== null}
 				<span>
-					Last Run: <span
+					Next Run: <span
 						class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-						>{formatLastRun(lastRunAt)}</span
+						>{formatTimeRemaining(timeUntilNext)}</span
 					>
 				</span>
-			</div>
-		{/if}
-	</div>
+			{/if}
+			<span>
+				Last Run: <span
+					class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+					>{formatLastRun(lastRunAt)}</span
+				>
+			</span>
+		</div>
+	{/if}
 </div>

@@ -11,6 +11,7 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
 
 	// Props
 	export let mode: 'create' | 'edit';
@@ -170,12 +171,12 @@
 
 <div class="space-y-6" class:mt-6={mode === 'edit'}>
 	<!-- Header -->
-	<div class="flex items-start justify-between">
-		<div>
-			<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
-			<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
-		</div>
-		<div class="flex items-center gap-2">
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<h1 class="text-neutral-900 dark:text-neutral-50">{title}</h1>
+			<p class="text-neutral-600 dark:text-neutral-400">{description}</p>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
 			{#if mode === 'edit'}
 				<Button
 					text="Delete"
@@ -192,8 +193,8 @@
 				disabled={saving || !canSubmit}
 				on:click={handleSave}
 			/>
-		</div>
-	</div>
+		</svelte:fragment>
+	</StickyCard>
 
 	<div
 		class="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
@@ -217,7 +218,7 @@
 			/>
 		</div>
 		<!-- Name + Status Row -->
-		<div class="flex items-end gap-4">
+		<div class="flex flex-col gap-4 md:flex-row md:items-end">
 			<div class="flex-1">
 				<FormInput
 					label="Name"
@@ -228,12 +229,11 @@
 					on:input={(e) => update('name', e.detail)}
 				/>
 			</div>
-			<div class="flex items-center gap-2">
+			<div class="space-y-1">
+				<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Status</span>
 				<DropdownSelect
-					label="Status:"
 					value={enabled}
 					options={enabledOptions}
-					responsiveButton
 					on:change={(e) => update('enabled', e.detail)}
 				/>
 			</div>
@@ -255,7 +255,7 @@
 			on:input={(e) => update('url', e.detail)}
 		/>
 		<!-- API Key + Test Connection Row -->
-		<div class="flex items-end gap-4">
+		<div class="flex flex-col gap-4 md:flex-row md:items-end">
 			<div class="flex-1">
 				<FormInput
 					label="API Key"
