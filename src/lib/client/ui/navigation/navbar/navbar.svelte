@@ -24,8 +24,8 @@
 			<div class="hidden text-xl font-bold text-neutral-900 md:block dark:text-neutral-100">profilarr</div>
 		</div>
 
-		<!-- Right: Accent picker and Theme toggle (desktop only) -->
-		<div class="hidden items-center gap-1 md:flex">
+		<!-- Right: Accent picker and Theme toggle -->
+		<div class="flex items-center gap-1">
 			<AccentPicker />
 			<ThemeToggle />
 		</div>

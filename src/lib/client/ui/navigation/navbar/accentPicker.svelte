@@ -35,7 +35,7 @@
 
 	{#if open}
 		<Dropdown position="middle" minWidth="auto" fixed={true} {triggerEl}>
-			<div class="flex flex-wrap gap-2 p-2">
+			<div class="flex flex-col gap-2 p-2">
 				{#each accentColors as accent}
 					<button
 						on:click|stopPropagation={() => select(accent.value)}
