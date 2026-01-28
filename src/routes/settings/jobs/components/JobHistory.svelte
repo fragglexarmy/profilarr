@@ -86,7 +86,7 @@
 		{/if}
 	</div>
 
-	<Table {columns} data={filteredRuns} emptyMessage="No job runs yet" compact>
+	<Table {columns} data={filteredRuns} emptyMessage="No job runs yet" compact responsive>
 		<svelte:fragment slot="cell" let:row let:column>
 			{#if column.key === 'job_name'}
 				<span class="text-xs font-medium">{formatJobName(row.job_name)}</span>
