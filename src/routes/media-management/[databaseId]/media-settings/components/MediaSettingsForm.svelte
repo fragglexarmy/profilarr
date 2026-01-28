@@ -129,7 +129,7 @@
 	</div>
 </StickyCard>
 
-<div class="mt-6 px-4">
+<div class="mt-6 md:px-4">
 	<div
 		class="space-y-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
 	>

@@ -24,7 +24,7 @@
 
 	onMount(() => {
 		if (responsive && typeof window !== 'undefined') {
-			mediaQuery = window.matchMedia('(max-width: 1279px)');
+			mediaQuery = window.matchMedia('(max-width: 767px)');
 			isSmallScreen = mediaQuery.matches;
 			mediaQuery.addEventListener('change', handleMediaChange);
 		}
@@ -46,7 +46,7 @@
 
 	const sizeClasses = {
 		xs: 'gap-1 rounded px-2 py-1 text-xs',
-		sm: 'gap-1.5 rounded-lg px-3 py-2',
+		sm: 'gap-1.5 rounded-lg px-3 py-1.5 text-sm md:py-2',
 		md: 'gap-2 rounded-lg px-4 py-2.5'
 	};
 

@@ -38,25 +38,25 @@
 		{position === 'top' ? 'top-0' : 'bottom-0'}"
 >
 	<div class="px-4 py-3 md:px-12 md:py-4">
-		<div class="flex items-center justify-between gap-3 md:gap-4">
-			<div class="[&_h1]:text-sm [&_h1]:md:text-xl [&_p]:text-xs [&_p]:md:text-sm">
+		<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+			<div class="min-w-0 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:md:text-xl [&_p]:text-xs [&_p]:md:text-sm">
 				<slot name="left" />
 			</div>
-			<slot name="right" />
+			<div class="border-t border-neutral-200 pt-3 dark:border-neutral-800 md:border-0 md:pt-0">
+				<div class="flex flex-shrink-0 flex-wrap items-center gap-2">
+					<slot name="right" />
+				</div>
+			</div>
 		</div>
 	</div>
 	{#if variant === 'default'}
 		{#if position === 'top'}
 			<div
-				class="border-b border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
-					? ''
-					: 'mx-4 md:mx-8'}"
+				class="mx-4 border-b border-neutral-200 dark:border-neutral-800 md:mx-8"
 			></div>
 		{:else}
 			<div
-				class="border-t border-neutral-200 transition-[margin] duration-200 dark:border-neutral-800 {isStuck
-					? ''
-					: 'mx-4 md:mx-8'}"
+				class="mx-4 border-t border-neutral-200 dark:border-neutral-800 md:mx-8"
 			></div>
 		{/if}
 	{/if}

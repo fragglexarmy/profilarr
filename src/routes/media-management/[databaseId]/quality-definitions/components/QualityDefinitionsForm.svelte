@@ -295,7 +295,7 @@
 				type="button"
 				on:click={() => (showUnitDropdown = !showUnitDropdown)}
 				on:blur={() => setTimeout(() => (showUnitDropdown = false), 150)}
-				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+				class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 md:py-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 			>
 				{selectedUnit.label}
 				<ChevronDown
@@ -305,7 +305,7 @@
 			</button>
 
 			{#if showUnitDropdown}
-				<Dropdown position="right" minWidth="12rem">
+				<Dropdown position="left" minWidth="12rem">
 					{#each unitOptions as unit}
 						<DropdownItem
 							label="{unit.label} ({unit.short})"
@@ -339,25 +339,22 @@
 	</div>
 </StickyCard>
 
-<div class="mt-6 px-4 space-y-6">
+<div class="mt-6 space-y-6 md:px-4">
 	<!-- Name input -->
-	<div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-		<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-4">Basic Info</h2>
-		<div>
-			<label
-				for="name"
-				class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-			>
-				Name <span class="text-red-500">*</span>
-			</label>
-			<input
-				type="text"
-				id="name"
-				bind:value={configName}
-				placeholder="e.g., default"
-				class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-			/>
-		</div>
+	<div>
+		<label
+			for="name"
+			class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+		>
+			Name <span class="text-red-500">*</span>
+		</label>
+		<input
+			type="text"
+			id="name"
+			bind:value={configName}
+			placeholder="e.g., default"
+			class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base sm:text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+		/>
 	</div>
 
 	<!-- Quality definitions table -->
@@ -394,14 +391,14 @@
 				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 					{#each row.entries as entry (entry.quality_name)}
 						{@const markers = markersMap[entry.quality_name] || createMarkers(entry)}
-						<div class="flex items-center gap-3 bg-white pt-5 pr-4 pb-8 pl-8 dark:bg-neutral-900">
+						<div class="flex flex-col gap-3 bg-white px-4 py-4 md:flex-row md:items-center md:gap-3 md:pt-5 md:pr-4 md:pb-8 md:pl-8 dark:bg-neutral-900">
 							<!-- Quality Name -->
-							<div class="w-32 shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100">
+							<div class="text-sm font-medium text-neutral-900 md:w-32 md:shrink-0 dark:text-neutral-100">
 								{entry.quality_name}
 							</div>
 
-							<!-- Range Scale -->
-							<div class="min-w-0 flex-1 pt-4 pr-16 pl-2">
+							<!-- Range Scale (hidden on mobile) -->
+							<div class="hidden min-w-0 flex-1 pt-4 pr-16 pl-2 md:block">
 								<RangeScale
 									orientation="horizontal"
 									direction="start"
@@ -418,48 +415,50 @@
 							</div>
 
 							<!-- Number Inputs -->
-							<div class="w-24 shrink-0">
-								<div class="mb-1 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-									Min <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+							<div class="flex gap-2 md:contents">
+								<div class="flex-1 md:w-24 md:flex-none md:shrink-0">
+									<div class="mb-1 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+										Min <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+									</div>
+									<NumberInput
+										id="min-{entry.quality_name}"
+										name="min-{entry.quality_name}"
+										bind:value={markers[0].value}
+										min={0}
+										max={markers[1].value}
+										step={1}
+										onchange={() => syncToEntry(entry.quality_name)}
+									/>
 								</div>
-								<NumberInput
-									id="min-{entry.quality_name}"
-									name="min-{entry.quality_name}"
-									bind:value={markers[0].value}
-									min={0}
-									max={markers[1].value}
-									step={1}
-									onchange={() => syncToEntry(entry.quality_name)}
-								/>
-							</div>
 
-							<div class="w-24 shrink-0">
-								<div class="mb-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
-									Pref <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+								<div class="flex-1 md:w-24 md:flex-none md:shrink-0">
+									<div class="mb-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+										Pref <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+									</div>
+									<NumberInput
+										id="preferred-{entry.quality_name}"
+										name="preferred-{entry.quality_name}"
+										bind:value={markers[1].value}
+										min={markers[0].value}
+										max={markers[2].value}
+										step={1}
+										onchange={() => syncToEntry(entry.quality_name)}
+									/>
 								</div>
-								<NumberInput
-									id="preferred-{entry.quality_name}"
-									name="preferred-{entry.quality_name}"
-									bind:value={markers[1].value}
-									min={markers[0].value}
-									max={markers[2].value}
-									step={1}
-									onchange={() => syncToEntry(entry.quality_name)}
-								/>
-							</div>
 
-							<div class="w-24 shrink-0">
-								<div class="mb-1 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400">
-									Max <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+								<div class="flex-1 md:w-24 md:flex-none md:shrink-0">
+									<div class="mb-1 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400">
+										Max <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
+									</div>
+									<NumberInput
+										id="max-{entry.quality_name}"
+										name="max-{entry.quality_name}"
+										bind:value={markers[2].value}
+										min={markers[1].value}
+										step={1}
+										onchange={() => syncToEntry(entry.quality_name)}
+									/>
 								</div>
-								<NumberInput
-									id="max-{entry.quality_name}"
-									name="max-{entry.quality_name}"
-									bind:value={markers[2].value}
-									min={markers[1].value}
-									step={1}
-									onchange={() => syncToEntry(entry.quality_name)}
-								/>
 							</div>
 						</div>
 					{/each}
