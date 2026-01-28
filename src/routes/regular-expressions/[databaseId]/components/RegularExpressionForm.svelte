@@ -5,6 +5,8 @@
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import RegexPatternField from './RegexPatternField.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2, Loader2 } from 'lucide-svelte';
@@ -114,19 +116,42 @@
 	}
 </script>
 
-<div class="space-y-8 p-8">
-	<!-- Header -->
-	<div class="space-y-3">
-		<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{title}</h1>
-		<p class="text-lg text-neutral-600 dark:text-neutral-400">
-			{description_}
-		</p>
-	</div>
+<div class="space-y-6">
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<div>
+				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{title}</h2>
+				<p class="text-sm text-neutral-600 dark:text-neutral-400">{description_}</p>
+			</div>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<div class="flex items-center gap-2">
+				{#if mode === 'edit'}
+					<Button
+						disabled={deleting}
+						icon={deleting ? Loader2 : Trash2}
+						iconColor="text-red-600 dark:text-red-400"
+						text={deleting ? 'Deleting...' : 'Delete'}
+						on:click={handleDeleteClick}
+					/>
+				{/if}
+				<Button text="Cancel" on:click={onCancel} />
+				<Button
+					disabled={saving || !isValid || !$isDirty}
+					icon={saving ? Loader2 : Save}
+					iconColor="text-blue-600 dark:text-blue-400"
+					text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
+					on:click={handleSaveClick}
+				/>
+			</div>
+		</svelte:fragment>
+	</StickyCard>
 
 	<form
 		bind:this={mainFormElement}
 		method="POST"
 		action={actionUrl}
+		class="md:px-4"
 		use:enhance={() => {
 			saving = true;
 			return async ({ result, update: formUpdate }) => {
@@ -149,68 +174,54 @@
 		<input type="hidden" name="tags" value={JSON.stringify(formData.tags)} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 
-		<!-- Basic Info Section -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Basic Info</h2>
+		<div class="space-y-6 pb-12">
+			<!-- Name -->
+			<div>
+				<label
+					for="name"
+					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+				>
+					Name <span class="text-red-500">*</span>
+				</label>
+				<input
+					type="text"
+					id="name"
+					name="name"
+					value={formData.name}
+					oninput={(e) => update('name', e.currentTarget.value)}
+					placeholder="e.g., Release Group - SPARKS"
+					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+				/>
+			</div>
 
-			<div class="space-y-4">
-				<!-- Name -->
-				<div>
-					<label
-						for="name"
-						class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Name <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="text"
-						id="name"
-						name="name"
-						value={formData.name}
-						oninput={(e) => update('name', e.currentTarget.value)}
-						placeholder="e.g., Release Group - SPARKS"
-						class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-					/>
-				</div>
-
-				<!-- Tags -->
-				<div>
-					<div class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Tags</div>
-					<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-						Categorize this pattern for easier filtering
-					</p>
-					<div class="mt-2">
-						<TagInput
-							tags={formData.tags}
-							onchange={(newTags) => update('tags', newTags)}
-							placeholder="Add tags..."
-						/>
-					</div>
-				</div>
-
-				<!-- Description -->
-				<div>
-					<MarkdownInput
-						id="description"
-						name="description"
-						label="Description"
-						description="Describe what this pattern matches"
-						value={formData.description}
-						onchange={(v) => update('description', v)}
-						rows={3}
-						placeholder="What does this pattern match?"
+			<!-- Tags -->
+			<div>
+				<div class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Tags</div>
+				<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+					Categorize this pattern for easier filtering
+				</p>
+				<div class="mt-2">
+					<TagInput
+						tags={formData.tags}
+						onchange={(newTags) => update('tags', newTags)}
+						placeholder="Add tags..."
 					/>
 				</div>
 			</div>
-		</div>
 
-		<!-- Pattern Section -->
-		<div
-			class="mt-8 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Pattern</h2>
+			<!-- Description -->
+			<div>
+				<MarkdownInput
+					id="description"
+					name="description"
+					label="Description"
+					description="Describe what this pattern matches"
+					value={formData.description}
+					onchange={(v) => update('description', v)}
+					rows={3}
+					placeholder="What does this pattern match?"
+				/>
+			</div>
 
 			<RegexPatternField
 				pattern={formData.pattern}
@@ -218,48 +229,6 @@
 				onPatternChange={(v) => update('pattern', v)}
 				onRegex101IdChange={(v) => update('regex101Id', v)}
 			/>
-		</div>
-
-		<!-- Actions -->
-		<div class="mt-8 flex flex-wrap items-center justify-between gap-3">
-			<!-- Left side: Delete (only in edit mode) -->
-			<div>
-				{#if mode === 'edit'}
-					<button
-						type="button"
-						onclick={handleDeleteClick}
-						class="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-neutral-900 dark:text-red-300 dark:hover:bg-red-900"
-					>
-						<Trash2 size={14} />
-						Delete
-					</button>
-				{/if}
-			</div>
-
-			<!-- Right side: Cancel and Save -->
-			<div class="flex gap-3">
-				<button
-					type="button"
-					onclick={onCancel}
-					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-				>
-					Cancel
-				</button>
-				<button
-					type="button"
-					disabled={saving || !isValid || !$isDirty}
-					onclick={handleSaveClick}
-					class="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-				>
-					{#if saving}
-						<Loader2 size={14} class="animate-spin" />
-						{mode === 'create' ? 'Creating...' : 'Saving...'}
-					{:else}
-						<Save size={14} />
-						{submitButtonText}
-					{/if}
-				</button>
-			</div>
 		</div>
 	</form>
 

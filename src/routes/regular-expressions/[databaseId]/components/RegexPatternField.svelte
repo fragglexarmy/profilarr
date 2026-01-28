@@ -2,6 +2,9 @@
 	import { onMount } from 'svelte';
 	import { ExternalLink, Check, X, AlertCircle } from 'lucide-svelte';
 	import type { Regex101UnitTest } from '../../../api/regex101/[id]/+server';
+	import { alertStore } from '$alerts/store';
+	import { sanitizeRegex101Id } from '$lib/client/utils/regex101';
+	import Button from '$ui/button/Button.svelte';
 
 	// Props
 	export let pattern: string = '';
@@ -15,8 +18,12 @@
 	}
 
 	function handleRegex101IdChange(value: string) {
-		regex101Id = value;
-		onRegex101IdChange?.(value);
+		const { value: sanitizedValue, sanitized } = sanitizeRegex101Id(value);
+		if (sanitized) {
+			alertStore.add('info', `Regex101 link detected. Saved ID as "${sanitizedValue}".`);
+		}
+		regex101Id = sanitizedValue;
+		onRegex101IdChange?.(sanitizedValue);
 	}
 
 	// Internal state
@@ -112,15 +119,15 @@
 				class="block flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>
 			{#if regex101Url}
-				<a
+				<Button
 					href={regex101Url}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-accent-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
-				>
-					<ExternalLink size={14} />
-					Test
-				</a>
+					icon={ExternalLink}
+					iconColor="text-blue-600 dark:text-blue-400"
+					text="Test"
+					variant="secondary"
+				/>
 			{/if}
 		</div>
 	</div>
