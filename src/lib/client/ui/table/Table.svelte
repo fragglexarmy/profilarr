@@ -1,4 +1,5 @@
 <script lang="ts" generics="T extends Record<string, any>">
+	import { onMount, onDestroy } from 'svelte';
 	import type { Column, SortDirection, SortState } from './types';
 
 	/**
@@ -13,6 +14,31 @@
 	export let initialSort: SortState | null = null;
 	export let onSortChange: ((sort: SortState | null) => void) | undefined = undefined;
 	export let actionsHeader: string = 'Actions';
+	// Mobile responsive mode - switches to card layout on small screens
+	export let responsive: boolean = false;
+
+	let isMobile = false;
+	let mediaQuery: MediaQueryList | null = null;
+
+	onMount(() => {
+		if (responsive && typeof window !== 'undefined') {
+			mediaQuery = window.matchMedia('(max-width: 767px)');
+			isMobile = mediaQuery.matches;
+			mediaQuery.addEventListener('change', handleMediaChange);
+		}
+	});
+
+	onDestroy(() => {
+		if (mediaQuery) {
+			mediaQuery.removeEventListener('change', handleMediaChange);
+		}
+	});
+
+	function handleMediaChange(e: MediaQueryListEvent) {
+		isMobile = e.matches;
+	}
+
+	$: useMobileLayout = responsive && isMobile;
 
 	let sortKey: string | null = initialSort?.key ?? null;
 	let sortDirection: SortDirection = initialSort?.direction ?? 'asc';
@@ -110,124 +136,198 @@
 	$: (sortKey, sortDirection, (sortedData = sortData(data)));
 </script>
 
-<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
-	<table class="w-full">
-		<!-- Header -->
-		<thead
-			class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
-		>
-			<tr>
-				{#each columns as column}
-					<th
-						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300 ${getAlignClass(column.align)} ${column.width || ''}`}
-					>
-						{#if column.sortable}
-							<button
-								type="button"
-								class={`group flex w-full items-center gap-1.5 text-xs font-medium tracking-wider uppercase ${
-									column.align === 'center'
-										? 'justify-center'
-										: column.align === 'right'
-											? 'justify-end'
-											: 'justify-start'
-								}`}
-								on:click={() => toggleSort(column)}
-							>
-								{#if column.headerIcon}
-									<svelte:component this={column.headerIcon} size={14} />
+{#if useMobileLayout}
+	<!-- Mobile Card Layout -->
+	<div class="space-y-3">
+		{#if sortedData.length === 0}
+			<div
+				class="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
+			>
+				{emptyMessage}
+			</div>
+		{:else}
+			{#each sortedData as row, rowIndex}
+				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+				<div
+					class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 {onRowClick ? 'cursor-pointer' : ''}"
+					on:click={() => onRowClick && onRowClick(row)}
+				>
+					<!-- Primary row: first column as title + actions -->
+					<div class="flex items-center justify-between gap-3 px-4 py-3">
+						<div class="min-w-0 flex-1 font-medium text-neutral-900 dark:text-neutral-100">
+							{#if columns[0].cell}
+								{@const rendered = columns[0].cell(row)}
+								{#if typeof rendered === 'string'}
+									{rendered}
+								{:else if typeof rendered === 'object' && 'html' in rendered}
+									{@html rendered.html}
+								{:else}
+									<svelte:component this={rendered} {row} />
 								{/if}
-								<span>{column.header}</span>
-								<span
-									class="text-[0.6rem] text-neutral-400 transition-opacity group-hover:text-neutral-600 group-hover:dark:text-neutral-200"
-								>
-									{#if sortKey === column.key}
-										{sortDirection === 'asc' ? '▲' : '▼'}
-									{:else}
-										⇅
-									{/if}
-								</span>
-							</button>
-						{:else}
-							<div
-								class={`flex items-center gap-1.5 ${
-									column.align === 'center'
-										? 'justify-center'
-										: column.align === 'right'
-											? 'justify-end'
-											: ''
-								}`}
-							>
-								{#if column.headerIcon}
-									<svelte:component this={column.headerIcon} size={14} />
-								{/if}
-								{column.header}
+							{:else}
+								<slot name="cell" {row} column={columns[0]} {rowIndex}>
+									{getCellValue(row, columns[0].key)}
+								</slot>
+							{/if}
+						</div>
+						{#if $$slots.actions}
+							<div class="shrink-0">
+								<slot name="actions" {row} {rowIndex} />
 							</div>
 						{/if}
-					</th>
-				{/each}
-				<!-- Actions column slot -->
-				{#if $$slots.actions}
-					<th
-						class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300`}
-					>
-						{actionsHeader}
-					</th>
-				{/if}
-			</tr>
-		</thead>
+					</div>
 
-		<!-- Body -->
-		<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
-			{#if sortedData.length === 0}
+					<!-- Secondary columns as label-value pairs -->
+					{#if columns.length > 1}
+						<div class="space-y-2 border-t border-neutral-100 px-4 py-3 dark:border-neutral-800">
+							{#each columns.slice(1) as column, colIndex}
+								<div class="flex items-center justify-between gap-4 text-sm">
+									<span class="shrink-0 text-neutral-500 dark:text-neutral-400">{column.header}</span>
+									<span class="min-w-0 text-right text-neutral-700 dark:text-neutral-300">
+										{#if column.cell}
+											{@const rendered = column.cell(row)}
+											{#if typeof rendered === 'string'}
+												{rendered}
+											{:else if typeof rendered === 'object' && 'html' in rendered}
+												{@html rendered.html}
+											{:else}
+												<svelte:component this={rendered} {row} />
+											{/if}
+										{:else}
+											<slot name="cell" {row} {column} rowIndex={colIndex + 1}>
+												{getCellValue(row, column.key)}
+											</slot>
+										{/if}
+									</span>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/each}
+		{/if}
+	</div>
+{:else}
+	<!-- Desktop Table Layout -->
+	<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+		<table class="w-full">
+			<!-- Header -->
+			<thead
+				class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
+			>
 				<tr>
-					<td
-						colspan={columns.length + ($$slots.actions ? 1 : 0)}
-						class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400"
-					>
-						{emptyMessage}
-					</td>
-				</tr>
-			{:else}
-				{#each sortedData as row, rowIndex}
-					<tr
-						class="{hoverable
-							? 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900'
-							: ''} {onRowClick ? 'cursor-pointer' : ''}"
-						on:click={() => onRowClick && onRowClick(row)}
-					>
-						{#each columns as column}
-							<td
-								class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 ${getAlignClass(column.align)} ${column.width || ''}`}
-							>
-								{#if column.cell}
-									{@const rendered = column.cell(row)}
-									{#if typeof rendered === 'string'}
-										{rendered}
-									{:else if typeof rendered === 'object' && 'html' in rendered}
-										{@html rendered.html}
-									{:else}
-										<svelte:component this={rendered} {row} />
+					{#each columns as column}
+						<th
+							class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300 ${getAlignClass(column.align)} ${column.width || ''}`}
+						>
+							{#if column.sortable}
+								<button
+									type="button"
+									class={`group flex w-full items-center gap-1.5 text-xs font-medium tracking-wider uppercase ${
+										column.align === 'center'
+											? 'justify-center'
+											: column.align === 'right'
+												? 'justify-end'
+												: 'justify-start'
+									}`}
+									on:click={() => toggleSort(column)}
+								>
+									{#if column.headerIcon}
+										<svelte:component this={column.headerIcon} size={14} />
 									{/if}
-								{:else}
-									<slot name="cell" {row} {column} {rowIndex}>
-										{getCellValue(row, column.key)}
-									</slot>
-								{/if}
-							</td>
-						{/each}
+									<span>{column.header}</span>
+									<span
+										class="text-[0.6rem] text-neutral-400 transition-opacity group-hover:text-neutral-600 group-hover:dark:text-neutral-200"
+									>
+										{#if sortKey === column.key}
+											{sortDirection === 'asc' ? '▲' : '▼'}
+										{:else}
+											⇅
+										{/if}
+									</span>
+								</button>
+							{:else}
+								<div
+									class={`flex items-center gap-1.5 ${
+										column.align === 'center'
+											? 'justify-center'
+											: column.align === 'right'
+												? 'justify-end'
+												: ''
+									}`}
+								>
+									{#if column.headerIcon}
+										<svelte:component this={column.headerIcon} size={14} />
+									{/if}
+									{column.header}
+								</div>
+							{/if}
+						</th>
+					{/each}
+					<!-- Actions column slot -->
+					{#if $$slots.actions}
+						<th
+							class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300`}
+						>
+							{actionsHeader}
+						</th>
+					{/if}
+				</tr>
+			</thead>
 
-						<!-- Actions slot -->
-						{#if $$slots.actions}
-							<td class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-right text-sm`}>
-								<slot name="actions" {row} {rowIndex} />
-							</td>
-						{/if}
+			<!-- Body -->
+			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
+				{#if sortedData.length === 0}
+					<tr>
+						<td
+							colspan={columns.length + ($$slots.actions ? 1 : 0)}
+							class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400"
+						>
+							{emptyMessage}
+						</td>
 					</tr>
-				{/each}
-			{/if}
-		</tbody>
-	</table>
-</div>
+				{:else}
+					{#each sortedData as row, rowIndex}
+						<tr
+							class="{hoverable
+								? 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900'
+								: ''} {onRowClick ? 'cursor-pointer' : ''}"
+							on:click={() => onRowClick && onRowClick(row)}
+						>
+							{#each columns as column}
+								<td
+									class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 ${getAlignClass(column.align)} ${column.width || ''}`}
+								>
+									{#if column.cell}
+										{@const rendered = column.cell(row)}
+										{#if typeof rendered === 'string'}
+											{rendered}
+										{:else if typeof rendered === 'object' && 'html' in rendered}
+											{@html rendered.html}
+										{:else}
+											<svelte:component this={rendered} {row} />
+										{/if}
+									{:else}
+										<slot name="cell" {row} {column} {rowIndex}>
+											{getCellValue(row, column.key)}
+										</slot>
+									{/if}
+								</td>
+							{/each}
+
+							<!-- Actions slot -->
+							{#if $$slots.actions}
+								<td class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-right text-sm`}>
+									<slot name="actions" {row} {rowIndex} />
+								</td>
+							{/if}
+						</tr>
+					{/each}
+				{/if}
+			</tbody>
+		</table>
+	</div>
+{/if}
 
 <style>
 	td :global(ul) {
