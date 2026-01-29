@@ -44,7 +44,6 @@ export async function remove(options: DeleteRegularExpressionOptions) {
 	// 2. Delete the regular expression with value guards
 	const deleteRegex = db
 		.deleteFrom('regular_expressions')
-		.where('id', '=', current.id)
 		// Value guards - ensure this is the regex we expect
 		.where('name', '=', current.name)
 		.where('pattern', '=', current.pattern)
@@ -58,10 +57,22 @@ export async function remove(options: DeleteRegularExpressionOptions) {
 		layer,
 		description: `delete-regular-expression-${current.name}`,
 		queries,
+		desiredState: {
+			deleted: true,
+			name: current.name,
+			pattern: current.pattern,
+			description: current.description ?? null,
+			regex101_id: current.regex101_id ?? null,
+			tags: current.tags.map((tag) => tag.name)
+		},
 		metadata: {
 			operation: 'delete',
 			entity: 'regular_expression',
-			name: current.name
+			name: current.name,
+			stableKey: { key: 'regular_expression_name', value: current.name },
+			changedFields: ['deleted'],
+			summary: 'Delete regular expression',
+			title: `Delete regular expression "${current.name}"`
 		}
 	});
 

@@ -21,6 +21,13 @@ interface CreateRegularExpressionOptions {
 }
 
 /**
+ * Escape a string for SQL
+ */
+function esc(value: string): string {
+	return value.replace(/'/g, "''");
+}
+
+/**
  * Create a regular expression by writing an operation to the specified layer
  */
 export async function create(options: CreateRegularExpressionOptions) {
@@ -55,7 +62,7 @@ export async function create(options: CreateRegularExpressionOptions) {
 
 		// Link tag to regular expression using name-based FKs
 		const linkTag = {
-			sql: `INSERT INTO regular_expression_tags (regular_expression_name, tag_name) VALUES ('${input.name.replace(/'/g, "''")}', '${tagName.replace(/'/g, "''")}')`,
+			sql: `INSERT INTO regular_expression_tags (regular_expression_name, tag_name) VALUES ('${esc(input.name)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};
@@ -69,10 +76,20 @@ export async function create(options: CreateRegularExpressionOptions) {
 		layer,
 		description: `create-regular-expression-${input.name}`,
 		queries,
+		desiredState: {
+			name: input.name,
+			pattern: input.pattern,
+			description: input.description ?? null,
+			regex101_id: input.regex101Id ?? null,
+			tags: input.tags
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'regular_expression',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'regular_expression_name', value: input.name },
+			summary: 'Create regular expression',
+			title: `Create regular expression "${input.name}"`
 		}
 	});
 

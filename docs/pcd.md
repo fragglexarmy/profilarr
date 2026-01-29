@@ -228,7 +228,9 @@ pcd_op_history:
 - [x] custom formats: conditions
 - [x] custom formats: tests (create/update/delete)
 - [x] custom formats: delete
-- [ ] regular expressions (create/update/delete)
+- [ ] entity tests: test entities (create/delete)
+- [ ] entity tests: test releases (create/update/delete/import)
+- [x] regular expressions (create/update/delete)
 - [ ] delay profiles (create/update/delete)
 - [ ] media management (settings)
 
