@@ -55,10 +55,21 @@ export async function createRadarrNaming(options: CreateRadarrNamingOptions) {
 		layer,
 		description: `create-radarr-naming-${input.name}`,
 		queries: [insertQuery],
+		desiredState: {
+			name: input.name,
+			rename: input.rename,
+			movie_format: input.movieFormat,
+			movie_folder_format: input.movieFolderFormat,
+			replace_illegal_characters: input.replaceIllegalCharacters,
+			colon_replacement_format: input.colonReplacementFormat
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'radarr_naming',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'radarr_naming_name', value: input.name },
+			summary: 'Create Radarr naming config',
+			title: `Create Radarr naming "${input.name}"`
 		}
 	});
 }
@@ -121,10 +132,26 @@ export async function createSonarrNaming(options: CreateSonarrNamingOptions) {
 		layer,
 		description: `create-sonarr-naming-${input.name}`,
 		queries: [insertQuery],
+		desiredState: {
+			name: input.name,
+			rename: input.rename,
+			standard_episode_format: input.standardEpisodeFormat,
+			daily_episode_format: input.dailyEpisodeFormat,
+			anime_episode_format: input.animeEpisodeFormat,
+			series_folder_format: input.seriesFolderFormat,
+			season_folder_format: input.seasonFolderFormat,
+			replace_illegal_characters: input.replaceIllegalCharacters,
+			colon_replacement_format: input.colonReplacementFormat,
+			custom_colon_replacement_format: input.customColonReplacementFormat,
+			multi_episode_style: input.multiEpisodeStyle
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'sonarr_naming',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'sonarr_naming_name', value: input.name },
+			summary: 'Create Sonarr naming config',
+			title: `Create Sonarr naming "${input.name}"`
 		}
 	});
 }
