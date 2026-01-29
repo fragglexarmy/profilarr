@@ -3,6 +3,7 @@
 	import { tick } from 'svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Check, Save, Trash2 } from 'lucide-svelte';
@@ -57,6 +58,7 @@
 
 	let saving = false;
 	let deleting = false;
+	let showDeleteModal = false;
 	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
@@ -77,9 +79,18 @@
 	}
 
 	async function handleDeleteClick() {
+		showDeleteModal = true;
+	}
+
+	async function handleDeleteConfirm() {
 		selectedLayer = canWriteToBase ? 'base' : 'user';
+		showDeleteModal = false;
 		await tick();
 		deleteFormElement?.requestSubmit();
+	}
+
+	function handleDeleteCancel() {
+		showDeleteModal = false;
 	}
 
 </script>
@@ -308,3 +319,16 @@
 		<input type="hidden" name="layer" value={selectedLayer} />
 	</form>
 {/if}
+
+<Modal
+	open={showDeleteModal}
+	header="Delete Radarr naming config"
+	bodyMessage="This will remove the naming config and write a delete op. You can recreate it later if needed."
+	confirmText="Delete"
+	cancelText="Cancel"
+	confirmDanger={true}
+	confirmDisabled={deleting}
+	loading={deleting}
+	on:confirm={handleDeleteConfirm}
+	on:cancel={handleDeleteCancel}
+/>
