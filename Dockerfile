@@ -13,11 +13,14 @@ FROM denoland/deno:2.5.6 AS builder
 
 WORKDIR /build
 
-# Copy everything
-COPY . .
+# Copy dependency files first (cached unless these change)
+COPY deno.json deno.lock* ./
 
 # Install dependencies (creates node_modules for npm packages)
 RUN deno install --node-modules-dir
+
+# Copy everything else
+COPY . .
 
 # Build the application
 # 1. Vite builds SvelteKit to dist/build/
