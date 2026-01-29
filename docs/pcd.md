@@ -170,7 +170,9 @@ Track each op application attempt in history:
 UI:
 - Show only draft base ops and conflicted ops by default.
 - History view reads from pcd_op_history.
- - User ops should be treated as append-only; edits/reorders should create a new op and mark the old one superseded/dropped.
+- User ops should be treated as append-only; edits/reorders should create a new op and mark the old one superseded/dropped.
+- For dev review/commit, group draft ops by entity (stable_key) and allow reverting an entire entity (drop all draft ops for that entity).
+  - Prefer a dependency check: block revert if other draft ops reference the entity (e.g., CF referenced by scoring). Show the referencing entities so the user can resolve.
 
 ## Suggested Tables (Summary)
 pcd_ops:
@@ -218,6 +220,19 @@ pcd_op_history:
   - Add title/summary for UI list views.
 
 ## Guard Checklist (Status)
+- [x] quality profiles: general fields (name/description/tags/languages)
+- [x] quality profiles: scoring fields
+- [x] quality profiles: qualities
+- [x] quality profiles: delete
+- [x] custom formats: general fields (description/include_in_rename/tags)
+- [x] custom formats: conditions
+- [x] custom formats: tests (create/update/delete)
+- [x] custom formats: delete
+- [ ] regular expressions (create/update/delete)
+- [ ] delay profiles (create/update/delete)
+- [ ] media management (settings)
+
+## Guard Checklist (Status)
 Legend:
 - [ ] Not reviewed / not fixed
 - [x] Reviewed and updated
@@ -228,7 +243,9 @@ Legend:
 - [ ] src/lib/server/pcd/entities/regularExpressions/create.ts
 
 ### Custom Formats
-- [ ] src/lib/server/pcd/entities/customFormats/general/update.ts
+- [x] src/lib/server/pcd/entities/customFormats/general/update.ts
+- [x] src/lib/server/pcd/entities/customFormats/delete.ts
+- [x] src/lib/server/pcd/entities/customFormats/conditions/update.ts
 - [ ] src/lib/server/pcd/entities/customFormats/conditions/update.ts
 - [ ] src/lib/server/pcd/entities/customFormats/tests/update.ts
 - [ ] src/lib/server/pcd/entities/customFormats/tests/delete.ts

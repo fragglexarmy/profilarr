@@ -40,30 +40,58 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 
 	const queries = [];
 
-	// 1. Update the custom format with value guards
-	const updateFormat = db
-		.updateTable('custom_formats')
-		.set({
-			name: input.name,
-			description: input.description || null,
-			include_in_rename: input.includeInRename ? 1 : 0
-		})
-		.where('id', '=', current.id)
-		// Value guards - ensure current values match what we expect
-		.where('name', '=', current.name)
-		.compile();
+	const currentDescription = current.description === '' ? null : current.description;
+	const nextDescription = input.description === '' ? null : input.description;
 
-	queries.push(updateFormat);
+	// 1. Update the custom format with value guards
+	const setValues: Record<string, unknown> = {};
+
+	if (current.name !== input.name) {
+		setValues.name = input.name;
+	}
+	if (currentDescription !== nextDescription) {
+		setValues.description = nextDescription;
+	}
+	if (current.include_in_rename !== input.includeInRename) {
+		setValues.include_in_rename = input.includeInRename ? 1 : 0;
+	}
+
+	let updateFormat = db
+		.updateTable('custom_formats')
+		.set(setValues)
+		// Value guards - ensure current values match what we expect
+		.where('name', '=', current.name);
+
+	if (currentDescription !== nextDescription) {
+		if (currentDescription === null) {
+			updateFormat = updateFormat.where('description', 'is', null);
+		} else {
+			updateFormat = updateFormat.where('description', '=', currentDescription);
+		}
+	}
+	if (current.include_in_rename !== input.includeInRename) {
+		updateFormat = updateFormat.where(
+			'include_in_rename',
+			'=',
+			current.include_in_rename ? 1 : 0
+		);
+	}
+
+	if (Object.keys(setValues).length > 0) {
+		const updateFormatQuery = updateFormat.compile();
+		queries.push(updateFormatQuery);
+	}
 
 	// 2. Handle tag changes
 	const currentTagNames = current.tags.map((t) => t.name);
 	const newTagNames = input.tags;
+	const formatNameForTags = input.name !== current.name ? input.name : current.name;
 
 	// Tags to remove
 	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
-			sql: `DELETE FROM custom_format_tags WHERE custom_format_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
+			sql: `DELETE FROM custom_format_tags WHERE custom_format_name = '${esc(formatNameForTags)}' AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
@@ -83,10 +111,8 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		queries.push(insertTag);
 
 		// Link tag to custom format
-		// Use input.name since the format might have been renamed
-		const formatName = input.name !== current.name ? input.name : current.name;
 		const linkTag = {
-			sql: `INSERT INTO custom_format_tags (custom_format_name, tag_name) VALUES ('${esc(formatName)}', '${esc(tagName)}')`,
+			sql: `INSERT INTO custom_format_tags (custom_format_name, tag_name) VALUES ('${esc(formatNameForTags)}', '${esc(tagName)}')`,
 			parameters: [],
 			query: {} as never
 		};
@@ -120,17 +146,42 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 
 	// Write the operation with metadata
 	const isRename = input.name !== current.name;
+	const changedFields = Object.keys(changes);
+	const desiredState: Record<string, unknown> = {};
+	if (changes.name) {
+		desiredState.name = { from: current.name, to: input.name };
+	}
+	if (changes.description) {
+		desiredState.description = {
+			from: currentDescription,
+			to: nextDescription
+		};
+	}
+	if (changes.includeInRename) {
+		desiredState.include_in_rename = {
+			from: current.include_in_rename,
+			to: input.includeInRename
+		};
+	}
+	if (changes.tags) {
+		desiredState.tags = { add: tagsToAdd, remove: tagsToRemove };
+	}
 
 	const result = await writeOperation({
 		databaseId,
 		layer,
 		description: `update-custom-format-${input.name}`,
 		queries,
+		desiredState,
 		metadata: {
 			operation: 'update',
 			entity: 'custom_format',
 			name: input.name,
-			...(isRename && { previousName: current.name })
+			...(isRename && { previousName: current.name }),
+			stableKey: { key: 'custom_format_name', value: current.name },
+			changedFields,
+			summary: 'Update custom format',
+			title: `Update custom format "${input.name}"`
 		}
 	});
 

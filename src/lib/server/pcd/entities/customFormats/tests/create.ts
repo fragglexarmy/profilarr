@@ -46,10 +46,20 @@ export async function createTest(options: CreateTestOptions) {
 		layer,
 		description: `create-test-${formatName}`,
 		queries: [insertTest],
+		desiredState: {
+			custom_format_name: formatName,
+			title: input.title,
+			type: input.type,
+			should_match: input.should_match,
+			description: input.description ?? null
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'custom_format_test',
-			name: `${formatName}: ${input.title.substring(0, 30)}`
+			name: `${formatName}: ${input.title.substring(0, 30)}`,
+			stableKey: { key: 'custom_format_name', value: formatName },
+			summary: 'Create custom format test',
+			title: `Create test for custom format "${formatName}"`
 		}
 	});
 

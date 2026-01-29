@@ -36,18 +36,78 @@ function esc(value: string): string {
 export async function updateTest(options: UpdateTestOptions) {
 	const { databaseId, layer, formatName, current, input } = options;
 
-	const descriptionValue = input.description ? `'${esc(input.description)}'` : 'NULL';
+	const currentDescription = current.description ?? null;
+	const nextDescription = input.description ?? null;
 
 	// Update with value guards on the current values
 	// We match on id AND verify the current values haven't changed
-	const updateTest = {
-		sql: `UPDATE custom_format_tests SET title = '${esc(input.title)}', type = '${esc(input.type)}', should_match = ${input.should_match ? 1 : 0}, description = ${descriptionValue} WHERE custom_format_name = '${esc(formatName)}' AND title = '${esc(current.title)}' AND type = '${esc(current.type)}'`,
-		parameters: [],
-		query: {} as never
-	};
+	const setParts: string[] = [];
+	if (current.title !== input.title) {
+		setParts.push(`title = '${esc(input.title)}'`);
+	}
+	if (current.type !== input.type) {
+		setParts.push(`type = '${esc(input.type)}'`);
+	}
+	if (current.should_match !== input.should_match) {
+		setParts.push(`should_match = ${input.should_match ? 1 : 0}`);
+	}
+	if (currentDescription !== nextDescription) {
+		const descriptionValue = nextDescription ? `'${esc(nextDescription)}'` : 'NULL';
+		setParts.push(`description = ${descriptionValue}`);
+	}
+
+	const guardParts: string[] = [
+		`custom_format_name = '${esc(formatName)}'`,
+		`title = '${esc(current.title)}'`,
+		`type = '${esc(current.type)}'`
+	];
+	if (current.should_match !== input.should_match) {
+		guardParts.push(`should_match = ${current.should_match ? 1 : 0}`);
+	}
+	if (currentDescription !== nextDescription) {
+		if (currentDescription === null) {
+			guardParts.push(`description IS NULL`);
+		} else {
+			guardParts.push(`description = '${esc(currentDescription)}'`);
+		}
+	}
+
+	const updateTest =
+		setParts.length > 0
+			? {
+					sql: `UPDATE custom_format_tests SET ${setParts.join(', ')} WHERE ${guardParts.join(
+						' AND '
+					)}`,
+					parameters: [],
+					query: {} as never
+				}
+			: null;
 
 	// Track if title changed for metadata
 	const isTitleChange = input.title !== current.title;
+	const changedFields = [];
+	if (current.title !== input.title) changedFields.push('title');
+	if (current.type !== input.type) changedFields.push('type');
+	if (current.should_match !== input.should_match) changedFields.push('should_match');
+	if (currentDescription !== nextDescription) changedFields.push('description');
+
+	const desiredState: Record<string, unknown> = {};
+	if (current.title !== input.title) {
+		desiredState.title = { from: current.title, to: input.title };
+	}
+	if (current.type !== input.type) {
+		desiredState.type = { from: current.type, to: input.type };
+	}
+	if (current.should_match !== input.should_match) {
+		desiredState.should_match = { from: current.should_match, to: input.should_match };
+	}
+	if (currentDescription !== nextDescription) {
+		desiredState.description = { from: currentDescription, to: nextDescription };
+	}
+
+	if (!updateTest) {
+		return { success: true };
+	}
 
 	// Write the operation
 	const result = await writeOperation({
@@ -55,11 +115,16 @@ export async function updateTest(options: UpdateTestOptions) {
 		layer,
 		description: `update-test-${formatName}`,
 		queries: [updateTest],
+		desiredState,
 		metadata: {
 			operation: 'update',
 			entity: 'custom_format_test',
 			name: `${formatName}: ${input.title.substring(0, 30)}`,
-			...(isTitleChange && { previousName: `${formatName}: ${current.title.substring(0, 30)}` })
+			...(isTitleChange && { previousName: `${formatName}: ${current.title.substring(0, 30)}` }),
+			stableKey: { key: 'custom_format_name', value: formatName },
+			changedFields,
+			summary: 'Update custom format test',
+			title: `Update test for custom format "${formatName}"`
 		}
 	});
 

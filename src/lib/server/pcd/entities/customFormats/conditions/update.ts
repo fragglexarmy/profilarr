@@ -160,7 +160,13 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 	const conditionsToDelete = originalConditions.filter((c) => !newConditionNames.has(c.name));
 	for (const condition of conditionsToDelete) {
 		queries.push({
-			sql: `DELETE FROM custom_format_conditions WHERE custom_format_name = '${esc(formatName)}' AND name = '${esc(condition.name)}'`,
+			sql: `DELETE FROM custom_format_conditions
+WHERE custom_format_name = '${esc(formatName)}'
+  AND name = '${esc(condition.name)}'
+  AND type = '${esc(condition.type)}'
+  AND arr_type = '${esc(condition.arrType ?? 'all')}'
+  AND negate = ${condition.negate ? 1 : 0}
+  AND required = ${condition.required ? 1 : 0}`,
 			parameters: [],
 			query: {} as never
 		});
@@ -171,7 +177,8 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 	for (const condition of newConditions) {
 		// Insert the base condition
 		queries.push({
-			sql: `INSERT INTO custom_format_conditions (custom_format_name, name, type, arr_type, negate, required) VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}', '${condition.arrType ?? 'all'}', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
+			sql: `INSERT INTO custom_format_conditions (custom_format_name, name, type, arr_type, negate, required)
+VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}', '${esc(condition.arrType ?? 'all')}', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
 			parameters: [],
 			query: {} as never
 		});
@@ -193,20 +200,45 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		const original = originalConditions.find((c) => c.name === condition.name);
 		if (!original) continue;
 
+		const originalArrType = normalizeArrType(original);
+		const nextArrType = normalizeArrType(condition);
+
 		// Check if base condition changed
 		const baseChanged =
 			original.type !== condition.type ||
-			original.arrType !== condition.arrType ||
+			originalArrType !== nextArrType ||
 			original.negate !== condition.negate ||
 			original.required !== condition.required;
 
 		if (baseChanged) {
-			// Update base condition
-			queries.push({
-				sql: `UPDATE custom_format_conditions SET type = '${esc(condition.type)}', arr_type = '${condition.arrType ?? 'all'}', negate = ${condition.negate ? 1 : 0}, required = ${condition.required ? 1 : 0} WHERE custom_format_name = '${esc(formatName)}' AND name = '${esc(condition.name)}'`,
-				parameters: [],
-				query: {} as never
-			});
+			const setParts: string[] = [];
+			if (original.type !== condition.type) {
+				setParts.push(`type = '${esc(condition.type)}'`);
+			}
+			if (originalArrType !== nextArrType) {
+				setParts.push(`arr_type = '${esc(nextArrType)}'`);
+			}
+			if (original.negate !== condition.negate) {
+				setParts.push(`negate = ${condition.negate ? 1 : 0}`);
+			}
+			if (original.required !== condition.required) {
+				setParts.push(`required = ${condition.required ? 1 : 0}`);
+			}
+
+			if (setParts.length > 0) {
+				queries.push({
+					sql: `UPDATE custom_format_conditions
+SET ${setParts.join(', ')}
+WHERE custom_format_name = '${esc(formatName)}'
+  AND name = '${esc(condition.name)}'
+  AND type = '${esc(original.type)}'
+  AND arr_type = '${esc(originalArrType)}'
+  AND negate = ${original.negate ? 1 : 0}
+  AND required = ${original.required ? 1 : 0}`,
+					parameters: [],
+					query: {} as never
+				});
+			}
 		}
 
 		// For type-specific data, if type changed, delete old and insert new
@@ -215,11 +247,11 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		const valuesChanged = !deepEquals(getConditionValues(original), getConditionValues(condition));
 
 		if (typeChanged || valuesChanged) {
-			// Delete old type-specific data based on original type
-			const deleteTable = getTypeTable(original.type);
-			if (deleteTable) {
+			// Delete old type-specific data based on original values
+			const deleteSqls = generateConditionValueDeleteSql(formatName, condition.name, original);
+			for (const sql of deleteSqls) {
 				queries.push({
-					sql: `DELETE FROM ${deleteTable} WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(condition.name)}'`,
+					sql,
 					parameters: [],
 					query: {} as never
 				});
@@ -259,10 +291,46 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		layer,
 		description: `update-conditions-${formatName}`,
 		queries,
+		desiredState: {
+			conditions: {
+				added: newConditions.map((c) => c.name),
+				removed: conditionsToDelete.map((c) => c.name),
+				updated: existingConditions
+					.filter((c) => {
+						const original = originalConditions.find((o) => o.name === c.name);
+						if (!original) return false;
+						const baseChanged =
+							original.type !== c.type ||
+							original.arrType !== c.arrType ||
+							original.negate !== c.negate ||
+							original.required !== c.required;
+						const valuesChanged = !deepEquals(getConditionValues(original), getConditionValues(c));
+						return baseChanged || valuesChanged;
+					})
+					.map((c) => {
+						const original = originalConditions.find((o) => o.name === c.name);
+						return {
+							name: c.name,
+							base: {
+								from: baseSnapshot(original!),
+								to: baseSnapshot(c)
+							},
+							values: {
+								from: getConditionValues(original!),
+								to: getConditionValues(c)
+							}
+						};
+					})
+			}
+		},
 		metadata: {
 			operation: 'update',
 			entity: 'custom_format_conditions',
-			name: formatName
+			name: formatName,
+			stableKey: { key: 'custom_format_name', value: formatName },
+			changedFields: ['conditions'],
+			summary: 'Update custom format conditions',
+			title: `Update conditions for custom format "${formatName}"`
 		}
 	});
 
@@ -297,6 +365,159 @@ function getTypeTable(type: string): string | null {
 		default:
 			return null;
 	}
+}
+
+function baseSnapshot(condition: ConditionData): Record<string, unknown> {
+	return {
+		type: condition.type,
+		arrType: normalizeArrType(condition),
+		negate: condition.negate,
+		required: condition.required
+	};
+}
+
+function normalizeArrType(condition: ConditionData): string {
+	return condition.arrType ?? 'all';
+}
+
+function generateConditionValueDeleteSql(
+	formatName: string,
+	conditionName: string,
+	condition: ConditionData
+): string[] {
+	const sqls: string[] = [];
+
+	switch (condition.type) {
+		case 'release_title':
+		case 'release_group':
+		case 'edition':
+			if (condition.patterns && condition.patterns.length > 0) {
+				for (const pattern of condition.patterns) {
+					sqls.push(
+						`DELETE FROM condition_patterns WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND regular_expression_name = '${esc(pattern.name)}'`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_patterns WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'language':
+			if (condition.languages && condition.languages.length > 0) {
+				for (const lang of condition.languages) {
+					sqls.push(
+						`DELETE FROM condition_languages WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND language_name = '${esc(lang.name)}' AND except_language = ${lang.except ? 1 : 0}`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_languages WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'source':
+			if (condition.sources && condition.sources.length > 0) {
+				for (const source of condition.sources) {
+					sqls.push(
+						`DELETE FROM condition_sources WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND source = '${esc(source)}'`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_sources WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'resolution':
+			if (condition.resolutions && condition.resolutions.length > 0) {
+				for (const res of condition.resolutions) {
+					sqls.push(
+						`DELETE FROM condition_resolutions WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND resolution = '${esc(res)}'`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_resolutions WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'quality_modifier':
+			if (condition.qualityModifiers && condition.qualityModifiers.length > 0) {
+				for (const qm of condition.qualityModifiers) {
+					sqls.push(
+						`DELETE FROM condition_quality_modifiers WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND quality_modifier = '${esc(qm)}'`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_quality_modifiers WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'release_type':
+			if (condition.releaseTypes && condition.releaseTypes.length > 0) {
+				for (const rt of condition.releaseTypes) {
+					sqls.push(
+						`DELETE FROM condition_release_types WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND release_type = '${esc(rt)}'`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_release_types WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'indexer_flag':
+			if (condition.indexerFlags && condition.indexerFlags.length > 0) {
+				for (const flag of condition.indexerFlags) {
+					sqls.push(
+						`DELETE FROM condition_indexer_flags WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND flag = '${esc(flag)}'`
+					);
+				}
+			} else {
+				sqls.push(
+					`DELETE FROM condition_indexer_flags WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'size':
+			if (condition.size) {
+				const minBytes = condition.size.minBytes ?? 'NULL';
+				const maxBytes = condition.size.maxBytes ?? 'NULL';
+				sqls.push(
+					`DELETE FROM condition_sizes WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND min_bytes IS ${minBytes === 'NULL' ? 'NULL' : minBytes} AND max_bytes IS ${maxBytes === 'NULL' ? 'NULL' : maxBytes}`
+				);
+			} else {
+				sqls.push(
+					`DELETE FROM condition_sizes WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+
+		case 'year':
+			if (condition.years) {
+				const minYear = condition.years.minYear ?? 'NULL';
+				const maxYear = condition.years.maxYear ?? 'NULL';
+				sqls.push(
+					`DELETE FROM condition_years WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}' AND min_year IS ${minYear === 'NULL' ? 'NULL' : minYear} AND max_year IS ${maxYear === 'NULL' ? 'NULL' : maxYear}`
+				);
+			} else {
+				sqls.push(
+					`DELETE FROM condition_years WHERE custom_format_name = '${esc(formatName)}' AND condition_name = '${esc(conditionName)}'`
+				);
+			}
+			break;
+	}
+
+	return sqls;
 }
 
 /**

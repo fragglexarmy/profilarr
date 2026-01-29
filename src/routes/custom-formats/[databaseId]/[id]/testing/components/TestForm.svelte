@@ -27,6 +27,8 @@
 	let type = initialData.type;
 	let shouldMatch = initialData.shouldMatch;
 	let description = initialData.description;
+	const originalTitle = initialData.title;
+	const originalType = initialData.type;
 
 	// Initialize dirty tracking
 	onMount(() => {
@@ -137,6 +139,8 @@
 		<input type="hidden" name="formatName" value={formatName} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 		<input type="hidden" name="description" value={description} />
+		<input type="hidden" name="currentTitle" value={originalTitle} />
+		<input type="hidden" name="currentType" value={originalType} />
 
 		<div
 			class="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
@@ -302,6 +306,8 @@
 		>
 			<input type="hidden" name="formatName" value={formatName} />
 			<input type="hidden" name="layer" value={deleteLayer} />
+			<input type="hidden" name="testTitle" value={originalTitle} />
+			<input type="hidden" name="testType" value={originalType} />
 		</form>
 	{/if}
 </div>
