@@ -64,13 +64,89 @@ async function cancelOutCreate(
 		states: ['published', 'draft']
 	});
 
+	type ParsedMetadata = {
+		operation?: string;
+		entity?: string;
+		name?: string;
+		stable_key?: { key?: string; value?: string };
+	};
+
+	function hasDependentOps(
+		createdOpId: number,
+		createdMeta: ParsedMetadata,
+		createdStableKey: { key?: string; value?: string } | undefined
+	): boolean {
+		for (const op of candidates) {
+			if (op.id <= createdOpId) continue;
+			if (!op.metadata) continue;
+
+			let parsed: ParsedMetadata;
+			try {
+				parsed = JSON.parse(op.metadata) as ParsedMetadata;
+			} catch {
+				continue;
+			}
+
+			const opStableKey = parsed.stable_key;
+			if (
+				createdStableKey?.key &&
+				opStableKey?.key === createdStableKey.key &&
+				opStableKey?.value === createdStableKey.value
+			) {
+				return true;
+			}
+
+			if (
+				createdMeta.entity &&
+				createdMeta.name &&
+				parsed.entity === createdMeta.entity &&
+				parsed.name === createdMeta.name
+			) {
+				return true;
+			}
+
+			if (createdMeta.entity === 'test_entity' && createdStableKey?.value) {
+				const [entityType, entityTmdbIdRaw] = createdStableKey.value.split(':');
+				const entityTmdbId = Number(entityTmdbIdRaw);
+				if (!entityType || Number.isNaN(entityTmdbId)) {
+					continue;
+				}
+
+				if (parsed.entity === 'test_release') {
+					if (
+						opStableKey?.value &&
+						opStableKey.value.startsWith(`${entityType}:${entityTmdbId}:`)
+					) {
+						return true;
+					}
+
+					if (op.desired_state) {
+						try {
+							const desired = JSON.parse(op.desired_state) as {
+								entity_type?: string;
+								entity_tmdb_id?: number;
+							};
+							if (desired.entity_type === entityType && desired.entity_tmdb_id === entityTmdbId) {
+								return true;
+							}
+						} catch {
+							// ignore malformed desired_state
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	for (let i = candidates.length - 1; i >= 0; i--) {
 		const candidate = candidates[i];
 		if (!candidate.metadata) continue;
 
-		let parsed: Record<string, string>;
+		let parsed: ParsedMetadata;
 		try {
-			parsed = JSON.parse(candidate.metadata) as Record<string, string>;
+			parsed = JSON.parse(candidate.metadata) as ParsedMetadata;
 		} catch {
 			continue;
 		}
@@ -80,6 +156,9 @@ async function cancelOutCreate(
 			parsed.entity === metadata.entity &&
 			parsed.name === metadata.name
 		) {
+			if (hasDependentOps(candidate.id, parsed, parsed.stable_key)) {
+				return false;
+			}
 			pcdOpsQueries.update(candidate.id, { state: 'dropped' });
 			await logger.info('Cancelled out local create operation with delete', {
 				source: 'PCDWriter',
