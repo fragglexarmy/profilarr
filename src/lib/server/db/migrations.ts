@@ -42,6 +42,8 @@ import { migration as migration037 } from './migrations/037_add_session_metadata
 import { migration as migration038 } from './migrations/038_add_media_management_config_names.ts';
 import { migration as migration039 } from './migrations/039_create_setup_state.ts';
 import { migration as migration040 } from './migrations/040_add_local_ops_enabled.ts';
+import { migration as migration041 } from './migrations/041_create_pcd_ops.ts';
+import { migration as migration042 } from './migrations/042_create_pcd_op_history.ts';
 
 export interface Migration {
 	version: number;
@@ -302,7 +304,9 @@ export function loadMigrations(): Migration[] {
 		migration037,
 		migration038,
 		migration039,
-		migration040
+		migration040,
+		migration041,
+		migration042
 	];
 
 	// Sort by version number

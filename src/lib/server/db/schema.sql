@@ -259,6 +259,76 @@ CREATE TABLE upgrade_configs (
 );
 
 -- ==============================================================================
+-- TABLE: pcd_ops
+-- Purpose: Store PCD operations (base + user) in the local database
+-- Migration: 041_create_pcd_ops.ts
+-- ==============================================================================
+
+CREATE TABLE pcd_ops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    database_id INTEGER NOT NULL,
+    origin TEXT NOT NULL CHECK (origin IN ('base', 'user')),
+    state TEXT NOT NULL CHECK (state IN ('published', 'draft', 'superseded', 'dropped', 'orphaned')),
+    source TEXT NOT NULL CHECK (source IN ('repo', 'local', 'import')),
+    filename TEXT,
+    op_number INTEGER,
+    sequence INTEGER,
+    sql TEXT NOT NULL,
+    metadata TEXT,
+    desired_state TEXT,
+    content_hash TEXT,
+    last_seen_in_repo_at DATETIME,
+    superseded_by_op_id INTEGER,
+    pushed_at DATETIME,
+    pushed_commit TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE CASCADE,
+    FOREIGN KEY (superseded_by_op_id) REFERENCES pcd_ops(id)
+);
+
+CREATE INDEX idx_pcd_ops_apply_order
+    ON pcd_ops(database_id, origin, state, sequence, id);
+
+CREATE UNIQUE INDEX idx_pcd_ops_base_filename
+    ON pcd_ops(database_id, origin, filename)
+    WHERE origin = 'base' AND filename IS NOT NULL;
+
+CREATE INDEX idx_pcd_ops_hash
+    ON pcd_ops(database_id, origin, content_hash);
+
+-- ==============================================================================
+-- TABLE: pcd_op_history
+-- Purpose: Track per-op apply status and conflicts
+-- Migration: 042_create_pcd_op_history.ts
+-- ==============================================================================
+
+CREATE TABLE pcd_op_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    op_id INTEGER NOT NULL,
+    database_id INTEGER NOT NULL,
+    batch_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (
+        status IN ('applied', 'skipped', 'conflicted', 'conflicted_pending', 'error', 'dropped', 'superseded')
+    ),
+    rowcount INTEGER,
+    conflict_reason TEXT,
+    error TEXT,
+    details TEXT,
+    applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (op_id) REFERENCES pcd_ops(id) ON DELETE CASCADE,
+    FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_pcd_op_history_status
+    ON pcd_op_history(database_id, status, applied_at);
+
+CREATE INDEX idx_pcd_op_history_op
+    ON pcd_op_history(op_id, applied_at);
+
+-- ==============================================================================
 -- TABLE: ai_settings
 -- Purpose: Store AI/LLM configuration for commit message generation
 -- Migration: 014_create_ai_settings.ts
