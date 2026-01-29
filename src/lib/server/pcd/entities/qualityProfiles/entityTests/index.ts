@@ -3,7 +3,7 @@
  */
 
 // Read
-export { list } from './read.ts';
+export { list, getEntity, getReleaseById } from './read.ts';
 
 // Create
 export { create } from './create.ts';

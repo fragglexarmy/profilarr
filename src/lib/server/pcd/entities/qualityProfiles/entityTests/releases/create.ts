@@ -36,6 +36,15 @@ export async function createRelease(options: CreateReleaseOptions) {
 	const { databaseId, cache, layer, input } = options;
 	const db = cache.kb;
 
+	const entity = await db
+		.selectFrom('test_entities')
+		.select(['title'])
+		.where('type', '=', input.entityType)
+		.where('tmdb_id', '=', input.entityTmdbId)
+		.executeTakeFirst();
+
+	const entityTitle = entity?.title ?? `${input.entityType}:${input.entityTmdbId}`;
+
 	const insertRelease = db
 		.insertInto('test_releases')
 		.values({
@@ -54,10 +63,25 @@ export async function createRelease(options: CreateReleaseOptions) {
 		layer,
 		description: `create-test-release`,
 		queries: [insertRelease],
+		desiredState: {
+			entity_type: input.entityType,
+			entity_tmdb_id: input.entityTmdbId,
+			title: input.title,
+			size_bytes: input.size_bytes,
+			languages: input.languages,
+			indexers: input.indexers,
+			flags: input.flags
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'test_release',
-			name: input.title.substring(0, 50)
+			name: input.title.substring(0, 50),
+			stableKey: {
+				key: 'test_release_key',
+				value: `${input.entityType}:${input.entityTmdbId}:${input.title}`
+			},
+			summary: 'Create test release',
+			title: `Create test release for "${entityTitle}"`
 		}
 	});
 
@@ -83,6 +107,13 @@ export async function createReleases(options: CreateReleasesOptions) {
 	// Get the entity key (all inputs should have the same entity)
 	const entityType = inputs[0].entityType;
 	const entityTmdbId = inputs[0].entityTmdbId;
+	const entityRow = await db
+		.selectFrom('test_entities')
+		.select(['title'])
+		.where('type', '=', entityType)
+		.where('tmdb_id', '=', entityTmdbId)
+		.executeTakeFirst();
+	const entityTitle = entityRow?.title ?? `${entityType}:${entityTmdbId}`;
 
 	// Check for existing releases for this entity
 	const existingReleases = await db
@@ -132,10 +163,23 @@ export async function createReleases(options: CreateReleasesOptions) {
 		layer,
 		description: `import-test-releases`,
 		queries,
+		desiredState: {
+			entity_type: entityType,
+			entity_tmdb_id: entityTmdbId,
+			releases: newInputs.map((input) => ({
+				title: input.title,
+				size_bytes: input.size_bytes,
+				languages: input.languages,
+				indexers: input.indexers,
+				flags: input.flags
+			}))
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'test_release',
-			name: `${newInputs.length} releases`
+			name: `${newInputs.length} releases`,
+			summary: 'Import test releases',
+			title: `Import ${newInputs.length} test releases for "${entityTitle}"`
 		}
 	});
 

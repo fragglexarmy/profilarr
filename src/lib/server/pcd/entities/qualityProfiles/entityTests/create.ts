@@ -68,16 +68,34 @@ export async function create(options: CreateEntitiesOptions) {
 	}
 
 	const name = newInputs.length === 1 ? newInputs[0].title : `${newInputs.length} entities`;
+	const entitiesState = newInputs.map((input) => ({
+		type: input.type,
+		tmdb_id: input.tmdbId,
+		title: input.title,
+		year: input.year,
+		poster_path: input.posterPath
+	}));
 
 	const result = await writeOperation({
 		databaseId,
 		layer,
 		description: `create-test-entities`,
 		queries,
+		desiredState: {
+			entities: entitiesState
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'test_entity',
-			name
+			name,
+			...(newInputs.length === 1 && {
+				stableKey: { key: 'test_entity_key', value: `${newInputs[0].type}:${newInputs[0].tmdbId}` }
+			}),
+			summary: 'Create test entities',
+			title:
+				newInputs.length === 1
+					? `Create test entity "${newInputs[0].title}"`
+					: `Create ${newInputs.length} test entities`
 		}
 	});
 
