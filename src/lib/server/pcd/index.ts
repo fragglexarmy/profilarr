@@ -21,7 +21,7 @@ export { compile, invalidate, invalidateAll } from './database/compiler.ts';
 // WRITER
 // ============================================================================
 
-export { writeOperation, canWriteToBase } from './operations/writer.ts';
+export { writeOperation, canWriteToBase } from './ops/writer.ts';
 
 // ============================================================================
 // MANIFEST
@@ -40,8 +40,15 @@ export { processDependencies, syncDependencies, validateDependencies } from './g
 // OPERATIONS
 // ============================================================================
 
-export { loadAllOperations, loadOperationsFromDir, validateOperations, getPCDPath, getUserOpsPath, getBaseOpsPath } from './operations/loader.ts';
-export { compiledQueryToSql, formatValue } from './operations/sql.ts';
+export { loadAllOperations } from './ops/loadOps.ts';
+export {
+	loadOperationsFromDir,
+	validateOperations,
+	getPCDPath,
+	getUserOpsPath,
+	getBaseOpsPath
+} from './utils/operations.ts';
+export { compiledQueryToSql, formatValue } from './utils/sql.ts';
 
 // ============================================================================
 // TYPES

@@ -6,13 +6,14 @@ import { Git, clone, type GitStatus, type UpdateInfo } from '$utils/git/index.ts
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 import { loadManifest, type Manifest } from '../manifest/manifest.ts';
-import { getPCDPath } from '../operations/loader.ts';
+import { getPCDPath } from '../utils/operations.ts';
 import { processDependencies, syncDependencies, validateDependencies } from '../git/dependencies.ts';
 import { compile, invalidate } from '../database/compiler.ts';
 import { getCache } from '../database/registry.ts';
 import { logger } from '$logger/logger.ts';
 import { triggerSyncs } from '$sync/processor.ts';
 import type { LinkOptions, SyncResult } from './types.ts';
+import { importBaseOps } from '../ops/importBaseOps.ts';
 
 /**
  * PCD Manager - Manages the lifecycle of Profilarr Compliant Databases
@@ -67,6 +68,15 @@ class PCDManager {
 			const instance = databaseInstancesQueries.getById(id);
 			if (!instance) {
 				throw new Error('Failed to retrieve created database instance');
+			}
+
+			try {
+				await importBaseOps(id, localPath);
+			} catch (error) {
+				await logger.error('Failed to import base ops after linking', {
+					source: 'PCDManager',
+					meta: { error: String(error), databaseId: id }
+				});
 			}
 
 			// Compile cache (only if enabled)
@@ -159,6 +169,15 @@ class PCDManager {
 			// Sync dependencies (schema, etc.) if versions changed
 			await syncDependencies(instance.local_path);
 
+			try {
+				await importBaseOps(id, instance.local_path);
+			} catch (error) {
+				await logger.error('Failed to import base ops after sync', {
+					source: 'PCDManager',
+					meta: { error: String(error), databaseId: id }
+				});
+			}
+
 			// Update last_synced_at
 			databaseInstancesQueries.updateSyncedAt(id);
 
@@ -227,6 +246,14 @@ class PCDManager {
 		const git = new Git(instance.local_path);
 		await git.checkout(branch);
 		await git.pull();
+		try {
+			await importBaseOps(id, instance.local_path);
+		} catch (error) {
+			await logger.error('Failed to import base ops after branch switch', {
+				source: 'PCDManager',
+				meta: { error: String(error), databaseId: id }
+			});
+		}
 		databaseInstancesQueries.updateSyncedAt(id);
 	}
 
@@ -282,6 +309,18 @@ class PCDManager {
 				await validateDependencies(instance.local_path);
 			} catch (error) {
 				await logger.error(`Failed to validate dependencies for "${instance.name}"`, {
+					source: 'PCDManager',
+					meta: { error: String(error), databaseId: instance.id }
+				});
+			}
+		}
+
+		// Import base ops from repo for all enabled instances
+		for (const instance of enabledInstances) {
+			try {
+				await importBaseOps(instance.id, instance.local_path);
+			} catch (error) {
+				await logger.error(`Failed to import base ops for "${instance.name}"`, {
 					source: 'PCDManager',
 					meta: { error: String(error), databaseId: instance.id }
 				});

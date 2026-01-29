@@ -7,7 +7,8 @@ import { Kysely } from 'kysely';
 // @ts-ignore - Deno JSR import not recognized by svelte-check
 import { DenoSqlite3Dialect } from '@soapbox/kysely-deno-sqlite';
 import { logger } from '$logger/logger.ts';
-import { loadAllOperations, validateOperations } from '../operations/loader.ts';
+import { loadAllOperations } from '../ops/loadOps.ts';
+import { validateOperations } from '../utils/operations.ts';
 import { disableDatabaseInstance } from '$db/queries/databaseInstances.ts';
 import type { PCDDatabase } from '$shared/pcd/types.ts';
 import type { CacheBuildStats, ValidationResult } from '../core/types.ts';
@@ -53,7 +54,7 @@ export class PCDCache {
 			this.registerHelperFunctions();
 
 			// 3. Load all operations
-			const operations = await loadAllOperations(this.pcdPath);
+			const operations = await loadAllOperations(this.pcdPath, this.databaseInstanceId);
 			validateOperations(operations);
 
 			// Count ops per layer
