@@ -237,6 +237,9 @@
 			>
 				{@html renderMarkdown(value)}
 			</div>
+			{#if name}
+				<input type="hidden" {name} {value} />
+			{/if}
 		{:else if multiline}
 			<!-- Textarea -->
 			<textarea
