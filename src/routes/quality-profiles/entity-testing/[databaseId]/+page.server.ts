@@ -313,11 +313,23 @@ export const actions: Actions = {
 			return fail(400, { error: 'Release title is required' });
 		}
 
+		const currentRelease = await entityTestQueries.getReleaseById(cache, release.id);
+		if (!currentRelease) {
+			return fail(404, { error: 'Release not found' });
+		}
+
 		const result = await entityTestQueries.updateRelease({
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			input: release
+			current: currentRelease,
+			input: {
+				title: release.title,
+				size_bytes: release.size_bytes,
+				languages: release.languages,
+				indexers: release.indexers,
+				flags: release.flags
+			}
 		});
 
 		if (!result.success) {
@@ -356,11 +368,16 @@ export const actions: Actions = {
 			return fail(403, { error: 'Cannot write to base layer for this database' });
 		}
 
+		const currentRelease = await entityTestQueries.getReleaseById(cache, releaseId);
+		if (!currentRelease) {
+			return fail(404, { error: 'Release not found' });
+		}
+
 		const result = await entityTestQueries.deleteRelease({
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			releaseId
+			current: currentRelease
 		});
 
 		if (!result.success) {
