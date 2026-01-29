@@ -9,13 +9,15 @@ export const load: ServerLoad = ({ url }) => {
 	const branch = url.searchParams.get('branch') || '';
 	const syncStrategy = url.searchParams.get('sync_strategy') || '';
 	const autoPull = url.searchParams.get('auto_pull') || '';
+	const localOpsEnabled = url.searchParams.get('local_ops_enabled') || '';
 
 	return {
 		formData: {
 			name,
 			branch,
 			syncStrategy,
-			autoPull
+			autoPull,
+			localOpsEnabled
 		}
 	};
 };
@@ -29,6 +31,7 @@ export const actions = {
 		const branch = formData.get('branch')?.toString().trim() || undefined;
 		const syncStrategy = parseInt(formData.get('sync_strategy')?.toString() || '0', 10);
 		const autoPull = formData.get('auto_pull') === '1';
+		const localOpsEnabled = formData.get('local_ops_enabled') === '1';
 		const personalAccessToken =
 			formData.get('personal_access_token')?.toString().trim() || undefined;
 
@@ -50,7 +53,8 @@ export const actions = {
 			name: name,
 			branch: branch || '',
 			sync_strategy: syncStrategy.toString(),
-			auto_pull: autoPull ? '1' : '0'
+			auto_pull: autoPull ? '1' : '0',
+			local_ops_enabled: localOpsEnabled ? '1' : '0'
 		});
 
 		if (repositoryUrl.includes('youtube.com') || repositoryUrl.includes('youtu.be')) {
@@ -93,7 +97,8 @@ export const actions = {
 				branch,
 				syncStrategy,
 				autoPull,
-				personalAccessToken
+				personalAccessToken,
+				localOpsEnabled
 			});
 
 			await logger.info(`Linked new database: ${name}`, {

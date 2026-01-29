@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import { alertStore } from '$alerts/store';
@@ -56,16 +55,14 @@
 	let deleting = false;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Modal states
-	let showSaveTargetModal = false;
-	let showDeleteTargetModal = false;
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
 
 	// Delete layer selection
-	let deleteLayer: 'user' | 'base' = 'user';
+	let deleteLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Display text based on mode
 	$: title = mode === 'create' ? 'New Delay Profile' : 'Edit Delay Profile';
@@ -97,40 +94,17 @@
 	$: isValid = formData.name.trim() !== '';
 
 	async function handleSaveClick() {
-		if (canWriteToBase) {
-			// Show modal to ask where to save
-			showSaveTargetModal = true;
-		} else {
-			// No choice, just submit with 'user' layer
-			selectedLayer = 'user';
-			await tick();
-			mainFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		mainFormElement?.requestSubmit();
 	}
 
 	async function handleDeleteClick() {
-		if (canWriteToBase) {
-			showDeleteTargetModal = true;
-		} else {
-			deleteLayer = 'user';
-			await tick();
-			deleteFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleDeleteLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		deleteLayer = event.detail;
-		showDeleteTargetModal = false;
+		deleteLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		deleteFormElement?.requestSubmit();
 	}
+
 </script>
 
 <div class="space-y-6">
@@ -406,21 +380,3 @@
 		</form>
 	{/if}
 </div>
-
-<!-- Save Target Modal -->
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-
-	<!-- Delete Target Modal -->
-	<SaveTargetModal
-		open={showDeleteTargetModal}
-		mode="delete"
-		on:select={handleDeleteLayerSelect}
-		on:cancel={() => (showDeleteTargetModal = false)}
-	/>
-{/if}

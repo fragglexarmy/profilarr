@@ -4,7 +4,6 @@
 	import { alertStore } from '$alerts/store';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { Trash2, Loader2, Check, X } from 'lucide-svelte';
 	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
 
@@ -51,12 +50,10 @@
 	let deleting = false;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
-	let deleteLayer: 'user' | 'base' = 'user';
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
+	let deleteLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Modal states
-	let showSaveTargetModal = false;
-	let showDeleteTargetModal = false;
 
 	// Form reference
 	let mainFormElement: HTMLFormElement;
@@ -71,38 +68,17 @@
 	$: isValid = title.trim() !== '';
 
 	async function handleSaveClick() {
-		if (canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			mainFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		mainFormElement?.requestSubmit();
 	}
 
 	async function handleDeleteClick() {
-		if (canWriteToBase) {
-			showDeleteTargetModal = true;
-		} else {
-			deleteLayer = 'user';
-			await tick();
-			deleteFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleDeleteLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		deleteLayer = event.detail;
-		showDeleteTargetModal = false;
+		deleteLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		deleteFormElement?.requestSubmit();
 	}
+
 
 	// Options
 	const typeOptions = [
@@ -329,21 +305,3 @@
 		</form>
 	{/if}
 </div>
-
-<!-- Save Target Modal -->
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-
-	<!-- Delete Target Modal -->
-	<SaveTargetModal
-		open={showDeleteTargetModal}
-		mode="delete"
-		on:select={handleDeleteLayerSelect}
-		on:cancel={() => (showDeleteTargetModal = false)}
-	/>
-{/if}

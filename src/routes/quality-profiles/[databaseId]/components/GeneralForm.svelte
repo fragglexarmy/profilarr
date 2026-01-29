@@ -5,7 +5,6 @@
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import { alertStore } from '$alerts/store';
@@ -57,13 +56,11 @@
 	let deleting = false;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
-	let deleteLayer: 'user' | 'base' = 'user';
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
+	let deleteLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Modal state
-	let showSaveTargetModal = false;
 	let showDeleteConfirmModal = false;
-	let showDeleteTargetModal = false;
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
 
@@ -135,18 +132,7 @@
 	$: isValid = name.trim() !== '';
 
 	async function handleSaveClick() {
-		if (canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			mainFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		mainFormElement?.requestSubmit();
 	}
@@ -157,21 +143,11 @@
 
 	async function handleDeleteConfirm() {
 		showDeleteConfirmModal = false;
-		if (canWriteToBase) {
-			showDeleteTargetModal = true;
-		} else {
-			deleteLayer = 'user';
-			await tick();
-			deleteFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleDeleteLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		deleteLayer = event.detail;
-		showDeleteTargetModal = false;
+		deleteLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		deleteFormElement?.requestSubmit();
 	}
+
 </script>
 
 <div class="space-y-6">
@@ -367,23 +343,5 @@
 		confirmDanger={true}
 		on:confirm={handleDeleteConfirm}
 		on:cancel={() => (showDeleteConfirmModal = false)}
-	/>
-{/if}
-
-<!-- Save Target Modal -->
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-
-	<!-- Delete Target Modal -->
-	<SaveTargetModal
-		open={showDeleteTargetModal}
-		mode="delete"
-		on:select={handleDeleteLayerSelect}
-		on:cancel={() => (showDeleteTargetModal = false)}
 	/>
 {/if}

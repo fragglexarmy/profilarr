@@ -16,7 +16,6 @@
 		Loader2
 	} from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -103,8 +102,7 @@
 	// Save state
 	let isSaving = false;
 	let saveError: string | null = null;
-	let selectedLayer: 'user' | 'base' = 'user';
-	let showSaveTargetModal = false;
+	let selectedLayer: 'user' | 'base' = data.canWriteToBase ? 'base' : 'user';
 	let formElement: HTMLFormElement;
 
 	type SortKey = 'name' | 'radarr' | 'sonarr';
@@ -481,18 +479,7 @@
 	}
 
 	async function handleSaveClick() {
-		if (data.canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			formElement?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = data.canWriteToBase ? 'base' : 'user';
 		await tick();
 		formElement?.requestSubmit();
 	}
@@ -1116,13 +1103,3 @@
 		</div>
 	</div>
 </InfoModal>
-
-<!-- Save Target Modal -->
-{#if data.canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-{/if}

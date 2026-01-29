@@ -12,7 +12,6 @@
 		ArrowUpAZ
 	} from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -33,8 +32,7 @@
 	let formRef: HTMLFormElement;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
-	let showSaveTargetModal = false;
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Step management: 1 = select library item, 2 = select releases
 	let step: 1 | 2 = 1;
@@ -269,21 +267,10 @@
 		} else {
 			// Step 2: Import selected releases
 			if (selectedReleases.size === 0) return;
-			if (canWriteToBase) {
-				showSaveTargetModal = true;
-			} else {
-				selectedLayer = 'user';
-				await tick();
-				formRef?.requestSubmit();
-			}
+			selectedLayer = canWriteToBase ? 'base' : 'user';
+			await tick();
+			formRef?.requestSubmit();
 		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
-		await tick();
-		formRef?.requestSubmit();
 	}
 
 	function handleBack() {
@@ -704,12 +691,3 @@
 		</form>
 	</div>
 </Modal>
-
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-{/if}

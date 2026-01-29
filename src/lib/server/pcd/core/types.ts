@@ -115,6 +115,7 @@ export interface LinkOptions {
 	syncStrategy?: number;
 	autoPull?: boolean;
 	personalAccessToken?: string;
+	localOpsEnabled?: boolean;
 }
 
 /**

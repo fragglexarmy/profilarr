@@ -27,6 +27,7 @@
 				name: instance.name,
 				repositoryUrl: instance.repository_url,
 				personalAccessToken: '', // Never pre-populate for security
+				localOpsEnabled: instance.local_ops_enabled ? 'true' : 'false',
 				syncStrategy: String(instance.sync_strategy),
 				autoPull: instance.auto_pull ? 'true' : 'false'
 			});
@@ -36,6 +37,7 @@
 				repositoryUrl: '',
 				branch: data?.formData?.branch ?? '',
 				personalAccessToken: data?.formData?.personalAccessToken ?? '',
+				localOpsEnabled: data?.formData?.localOpsEnabled === '1' ? 'true' : 'false',
 				syncStrategy: data?.formData?.syncStrategy ? String(data.formData.syncStrategy) : '60',
 				autoPull: data?.formData?.autoPull === '0' ? 'false' : 'true'
 			});
@@ -48,6 +50,7 @@
 	$: repositoryUrl = ($current.repositoryUrl ?? '') as string;
 	$: branch = ($current.branch ?? '') as string;
 	$: personalAccessToken = ($current.personalAccessToken ?? '') as string;
+	$: localOpsEnabled = ($current.localOpsEnabled ?? 'false') as string;
 	$: syncStrategy = ($current.syncStrategy ?? '60') as string;
 	$: autoPull = ($current.autoPull ?? 'true') as string;
 
@@ -71,6 +74,11 @@
 	const autoPullOptions = [
 		{ value: 'true', label: 'Enabled' },
 		{ value: 'false', label: 'Disabled' }
+	];
+
+	const localOpsOptions = [
+		{ value: 'false', label: 'Disabled' },
+		{ value: 'true', label: 'Enabled' }
 	];
 
 	// Submit handler
@@ -104,6 +112,7 @@
 				name,
 				repositoryUrl,
 				personalAccessToken: '',
+				localOpsEnabled,
 				syncStrategy,
 				autoPull
 			});
@@ -202,6 +211,22 @@
 			on:input={(e) => update('personalAccessToken', e.detail)}
 		/>
 
+		<!-- Local Ops Only Row -->
+		<div class="space-y-2">
+			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Local Ops Only
+			</span>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">
+				Force changes to save as local user ops even when a personal access token is set.
+			</p>
+			<DropdownSelect
+				value={localOpsEnabled}
+				options={localOpsOptions}
+				fullWidth
+				on:change={(e) => update('localOpsEnabled', e.detail)}
+			/>
+		</div>
+
 		<!-- Sync Strategy Row -->
 		<div class="space-y-2">
 			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -266,6 +291,7 @@
 		<input type="hidden" name="branch" value={branch} />
 	{/if}
 	<input type="hidden" name="personal_access_token" value={personalAccessToken} />
+	<input type="hidden" name="local_ops_enabled" value={localOpsEnabled === 'true' ? '1' : '0'} />
 	<input type="hidden" name="sync_strategy" value={syncStrategy} />
 	<input type="hidden" name="auto_pull" value={autoPull === 'true' ? '1' : '0'} />
 </form>

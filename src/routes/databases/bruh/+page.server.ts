@@ -7,6 +7,7 @@ export const load: ServerLoad = ({ url }) => {
 	const branch = url.searchParams.get('branch') || '';
 	const syncStrategy = url.searchParams.get('sync_strategy') || '';
 	const autoPull = url.searchParams.get('auto_pull') || '';
+	const localOpsEnabled = url.searchParams.get('local_ops_enabled') || '';
 
 	return {
 		url: urlParam,
@@ -15,7 +16,8 @@ export const load: ServerLoad = ({ url }) => {
 			name,
 			branch,
 			syncStrategy,
-			autoPull
+			autoPull,
+			localOpsEnabled
 		}
 	};
 };

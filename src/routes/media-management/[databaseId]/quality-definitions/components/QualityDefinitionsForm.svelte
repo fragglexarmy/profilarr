@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import RangeScale from '$ui/form/RangeScale.svelte';
@@ -98,9 +97,8 @@
 
 	let saving = false;
 	let deleting = false;
-	let selectedLayer: 'user' | 'base' = 'user';
-	let showSaveTargetModal = false;
-	let showDeleteTargetModal = false;
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
+	
 	let expandedRows: Set<string | number> = new Set();
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
@@ -246,41 +244,18 @@
 
 	async function handleSaveClick() {
 		if (saving) return;
-		if (canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			saving = true;
-			selectedLayer = 'user';
-			await tick();
-			mainFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		if (saving) return;
 		saving = true;
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		mainFormElement?.requestSubmit();
 	}
 
 	async function handleDeleteClick() {
-		if (canWriteToBase) {
-			showDeleteTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			deleteFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleDeleteLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showDeleteTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		deleteFormElement?.requestSubmit();
 	}
+
 </script>
 
 <StickyCard position="top">
@@ -525,20 +500,4 @@
 	>
 		<input type="hidden" name="layer" value={selectedLayer} />
 	</form>
-{/if}
-
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-
-	<SaveTargetModal
-		open={showDeleteTargetModal}
-		mode="delete"
-		on:select={handleDeleteLayerSelect}
-		on:cancel={() => (showDeleteTargetModal = false)}
-	/>
 {/if}

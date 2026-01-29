@@ -170,9 +170,12 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 			return { success: false, error: 'Database instance not found' };
 		}
 
-		// Check if base layer is allowed (requires PAT)
-		if (layer === 'base' && !instance.personal_access_token) {
-			return { success: false, error: 'Base layer requires a personal access token' };
+		// Check if base layer is allowed (requires PAT and no local-only override)
+		if (layer === 'base' && (!instance.personal_access_token || instance.local_ops_enabled)) {
+			return {
+				success: false,
+				error: 'Base layer requires a personal access token and local ops must be disabled'
+			};
 		}
 
 		// Get the target directory
@@ -297,7 +300,7 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
  */
 export function canWriteToBase(databaseId: number): boolean {
 	const instance = databaseInstancesQueries.getById(databaseId);
-	return !!instance?.personal_access_token;
+	return !!instance?.personal_access_token && !instance?.local_ops_enabled;
 }
 
 // Re-export types for convenience

@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import { alertStore } from '$alerts/store';
@@ -25,8 +24,7 @@
 	let formRef: HTMLFormElement;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
-	let showSaveTargetModal = false;
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Form state
 	let title = '';
@@ -53,18 +51,7 @@
 	}
 
 	async function handleConfirm() {
-		if (canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			formRef?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		formRef?.requestSubmit();
 	}
@@ -173,12 +160,3 @@
 		</form>
 	</div>
 </Modal>
-
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-{/if}

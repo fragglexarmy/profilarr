@@ -7,7 +7,6 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import AddEntityModal from './components/AddEntityModal.svelte';
@@ -190,10 +189,8 @@
 	let importEntity: TestEntity | null = null;
 
 	// Layer selection for delete operations
-	let deleteLayer: 'user' | 'base' = 'user';
-	let deleteReleaseLayer: 'user' | 'base' = 'user';
-	let showDeleteTargetModal = false;
-	let showDeleteReleaseTargetModal = false;
+	let deleteLayer: 'user' | 'base' = data.canWriteToBase ? 'base' : 'user';
+	let deleteReleaseLayer: 'user' | 'base' = data.canWriteToBase ? 'base' : 'user';
 
 	// Entity type selection (both selected by default)
 	let moviesSelected = true;
@@ -251,22 +248,7 @@
 
 	async function handleDeleteConfirm() {
 		showDeleteModal = false;
-		if (data.canWriteToBase) {
-			showDeleteTargetModal = true;
-		} else {
-			deleteLayer = 'user';
-			await tick();
-			if (deleteFormRef) {
-				deleteFormRef.requestSubmit();
-			}
-			entityToDelete = null;
-			deleteFormRef = null;
-		}
-	}
-
-	async function handleDeleteLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		deleteLayer = event.detail;
-		showDeleteTargetModal = false;
+		deleteLayer = data.canWriteToBase ? 'base' : 'user';
 		await tick();
 		if (deleteFormRef) {
 			deleteFormRef.requestSubmit();
@@ -277,12 +259,6 @@
 
 	function handleDeleteCancel() {
 		showDeleteModal = false;
-		entityToDelete = null;
-		deleteFormRef = null;
-	}
-
-	function handleDeleteTargetCancel() {
-		showDeleteTargetModal = false;
 		entityToDelete = null;
 		deleteFormRef = null;
 	}
@@ -319,22 +295,7 @@
 
 	async function handleDeleteReleaseConfirm() {
 		showDeleteReleaseModal = false;
-		if (data.canWriteToBase) {
-			showDeleteReleaseTargetModal = true;
-		} else {
-			deleteReleaseLayer = 'user';
-			await tick();
-			if (deleteReleaseFormRef) {
-				deleteReleaseFormRef.requestSubmit();
-			}
-			releaseToDelete = null;
-			deleteReleaseFormRef = null;
-		}
-	}
-
-	async function handleDeleteReleaseLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		deleteReleaseLayer = event.detail;
-		showDeleteReleaseTargetModal = false;
+		deleteReleaseLayer = data.canWriteToBase ? 'base' : 'user';
 		await tick();
 		if (deleteReleaseFormRef) {
 			deleteReleaseFormRef.requestSubmit();
@@ -345,12 +306,6 @@
 
 	function handleDeleteReleaseCancel() {
 		showDeleteReleaseModal = false;
-		releaseToDelete = null;
-		deleteReleaseFormRef = null;
-	}
-
-	function handleDeleteReleaseTargetCancel() {
-		showDeleteReleaseTargetModal = false;
 		releaseToDelete = null;
 		deleteReleaseFormRef = null;
 	}
@@ -537,24 +492,6 @@
 	on:confirm={handleDeleteReleaseConfirm}
 	on:cancel={handleDeleteReleaseCancel}
 />
-
-{#if data.canWriteToBase}
-	<!-- Delete Entity Target Modal -->
-	<SaveTargetModal
-		open={showDeleteTargetModal}
-		mode="delete"
-		on:select={handleDeleteLayerSelect}
-		on:cancel={handleDeleteTargetCancel}
-	/>
-
-	<!-- Delete Release Target Modal -->
-	<SaveTargetModal
-		open={showDeleteReleaseTargetModal}
-		mode="delete"
-		on:select={handleDeleteReleaseLayerSelect}
-		on:cancel={handleDeleteReleaseTargetCancel}
-	/>
-{/if}
 
 <ImportReleasesModal
 	bind:open={showImportModal}

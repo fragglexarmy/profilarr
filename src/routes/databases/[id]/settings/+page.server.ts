@@ -33,6 +33,7 @@ export const actions: Actions = {
 		const name = formData.get('name')?.toString().trim();
 		const syncStrategy = parseInt(formData.get('sync_strategy')?.toString() || '0', 10);
 		const autoPull = formData.get('auto_pull') === '1';
+		const localOpsEnabled = formData.get('local_ops_enabled') === '1';
 		const personalAccessToken =
 			formData.get('personal_access_token')?.toString().trim() || undefined;
 
@@ -68,7 +69,8 @@ export const actions: Actions = {
 				name,
 				syncStrategy,
 				autoPull,
-				personalAccessToken
+				personalAccessToken,
+				localOpsEnabled
 			});
 
 			if (!updated) {

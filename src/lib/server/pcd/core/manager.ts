@@ -59,7 +59,8 @@ class PCDManager {
 				syncStrategy: options.syncStrategy,
 				autoPull: options.autoPull,
 				personalAccessToken: options.personalAccessToken,
-				isPrivate
+				isPrivate,
+				localOpsEnabled: options.localOpsEnabled
 			});
 
 			// Get and return the created instance

@@ -13,7 +13,6 @@
 		ArrowUpAZ
 	} from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
@@ -34,8 +33,7 @@
 	let formRef: HTMLFormElement;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
-	let showSaveTargetModal = false;
+	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	type ResultItem = {
 		id: number;
@@ -177,18 +175,7 @@
 
 	async function handleConfirm() {
 		if (selectedItems.size === 0) return;
-		if (canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			formRef?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = canWriteToBase ? 'base' : 'user';
 		await tick();
 		formRef?.requestSubmit();
 	}
@@ -483,12 +470,3 @@
 		{/if}
 	</div>
 </Modal>
-
-{#if canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-{/if}

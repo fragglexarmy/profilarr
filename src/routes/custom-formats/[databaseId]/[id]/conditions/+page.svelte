@@ -6,7 +6,6 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
-	import SaveTargetModal from '$ui/modal/SaveTargetModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { sortConditions } from '$shared/pcd/conditions';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
@@ -40,10 +39,8 @@
 	let saving = false;
 
 	// Layer selection
-	let selectedLayer: 'user' | 'base' = 'user';
+	let selectedLayer: 'user' | 'base' = data.canWriteToBase ? 'base' : 'user';
 
-	// Modal state
-	let showSaveTargetModal = false;
 	let mainFormElement: HTMLFormElement;
 
 	// Reactive getters for current values
@@ -184,21 +181,11 @@
 	}
 
 	async function handleSaveClick() {
-		if (data.canWriteToBase) {
-			showSaveTargetModal = true;
-		} else {
-			selectedLayer = 'user';
-			await tick();
-			mainFormElement?.requestSubmit();
-		}
-	}
-
-	async function handleLayerSelect(event: CustomEvent<'user' | 'base'>) {
-		selectedLayer = event.detail;
-		showSaveTargetModal = false;
+		selectedLayer = data.canWriteToBase ? 'base' : 'user';
 		await tick();
 		mainFormElement?.requestSubmit();
 	}
+
 </script>
 
 <svelte:head>
@@ -335,13 +322,3 @@
 		{/if}
 	</div>
 </form>
-
-<!-- Save Target Modal -->
-{#if data.canWriteToBase}
-	<SaveTargetModal
-		open={showSaveTargetModal}
-		mode="save"
-		on:select={handleLayerSelect}
-		on:cancel={() => (showSaveTargetModal = false)}
-	/>
-{/if}

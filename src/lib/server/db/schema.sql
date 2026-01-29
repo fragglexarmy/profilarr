@@ -194,7 +194,7 @@ CREATE TABLE notification_history (
 -- ==============================================================================
 -- TABLE: database_instances
 -- Purpose: Store linked Profilarr Compliant Database (PCD) repositories
--- Migration: 008_create_database_instances.ts, 009_add_personal_access_token.ts, 010_add_is_private.ts
+-- Migration: 008_create_database_instances.ts, 009_add_personal_access_token.ts, 010_add_is_private.ts, 040_add_local_ops_enabled.ts
 -- ==============================================================================
 
 CREATE TABLE database_instances (
@@ -208,6 +208,7 @@ CREATE TABLE database_instances (
     repository_url TEXT NOT NULL,               -- Git repository URL
     personal_access_token TEXT,                 -- PAT for private repos and push access (Migration 009)
     is_private INTEGER NOT NULL DEFAULT 0,      -- 1=private repo, 0=public (auto-detected, Migration 010)
+    local_ops_enabled INTEGER NOT NULL DEFAULT 0, -- 1=force local ops even with PAT (Migration 040)
 
     -- Local storage
     local_path TEXT NOT NULL,                   -- Path where repo is cloned (data/databases/{uuid})

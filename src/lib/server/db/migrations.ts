@@ -41,6 +41,7 @@ import { migration as migration036 } from './migrations/036_create_auth_tables.t
 import { migration as migration037 } from './migrations/037_add_session_metadata.ts';
 import { migration as migration038 } from './migrations/038_add_media_management_config_names.ts';
 import { migration as migration039 } from './migrations/039_create_setup_state.ts';
+import { migration as migration040 } from './migrations/040_add_local_ops_enabled.ts';
 
 export interface Migration {
 	version: number;
@@ -300,7 +301,8 @@ export function loadMigrations(): Migration[] {
 		migration036,
 		migration037,
 		migration038,
-		migration039
+		migration039,
+		migration040
 	];
 
 	// Sort by version number

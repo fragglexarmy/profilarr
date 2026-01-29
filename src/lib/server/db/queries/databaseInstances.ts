@@ -14,6 +14,7 @@ export interface DatabaseInstance {
 	enabled: number;
 	personal_access_token: string | null;
 	is_private: number;
+	local_ops_enabled: number;
 	last_synced_at: string | null;
 	created_at: string;
 	updated_at: string;
@@ -29,6 +30,7 @@ export interface CreateDatabaseInstanceInput {
 	enabled?: boolean;
 	personalAccessToken?: string;
 	isPrivate?: boolean;
+	localOpsEnabled?: boolean;
 }
 
 export interface UpdateDatabaseInstanceInput {
@@ -38,6 +40,7 @@ export interface UpdateDatabaseInstanceInput {
 	autoPull?: boolean;
 	enabled?: boolean;
 	personalAccessToken?: string;
+	localOpsEnabled?: boolean;
 }
 
 /**
@@ -53,10 +56,11 @@ export const databaseInstancesQueries = {
 		const enabled = input.enabled !== false ? 1 : 0;
 		const personalAccessToken = input.personalAccessToken || null;
 		const isPrivate = input.isPrivate ? 1 : 0;
+		const localOpsEnabled = input.localOpsEnabled ? 1 : 0;
 
 		db.execute(
-			`INSERT INTO database_instances (uuid, name, repository_url, local_path, sync_strategy, auto_pull, enabled, personal_access_token, is_private)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO database_instances (uuid, name, repository_url, local_path, sync_strategy, auto_pull, enabled, personal_access_token, is_private, local_ops_enabled)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			input.uuid,
 			input.name,
 			input.repositoryUrl,
@@ -65,7 +69,8 @@ export const databaseInstancesQueries = {
 			autoPull,
 			enabled,
 			personalAccessToken,
-			isPrivate
+			isPrivate,
+			localOpsEnabled
 		);
 
 		// Get the last inserted ID
@@ -150,6 +155,10 @@ export const databaseInstancesQueries = {
 		if (input.personalAccessToken !== undefined) {
 			updates.push('personal_access_token = ?');
 			params.push(input.personalAccessToken || null);
+		}
+		if (input.localOpsEnabled !== undefined) {
+			updates.push('local_ops_enabled = ?');
+			params.push(input.localOpsEnabled ? 1 : 0);
 		}
 
 		if (updates.length === 0) {
