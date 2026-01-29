@@ -88,7 +88,7 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			currentName: decodedName,
+			current,
 			input: {
 				name: newName.trim(),
 				entries
@@ -136,7 +136,7 @@ export const actions: Actions = {
 			databaseId: currentDatabaseId,
 			cache,
 			layer,
-			name: decodedName
+			current
 		});
 
 		if (!result.success) {

@@ -232,7 +232,8 @@ pcd_op_history:
 - [x] entity tests: test releases (create/update/delete/import)
 - [x] regular expressions (create/update/delete)
 - [x] delay profiles (create/update/delete)
-- [ ] media management: settings
+- [x] media management: settings
+- [x] media management: quality definitions
 - [x] media management: naming
 - [ ] audit all entity ops to ensure they align with schema constraints (e.g., unique keys) and avoid writes that will fail
 

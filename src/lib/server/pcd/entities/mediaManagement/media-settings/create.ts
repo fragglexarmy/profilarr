@@ -48,10 +48,18 @@ export async function createRadarrMediaSettings(options: CreateMediaSettingsOpti
 		layer,
 		description: `create-radarr-media-settings-${input.name}`,
 		queries: [insertQuery],
+		desiredState: {
+			name: input.name,
+			propers_repacks: input.propersRepacks,
+			enable_media_info: input.enableMediaInfo
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'radarr_media_settings',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'radarr_media_settings_name', value: input.name },
+			summary: 'Create Radarr media settings',
+			title: `Create Radarr media settings "${input.name}"`
 		}
 	});
 }
@@ -85,10 +93,18 @@ export async function createSonarrMediaSettings(options: CreateMediaSettingsOpti
 		layer,
 		description: `create-sonarr-media-settings-${input.name}`,
 		queries: [insertQuery],
+		desiredState: {
+			name: input.name,
+			propers_repacks: input.propersRepacks,
+			enable_media_info: input.enableMediaInfo
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'sonarr_media_settings',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'sonarr_media_settings_name', value: input.name },
+			summary: 'Create Sonarr media settings',
+			title: `Create Sonarr media settings "${input.name}"`
 		}
 	});
 }

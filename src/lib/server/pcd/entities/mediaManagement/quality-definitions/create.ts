@@ -51,10 +51,17 @@ export async function createRadarrQualityDefinitions(options: CreateQualityDefin
 		layer,
 		description: `create-radarr-quality-definitions-${input.name}`,
 		queries,
+		desiredState: {
+			name: input.name,
+			entries: input.entries
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'radarr_quality_definitions',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'radarr_quality_definitions_name', value: input.name },
+			summary: 'Create Radarr quality definitions',
+			title: `Create Radarr quality definitions "${input.name}"`
 		}
 	});
 }
@@ -92,10 +99,17 @@ export async function createSonarrQualityDefinitions(options: CreateQualityDefin
 		layer,
 		description: `create-sonarr-quality-definitions-${input.name}`,
 		queries,
+		desiredState: {
+			name: input.name,
+			entries: input.entries
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'sonarr_quality_definitions',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'sonarr_quality_definitions_name', value: input.name },
+			summary: 'Create Sonarr quality definitions',
+			title: `Create Sonarr quality definitions "${input.name}"`
 		}
 	});
 }
