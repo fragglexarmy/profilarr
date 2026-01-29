@@ -4,8 +4,9 @@
 
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
-import type { OrderedItem } from '$shared/pcd/display.ts';
+import type { OrderedItem, QualitiesPageData } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
+import { qualities as readQualities } from './read.ts';
 
 // ============================================================================
 // Input types
@@ -40,26 +41,68 @@ export async function updateQualities(options: UpdateQualitiesOptions) {
 
 	const queries = [];
 
-	// 1. Delete existing quality_profile_qualities for this profile
-	const deleteQPQ = db
-		.deleteFrom('quality_profile_qualities')
-		.where('quality_profile_name', '=', profileName)
-		.compile();
-	queries.push(deleteQPQ);
+	const currentData = await readQualities(cache, databaseId, profileName);
+	if (isSameOrderedItems(currentData, input.orderedItems)) {
+		return { success: true };
+	}
 
-	// 2. Delete existing quality_group_members for this profile
-	const deleteGroupMembers = db
-		.deleteFrom('quality_group_members')
-		.where('quality_profile_name', '=', profileName)
-		.compile();
-	queries.push(deleteGroupMembers);
+	// 1. Delete existing quality_profile_qualities with value guards
+	for (const item of currentData.orderedItems) {
+		if (item.type === 'quality') {
+			const deleteQPQ = {
+				sql: `DELETE FROM quality_profile_qualities
+WHERE quality_profile_name = '${esc(profileName)}'
+  AND quality_name = '${esc(item.name)}'
+  AND quality_group_name IS NULL
+  AND position = ${item.position}
+  AND enabled = ${item.enabled ? 1 : 0}
+  AND upgrade_until = ${item.upgradeUntil ? 1 : 0}`,
+				parameters: [],
+				query: {} as never
+			};
+			queries.push(deleteQPQ);
+		} else {
+			const deleteQPQ = {
+				sql: `DELETE FROM quality_profile_qualities
+WHERE quality_profile_name = '${esc(profileName)}'
+  AND quality_group_name = '${esc(item.name)}'
+  AND quality_name IS NULL
+  AND position = ${item.position}
+  AND enabled = ${item.enabled ? 1 : 0}
+  AND upgrade_until = ${item.upgradeUntil ? 1 : 0}`,
+				parameters: [],
+				query: {} as never
+			};
+			queries.push(deleteQPQ);
+		}
+	}
 
-	// 3. Delete existing quality_groups for this profile
-	const deleteGroups = db
-		.deleteFrom('quality_groups')
-		.where('quality_profile_name', '=', profileName)
-		.compile();
-	queries.push(deleteGroups);
+	// 2. Delete existing quality_group_members with value guards
+	for (const group of currentData.groups) {
+		for (const member of group.members) {
+			const deleteGroupMember = {
+				sql: `DELETE FROM quality_group_members
+WHERE quality_profile_name = '${esc(profileName)}'
+  AND quality_group_name = '${esc(group.name)}'
+  AND quality_name = '${esc(member.name)}'`,
+				parameters: [],
+				query: {} as never
+			};
+			queries.push(deleteGroupMember);
+		}
+	}
+
+	// 3. Delete existing quality_groups with value guards
+	for (const group of currentData.groups) {
+		const deleteGroup = {
+			sql: `DELETE FROM quality_groups
+WHERE quality_profile_name = '${esc(profileName)}'
+  AND name = '${esc(group.name)}'`,
+			parameters: [],
+			query: {} as never
+		};
+		queries.push(deleteGroup);
+	}
 
 	// 4. Process each ordered item
 	// First pass: create groups
@@ -126,12 +169,36 @@ export async function updateQualities(options: UpdateQualitiesOptions) {
 		layer,
 		description: `update-quality-profile-qualities-${profileName}`,
 		queries,
+		desiredState: {
+			ordered_items: input.orderedItems
+		},
 		metadata: {
 			operation: 'update',
 			entity: 'quality_profile',
-			name: profileName
+			name: profileName,
+			stableKey: { key: 'quality_profile_name', value: profileName },
+			changedFields: ['qualities'],
+			summary: 'Update quality profile qualities',
+			title: `Update qualities for quality profile "${profileName}"`
 		}
 	});
 
 	return result;
+}
+
+function isSameOrderedItems(currentData: QualitiesPageData, nextItems: OrderedItem[]): boolean {
+	const normalize = (items: OrderedItem[]) =>
+		items.map((item) => ({
+			type: item.type,
+			name: item.name,
+			position: item.position,
+			enabled: item.enabled,
+			upgradeUntil: item.upgradeUntil,
+			members: item.members ? item.members.map((m) => m.name).sort() : []
+		}));
+
+	const current = normalize(currentData.orderedItems);
+	const next = normalize(nextItems);
+
+	return JSON.stringify(current) === JSON.stringify(next);
 }

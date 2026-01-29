@@ -114,10 +114,19 @@ export async function create(options: CreateQualityProfileOptions) {
 		layer,
 		description: `create-quality-profile-${input.name}`,
 		queries,
+		desiredState: {
+			name: input.name,
+			description: input.description ?? null,
+			tags: input.tags,
+			language: input.language ?? null
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'quality_profile',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'quality_profile_name', value: input.name },
+			summary: 'Create quality profile',
+			title: `Create quality profile "${input.name}"`
 		}
 	});
 

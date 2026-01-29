@@ -47,6 +47,14 @@ export interface OperationMetadata {
 	name: string;
 	/** Previous name if this is a rename operation */
 	previousName?: string;
+	/** Stable key for locating the entity */
+	stableKey?: { key: string; value: string };
+	/** Fields changed by this operation */
+	changedFields?: string[];
+	/** Short summary for display */
+	summary?: string;
+	/** Human-friendly title for display */
+	title?: string;
 }
 
 // ============================================================================
@@ -90,6 +98,8 @@ export interface WriteOptions {
 	queries: CompiledQuery[];
 	/** Metadata for optimization and tracking */
 	metadata?: OperationMetadata;
+	/** Optional desired state payload for diff/UI */
+	desiredState?: Record<string, unknown> | null;
 }
 
 /**

@@ -258,7 +258,7 @@ Legend:
 - [x] src/lib/server/pcd/entities/qualityProfiles/general/update.ts
 
 ### Quality Profiles: Qualities
-- [ ] src/lib/server/pcd/entities/qualityProfiles/qualities/update.ts
+- [x] src/lib/server/pcd/entities/qualityProfiles/qualities/update.ts
 
 ### Quality Profiles: Scoring
 - [x] src/lib/server/pcd/entities/qualityProfiles/scoring/update.ts
