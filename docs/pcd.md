@@ -170,6 +170,7 @@ Track each op application attempt in history:
 UI:
 - Show only draft base ops and conflicted ops by default.
 - History view reads from pcd_op_history.
+ - User ops should be treated as append-only; edits/reorders should create a new op and mark the old one superseded/dropped.
 
 ## Suggested Tables (Summary)
 pcd_ops:
@@ -265,7 +266,7 @@ Legend:
 
 ### Quality Profiles: Create/Delete
 - [ ] src/lib/server/pcd/entities/qualityProfiles/create.ts
-- [ ] src/lib/server/pcd/entities/qualityProfiles/delete.ts
+- [x] src/lib/server/pcd/entities/qualityProfiles/delete.ts
 
 ### Quality Profiles: Entity Tests
 - [ ] src/lib/server/pcd/entities/qualityProfiles/entityTests/create.ts

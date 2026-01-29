@@ -25,10 +25,37 @@ interface RemoveQualityProfileOptions {
  * Delete a quality profile by writing an operation to the specified layer
  */
 export async function remove(options: RemoveQualityProfileOptions) {
-	const { databaseId, cache, layer, profileId, profileName } = options;
+	const { databaseId, cache, layer, profileName } = options;
 	const db = cache.kb;
 
 	const queries = [];
+
+	// Snapshot counts for metadata/diff
+	const tagCountRow = await db
+		.selectFrom('quality_profile_tags')
+		.select(db.fn.count<number>('quality_profile_name').as('count'))
+		.where('quality_profile_name', '=', profileName)
+		.executeTakeFirst();
+	const languageCountRow = await db
+		.selectFrom('quality_profile_languages')
+		.select(db.fn.count<number>('quality_profile_name').as('count'))
+		.where('quality_profile_name', '=', profileName)
+		.executeTakeFirst();
+	const qualitiesCountRow = await db
+		.selectFrom('quality_profile_qualities')
+		.select(db.fn.count<number>('quality_profile_name').as('count'))
+		.where('quality_profile_name', '=', profileName)
+		.executeTakeFirst();
+	const cfCountRow = await db
+		.selectFrom('quality_profile_custom_formats')
+		.select(db.fn.count<number>('quality_profile_name').as('count'))
+		.where('quality_profile_name', '=', profileName)
+		.executeTakeFirst();
+	const groupCountRow = await db
+		.selectFrom('quality_groups')
+		.select(db.fn.count<number>('quality_profile_name').as('count'))
+		.where('quality_profile_name', '=', profileName)
+		.executeTakeFirst();
 
 	// Delete associated tags
 	const deleteProfileTags = db
@@ -73,7 +100,6 @@ export async function remove(options: RemoveQualityProfileOptions) {
 	// Delete the quality profile itself
 	const deleteProfile = db
 		.deleteFrom('quality_profiles')
-		.where('id', '=', profileId)
 		.where('name', '=', profileName)
 		.compile();
 
@@ -85,10 +111,25 @@ export async function remove(options: RemoveQualityProfileOptions) {
 		layer,
 		description: `delete-quality-profile-${profileName}`,
 		queries,
+		desiredState: {
+			deleted: true,
+			name: profileName,
+			counts: {
+				tags: tagCountRow?.count ?? 0,
+				languages: languageCountRow?.count ?? 0,
+				qualities: qualitiesCountRow?.count ?? 0,
+				custom_format_scores: cfCountRow?.count ?? 0,
+				groups: groupCountRow?.count ?? 0
+			}
+		},
 		metadata: {
 			operation: 'delete',
 			entity: 'quality_profile',
-			name: profileName
+			name: profileName,
+			stableKey: { key: 'quality_profile_name', value: profileName },
+			changedFields: ['deleted'],
+			summary: 'Delete quality profile',
+			title: `Delete quality profile "${profileName}"`
 		}
 	});
 
