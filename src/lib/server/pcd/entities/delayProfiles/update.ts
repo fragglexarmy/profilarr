@@ -45,22 +45,81 @@ export async function update(options: UpdateDelayProfileOptions) {
 	const minimumCfScore = input.bypassIfAboveCfScore ? input.minimumCfScore : null;
 
 	// Update the delay profile with value guards
-	const updateProfile = db
+	const setValues: Record<string, unknown> = {};
+
+	if (current.name !== input.name) {
+		setValues.name = input.name;
+	}
+	if (current.preferred_protocol !== input.preferredProtocol) {
+		setValues.preferred_protocol = input.preferredProtocol;
+	}
+	if (current.usenet_delay !== usenetDelay) {
+		setValues.usenet_delay = usenetDelay;
+	}
+	if (current.torrent_delay !== torrentDelay) {
+		setValues.torrent_delay = torrentDelay;
+	}
+	if (current.bypass_if_highest_quality !== input.bypassIfHighestQuality) {
+		setValues.bypass_if_highest_quality = input.bypassIfHighestQuality ? 1 : 0;
+	}
+	if (current.bypass_if_above_custom_format_score !== input.bypassIfAboveCfScore) {
+		setValues.bypass_if_above_custom_format_score = input.bypassIfAboveCfScore ? 1 : 0;
+	}
+	if (current.minimum_custom_format_score !== minimumCfScore) {
+		setValues.minimum_custom_format_score = minimumCfScore;
+	}
+
+	let updateProfile = db
 		.updateTable('delay_profiles')
-		.set({
-			name: input.name,
-			preferred_protocol: input.preferredProtocol,
-			usenet_delay: usenetDelay,
-			torrent_delay: torrentDelay,
-			bypass_if_highest_quality: input.bypassIfHighestQuality ? 1 : 0,
-			bypass_if_above_custom_format_score: input.bypassIfAboveCfScore ? 1 : 0,
-			minimum_custom_format_score: minimumCfScore
-		})
-		.where('id', '=', current.id)
-		// Value guards - ensure current values match what we expect
-		.where('name', '=', current.name)
-		.where('preferred_protocol', '=', current.preferred_protocol)
-		.compile();
+		.set(setValues)
+		// Value guard - ensure this is the profile we expect
+		.where('name', '=', current.name);
+
+	if (current.preferred_protocol !== input.preferredProtocol) {
+		updateProfile = updateProfile.where('preferred_protocol', '=', current.preferred_protocol);
+	}
+	if (current.usenet_delay !== usenetDelay) {
+		if (current.usenet_delay === null) {
+			updateProfile = updateProfile.where('usenet_delay', 'is', null);
+		} else {
+			updateProfile = updateProfile.where('usenet_delay', '=', current.usenet_delay);
+		}
+	}
+	if (current.torrent_delay !== torrentDelay) {
+		if (current.torrent_delay === null) {
+			updateProfile = updateProfile.where('torrent_delay', 'is', null);
+		} else {
+			updateProfile = updateProfile.where('torrent_delay', '=', current.torrent_delay);
+		}
+	}
+	if (current.bypass_if_highest_quality !== input.bypassIfHighestQuality) {
+		updateProfile = updateProfile.where(
+			'bypass_if_highest_quality',
+			'=',
+			current.bypass_if_highest_quality ? 1 : 0
+		);
+	}
+	if (current.bypass_if_above_custom_format_score !== input.bypassIfAboveCfScore) {
+		updateProfile = updateProfile.where(
+			'bypass_if_above_custom_format_score',
+			'=',
+			current.bypass_if_above_custom_format_score ? 1 : 0
+		);
+	}
+	if (current.minimum_custom_format_score !== minimumCfScore) {
+		if (current.minimum_custom_format_score === null) {
+			updateProfile = updateProfile.where('minimum_custom_format_score', 'is', null);
+		} else {
+			updateProfile = updateProfile.where(
+				'minimum_custom_format_score',
+				'=',
+				current.minimum_custom_format_score
+			);
+		}
+	}
+
+	const updateProfileQuery =
+		Object.keys(setValues).length > 0 ? updateProfile.compile() : null;
 
 	// Log what's being changed
 	const changes: Record<string, { from: unknown; to: unknown }> = {};
@@ -93,6 +152,10 @@ export async function update(options: UpdateDelayProfileOptions) {
 		changes.minimumCfScore = { from: current.minimum_custom_format_score, to: minimumCfScore };
 	}
 
+	if (!updateProfileQuery) {
+		return { success: true };
+	}
+
 	await logger.info(`Save delay profile "${input.name}"`, {
 		source: 'DelayProfile',
 		meta: {
@@ -103,17 +166,57 @@ export async function update(options: UpdateDelayProfileOptions) {
 
 	// Write the operation with metadata
 	const isRename = input.name !== current.name;
+	const changedFields = Object.keys(changes);
+	const desiredState: Record<string, unknown> = {};
+	if (changes.name) {
+		desiredState.name = { from: current.name, to: input.name };
+	}
+	if (changes.preferredProtocol) {
+		desiredState.preferred_protocol = {
+			from: current.preferred_protocol,
+			to: input.preferredProtocol
+		};
+	}
+	if (changes.usenetDelay) {
+		desiredState.usenet_delay = { from: current.usenet_delay, to: usenetDelay };
+	}
+	if (changes.torrentDelay) {
+		desiredState.torrent_delay = { from: current.torrent_delay, to: torrentDelay };
+	}
+	if (changes.bypassIfHighestQuality) {
+		desiredState.bypass_if_highest_quality = {
+			from: current.bypass_if_highest_quality,
+			to: input.bypassIfHighestQuality
+		};
+	}
+	if (changes.bypassIfAboveCfScore) {
+		desiredState.bypass_if_above_custom_format_score = {
+			from: current.bypass_if_above_custom_format_score,
+			to: input.bypassIfAboveCfScore
+		};
+	}
+	if (changes.minimumCfScore) {
+		desiredState.minimum_custom_format_score = {
+			from: current.minimum_custom_format_score,
+			to: minimumCfScore
+		};
+	}
 
 	const result = await writeOperation({
 		databaseId,
 		layer,
 		description: `update-delay-profile-${input.name}`,
-		queries: [updateProfile],
+		queries: [updateProfileQuery],
+		desiredState,
 		metadata: {
 			operation: 'update',
 			entity: 'delay_profile',
 			name: input.name,
-			...(isRename && { previousName: current.name })
+			...(isRename && { previousName: current.name }),
+			stableKey: { key: 'delay_profile_name', value: current.name },
+			changedFields,
+			summary: 'Update delay profile',
+			title: `Update delay profile "${input.name}"`
 		}
 	});
 

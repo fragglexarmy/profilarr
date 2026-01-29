@@ -57,10 +57,22 @@ export async function create(options: CreateDelayProfileOptions) {
 		layer,
 		description: `create-delay-profile-${input.name}`,
 		queries: [insertProfile],
+		desiredState: {
+			name: input.name,
+			preferred_protocol: input.preferredProtocol,
+			usenet_delay: usenetDelay,
+			torrent_delay: torrentDelay,
+			bypass_if_highest_quality: input.bypassIfHighestQuality,
+			bypass_if_above_custom_format_score: input.bypassIfAboveCfScore,
+			minimum_custom_format_score: minimumCfScore
+		},
 		metadata: {
 			operation: 'create',
 			entity: 'delay_profile',
-			name: input.name
+			name: input.name,
+			stableKey: { key: 'delay_profile_name', value: input.name },
+			summary: 'Create delay profile',
+			title: `Create delay profile "${input.name}"`
 		}
 	});
 
