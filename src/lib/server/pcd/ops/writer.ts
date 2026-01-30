@@ -34,6 +34,15 @@ function buildMetadataJson(metadata?: OperationMetadata): string | null {
 	if (metadata.stableKey) {
 		payload.stable_key = metadata.stableKey;
 	}
+	if (metadata.groupId) {
+		payload.group_id = metadata.groupId;
+	}
+	if (metadata.generated) {
+		payload.generated = true;
+	}
+	if (metadata.dependsOn && metadata.dependsOn.length > 0) {
+		payload.depends_on = metadata.dependsOn;
+	}
 	return JSON.stringify(payload);
 }
 

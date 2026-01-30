@@ -49,6 +49,12 @@ export interface OperationMetadata {
 	previousName?: string;
 	/** Stable key for locating the entity */
 	stableKey?: { key: string; value: string };
+	/** Group id for operations created as part of a single action */
+	groupId?: string;
+	/** Whether this operation was generated as a dependency */
+	generated?: boolean;
+	/** Dependencies required for this operation */
+	dependsOn?: Array<{ entity: string; key: string; value: string }>;
 	/** Fields changed by this operation */
 	changedFields?: string[];
 	/** Short summary for display */

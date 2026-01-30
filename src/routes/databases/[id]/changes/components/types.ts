@@ -10,6 +10,8 @@ export type DraftOpDetails = {
 	summary?: string;
 	createdAt: string;
 	sequence: number | null;
+	groupId?: string;
+	generated?: boolean;
 };
 
 export type FieldRow = {
@@ -120,6 +122,9 @@ export type DraftEntityChange = {
 	updatedAt: string;
 	ops: DraftOpDetails[];
 	sections: DraftEntitySection[];
+	requires?: Array<{ key: string; entity: string; name: string }>;
+	groupId?: string;
+	generated?: boolean;
 };
 
 export type { QualityDefinitionEntry };

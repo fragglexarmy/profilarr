@@ -11,6 +11,9 @@ type ParsedMetadata = {
 	title?: string;
 	changed_fields?: string[];
 	stable_key?: { key: string; value: string };
+	depends_on?: Array<{ entity?: string; key?: string; value?: string }>;
+	group_id?: string;
+	generated?: boolean;
 };
 
 export type DraftOpDetails = {
@@ -20,6 +23,8 @@ export type DraftOpDetails = {
 	summary?: string;
 	createdAt: string;
 	sequence: number | null;
+	groupId?: string;
+	generated?: boolean;
 };
 
 type FieldAggregate = {
@@ -144,6 +149,9 @@ export type DraftEntityChange = {
 	updatedAt: string;
 	ops: DraftOpDetails[];
 	sections: DraftEntitySection[];
+	requires?: Array<{ key: string; entity: string; name: string }>;
+	groupId?: string;
+	generated?: boolean;
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -165,6 +173,12 @@ const FIELD_LABELS: Record<string, string> = {
 	minimum_custom_format_score: 'Minimum score',
 	upgrade_until_score: 'Upgrade until score',
 	upgrade_score_increment: 'Upgrade score increment'
+};
+
+const ENTITY_BY_STABLE_KEY: Record<string, string> = {
+	custom_format_name: 'custom_format',
+	quality_profile_name: 'quality_profile',
+	regular_expression_name: 'regular_expression'
 };
 
 function parseJson<T>(value: string | null): T | null {
@@ -725,6 +739,7 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 	const aggregates = new Map<string, Map<string, FieldAggregate>>();
 	const entityCreates = new Map<string, boolean>();
 	const entityDeletes = new Map<string, boolean>();
+	const dependencies = new Map<string, Set<string>>();
 
 	for (const { op, metadata } of parsedOps) {
 		if (!metadata?.entity || !metadata?.name || !metadata.operation) {
@@ -734,6 +749,23 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 		const desiredState = parseJson<Record<string, unknown>>(op.desired_state);
 		const stableKey = metadata.stable_key?.value ?? metadata.name;
 		const groupKey = `${metadata.entity}:${resolveAlias(stableKey)}`;
+
+		if (metadata.depends_on && metadata.depends_on.length > 0) {
+			const depSet = dependencies.get(groupKey) ?? new Set<string>();
+			for (const dependency of metadata.depends_on) {
+				const depEntity =
+					dependency.entity ??
+					(dependency.key ? ENTITY_BY_STABLE_KEY[dependency.key] : undefined);
+				const depValue = dependency.value;
+				if (!depEntity || !depValue) continue;
+				const depKey = `${depEntity}:${resolveAlias(depValue)}`;
+				if (depKey === groupKey) continue;
+				depSet.add(depKey);
+			}
+			if (depSet.size > 0) {
+				dependencies.set(groupKey, depSet);
+			}
+		}
 
 		const hasNameField =
 			desiredState && Object.prototype.hasOwnProperty.call(desiredState, 'name');
@@ -757,7 +789,9 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 			title: metadata.title ?? `${humanizeKey(metadata.operation)} ${metadata.entity}`,
 			summary: metadata.summary ?? undefined,
 			createdAt: op.created_at,
-			sequence: op.sequence
+			sequence: op.sequence,
+			groupId: metadata.group_id,
+			generated: metadata.generated === true
 		};
 
 		if (!existing) {
@@ -819,6 +853,12 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 			return aSeq - bSeq;
 		});
 
+		const groupIds = new Set(group.ops.map((op) => op.groupId).filter(Boolean));
+		if (groupIds.size === 1) {
+			group.groupId = Array.from(groupIds)[0];
+		}
+		group.generated = group.ops.length > 0 && group.ops.every((op) => op.generated);
+
 		const hasCreate = entityCreates.get(group.key) ?? false;
 		const hasDelete = entityDeletes.get(group.key) ?? false;
 		group.operation = hasCreate ? 'create' : hasDelete ? 'delete' : 'update';
@@ -833,6 +873,27 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 		group.changedFields = Array.from(fieldSet);
 		group.summary = buildSummary(group.operation, group.changedFields);
 		group.sections = buildSections(group.entity, fieldMap ?? new Map());
+
+		const depSet = dependencies.get(group.key);
+		if (depSet) {
+			const requires: Array<{ key: string; entity: string; name: string }> = [];
+			for (const depKey of depSet) {
+				const dependency = groups.get(depKey);
+				if (!dependency) continue;
+				requires.push({
+					key: depKey,
+					entity: dependency.entity,
+					name: dependency.name
+				});
+			}
+			requires.sort((a, b) => {
+				if (a.entity === b.entity) return a.name.localeCompare(b.name);
+				return a.entity.localeCompare(b.entity);
+			});
+			if (requires.length > 0) {
+				group.requires = requires;
+			}
+		}
 
 		results.push(group);
 	}
