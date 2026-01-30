@@ -340,7 +340,7 @@
 						flushExpanded
 						chevronPosition="right"
 					>
-						<svelte:fragment slot="cell" let:row let:column let:rowIndex>
+						<svelte:fragment slot="cell" let:row let:column let:index>
 							{#if column.key === 'tag_name'}
 								<div class="flex items-center gap-2">
 									<a
@@ -352,7 +352,7 @@
 									>
 										{row.tag_name}
 									</a>
-									{#if rowIndex === 0}
+									{#if index === 0}
 										<Badge variant="accent" size="sm">Latest</Badge>
 									{/if}
 								</div>

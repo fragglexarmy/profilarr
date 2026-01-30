@@ -59,7 +59,7 @@
 	}
 
 	// Handle unlink click
-	function handleUnlinkClick(e: MouseEvent, database: DatabaseInstance) {
+	function handleUnlinkClick(e: Event, database: DatabaseInstance) {
 		e.stopPropagation();
 		dispatch('unlink', database);
 	}

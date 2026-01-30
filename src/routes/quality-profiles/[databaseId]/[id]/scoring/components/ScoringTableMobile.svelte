@@ -8,7 +8,8 @@
 	export let arrTypes: string[];
 	export let customFormatScores: Record<string, Record<string, number | null>>;
 	export let customFormatEnabled: Record<string, Record<string, boolean>>;
-	export let getArrTypeColor: (arrType: string) => string;
+	type IconCheckboxColor = 'accent' | 'blue' | 'green' | 'red' | 'neutral' | `#${string}`;
+	export let getArrTypeColor: (arrType: string) => IconCheckboxColor;
 
 	const dispatch = createEventDispatcher<{
 		scoreChange: { formatName: string; arrType: string; score: number | null };

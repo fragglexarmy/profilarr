@@ -311,7 +311,6 @@
 								availableLanguages={data.availableLanguages}
 								invalid={!isConditionValid(condition)}
 								nameConflict={hasNameConflict(condition)}
-								{hasDrafts}
 								on:remove={() => handleRemove(condition._key)}
 								on:change={(e) => handleConditionChange(e.detail, condition._key)}
 							/>

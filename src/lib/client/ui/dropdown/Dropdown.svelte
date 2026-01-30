@@ -18,7 +18,7 @@
 		middle: 'left-1/2 -translate-x-1/2'
 	};
 
-	const responsivePositionClasses = {
+	const responsivePositionClasses: Record<string, string> = {
 		'middle-to-right': 'left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0',
 		'middle-to-left': 'left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0',
 		'left-to-right': 'left-0 md:left-auto md:right-0',

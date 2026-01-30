@@ -549,17 +549,17 @@
 							{#if row.generated}
 								<span class="inline-block h-5 w-5"></span>
 							{:else}
-								<span
-									on:click|stopPropagation={() => toggleRow(row.key)}
-									title={autoSelectedKeys.has(row.key) ? 'Auto-selected (required by other changes)' : 'Selected'}
-								>
-									<IconCheckbox
-										checked={selected.has(row.key)}
-										icon={Check}
-										color={autoSelectedKeys.has(row.key) ? '#f59e0b' : 'blue'}
-										variant={autoSelectedKeys.has(row.key) ? 'filled' : 'filled'}
-									/>
-								</span>
+								<IconCheckbox
+									checked={selected.has(row.key)}
+									icon={Check}
+									color={autoSelectedKeys.has(row.key) ? '#f59e0b' : 'blue'}
+									variant={autoSelectedKeys.has(row.key) ? 'filled' : 'filled'}
+									stopPropagation
+									on:click={() => toggleRow(row.key)}
+									title={autoSelectedKeys.has(row.key)
+										? 'Auto-selected (required by other changes)'
+										: 'Selected'}
+								/>
 							{/if}
 						{:else if column.key === 'operation'}
 							<span

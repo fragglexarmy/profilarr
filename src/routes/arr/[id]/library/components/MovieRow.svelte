@@ -8,7 +8,6 @@
 
 	export let row: RadarrLibraryItem;
 	export let column: Column<RadarrLibraryItem>;
-	export let baseUrl: string;
 	export let mode: 'cell' | 'expanded' = 'cell';
 
 	function getProgressColor(progress: number, cutoffMet: boolean): string {

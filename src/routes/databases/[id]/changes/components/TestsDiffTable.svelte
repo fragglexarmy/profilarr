@@ -3,10 +3,9 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import { marked } from 'marked';
 	import type { Column } from '$ui/table/types';
-	import type { TestDiff, TestSnapshot, OperationType } from './types';
+	import type { TestDiff, TestSnapshot } from './types';
 
 	export let rows: TestDiff[] = [];
-	export let operation: OperationType = 'update';
 
 	const columns: Column<TestDiff>[] = [
 		{ key: 'name', header: 'Name' },

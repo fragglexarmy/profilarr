@@ -551,7 +551,7 @@
 							title="Delete test case"
 							variant="danger"
 							on:click={(e) => {
-								const form = e.currentTarget.closest('form');
+								const form = (e.currentTarget as HTMLElement | null)?.closest('form');
 								if (form) handleDeleteClick(row, form);
 							}}
 						/>

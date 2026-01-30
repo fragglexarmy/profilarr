@@ -33,7 +33,6 @@
 	export let condition: ConditionData;
 	export let invalid = false;
 	export let nameConflict = false;
-	export let hasDrafts = false;
 
 	// Available patterns and languages from database (passed in)
 	export let availablePatterns: { id: number; name: string; pattern: string }[] = [];

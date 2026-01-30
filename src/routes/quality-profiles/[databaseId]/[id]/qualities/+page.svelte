@@ -719,10 +719,14 @@
 		</p>
 
 		<div>
-			<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+			<label
+				for="quality-group-name"
+				class="block text-sm font-medium text-neutral-900 dark:text-neutral-100"
+			>
 				Group Name (optional)
 			</label>
 			<input
+				id="quality-group-name"
 				type="text"
 				bind:value={groupNameInput}
 				placeholder="e.g. Web + Bluray"

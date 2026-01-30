@@ -2,12 +2,11 @@
 	import Table from '$ui/table/Table.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { Column } from '$ui/table/types';
-	import type { ConditionDiff, ConditionSnapshot, OperationType } from './types';
+	import type { ConditionDiff, ConditionSnapshot } from './types';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
 
 	export let rows: ConditionDiff[] = [];
-	export let operation: OperationType = 'update';
 
 	const columns: Column<ConditionDiff>[] = [
 		{ key: 'name', header: 'Name' },

@@ -370,7 +370,7 @@
 						{#if loading}
 							<MovieRowSkeleton {column} />
 						{:else}
-							<MovieRow {row} {column} {baseUrl} mode="cell" />
+							<MovieRow {row} {column} mode="cell" />
 						{/if}
 					</svelte:fragment>
 
@@ -391,7 +391,7 @@
 
 					<svelte:fragment slot="expanded" let:row>
 						{#if !loading}
-							<MovieRow {row} column={allColumns[0]} {baseUrl} mode="expanded" />
+							<MovieRow {row} column={allColumns[0]} mode="expanded" />
 						{/if}
 					</svelte:fragment>
 				</ExpandableTable>

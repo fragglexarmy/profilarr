@@ -333,14 +333,14 @@
 							{#if chevronPosition === 'left'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400">
 									{#if !shouldDisableExpand(row)}
-										<span on:click|stopPropagation={() => toggleRow(rowId)}>
-											<TableActionButton
-												icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
-												title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
-												size="sm"
-												variant={expandOnRowClick ? 'neutral' : 'accent'}
-											/>
-										</span>
+										<TableActionButton
+											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+											size="sm"
+											variant={expandOnRowClick ? 'neutral' : 'accent'}
+											stopPropagation
+											on:click={() => toggleRow(rowId)}
+										/>
 									{/if}
 								</td>
 							{/if}
@@ -371,14 +371,14 @@
 							{#if chevronPosition === 'right'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-right text-neutral-400">
 									{#if !shouldDisableExpand(row)}
-										<span on:click|stopPropagation={() => toggleRow(rowId)}>
-											<TableActionButton
-												icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
-												title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
-												size="sm"
-												variant={expandOnRowClick ? 'neutral' : 'accent'}
-											/>
-										</span>
+										<TableActionButton
+											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+											size="sm"
+											variant={expandOnRowClick ? 'neutral' : 'accent'}
+											stopPropagation
+											on:click={() => toggleRow(rowId)}
+										/>
 									{/if}
 								</td>
 							{/if}

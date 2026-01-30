@@ -3,7 +3,8 @@
 	export let arrTypes: string[];
 	export let customFormatScores: Record<string, Record<string, number | null>>;
 	export let customFormatEnabled: Record<string, Record<string, boolean>>;
-	export let getArrTypeColor: (arrType: string) => string;
+	type IconCheckboxColor = 'accent' | 'blue' | 'green' | 'red' | 'neutral' | `#${string}`;
+	export let getArrTypeColor: (arrType: string) => IconCheckboxColor;
 	export let title: string | null = null;
 
 	import ScoringTableDesktop from './ScoringTableDesktop.svelte';

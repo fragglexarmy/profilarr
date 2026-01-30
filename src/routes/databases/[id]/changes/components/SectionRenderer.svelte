@@ -75,7 +75,7 @@
 			{#if hasRows(section.rows, 'conditions')}
 				{#each getRows(section.rows, 'conditions') as conditionsRow}
 					<div class="space-y-2">
-						<ConditionsDiffTable rows={conditionsRow.rows} {operation} />
+						<ConditionsDiffTable rows={conditionsRow.rows} />
 					</div>
 				{/each}
 			{/if}
@@ -83,7 +83,7 @@
 			{#if hasRows(section.rows, 'tests')}
 				{#each getRows(section.rows, 'tests') as testsRow}
 					<div class="space-y-2">
-						<TestsDiffTable rows={testsRow.rows} {operation} />
+						<TestsDiffTable rows={testsRow.rows} />
 					</div>
 				{/each}
 			{/if}

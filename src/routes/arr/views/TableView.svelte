@@ -46,7 +46,7 @@
 	}
 
 	// Handle delete click
-	function handleDeleteClick(e: MouseEvent, instance: ArrInstance) {
+	function handleDeleteClick(e: Event, instance: ArrInstance) {
 		e.stopPropagation();
 		dispatch('delete', instance);
 	}
