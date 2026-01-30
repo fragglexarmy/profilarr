@@ -65,6 +65,7 @@ type TestDiff = {
 	after?: TestSnapshot;
 };
 
+
 export type DraftEntitySectionRow =
 	| {
 			kind: 'field';
@@ -608,6 +609,31 @@ function buildSections(entity: string, aggregates: Map<string, FieldAggregate>):
 					}
 				]
 			});
+		}
+
+		return sections;
+	}
+
+	if (entity === 'regular_expression') {
+		const sections: DraftEntitySection[] = [];
+		const generalFields = ['name', 'pattern', 'description', 'regex101_id', 'tags'];
+
+		const generalRows: DraftEntitySectionRow[] = [];
+		for (const field of generalFields) {
+			const aggregate = aggregates.get(field);
+			if (!aggregate) continue;
+			generalRows.push({
+				kind: 'field',
+				field,
+				label: aggregate.label,
+				before: aggregate.before,
+				after: aggregate.after,
+				add: aggregate.add,
+				remove: aggregate.remove
+			});
+		}
+		if (generalRows.length > 0) {
+			sections.push({ id: 'general', title: 'General', rows: generalRows });
 		}
 
 		return sections;
