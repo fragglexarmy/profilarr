@@ -84,16 +84,26 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid entries data' });
 		}
 
-		const result = await updateSonarrQualityDefinitions({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: newName.trim(),
-				entries
+		let result;
+		try {
+			result = await updateSonarrQualityDefinitions({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: newName.trim(),
+					entries
+				}
+			});
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : 'Failed to update quality definitions config';
+			if (message.includes('already exists') || message.toLowerCase().includes('duplicate')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update quality definitions config' });

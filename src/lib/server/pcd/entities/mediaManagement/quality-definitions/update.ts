@@ -23,6 +23,8 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
 
+	ensureUniqueEntries(input.entries);
+
 	// If renaming, check if new name already exists
 	if (input.name !== current.name) {
 		const existing = await db
@@ -102,6 +104,8 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 export async function updateSonarrQualityDefinitions(options: UpdateQualityDefinitionsOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
+
+	ensureUniqueEntries(input.entries);
 
 	// If renaming, check if new name already exists
 	if (input.name !== current.name) {
@@ -194,4 +198,12 @@ function isSameEntries(
 			.sort((a, b) => a.quality_name.localeCompare(b.quality_name));
 
 	return JSON.stringify(normalize(current)) === JSON.stringify(normalize(next));
+}
+
+function ensureUniqueEntries(entries: QualityDefinitionEntry[]) {
+	const normalized = entries.map((entry) => entry.quality_name.trim().toLowerCase());
+	const unique = new Set(normalized);
+	if (unique.size !== normalized.length) {
+		throw new Error('Quality definitions cannot contain duplicate quality names');
+	}
 }

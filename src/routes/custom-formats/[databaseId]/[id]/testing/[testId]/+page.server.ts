@@ -102,30 +102,27 @@ export const actions: Actions = {
 			return fail(403, { error: 'Cannot write to base layer without personal access token' });
 		}
 
-		// Check for duplicate if title or type changed (composite key: formatName + title + type)
-		const newTitle = title.trim();
-		const keyChanged = newTitle !== currentTitle || type !== currentType;
-		if (keyChanged) {
-			const existingTest = await customFormatQueries.getTest(cache, formatName, newTitle, type);
-			if (existingTest) {
-				return fail(400, {
-					error: 'A test with this title and type already exists for this custom format'
-				});
+		let result;
+		try {
+			result = await customFormatQueries.updateTest({
+				databaseId: currentDatabaseId,
+				layer,
+				formatName,
+				current,
+				input: {
+					title: title.trim(),
+					type,
+					should_match: shouldMatch,
+					description: description?.trim() || null
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update test';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
+			return fail(500, { error: message });
 		}
-
-		const result = await customFormatQueries.updateTest({
-			databaseId: currentDatabaseId,
-			layer,
-			formatName,
-			current,
-			input: {
-				title: title.trim(),
-				type,
-				should_match: shouldMatch,
-				description: description?.trim() || null
-			}
-		});
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update test' });

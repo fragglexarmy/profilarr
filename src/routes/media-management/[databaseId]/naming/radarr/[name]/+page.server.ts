@@ -82,20 +82,29 @@ export const actions: Actions = {
 			'colonReplacementFormat'
 		) as RadarrNamingRow['colon_replacement_format'];
 
-		const result = await updateRadarrNaming({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: newName.trim(),
-				rename,
-				movieFormat: movieFormat || '',
-				movieFolderFormat: movieFolderFormat || '',
-				replaceIllegalCharacters,
-				colonReplacementFormat: colonReplacementFormat || 'delete'
+		let result;
+		try {
+			result = await updateRadarrNaming({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: newName.trim(),
+					rename,
+					movieFormat: movieFormat || '',
+					movieFolderFormat: movieFolderFormat || '',
+					replaceIllegalCharacters,
+					colonReplacementFormat: colonReplacementFormat || 'delete'
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update naming config';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update naming config' });

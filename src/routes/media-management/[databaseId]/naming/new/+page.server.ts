@@ -57,19 +57,28 @@ export const actions: Actions = {
 				'colonReplacementFormat'
 			) as RadarrNamingRow['colon_replacement_format'];
 
-			const result = await createRadarrNaming({
-				databaseId: currentDatabaseId,
-				cache,
-				layer,
-				input: {
-					name: name.trim(),
-					rename,
-					movieFormat: movieFormat || '',
-					movieFolderFormat: movieFolderFormat || '',
-					replaceIllegalCharacters,
-					colonReplacementFormat: colonReplacementFormat || 'delete'
+			let result;
+			try {
+				result = await createRadarrNaming({
+					databaseId: currentDatabaseId,
+					cache,
+					layer,
+					input: {
+						name: name.trim(),
+						rename,
+						movieFormat: movieFormat || '',
+						movieFolderFormat: movieFolderFormat || '',
+						replaceIllegalCharacters,
+						colonReplacementFormat: colonReplacementFormat || 'delete'
+					}
+				});
+			} catch (err) {
+				const message = err instanceof Error ? err.message : 'Failed to create radarr naming config';
+				if (message.includes('already exists')) {
+					return fail(400, { error: message });
 				}
-			});
+				return fail(500, { error: message });
+			}
 
 			if (!result.success) {
 				return fail(500, { error: result.error || 'Failed to create radarr naming config' });
@@ -88,24 +97,33 @@ export const actions: Actions = {
 			const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
 			const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
 
-			const result = await createSonarrNaming({
-				databaseId: currentDatabaseId,
-				cache,
-				layer,
-				input: {
-					name: name.trim(),
-					rename,
-					standardEpisodeFormat: standardEpisodeFormat || '',
-					dailyEpisodeFormat: dailyEpisodeFormat || '',
-					animeEpisodeFormat: animeEpisodeFormat || '',
-					seriesFolderFormat: seriesFolderFormat || '',
-					seasonFolderFormat: seasonFolderFormat || '',
-					replaceIllegalCharacters,
-					colonReplacementFormat: colonReplacementFormat || 'delete',
-					customColonReplacementFormat: customColonReplacementFormat || null,
-					multiEpisodeStyle: multiEpisodeStyle || 'extend'
+			let result;
+			try {
+				result = await createSonarrNaming({
+					databaseId: currentDatabaseId,
+					cache,
+					layer,
+					input: {
+						name: name.trim(),
+						rename,
+						standardEpisodeFormat: standardEpisodeFormat || '',
+						dailyEpisodeFormat: dailyEpisodeFormat || '',
+						animeEpisodeFormat: animeEpisodeFormat || '',
+						seriesFolderFormat: seriesFolderFormat || '',
+						seasonFolderFormat: seasonFolderFormat || '',
+						replaceIllegalCharacters,
+						colonReplacementFormat: colonReplacementFormat || 'delete',
+						customColonReplacementFormat: customColonReplacementFormat || null,
+						multiEpisodeStyle: multiEpisodeStyle || 'extend'
+					}
+				});
+			} catch (err) {
+				const message = err instanceof Error ? err.message : 'Failed to create sonarr naming config';
+				if (message.includes('already exists')) {
+					return fail(400, { error: message });
 				}
-			});
+				return fail(500, { error: message });
+			}
 
 			if (!result.success) {
 				return fail(500, { error: result.error || 'Failed to create sonarr naming config' });

@@ -117,18 +117,27 @@ export const actions: Actions = {
 		}
 
 		// Update the scoring
-		const result = await qualityProfileQueries.updateScoring({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			profileName: profile.name,
-			input: {
-				minimumScore,
-				upgradeUntilScore,
-				upgradeScoreIncrement,
-				customFormatScores
+		let result;
+		try {
+			result = await qualityProfileQueries.updateScoring({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				profileName: profile.name,
+				input: {
+					minimumScore,
+					upgradeUntilScore,
+					upgradeScoreIncrement,
+					customFormatScores
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update scoring';
+			if (message.toLowerCase().includes('upgrade score increment')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update scoring' });

@@ -100,7 +100,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 
 	// 2. Handle tag changes
 	const currentTagNames = current.tags.map((t) => t.name);
-	const newTagNames = input.tags;
+	const newTagNames = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
 	const formatNameForTags = input.name !== current.name ? input.name : current.name;
 
 	// Tags to remove
@@ -149,7 +149,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		changes.includeInRename = { from: current.include_in_rename, to: input.includeInRename };
 	}
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
-		changes.tags = { from: currentTagNames, to: input.tags };
+		changes.tags = { from: currentTagNames, to: newTagNames };
 	}
 
 	await logger.info(`Save custom format "${input.name}"`, {

@@ -73,8 +73,10 @@ export async function create(options: CreateQualityProfileOptions) {
 
 	queries.push(insertProfile);
 
+	const uniqueTags = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
+
 	// 2. Insert tags (create if not exist, then link)
-	for (const tagName of input.tags) {
+	for (const tagName of uniqueTags) {
 		// Insert tag if not exists
 		const insertTag = db
 			.insertInto('tags')
@@ -132,7 +134,7 @@ export async function create(options: CreateQualityProfileOptions) {
 		desiredState: {
 			name: input.name,
 			description: input.description ?? null,
-			tags: input.tags,
+			tags: uniqueTags,
 			language: input.language ?? null
 		},
 		metadata: {

@@ -22,6 +22,8 @@ export async function createRadarrQualityDefinitions(options: CreateQualityDefin
 	const { databaseId, cache, layer, input } = options;
 	const db = cache.kb;
 
+	ensureUniqueEntries(input.entries);
+
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('radarr_quality_definitions')
@@ -70,6 +72,8 @@ export async function createSonarrQualityDefinitions(options: CreateQualityDefin
 	const { databaseId, cache, layer, input } = options;
 	const db = cache.kb;
 
+	ensureUniqueEntries(input.entries);
+
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('sonarr_quality_definitions')
@@ -112,4 +116,12 @@ export async function createSonarrQualityDefinitions(options: CreateQualityDefin
 			title: `Create Sonarr quality definitions "${input.name}"`
 		}
 	});
+}
+
+function ensureUniqueEntries(entries: QualityDefinitionEntry[]) {
+	const normalized = entries.map((entry) => entry.quality_name.trim().toLowerCase());
+	const unique = new Set(normalized);
+	if (unique.size !== normalized.length) {
+		throw new Error('Quality definitions cannot contain duplicate quality names');
+	}
 }

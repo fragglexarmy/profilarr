@@ -108,7 +108,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 
 	// 2. Handle tag changes
 	const currentTagNames = current.tags.map((t) => t.name);
-	const newTagNames = input.tags;
+	const newTagNames = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
 
 	// Tags to remove
 	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
@@ -188,7 +188,7 @@ WHERE NOT EXISTS (
 		changes.description = { from: current.description, to: input.description };
 	}
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
-		changes.tags = { from: currentTagNames, to: input.tags };
+		changes.tags = { from: currentTagNames, to: newTagNames };
 	}
 	if (current.language !== input.language) {
 		changes.language = { from: current.language, to: input.language };

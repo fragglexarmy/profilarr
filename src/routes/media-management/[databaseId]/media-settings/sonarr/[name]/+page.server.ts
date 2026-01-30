@@ -77,17 +77,26 @@ export const actions: Actions = {
 		const propersRepacks = formData.get('propersRepacks') as PropersRepacks;
 		const enableMediaInfo = formData.get('enableMediaInfo') === 'true';
 
-		const result = await updateSonarrMediaSettings({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: newName.trim(),
-				propersRepacks: propersRepacks || 'doNotPrefer',
-				enableMediaInfo
+		let result;
+		try {
+			result = await updateSonarrMediaSettings({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: newName.trim(),
+					propersRepacks: propersRepacks || 'doNotPrefer',
+					enableMediaInfo
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update media settings config';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update media settings config' });

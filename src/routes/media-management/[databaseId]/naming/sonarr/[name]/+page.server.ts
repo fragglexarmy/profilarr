@@ -85,25 +85,34 @@ export const actions: Actions = {
 		const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
 		const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
 
-		const result = await updateSonarrNaming({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: newName.trim(),
-				rename,
-				standardEpisodeFormat: standardEpisodeFormat || '',
-				dailyEpisodeFormat: dailyEpisodeFormat || '',
-				animeEpisodeFormat: animeEpisodeFormat || '',
-				seriesFolderFormat: seriesFolderFormat || '',
-				seasonFolderFormat: seasonFolderFormat || '',
-				replaceIllegalCharacters,
-				colonReplacementFormat: colonReplacementFormat || 'delete',
-				customColonReplacementFormat: customColonReplacementFormat || null,
-				multiEpisodeStyle: multiEpisodeStyle || 'extend'
+		let result;
+		try {
+			result = await updateSonarrNaming({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: newName.trim(),
+					rename,
+					standardEpisodeFormat: standardEpisodeFormat || '',
+					dailyEpisodeFormat: dailyEpisodeFormat || '',
+					animeEpisodeFormat: animeEpisodeFormat || '',
+					seriesFolderFormat: seriesFolderFormat || '',
+					seasonFolderFormat: seasonFolderFormat || '',
+					replaceIllegalCharacters,
+					colonReplacementFormat: colonReplacementFormat || 'delete',
+					customColonReplacementFormat: customColonReplacementFormat || null,
+					multiEpisodeStyle: multiEpisodeStyle || 'extend'
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update naming config';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update naming config' });

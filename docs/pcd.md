@@ -235,7 +235,16 @@ pcd_op_history:
 - [x] media management: settings
 - [x] media management: quality definitions
 - [x] media management: naming
-- [ ] audit all entity ops to ensure they align with schema constraints (e.g., unique keys) and avoid writes that will fail
+- [x] audit all entity ops to ensure they align with schema constraints (e.g., unique keys) and avoid writes that will fail
+
+Validation rules added:
+- Duplicate names are blocked in the entity layer (case-insensitive) for core entities and media management configs.
+- Tag inputs are de-duplicated before writes (custom formats, quality profiles, regular expressions).
+- Custom format tests enforce unique (format + title + type), case-insensitive.
+- Custom format conditions require unique names and only a single value per condition.
+- Quality definitions reject duplicate quality_name entries.
+- Quality profile qualities enforce only one upgrade_until entry.
+- Quality profile scoring enforces upgrade_score_increment >= 1.
 
 ## Guard Checklist (Status)
 Legend:

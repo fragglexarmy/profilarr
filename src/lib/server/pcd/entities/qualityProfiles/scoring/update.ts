@@ -42,6 +42,10 @@ export async function updateScoring(options: UpdateScoringOptions) {
 	const { databaseId, cache, layer, profileName, input } = options;
 	const db = cache.kb;
 
+	if (input.upgradeScoreIncrement < 1) {
+		throw new Error('Upgrade score increment must be at least 1');
+	}
+
 	const queries = [];
 
 	// Fetch current profile scoring values for guards

@@ -55,8 +55,10 @@ export async function create(options: CreateCustomFormatOptions) {
 
 	queries.push(insertFormat);
 
+	const uniqueTags = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
+
 	// 2. Insert tags (create if not exist, then link)
-	for (const tagName of input.tags) {
+	for (const tagName of uniqueTags) {
 		// Insert tag if not exists
 		const insertTag = db
 			.insertInto('tags')
@@ -86,6 +88,12 @@ export async function create(options: CreateCustomFormatOptions) {
 			operation: 'create',
 			entity: 'custom_format',
 			name: input.name
+		},
+		desiredState: {
+			name: input.name,
+			description: input.description ?? null,
+			include_in_rename: input.includeInRename,
+			tags: uniqueTags
 		}
 	});
 

@@ -39,6 +39,11 @@ export async function updateQualities(options: UpdateQualitiesOptions) {
 	const { databaseId, cache, layer, profileName, input } = options;
 	const db = cache.kb;
 
+	const upgradeUntilCount = input.orderedItems.filter((item) => item.upgradeUntil).length;
+	if (upgradeUntilCount > 1) {
+		throw new Error('Only one quality can be marked as "upgrade until"');
+	}
+
 	const queries = [];
 
 	const currentData = await readQualities(cache, databaseId, profileName);

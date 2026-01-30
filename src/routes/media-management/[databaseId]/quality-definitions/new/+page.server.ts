@@ -86,15 +86,25 @@ export const actions: Actions = {
 
 		const createFn = arrType === 'radarr' ? createRadarrQualityDefinitions : createSonarrQualityDefinitions;
 
-		const result = await createFn({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			input: {
-				name: name.trim(),
-				entries
+		let result;
+		try {
+			result = await createFn({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				input: {
+					name: name.trim(),
+					entries
+				}
+			});
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : `Failed to create ${arrType} quality definitions`;
+			if (message.includes('already exists') || message.toLowerCase().includes('duplicate')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || `Failed to create ${arrType} quality definitions` });

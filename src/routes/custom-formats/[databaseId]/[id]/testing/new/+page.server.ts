@@ -79,25 +79,26 @@ export const actions: Actions = {
 			return fail(403, { error: 'Cannot write to base layer without personal access token' });
 		}
 
-		// Check for duplicate (composite key: formatName + title + type)
-		const existingTest = await customFormatQueries.getTest(cache, formatName, title.trim(), type);
-		if (existingTest) {
-			return fail(400, {
-				error: 'A test with this title and type already exists for this custom format'
+		let result;
+		try {
+			result = await customFormatQueries.createTest({
+				databaseId: currentDatabaseId,
+				layer,
+				formatName,
+				input: {
+					title: title.trim(),
+					type,
+					should_match: shouldMatch,
+					description: description?.trim() || null
+				}
 			});
-		}
-
-		const result = await customFormatQueries.createTest({
-			databaseId: currentDatabaseId,
-			layer,
-			formatName,
-			input: {
-				title: title.trim(),
-				type,
-				should_match: shouldMatch,
-				description: description?.trim() || null
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to create test';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to create test' });

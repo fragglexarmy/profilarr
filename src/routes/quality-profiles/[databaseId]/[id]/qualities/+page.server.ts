@@ -121,15 +121,24 @@ export const actions: Actions = {
 		}
 
 		// Update the qualities
-		const result = await qualityProfileQueries.updateQualities({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			profileName: profile.name,
-			input: {
-				orderedItems
+		let result;
+		try {
+			result = await qualityProfileQueries.updateQualities({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				profileName: profile.name,
+				input: {
+					orderedItems
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update qualities';
+			if (message.toLowerCase().includes('upgrade until')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update qualities' });

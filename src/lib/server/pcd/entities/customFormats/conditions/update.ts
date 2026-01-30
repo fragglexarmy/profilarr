@@ -149,6 +149,39 @@ function generateConditionValueSql(
 export async function updateConditions(options: UpdateConditionsOptions) {
 	const { databaseId, layer, formatName, originalConditions, conditions } = options;
 
+	// Validate unique condition names (case-insensitive)
+	const normalizedNames = conditions.map((c) => c.name.trim().toLowerCase());
+	const uniqueNames = new Set(normalizedNames);
+	if (uniqueNames.size !== normalizedNames.length) {
+		throw new Error('Condition names must be unique');
+	}
+
+	const typeFieldMap: Record<
+		string,
+		{ field: keyof ConditionData; label: string } | null
+	> = {
+		release_title: { field: 'patterns', label: 'pattern' },
+		release_group: { field: 'patterns', label: 'pattern' },
+		edition: { field: 'patterns', label: 'pattern' },
+		language: { field: 'languages', label: 'language' },
+		source: { field: 'sources', label: 'source' },
+		resolution: { field: 'resolutions', label: 'resolution' },
+		quality_modifier: { field: 'qualityModifiers', label: 'quality modifier' },
+		release_type: { field: 'releaseTypes', label: 'release type' },
+		indexer_flag: { field: 'indexerFlags', label: 'indexer flag' },
+		size: null,
+		year: null
+	};
+
+	for (const condition of conditions) {
+		const mapping = typeFieldMap[condition.type] ?? null;
+		if (!mapping) continue;
+		const values = condition[mapping.field] as unknown[] | undefined;
+		if (Array.isArray(values) && values.length > 1) {
+			throw new Error(`Condition "${condition.name}" must have a single ${mapping.label}`);
+		}
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const queries: any[] = [];
 

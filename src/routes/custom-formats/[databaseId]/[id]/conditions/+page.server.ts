@@ -122,14 +122,23 @@ export const actions: Actions = {
 		}
 
 		// Update conditions
-		const result = await customFormatQueries.updateConditions({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			formatName: format.name,
-			originalConditions,
-			conditions
-		});
+		let result;
+		try {
+			result = await customFormatQueries.updateConditions({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				formatName: format.name,
+				originalConditions,
+				conditions
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update conditions';
+			if (message.toLowerCase().includes('condition')) {
+				return fail(400, { error: message });
+			}
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update conditions' });

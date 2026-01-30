@@ -2,7 +2,7 @@
  * Update a custom format test operation
  */
 
-import { writeOperation, type OperationLayer } from '$pcd/index.ts';
+import { getCache, writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { CustomFormatTest } from '$shared/pcd/display.ts';
 
 interface UpdateTestInput {
@@ -35,6 +35,29 @@ function esc(value: string): string {
  */
 export async function updateTest(options: UpdateTestOptions) {
 	const { databaseId, layer, formatName, current, input } = options;
+
+	// Ensure unique (format, title, type) when changing key fields
+	if (
+		input.title.toLowerCase() !== current.title.toLowerCase() ||
+		input.type.toLowerCase() !== current.type.toLowerCase()
+	) {
+		const cache = getCache(databaseId);
+		if (!cache) {
+			throw new Error('Database cache not available');
+		}
+
+		const existing = await cache.kb
+			.selectFrom('custom_format_tests')
+			.where('custom_format_name', '=', formatName)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('title')]), '=', input.title.toLowerCase()))
+			.where((eb) => eb(eb.fn('lower', [eb.ref('type')]), '=', input.type.toLowerCase()))
+			.select('id')
+			.executeTakeFirst();
+
+		if (existing) {
+			throw new Error('A test with this title and type already exists for this custom format');
+		}
+	}
 
 	const currentDescription = current.description ?? null;
 	const nextDescription = input.description ?? null;

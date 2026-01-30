@@ -64,8 +64,10 @@ export async function create(options: CreateRegularExpressionOptions) {
 
 	queries.push(insertRegex);
 
+	const uniqueTags = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
+
 	// 2. Insert tags (create if not exist, then link)
-	for (const tagName of input.tags) {
+	for (const tagName of uniqueTags) {
 		// Insert tag if not exists
 		const insertTag = db
 			.insertInto('tags')
@@ -96,7 +98,7 @@ export async function create(options: CreateRegularExpressionOptions) {
 			pattern: input.pattern,
 			description: input.description ?? null,
 			regex101_id: input.regex101Id ?? null,
-			tags: input.tags
+			tags: uniqueTags
 		},
 		metadata: {
 			operation: 'create',
