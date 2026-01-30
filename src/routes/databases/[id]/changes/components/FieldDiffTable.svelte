@@ -3,6 +3,10 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import { marked } from 'marked';
 	import { ExternalLink } from 'lucide-svelte';
+	import {
+		getColonReplacementLabel,
+		getMultiEpisodeStyleLabel
+	} from '$shared/pcd/mediaManagement.ts';
 	import type { Column } from '$ui/table/types';
 	import type { FieldRow, OperationType } from './types';
 
@@ -29,6 +33,38 @@
 
 	function isPreferredProtocolField(field: string): boolean {
 		return field === 'preferred_protocol';
+	}
+
+	function isNamingTemplateField(field: string): boolean {
+		return [
+			'movie_format',
+			'movie_folder_format',
+			'standard_episode_format',
+			'daily_episode_format',
+			'anime_episode_format',
+			'series_folder_format',
+			'season_folder_format'
+		].includes(field);
+	}
+
+	function isCustomColonFormatField(field: string): boolean {
+		return field === 'custom_colon_replacement_format';
+	}
+
+	function isColonReplacementField(field: string): boolean {
+		return field === 'colon_replacement_format';
+	}
+
+	function isMultiEpisodeStyleField(field: string): boolean {
+		return field === 'multi_episode_style';
+	}
+
+	function formatColonReplacement(value: string): string {
+		return getColonReplacementLabel(value as Parameters<typeof getColonReplacementLabel>[0]);
+	}
+
+	function formatMultiEpisodeStyle(value: string): string {
+		return getMultiEpisodeStyleLabel(value as Parameters<typeof getMultiEpisodeStyleLabel>[0]);
 	}
 
 	function formatPreferredProtocol(value: string): string {
@@ -102,6 +138,18 @@
 			{@const beforeValue = getFieldBefore(row)}
 			{#if row.field === 'language' && typeof beforeValue === 'string'}
 				<Badge variant="info" size="md">{beforeValue}</Badge>
+			{:else if isColonReplacementField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md">{formatColonReplacement(beforeValue)}</Badge>
+			{:else if isMultiEpisodeStyleField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md">{formatMultiEpisodeStyle(beforeValue)}</Badge>
+			{:else if isNamingTemplateField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md" mono>
+					{beforeValue}
+				</Badge>
+			{:else if isCustomColonFormatField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md" mono>
+					{beforeValue}
+				</Badge>
 			{:else if isPreferredProtocolField(row.field) && typeof beforeValue === 'string'}
 				<Badge variant="neutral" size="md">{formatPreferredProtocol(beforeValue)}</Badge>
 			{:else if isRegex101Field(row.field) && typeof beforeValue === 'string' && beforeValue.trim()}
@@ -142,6 +190,18 @@
 			{@const afterValue = getFieldAfter(row)}
 			{#if row.field === 'language' && typeof afterValue === 'string'}
 				<Badge variant="info" size="md">{afterValue}</Badge>
+			{:else if isColonReplacementField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md">{formatColonReplacement(afterValue)}</Badge>
+			{:else if isMultiEpisodeStyleField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md">{formatMultiEpisodeStyle(afterValue)}</Badge>
+			{:else if isNamingTemplateField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md" mono>
+					{afterValue}
+				</Badge>
+			{:else if isCustomColonFormatField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md" mono>
+					{afterValue}
+				</Badge>
 			{:else if isPreferredProtocolField(row.field) && typeof afterValue === 'string'}
 				<Badge variant="neutral" size="md">{formatPreferredProtocol(afterValue)}</Badge>
 			{:else if isRegex101Field(row.field) && typeof afterValue === 'string' && afterValue.trim()}
