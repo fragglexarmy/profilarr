@@ -32,6 +32,30 @@ export async function remove(options: DeleteCustomFormatOptions) {
 
 	const queries = [];
 
+	const dependentScores = await db
+		.selectFrom('quality_profile_custom_formats')
+		.select(['quality_profile_name', 'custom_format_name', 'arr_type', 'score'])
+		.where('custom_format_name', '=', formatName)
+		.orderBy('quality_profile_name')
+		.orderBy('arr_type')
+		.execute();
+
+	const scoresByProfile = new Map<
+		string,
+		Array<{ custom_format_name: string; arr_type: string; score: number }>
+	>();
+
+	for (const score of dependentScores) {
+		if (!scoresByProfile.has(score.quality_profile_name)) {
+			scoresByProfile.set(score.quality_profile_name, []);
+		}
+		scoresByProfile.get(score.quality_profile_name)!.push({
+			custom_format_name: score.custom_format_name,
+			arr_type: score.arr_type,
+			score: score.score
+		});
+	}
+
 	const formatRow = await db
 		.selectFrom('custom_formats')
 		.select(['description', 'include_in_rename'])
@@ -54,17 +78,59 @@ export async function remove(options: DeleteCustomFormatOptions) {
 		.where('custom_format_name', '=', formatName)
 		.executeTakeFirst();
 
-	// Delete the custom format with value guards
-	// Foreign key cascades will handle:
-	// - custom_format_tags
-	// - custom_format_conditions (and their type-specific tables)
-	// - custom_format_tests
+	// Prepare custom format delete query before writing other ops
 	const deleteFormat = db
 		.deleteFrom('custom_formats')
 		// Value guard - ensure this is the format we expect
 		.where('name', '=', formatName)
 		.compile();
 
+	// Write quality profile scoring removals first (so they appear as updates)
+	for (const [profileName, scores] of scoresByProfile.entries()) {
+		const scoreQueries = scores.map((score) =>
+			db
+				.deleteFrom('quality_profile_custom_formats')
+				.where('quality_profile_name', '=', profileName)
+				.where('custom_format_name', '=', score.custom_format_name)
+				.where('arr_type', '=', score.arr_type)
+				.where('score', '=', score.score)
+				.compile()
+		);
+
+		const result = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-quality-profile-scoring-${profileName}`,
+			queries: scoreQueries,
+			desiredState: {
+				custom_format_scores: scores.map((score) => ({
+					custom_format_name: score.custom_format_name,
+					arr_type: score.arr_type,
+					from: score.score,
+					to: null
+				}))
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'quality_profile',
+				name: profileName,
+				stableKey: { key: 'quality_profile_name', value: profileName },
+				changedFields: ['custom_format_scores'],
+				summary: 'Update quality profile scoring',
+				title: `Update scoring for quality profile "${profileName}"`
+			}
+		});
+
+		if (!result.success) {
+			return result;
+		}
+	}
+
+	// Delete the custom format with value guards
+	// Foreign key cascades will handle:
+	// - custom_format_tags
+	// - custom_format_conditions (and their type-specific tables)
+	// - custom_format_tests
 	queries.push(deleteFormat);
 
 	// Write the operation
