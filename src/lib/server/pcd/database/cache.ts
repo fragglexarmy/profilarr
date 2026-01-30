@@ -10,8 +10,10 @@ import { logger } from '$logger/logger.ts';
 import { loadAllOperations } from '../ops/loadOps.ts';
 import { validateOperations } from '../utils/operations.ts';
 import { disableDatabaseInstance } from '$db/queries/databaseInstances.ts';
+import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import type { PCDDatabase } from '$shared/pcd/types.ts';
 import type { CacheBuildStats, ValidationResult } from '../core/types.ts';
+import { uuid } from '$shared/utils/uuid.ts';
 
 /**
  * PCDCache - Manages an in-memory compiled database for a single PCD
@@ -34,6 +36,7 @@ export class PCDCache {
 	 */
 	async build(): Promise<CacheBuildStats> {
 		const startTime = performance.now();
+		const batchId = uuid();
 
 		try {
 			// 1. Create in-memory database
@@ -68,9 +71,58 @@ export class PCDCache {
 
 			// 4. Execute operations in order
 			for (const operation of operations) {
+				const opId = parseOpId(operation.filepath);
+				const trackHistory = opId !== null;
+				const beforeChanges = trackHistory ? this.db!.totalChanges : 0;
 				try {
 					this.db.exec(operation.sql);
+					if (trackHistory) {
+						const rowcount = this.db!.totalChanges - beforeChanges;
+						try {
+							pcdOpHistoryQueries.create({
+								opId,
+								databaseId: this.databaseInstanceId,
+								batchId,
+								status: rowcount === 0 ? 'skipped' : 'applied',
+								rowcount
+							});
+						} catch (historyError) {
+							await logger.warn('Failed to record op history', {
+								source: 'PCDCache',
+								meta: {
+									opId,
+									databaseInstanceId: this.databaseInstanceId,
+									error: String(historyError)
+								}
+							});
+						}
+					}
 				} catch (error) {
+					if (trackHistory) {
+						try {
+							pcdOpHistoryQueries.create({
+								opId,
+								databaseId: this.databaseInstanceId,
+								batchId,
+								status: 'error',
+								rowcount: null,
+								error: String(error),
+								details: JSON.stringify({
+									layer: operation.layer,
+									filename: operation.filename
+								})
+							});
+						} catch (historyError) {
+							await logger.warn('Failed to record op history', {
+								source: 'PCDCache',
+								meta: {
+									opId,
+									databaseInstanceId: this.databaseInstanceId,
+									error: String(historyError)
+								}
+							});
+						}
+					}
 					throw new Error(
 						`Failed to execute operation ${operation.filename} in ${operation.layer} layer: ${error}`
 					);
@@ -279,4 +331,11 @@ export class PCDCache {
 			};
 		}
 	}
+}
+
+function parseOpId(filepath: string): number | null {
+	if (!filepath.startsWith('pcd_ops:')) return null;
+	const raw = filepath.slice('pcd_ops:'.length);
+	const opId = Number(raw);
+	return Number.isFinite(opId) ? opId : null;
 }
