@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import { alertStore } from '$lib/client/alerts/store';
 
 	export let tags: string[] = [];
 	export let placeholder = 'Type and press Enter to add tags';
 	export let onchange: ((tags: string[]) => void) | undefined = undefined;
 
 	let inputValue = '';
+	let lastDuplicateTag: string | null = null;
+	let lastDuplicateAt = 0;
 
 	function updateTags(newTags: string[]) {
 		tags = newTags;
@@ -15,10 +18,21 @@
 
 	function addTag() {
 		const trimmed = inputValue.trim();
-		if (trimmed && !tags.includes(trimmed)) {
-			updateTags([...tags, trimmed]);
-			inputValue = '';
+		if (!trimmed) return;
+		const normalized = trimmed.toLowerCase();
+		const existingNormalized = tags.map((tag) => tag.toLowerCase());
+		if (existingNormalized.includes(normalized)) {
+			const now = Date.now();
+			if (lastDuplicateTag !== normalized || now - lastDuplicateAt > 1500) {
+				alertStore.add('error', 'Tag already added.', 2000);
+				lastDuplicateTag = normalized;
+				lastDuplicateAt = now;
+			}
+			return;
 		}
+
+		updateTags([...tags, trimmed]);
+		inputValue = '';
 	}
 
 	function removeTag(index: number) {
