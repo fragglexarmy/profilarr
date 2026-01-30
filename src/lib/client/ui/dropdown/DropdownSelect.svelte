@@ -28,6 +28,8 @@
 	export let width: string | undefined = undefined;
 	// Disable the dropdown
 	export let disabled: boolean = false;
+	// Optional button size override
+	export let buttonSize: 'xs' | 'sm' | 'md' | null = null;
 
 	const dispatch = createEventDispatcher<{ change: string }>();
 
@@ -64,7 +66,7 @@
 			: compactDropdownThreshold > 0 && options.length >= compactDropdownThreshold
 				? true
 				: compact;
-	$: buttonSize = (isCompactButton ? 'xs' : 'sm') as 'xs' | 'sm';
+	$: resolvedButtonSize = buttonSize ?? ((isCompactButton ? 'xs' : 'sm') as 'xs' | 'sm');
 	$: labelClasses = isCompactButton
 		? 'text-xs text-neutral-500 dark:text-neutral-400'
 		: 'text-sm text-neutral-500 dark:text-neutral-400';
@@ -89,7 +91,7 @@
 			text={currentLabel}
 			icon={ChevronDown}
 			iconPosition="right"
-			size={buttonSize}
+			size={resolvedButtonSize}
 			{fullWidth}
 			{disabled}
 			justify={fullWidth || width ? 'between' : 'center'}
