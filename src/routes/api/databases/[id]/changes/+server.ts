@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { Git, getRepoInfo } from '$utils/git/index.ts';
+import { listDraftEntityChanges } from '$pcd/ops/draftChanges.ts';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -23,8 +24,10 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// Only fetch outgoing changes for developers
 	let uncommittedOps = null;
+	let draftChanges = null;
 	if (database.personal_access_token) {
 		uncommittedOps = await git.getUncommittedOps();
+		draftChanges = listDraftEntityChanges(id);
 	}
 
 	return json({
@@ -32,6 +35,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		incomingChanges,
 		branches,
 		repoInfo,
-		uncommittedOps
+		uncommittedOps,
+		draftChanges
 	});
 };
