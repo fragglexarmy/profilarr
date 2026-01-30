@@ -59,12 +59,29 @@
 		return field === 'multi_episode_style';
 	}
 
+	function isPropersRepacksField(field: string): boolean {
+		return field === 'propers_repacks';
+	}
+
 	function formatColonReplacement(value: string): string {
 		return getColonReplacementLabel(value as Parameters<typeof getColonReplacementLabel>[0]);
 	}
 
 	function formatMultiEpisodeStyle(value: string): string {
 		return getMultiEpisodeStyleLabel(value as Parameters<typeof getMultiEpisodeStyleLabel>[0]);
+	}
+
+	function formatPropersRepacks(value: string): string {
+		switch (value) {
+			case 'doNotPrefer':
+				return 'Do Not Prefer';
+			case 'preferAndUpgrade':
+				return 'Prefer and Upgrade';
+			case 'doNotUpgradeAutomatically':
+				return 'Do Not Upgrade Automatically';
+			default:
+				return value;
+		}
 	}
 
 	function formatPreferredProtocol(value: string): string {
@@ -138,6 +155,8 @@
 			{@const beforeValue = getFieldBefore(row)}
 			{#if row.field === 'language' && typeof beforeValue === 'string'}
 				<Badge variant="info" size="md">{beforeValue}</Badge>
+			{:else if isPropersRepacksField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md">{formatPropersRepacks(beforeValue)}</Badge>
 			{:else if isColonReplacementField(row.field) && typeof beforeValue === 'string'}
 				<Badge variant="neutral" size="md">{formatColonReplacement(beforeValue)}</Badge>
 			{:else if isMultiEpisodeStyleField(row.field) && typeof beforeValue === 'string'}
@@ -190,6 +209,8 @@
 			{@const afterValue = getFieldAfter(row)}
 			{#if row.field === 'language' && typeof afterValue === 'string'}
 				<Badge variant="info" size="md">{afterValue}</Badge>
+			{:else if isPropersRepacksField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md">{formatPropersRepacks(afterValue)}</Badge>
 			{:else if isColonReplacementField(row.field) && typeof afterValue === 'string'}
 				<Badge variant="neutral" size="md">{formatColonReplacement(afterValue)}</Badge>
 			{:else if isMultiEpisodeStyleField(row.field) && typeof afterValue === 'string'}
