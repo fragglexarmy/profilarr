@@ -1,4 +1,5 @@
 import type { OperationType } from '../core/types.ts';
+import type { QualityDefinitionEntry } from '$shared/pcd/display.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 
 type ParsedMetadata = {
@@ -73,6 +74,13 @@ export type DraftEntitySectionRow =
 			after?: unknown;
 			add?: unknown[];
 			remove?: unknown[];
+	  }
+	| {
+			kind: 'quality_definition_entries';
+			field: string;
+			label: string;
+			beforeEntries?: QualityDefinitionEntry[];
+			afterEntries?: QualityDefinitionEntry[];
 	  }
 	| {
 			kind: 'conditions';
@@ -597,6 +605,48 @@ function buildSections(entity: string, aggregates: Map<string, FieldAggregate>):
 						field: 'tests',
 						label: 'Tests',
 						rows: testsAggregate.tests
+					}
+				]
+			});
+		}
+
+		return sections;
+	}
+
+	if (entity === 'radarr_quality_definitions' || entity === 'sonarr_quality_definitions') {
+		const sections: DraftEntitySection[] = [];
+		const generalFields = ['name'];
+
+		const generalRows: DraftEntitySectionRow[] = [];
+		for (const field of generalFields) {
+			const aggregate = aggregates.get(field);
+			if (!aggregate) continue;
+			generalRows.push({
+				kind: 'field',
+				field,
+				label: aggregate.label,
+				before: aggregate.before,
+				after: aggregate.after,
+				add: aggregate.add,
+				remove: aggregate.remove
+			});
+		}
+		if (generalRows.length > 0) {
+			sections.push({ id: 'general', title: 'General', rows: generalRows });
+		}
+
+		const entriesAggregate = aggregates.get('entries');
+		if (entriesAggregate) {
+			sections.push({
+				id: 'entries',
+				title: 'Entries',
+				rows: [
+					{
+						kind: 'quality_definition_entries',
+						field: 'entries',
+						label: entriesAggregate.label,
+						beforeEntries: entriesAggregate.before as QualityDefinitionEntry[] | undefined,
+						afterEntries: entriesAggregate.after as QualityDefinitionEntry[] | undefined
 					}
 				]
 			});

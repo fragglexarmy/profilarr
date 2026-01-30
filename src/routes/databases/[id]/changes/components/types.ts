@@ -1,5 +1,5 @@
 import type { QualityProfileCustomFormatsRow } from '$shared/pcd/types';
-import type { OrderedItem } from '$shared/pcd/display';
+import type { OrderedItem, QualityDefinitionEntry } from '$shared/pcd/display';
 
 export type OperationType = 'create' | 'update' | 'delete';
 
@@ -88,12 +88,21 @@ export type OrderedItemsRow = {
 	afterItems?: OrderedItem[];
 };
 
+export type QualityDefinitionEntriesRow = {
+	kind: 'quality_definition_entries';
+	field: string;
+	label: string;
+	beforeEntries?: QualityDefinitionEntry[];
+	afterEntries?: QualityDefinitionEntry[];
+};
+
 export type DraftEntitySectionRow =
 	| FieldRow
 	| ConditionsRow
 	| TestsRow
 	| CustomFormatScoresRow
-	| OrderedItemsRow;
+	| OrderedItemsRow
+	| QualityDefinitionEntriesRow;
 
 export type DraftEntitySection = {
 	id: string;
@@ -112,3 +121,5 @@ export type DraftEntityChange = {
 	ops: DraftOpDetails[];
 	sections: DraftEntitySection[];
 };
+
+export type { QualityDefinitionEntry };

@@ -6,6 +6,7 @@
 	import OrderedItemsDiff from './OrderedItemsDiff.svelte';
 	import ConditionsDiffTable from './ConditionsDiffTable.svelte';
 	import TestsDiffTable from './TestsDiffTable.svelte';
+	import QualityDefinitionEntriesTable from './QualityDefinitionEntriesTable.svelte';
 
 	export let sections: DraftEntitySection[] = [];
 	export let operation: OperationType = 'update';
@@ -92,6 +93,16 @@
 					<OrderedItemsDiff
 						beforeItems={itemsRow.beforeItems ?? []}
 						afterItems={itemsRow.afterItems ?? []}
+						{operation}
+					/>
+				{/each}
+			{/if}
+
+			{#if hasRows(section.rows, 'quality_definition_entries')}
+				{#each getRows(section.rows, 'quality_definition_entries') as entriesRow}
+					<QualityDefinitionEntriesTable
+						beforeEntries={entriesRow.beforeEntries ?? []}
+						afterEntries={entriesRow.afterEntries ?? []}
 						{operation}
 					/>
 				{/each}

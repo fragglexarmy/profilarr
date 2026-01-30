@@ -73,13 +73,14 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 	}
 
 	const changedFields: string[] = [];
-	const desiredState: Record<string, unknown> = { entries: input.entries };
+	const desiredState: Record<string, unknown> = {};
 	if (current.name !== input.name) {
 		changedFields.push('name');
 		desiredState.name = { from: current.name, to: input.name };
 	}
 	if (!isSameEntries(current.entries, input.entries)) {
 		changedFields.push('entries');
+		desiredState.entries = { from: current.entries, to: input.entries };
 	}
 
 	return writeOperation({
@@ -155,13 +156,14 @@ export async function updateSonarrQualityDefinitions(options: UpdateQualityDefin
 	}
 
 	const changedFields: string[] = [];
-	const desiredState: Record<string, unknown> = { entries: input.entries };
+	const desiredState: Record<string, unknown> = {};
 	if (current.name !== input.name) {
 		changedFields.push('name');
 		desiredState.name = { from: current.name, to: input.name };
 	}
 	if (!isSameEntries(current.entries, input.entries)) {
 		changedFields.push('entries');
+		desiredState.entries = { from: current.entries, to: input.entries };
 	}
 
 	return writeOperation({
