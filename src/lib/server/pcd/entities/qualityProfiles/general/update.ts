@@ -75,14 +75,19 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		}
 	}
 
+	const rawCurrentDescription = current.description;
+	const normalizedCurrentDescription = rawCurrentDescription ?? '';
+	const normalizedNextDescription = input.description?.trim() ?? '';
+	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
+
 	// 1. Update the quality profile with value guards
 	const setValues: Record<string, unknown> = {};
 
 	if (current.name !== input.name) {
 		setValues.name = input.name;
 	}
-	if (current.description !== input.description) {
-		setValues.description = input.description || null;
+	if (descriptionChanged) {
+		setValues.description = normalizedNextDescription === '' ? null : normalizedNextDescription;
 	}
 
 	let updateProfile = db
@@ -91,11 +96,11 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		// Value guards - ensure current values match what we expect
 		.where('name', '=', current.name);
 
-	if (current.description !== input.description) {
-		if (current.description === null) {
+	if (descriptionChanged) {
+		if (rawCurrentDescription === null) {
 			updateProfile = updateProfile.where('description', 'is', null);
 		} else {
-			updateProfile = updateProfile.where('description', '=', current.description);
+			updateProfile = updateProfile.where('description', '=', rawCurrentDescription);
 		}
 	}
 
@@ -184,8 +189,11 @@ WHERE NOT EXISTS (
 	if (current.name !== input.name) {
 		changes.name = { from: current.name, to: input.name };
 	}
-	if (current.description !== input.description) {
-		changes.description = { from: current.description, to: input.description };
+	if (descriptionChanged) {
+		changes.description = {
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
+		};
 	}
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
 		changes.tags = { from: currentTagNames, to: newTagNames };
@@ -211,8 +219,8 @@ WHERE NOT EXISTS (
 	}
 	if (changes.description) {
 		desiredState.description = {
-			from: current.description ?? null,
-			to: input.description ?? null
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
 		};
 	}
 	if (changes.tags) {

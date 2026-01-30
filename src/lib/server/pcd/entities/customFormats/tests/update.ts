@@ -59,8 +59,10 @@ export async function updateTest(options: UpdateTestOptions) {
 		}
 	}
 
-	const currentDescription = current.description ?? null;
-	const nextDescription = input.description ?? null;
+	const rawCurrentDescription = current.description;
+	const normalizedCurrentDescription = rawCurrentDescription ?? '';
+	const normalizedNextDescription = input.description?.trim() ?? '';
+	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
 
 	// Update with value guards on the current values
 	// We match on id AND verify the current values haven't changed
@@ -74,8 +76,9 @@ export async function updateTest(options: UpdateTestOptions) {
 	if (current.should_match !== input.should_match) {
 		setParts.push(`should_match = ${input.should_match ? 1 : 0}`);
 	}
-	if (currentDescription !== nextDescription) {
-		const descriptionValue = nextDescription ? `'${esc(nextDescription)}'` : 'NULL';
+	if (descriptionChanged) {
+		const descriptionValue =
+			normalizedNextDescription === '' ? 'NULL' : `'${esc(normalizedNextDescription)}'`;
 		setParts.push(`description = ${descriptionValue}`);
 	}
 
@@ -87,11 +90,11 @@ export async function updateTest(options: UpdateTestOptions) {
 	if (current.should_match !== input.should_match) {
 		guardParts.push(`should_match = ${current.should_match ? 1 : 0}`);
 	}
-	if (currentDescription !== nextDescription) {
-		if (currentDescription === null) {
+	if (descriptionChanged) {
+		if (rawCurrentDescription === null) {
 			guardParts.push(`description IS NULL`);
 		} else {
-			guardParts.push(`description = '${esc(currentDescription)}'`);
+			guardParts.push(`description = '${esc(rawCurrentDescription)}'`);
 		}
 	}
 
@@ -112,14 +115,14 @@ export async function updateTest(options: UpdateTestOptions) {
 	if (current.title !== input.title) changedFields.push('title');
 	if (current.type !== input.type) changedFields.push('type');
 	if (current.should_match !== input.should_match) changedFields.push('should_match');
-	if (currentDescription !== nextDescription) changedFields.push('description');
+	if (descriptionChanged) changedFields.push('description');
 
 	const desiredState: Record<string, unknown> = {};
 
 	desiredState.test_title = input.title;
 	desiredState.test_type = input.type;
 	desiredState.test_should_match = input.should_match;
-	desiredState.test_description = input.description ?? null;
+	desiredState.test_description = normalizedNextDescription === '' ? null : normalizedNextDescription;
 	if (current.title !== input.title) {
 		desiredState.title = { from: current.title, to: input.title };
 	}
@@ -129,8 +132,11 @@ export async function updateTest(options: UpdateTestOptions) {
 	if (current.should_match !== input.should_match) {
 		desiredState.should_match = { from: current.should_match, to: input.should_match };
 	}
-	if (currentDescription !== nextDescription) {
-		desiredState.description = { from: currentDescription, to: nextDescription };
+	if (descriptionChanged) {
+		desiredState.description = {
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
+		};
 	}
 
 	if (!updateTest) {

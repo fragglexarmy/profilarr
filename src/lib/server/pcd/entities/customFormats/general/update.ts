@@ -56,8 +56,10 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		}
 	}
 
-	const currentDescription = current.description === '' ? null : current.description;
-	const nextDescription = input.description === '' ? null : input.description;
+	const rawCurrentDescription = current.description;
+	const normalizedCurrentDescription = rawCurrentDescription ?? '';
+	const normalizedNextDescription = input.description?.trim() ?? '';
+	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
 
 	// 1. Update the custom format with value guards
 	const setValues: Record<string, unknown> = {};
@@ -65,8 +67,8 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	if (current.name !== input.name) {
 		setValues.name = input.name;
 	}
-	if (currentDescription !== nextDescription) {
-		setValues.description = nextDescription;
+	if (descriptionChanged) {
+		setValues.description = normalizedNextDescription === '' ? null : normalizedNextDescription;
 	}
 	if (current.include_in_rename !== input.includeInRename) {
 		setValues.include_in_rename = input.includeInRename ? 1 : 0;
@@ -78,11 +80,11 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		// Value guards - ensure current values match what we expect
 		.where('name', '=', current.name);
 
-	if (currentDescription !== nextDescription) {
-		if (currentDescription === null) {
+	if (descriptionChanged) {
+		if (rawCurrentDescription === null) {
 			updateFormat = updateFormat.where('description', 'is', null);
 		} else {
-			updateFormat = updateFormat.where('description', '=', currentDescription);
+			updateFormat = updateFormat.where('description', '=', rawCurrentDescription);
 		}
 	}
 	if (current.include_in_rename !== input.includeInRename) {
@@ -142,8 +144,11 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	if (current.name !== input.name) {
 		changes.name = { from: current.name, to: input.name };
 	}
-	if (current.description !== input.description) {
-		changes.description = { from: current.description, to: input.description };
+	if (descriptionChanged) {
+		changes.description = {
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
+		};
 	}
 	if (current.include_in_rename !== input.includeInRename) {
 		changes.includeInRename = { from: current.include_in_rename, to: input.includeInRename };
@@ -169,8 +174,8 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	}
 	if (changes.description) {
 		desiredState.description = {
-			from: currentDescription,
-			to: nextDescription
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
 		};
 	}
 	if (changes.includeInRename) {

@@ -58,10 +58,14 @@ export async function update(options: UpdateRegularExpressionOptions) {
 		}
 	}
 
-	const currentDescription = current.description === '' ? null : current.description;
-	const nextDescription = input.description === '' ? null : input.description;
-	const currentRegex101Id = current.regex101_id === '' ? null : current.regex101_id;
-	const nextRegex101Id = input.regex101Id === '' ? null : input.regex101Id;
+	const rawCurrentDescription = current.description;
+	const normalizedCurrentDescription = rawCurrentDescription ?? '';
+	const normalizedNextDescription = input.description?.trim() ?? '';
+	const rawCurrentRegex101Id = current.regex101_id;
+	const normalizedCurrentRegex101Id = rawCurrentRegex101Id ?? '';
+	const normalizedNextRegex101Id = input.regex101Id?.trim() ?? '';
+	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
+	const regex101Changed = normalizedCurrentRegex101Id !== normalizedNextRegex101Id;
 
 	// 1. Update the regular expression with value guards
 	const setValues: Record<string, unknown> = {};
@@ -72,11 +76,11 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	if (current.pattern !== input.pattern) {
 		setValues.pattern = input.pattern;
 	}
-	if (currentDescription !== nextDescription) {
-		setValues.description = nextDescription;
+	if (descriptionChanged) {
+		setValues.description = normalizedNextDescription === '' ? null : normalizedNextDescription;
 	}
-	if (currentRegex101Id !== nextRegex101Id) {
-		setValues.regex101_id = nextRegex101Id;
+	if (regex101Changed) {
+		setValues.regex101_id = normalizedNextRegex101Id === '' ? null : normalizedNextRegex101Id;
 	}
 
 	let updateRegex = db
@@ -88,18 +92,18 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	if (current.pattern !== input.pattern) {
 		updateRegex = updateRegex.where('pattern', '=', current.pattern);
 	}
-	if (currentDescription !== nextDescription) {
-		if (currentDescription === null) {
+	if (descriptionChanged) {
+		if (rawCurrentDescription === null) {
 			updateRegex = updateRegex.where('description', 'is', null);
 		} else {
-			updateRegex = updateRegex.where('description', '=', currentDescription);
+			updateRegex = updateRegex.where('description', '=', rawCurrentDescription);
 		}
 	}
-	if (currentRegex101Id !== nextRegex101Id) {
-		if (currentRegex101Id === null) {
+	if (regex101Changed) {
+		if (rawCurrentRegex101Id === null) {
 			updateRegex = updateRegex.where('regex101_id', 'is', null);
 		} else {
-			updateRegex = updateRegex.where('regex101_id', '=', currentRegex101Id);
+			updateRegex = updateRegex.where('regex101_id', '=', rawCurrentRegex101Id);
 		}
 	}
 
@@ -111,13 +115,14 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	// 2. Handle tag changes
 	const currentTagNames = current.tags.map((t) => t.name);
 	const newTagNames = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
-	const regexNameForTags = input.name !== current.name ? input.name : current.name;
+	const tagParentNames = Array.from(new Set([current.name, input.name]));
+	const tagParentInClause = tagParentNames.map((name) => `'${esc(name)}'`).join(', ');
 
 	// Tags to remove
 	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
-			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_name = '${esc(regexNameForTags)}' AND tag_name = '${esc(tagName)}'`,
+			sql: `DELETE FROM regular_expression_tags WHERE regular_expression_name IN (${tagParentInClause}) AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
@@ -138,7 +143,8 @@ export async function update(options: UpdateRegularExpressionOptions) {
 
 		// Link tag to regular expression
 		const linkTag = {
-			sql: `INSERT INTO regular_expression_tags (regular_expression_name, tag_name) VALUES ('${esc(regexNameForTags)}', '${esc(tagName)}')`,
+			sql: `INSERT INTO regular_expression_tags (regular_expression_name, tag_name)
+SELECT name, '${esc(tagName)}' FROM regular_expressions WHERE name IN (${tagParentInClause}) LIMIT 1`,
 			parameters: [],
 			query: {} as never
 		};
@@ -159,11 +165,17 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	if (current.pattern !== input.pattern) {
 		changes.pattern = { from: current.pattern, to: input.pattern };
 	}
-	if (currentDescription !== nextDescription) {
-		changes.description = { from: currentDescription, to: nextDescription };
+	if (descriptionChanged) {
+		changes.description = {
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
+		};
 	}
-	if (currentRegex101Id !== nextRegex101Id) {
-		changes.regex101Id = { from: currentRegex101Id, to: nextRegex101Id };
+	if (regex101Changed) {
+		changes.regex101Id = {
+			from: rawCurrentRegex101Id ?? null,
+			to: normalizedNextRegex101Id === '' ? null : normalizedNextRegex101Id
+		};
 	}
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
 		changes.tags = { from: currentTagNames, to: newTagNames };
@@ -189,10 +201,16 @@ export async function update(options: UpdateRegularExpressionOptions) {
 		desiredState.pattern = { from: current.pattern, to: input.pattern };
 	}
 	if (changes.description) {
-		desiredState.description = { from: currentDescription, to: nextDescription };
+		desiredState.description = {
+			from: rawCurrentDescription ?? null,
+			to: normalizedNextDescription === '' ? null : normalizedNextDescription
+		};
 	}
 	if (changes.regex101Id) {
-		desiredState.regex101_id = { from: currentRegex101Id, to: nextRegex101Id };
+		desiredState.regex101_id = {
+			from: rawCurrentRegex101Id ?? null,
+			to: normalizedNextRegex101Id === '' ? null : normalizedNextRegex101Id
+		};
 	}
 	if (changes.tags) {
 		desiredState.tags = { add: tagsToAdd, remove: tagsToRemove };
