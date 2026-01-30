@@ -175,7 +175,10 @@ WHERE quality_profile_name = '${esc(profileName)}'
 		description: `update-quality-profile-qualities-${profileName}`,
 		queries,
 		desiredState: {
-			ordered_items: input.orderedItems
+			ordered_items: {
+				from: currentData.orderedItems,
+				to: input.orderedItems
+			}
 		},
 		metadata: {
 			operation: 'update',
