@@ -115,6 +115,11 @@ export async function updateTest(options: UpdateTestOptions) {
 	if (currentDescription !== nextDescription) changedFields.push('description');
 
 	const desiredState: Record<string, unknown> = {};
+
+	desiredState.test_title = input.title;
+	desiredState.test_type = input.type;
+	desiredState.test_should_match = input.should_match;
+	desiredState.test_description = input.description ?? null;
 	if (current.title !== input.title) {
 		desiredState.title = { from: current.title, to: input.title };
 	}
@@ -141,9 +146,8 @@ export async function updateTest(options: UpdateTestOptions) {
 		desiredState,
 		metadata: {
 			operation: 'update',
-			entity: 'custom_format_test',
-			name: `${formatName}: ${input.title.substring(0, 30)}`,
-			...(isTitleChange && { previousName: `${formatName}: ${current.title.substring(0, 30)}` }),
+			entity: 'custom_format',
+			name: formatName,
 			stableKey: { key: 'custom_format_name', value: formatName },
 			changedFields,
 			summary: 'Update custom format test',

@@ -53,12 +53,16 @@ WHERE custom_format_name = '${esc(formatName)}'
 			title: current.title,
 			type: current.type,
 			should_match: current.should_match,
-			description: currentDescription
+			description: currentDescription,
+			test_title: current.title,
+			test_type: current.type,
+			test_should_match: current.should_match,
+			test_description: currentDescription
 		},
 		metadata: {
 			operation: 'delete',
-			entity: 'custom_format_test',
-			name: `${formatName}: ${current.title.substring(0, 30)}`,
+			entity: 'custom_format',
+			name: formatName,
 			stableKey: { key: 'custom_format_name', value: formatName },
 			changedFields: ['deleted'],
 			summary: 'Delete custom format test',

@@ -69,12 +69,16 @@ export async function createTest(options: CreateTestOptions) {
 			title: input.title,
 			type: input.type,
 			should_match: input.should_match,
-			description: input.description ?? null
+			description: input.description ?? null,
+			test_title: input.title,
+			test_type: input.type,
+			test_should_match: input.should_match,
+			test_description: input.description ?? null
 		},
 		metadata: {
 			operation: 'create',
-			entity: 'custom_format_test',
-			name: `${formatName}: ${input.title.substring(0, 30)}`,
+			entity: 'custom_format',
+			name: formatName,
 			stableKey: { key: 'custom_format_name', value: formatName },
 			summary: 'Create custom format test',
 			title: `Create test for custom format "${formatName}"`

@@ -22,6 +22,49 @@ export type FieldRow = {
 	remove?: unknown[];
 };
 
+export type ConditionSnapshot = {
+	type?: string;
+	arrType?: string;
+	required?: boolean;
+	negate?: boolean;
+	values?: Record<string, unknown> | null;
+};
+
+export type ConditionDiff = {
+	name: string;
+	change: 'added' | 'removed' | 'updated';
+	before?: ConditionSnapshot;
+	after?: ConditionSnapshot;
+};
+
+export type ConditionsRow = {
+	kind: 'conditions';
+	field: string;
+	label: string;
+	rows: ConditionDiff[];
+};
+
+export type TestSnapshot = {
+	title?: string;
+	type?: string;
+	shouldMatch?: boolean;
+	description?: string | null;
+};
+
+export type TestDiff = {
+	name: string;
+	change: 'added' | 'removed' | 'updated';
+	before?: TestSnapshot;
+	after?: TestSnapshot;
+};
+
+export type TestsRow = {
+	kind: 'tests';
+	field: string;
+	label: string;
+	rows: TestDiff[];
+};
+
 export type CustomFormatScoreDiff = Pick<
 	QualityProfileCustomFormatsRow,
 	'custom_format_name' | 'arr_type'
@@ -45,7 +88,12 @@ export type OrderedItemsRow = {
 	afterItems?: OrderedItem[];
 };
 
-export type DraftEntitySectionRow = FieldRow | CustomFormatScoresRow | OrderedItemsRow;
+export type DraftEntitySectionRow =
+	| FieldRow
+	| ConditionsRow
+	| TestsRow
+	| CustomFormatScoresRow
+	| OrderedItemsRow;
 
 export type DraftEntitySection = {
 	id: string;

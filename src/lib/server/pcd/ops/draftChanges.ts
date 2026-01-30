@@ -31,6 +31,37 @@ type FieldAggregate = {
 	items?: unknown[];
 	beforeItems?: unknown[];
 	afterItems?: unknown[];
+	conditions?: ConditionDiff[];
+	tests?: TestDiff[];
+};
+
+type ConditionSnapshot = {
+	type?: string;
+	arrType?: string;
+	negate?: boolean;
+	required?: boolean;
+	values?: Record<string, unknown> | null;
+};
+
+type ConditionDiff = {
+	name: string;
+	change: 'added' | 'removed' | 'updated';
+	before?: ConditionSnapshot;
+	after?: ConditionSnapshot;
+};
+
+type TestSnapshot = {
+	title?: string;
+	type?: string;
+	shouldMatch?: boolean;
+	description?: string | null;
+};
+
+type TestDiff = {
+	name: string;
+	change: 'added' | 'removed' | 'updated';
+	before?: TestSnapshot;
+	after?: TestSnapshot;
 };
 
 export type DraftEntitySectionRow =
@@ -42,6 +73,18 @@ export type DraftEntitySectionRow =
 			after?: unknown;
 			add?: unknown[];
 			remove?: unknown[];
+	  }
+	| {
+			kind: 'conditions';
+			field: string;
+			label: string;
+			rows: ConditionDiff[];
+	  }
+	| {
+			kind: 'tests';
+			field: string;
+			label: string;
+			rows: TestDiff[];
 	  }
 	| {
 			kind: 'custom_format_scores';
@@ -100,6 +143,8 @@ const FIELD_LABELS: Record<string, string> = {
 	delay_profile_name: 'Delay profile',
 	regular_expression_name: 'Regular expression',
 	ordered_items: 'Ordered items',
+	conditions: 'Conditions',
+	tests: 'Tests',
 	tags: 'Tags',
 	include_in_rename: 'Include in rename',
 	preferred_protocol: 'Preferred protocol',
@@ -258,6 +303,165 @@ function mergeOrderedItems(target: FieldAggregate, value: unknown) {
 	}
 }
 
+function isTestPayload(desiredState: Record<string, unknown>): boolean {
+	return (
+		'test_title' in desiredState ||
+		'test_type' in desiredState ||
+		'test_should_match' in desiredState ||
+		'test_description' in desiredState
+	);
+}
+
+function extractChangeValue<T>(
+	value: unknown,
+	mode: 'added' | 'removed' | 'updated'
+): { before?: T; after?: T } {
+	if (value && typeof value === 'object' && !Array.isArray(value)) {
+		const record = value as Record<string, unknown>;
+		if ('from' in record || 'to' in record) {
+			return {
+				before: record.from as T | undefined,
+				after: record.to as T | undefined
+			};
+		}
+	}
+
+	if (value === undefined) return {};
+
+	if (mode === 'removed') {
+		return { before: value as T };
+	}
+	return { after: value as T };
+}
+
+function mergeTests(target: FieldAggregate, value: Record<string, unknown>) {
+	const rowsMap = new Map<string, TestDiff>(
+		(target.tests ?? []).map((row) => [row.name, row])
+	);
+
+	const mode: 'added' | 'removed' | 'updated' = value.deleted
+		? 'removed'
+		: Object.values(value).some(
+					(entry) =>
+						entry &&
+						typeof entry === 'object' &&
+						!Array.isArray(entry) &&
+						('from' in (entry as Record<string, unknown>) || 'to' in (entry as Record<string, unknown>))
+				)
+			? 'updated'
+			: 'added';
+
+	const titleValue = 'title' in value ? value.title : value.test_title;
+	const typeValue = 'type' in value ? value.type : value.test_type;
+	const matchValue = 'should_match' in value ? value.should_match : value.test_should_match;
+	const descriptionValue = 'description' in value ? value.description : value.test_description;
+
+	const titleChange = extractChangeValue<string>(titleValue, mode);
+	const typeChange = extractChangeValue<string>(typeValue, mode);
+	const matchChange = extractChangeValue<boolean>(matchValue, mode);
+	const descriptionChange = extractChangeValue<string | null>(descriptionValue, mode);
+
+	const before: TestSnapshot = {};
+	const after: TestSnapshot = {};
+
+	if (titleChange.before !== undefined) before.title = titleChange.before;
+	if (titleChange.after !== undefined) after.title = titleChange.after;
+	if (typeChange.before !== undefined) before.type = typeChange.before;
+	if (typeChange.after !== undefined) after.type = typeChange.after;
+	if (matchChange.before !== undefined) before.shouldMatch = matchChange.before;
+	if (matchChange.after !== undefined) after.shouldMatch = matchChange.after;
+	if (descriptionChange.before !== undefined) before.description = descriptionChange.before;
+	if (descriptionChange.after !== undefined) after.description = descriptionChange.after;
+
+	const name = String(titleChange.after ?? titleChange.before ?? 'Test');
+
+	rowsMap.set(name, {
+		name,
+		change: mode,
+		before: Object.keys(before).length > 0 ? before : undefined,
+		after: Object.keys(after).length > 0 ? after : undefined
+	});
+
+	target.tests = Array.from(rowsMap.values());
+}
+
+function extractConditionSnapshot(value: unknown): ConditionSnapshot | undefined {
+	if (!value || typeof value !== 'object') return undefined;
+	const record = value as Record<string, unknown>;
+	const base = (record.base as Record<string, unknown>) ?? {};
+	return {
+		type: base.type as string | undefined,
+		arrType: base.arrType as string | undefined,
+		negate: base.negate as boolean | undefined,
+		required: base.required as boolean | undefined,
+		values: (record.values as Record<string, unknown>) ?? null
+	};
+}
+
+function mergeConditions(target: FieldAggregate, value: unknown) {
+	if (!value || typeof value !== 'object') return;
+	const record = value as Record<string, unknown>;
+	const rowsMap = new Map<string, ConditionDiff>(
+		(target.conditions ?? []).map((row) => [row.name, row])
+	);
+
+	const added = Array.isArray(record.added) ? record.added : [];
+	for (const entry of added) {
+		if (!entry) continue;
+		if (typeof entry === 'string') {
+			rowsMap.set(entry, { name: entry, change: 'added' });
+			continue;
+		}
+		const snapshot = extractConditionSnapshot(entry);
+		const name = (entry as Record<string, unknown>).name as string | undefined;
+		if (!name) continue;
+		rowsMap.set(name, { name, change: 'added', after: snapshot });
+	}
+
+	const removed = Array.isArray(record.removed) ? record.removed : [];
+	for (const entry of removed) {
+		if (!entry) continue;
+		if (typeof entry === 'string') {
+			rowsMap.set(entry, { name: entry, change: 'removed' });
+			continue;
+		}
+		const snapshot = extractConditionSnapshot(entry);
+		const name = (entry as Record<string, unknown>).name as string | undefined;
+		if (!name) continue;
+		rowsMap.set(name, { name, change: 'removed', before: snapshot });
+	}
+
+	const updated = Array.isArray(record.updated) ? record.updated : [];
+	for (const entry of updated) {
+		if (!entry || typeof entry !== 'object') continue;
+		const name = (entry as Record<string, unknown>).name as string | undefined;
+		if (!name) continue;
+		const existing = rowsMap.get(name);
+		if (existing && (existing.change === 'added' || existing.change === 'removed')) {
+			continue;
+		}
+		const base = (entry as Record<string, unknown>).base as Record<string, unknown> | undefined;
+		const values = (entry as Record<string, unknown>).values as Record<string, unknown> | undefined;
+		const before: ConditionSnapshot = {
+			type: (base?.from as Record<string, unknown> | undefined)?.type as string | undefined,
+			arrType: (base?.from as Record<string, unknown> | undefined)?.arrType as string | undefined,
+			negate: (base?.from as Record<string, unknown> | undefined)?.negate as boolean | undefined,
+			required: (base?.from as Record<string, unknown> | undefined)?.required as boolean | undefined,
+			values: (values?.from as Record<string, unknown>) ?? null
+		};
+		const after: ConditionSnapshot = {
+			type: (base?.to as Record<string, unknown> | undefined)?.type as string | undefined,
+			arrType: (base?.to as Record<string, unknown> | undefined)?.arrType as string | undefined,
+			negate: (base?.to as Record<string, unknown> | undefined)?.negate as boolean | undefined,
+			required: (base?.to as Record<string, unknown> | undefined)?.required as boolean | undefined,
+			values: (values?.to as Record<string, unknown>) ?? null
+		};
+		rowsMap.set(name, { name, change: 'updated', before, after });
+	}
+
+	target.conditions = Array.from(rowsMap.values());
+}
+
 function buildSections(entity: string, aggregates: Map<string, FieldAggregate>): DraftEntitySection[] {
 	if (aggregates.size === 0) return [];
 
@@ -341,6 +545,65 @@ function buildSections(entity: string, aggregates: Map<string, FieldAggregate>):
 		return sections;
 	}
 
+	if (entity === 'custom_format') {
+		const generalFields = ['name', 'description', 'include_in_rename', 'tags'];
+		const sections: DraftEntitySection[] = [];
+		const buildSectionRows = (fields: string[]): DraftEntitySectionRow[] => {
+			const rows: DraftEntitySectionRow[] = [];
+			for (const field of fields) {
+				const aggregate = aggregates.get(field);
+				if (!aggregate) continue;
+				rows.push({
+					kind: 'field',
+					field,
+					label: aggregate.label,
+					before: aggregate.before,
+					after: aggregate.after,
+					add: aggregate.add,
+					remove: aggregate.remove
+				});
+			}
+			return rows;
+		};
+
+		const generalRows = buildSectionRows(generalFields);
+		if (generalRows.length > 0) sections.push({ id: 'general', title: 'General', rows: generalRows });
+
+		const conditionsAggregate = aggregates.get('conditions');
+		if (conditionsAggregate?.conditions && conditionsAggregate.conditions.length > 0) {
+			sections.push({
+				id: 'conditions',
+				title: 'Conditions',
+				rows: [
+					{
+						kind: 'conditions',
+						field: 'conditions',
+						label: 'Conditions',
+						rows: conditionsAggregate.conditions
+					}
+				]
+			});
+		}
+
+		const testsAggregate = aggregates.get('tests');
+		if (testsAggregate?.tests && testsAggregate.tests.length > 0) {
+			sections.push({
+				id: 'tests',
+				title: 'Tests',
+				rows: [
+					{
+						kind: 'tests',
+						field: 'tests',
+						label: 'Tests',
+						rows: testsAggregate.tests
+					}
+				]
+			});
+		}
+
+		return sections;
+	}
+
 	const fallbackRows: DraftEntitySectionRow[] = [];
 	for (const aggregate of aggregates.values()) {
 		fallbackRows.push({
@@ -383,6 +646,8 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 	};
 	const groups = new Map<string, DraftEntityChange>();
 	const aggregates = new Map<string, Map<string, FieldAggregate>>();
+	const entityCreates = new Map<string, boolean>();
+	const entityDeletes = new Map<string, boolean>();
 
 	for (const { op, metadata } of parsedOps) {
 		if (!metadata?.entity || !metadata?.name || !metadata.operation) {
@@ -392,6 +657,19 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 		const desiredState = parseJson<Record<string, unknown>>(op.desired_state);
 		const stableKey = metadata.stable_key?.value ?? metadata.name;
 		const groupKey = `${metadata.entity}:${resolveAlias(stableKey)}`;
+
+		const hasNameField =
+			desiredState && Object.prototype.hasOwnProperty.call(desiredState, 'name');
+		if (metadata.operation === 'create' && hasNameField) {
+			entityCreates.set(groupKey, true);
+		}
+		if (
+			metadata.operation === 'delete' &&
+			hasNameField &&
+			desiredState?.deleted === true
+		) {
+			entityDeletes.set(groupKey, true);
+		}
 
 		const existing = groups.get(groupKey);
 		const updatedAt = op.updated_at ?? op.created_at;
@@ -430,8 +708,18 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 				aggregates.set(groupKey, fieldMap);
 			}
 
+			if (isTestPayload(desiredState)) {
+				const aggregate = ensureField(fieldMap, 'tests');
+				mergeTests(aggregate, desiredState);
+				continue;
+			}
+
 			for (const [field, value] of Object.entries(desiredState)) {
 				const aggregate = ensureField(fieldMap, field);
+				if (field === 'conditions') {
+					mergeConditions(aggregate, value);
+					continue;
+				}
 				if (field === 'custom_format_scores') {
 					mergeCustomFormatScores(aggregate, value);
 					continue;
@@ -454,8 +742,8 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 			return aSeq - bSeq;
 		});
 
-		const hasCreate = group.ops.some((op) => op.operation === 'create');
-		const hasDelete = group.ops.some((op) => op.operation === 'delete');
+		const hasCreate = entityCreates.get(group.key) ?? false;
+		const hasDelete = entityDeletes.get(group.key) ?? false;
 		group.operation = hasCreate ? 'create' : hasDelete ? 'delete' : 'update';
 
 		const fieldMap = aggregates.get(group.key);

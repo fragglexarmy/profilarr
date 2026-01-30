@@ -70,6 +70,10 @@
 			{@const beforeValue = getFieldBefore(row)}
 			{#if row.field === 'language' && typeof beforeValue === 'string'}
 				<Badge variant="info" size="md">{beforeValue}</Badge>
+			{:else if typeof beforeValue === 'boolean'}
+				<Badge variant={beforeValue ? 'success' : 'neutral'} size="md">
+					{beforeValue ? 'Yes' : 'No'}
+				</Badge>
 			{:else if isMarkdownField(row.field) && typeof beforeValue === 'string'}
 				<div class="prose prose-sm text-sm prose-neutral dark:prose-invert">
 					{@html parseMarkdown(beforeValue)}
@@ -87,6 +91,10 @@
 			{@const afterValue = getFieldAfter(row)}
 			{#if row.field === 'language' && typeof afterValue === 'string'}
 				<Badge variant="info" size="md">{afterValue}</Badge>
+			{:else if typeof afterValue === 'boolean'}
+				<Badge variant={afterValue ? 'success' : 'neutral'} size="md">
+					{afterValue ? 'Yes' : 'No'}
+				</Badge>
 			{:else if isMarkdownField(row.field) && typeof afterValue === 'string'}
 				<div class="prose prose-sm text-sm prose-neutral dark:prose-invert">
 					{@html parseMarkdown(afterValue)}

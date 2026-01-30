@@ -325,10 +325,18 @@ WHERE custom_format_name = '${esc(formatName)}'
 		description: `update-conditions-${formatName}`,
 		queries,
 		desiredState: {
-			conditions: {
-				added: newConditions.map((c) => c.name),
-				removed: conditionsToDelete.map((c) => c.name),
-				updated: existingConditions
+		conditions: {
+			added: newConditions.map((c) => ({
+				name: c.name,
+				base: baseSnapshot(c),
+				values: getConditionValues(c)
+			})),
+			removed: conditionsToDelete.map((c) => ({
+				name: c.name,
+				base: baseSnapshot(c),
+				values: getConditionValues(c)
+			})),
+			updated: existingConditions
 					.filter((c) => {
 						const original = originalConditions.find((o) => o.name === c.name);
 						if (!original) return false;
@@ -358,7 +366,7 @@ WHERE custom_format_name = '${esc(formatName)}'
 		},
 		metadata: {
 			operation: 'update',
-			entity: 'custom_format_conditions',
+			entity: 'custom_format',
 			name: formatName,
 			stableKey: { key: 'custom_format_name', value: formatName },
 			changedFields: ['conditions'],

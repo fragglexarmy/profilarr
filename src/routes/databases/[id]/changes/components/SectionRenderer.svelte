@@ -4,6 +4,8 @@
 	import TagsDiffTable from './TagsDiffTable.svelte';
 	import CustomFormatScoresTable from './CustomFormatScoresTable.svelte';
 	import OrderedItemsDiff from './OrderedItemsDiff.svelte';
+	import ConditionsDiffTable from './ConditionsDiffTable.svelte';
+	import TestsDiffTable from './TestsDiffTable.svelte';
 
 	export let sections: DraftEntitySection[] = [];
 	export let operation: OperationType = 'update';
@@ -65,6 +67,22 @@
 							{scoreRow.label}
 						</div>
 						<CustomFormatScoresTable rows={scoreRow.rows} {operation} />
+					</div>
+				{/each}
+			{/if}
+
+			{#if hasRows(section.rows, 'conditions')}
+				{#each getRows(section.rows, 'conditions') as conditionsRow}
+					<div class="space-y-2">
+						<ConditionsDiffTable rows={conditionsRow.rows} {operation} />
+					</div>
+				{/each}
+			{/if}
+
+			{#if hasRows(section.rows, 'tests')}
+				{#each getRows(section.rows, 'tests') as testsRow}
+					<div class="space-y-2">
+						<TestsDiffTable rows={testsRow.rows} {operation} />
 					</div>
 				{/each}
 			{/if}
