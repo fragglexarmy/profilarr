@@ -3,7 +3,10 @@
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import QualityProfileDiff from './components/QualityProfileDiff.svelte';
 	import SectionRenderer from './components/SectionRenderer.svelte';
-	import { Check, ArrowDown, ExternalLink, FileText } from 'lucide-svelte';
+	import ActionsBar from '$ui/actions/ActionsBar.svelte';
+	import ActionButton from '$ui/actions/ActionButton.svelte';
+	import Modal from '$ui/modal/Modal.svelte';
+	import { Check, ArrowDown, ExternalLink, FileText, Sparkles, Upload, Trash2 } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
@@ -24,13 +27,23 @@
 	let repoInfo: RepoInfo | null = null;
 	let primarySelected = new Set<string>();
 	let selected = new Set<string>();
+	let commitMessage = '';
+	let generating = false;
+	let committing = false;
+	let dropping = false;
+	let showDropModal = false;
+	let aiEnabled = false;
 
 	$: isDeveloper = data.isDeveloper;
 	$: hasIncomingChanges = incomingChanges?.hasUpdates ?? false;
 	$: selectableChanges = draftChanges.filter((change) => !change.generated);
 	$: selectableKeys = selectableChanges.map((change) => change.key);
 	$: selectedPrimaryCount = selectableKeys.filter((key) => primarySelected.has(key)).length;
+	$: selectedCount = Array.from(selected).length;
 	$: allSelected = selectableKeys.length > 0 && selectedPrimaryCount === selectableKeys.length;
+	$: primaryKeys = Array.from(primarySelected);
+	$: selectedKeys = Array.from(selected);
+	$: selectedChanges = draftChanges.filter((change) => selected.has(change.key));
 
 	$: changeByKey = new Map(draftChanges.map((change) => [change.key, change]));
 	$: groupMap = buildGroupMap(draftChanges);
@@ -55,8 +68,23 @@
 		}
 	}
 
+	async function fetchAIStatus() {
+		try {
+			const response = await fetch('/api/ai/status');
+			if (response.ok) {
+				const result = await response.json();
+				aiEnabled = !!result.enabled;
+			} else {
+				aiEnabled = false;
+			}
+		} catch {
+			aiEnabled = false;
+		}
+	}
+
 	afterNavigate(() => {
 		fetchChanges();
+		fetchAIStatus();
 	});
 
 	function toggleAll() {
@@ -183,6 +211,123 @@
 			}
 		}
 		return autoSelected;
+	}
+
+	function buildDropKeys(): Set<string> {
+		const keysToDrop = new Set<string>();
+		for (const key of primaryKeys) {
+			const change = changeByKey.get(key);
+			if (!change) continue;
+			if (change.groupId && groupMap.has(change.groupId)) {
+				for (const groupKey of groupMap.get(change.groupId) ?? []) {
+					keysToDrop.add(groupKey);
+				}
+			} else {
+				keysToDrop.add(change.key);
+			}
+		}
+		return keysToDrop;
+	}
+
+	function buildCommitMessage(changes: DraftEntityChange[]): string {
+		if (changes.length === 0) return '';
+		if (changes.length === 1) {
+			const change = changes[0];
+			return `${formatOperation(change.operation)} ${formatEntity(change.entity)} "${change.name}"`;
+		}
+		if (changes.length <= 3) {
+			const detail = changes
+				.map((change) => `${formatOperation(change.operation)} ${formatEntity(change.entity)} "${change.name}"`)
+				.join(', ');
+			return `Update ${changes.length} changes: ${detail}`;
+		}
+		return `Update ${changes.length} changes`;
+	}
+
+	function handleGenerate() {
+		if (!aiEnabled) return;
+		if (!selectedChanges.length) return;
+		commitMessage = buildCommitMessage(selectedChanges);
+	}
+
+	async function handleCommit() {
+		alertStore.add('info', 'Exporter not implemented yet');
+	}
+
+	function requestDrop() {
+		if (!primaryKeys.length) return;
+		showDropModal = true;
+	}
+
+	async function handleDropConfirm() {
+		if (!primaryKeys.length) return;
+		dropping = true;
+		try {
+			const dropKeys = buildDropKeys();
+			const opIds = new Set<number>();
+			for (const key of dropKeys) {
+				const change = changeByKey.get(key);
+				if (!change) continue;
+				for (const op of change.ops) {
+					opIds.add(op.id);
+				}
+			}
+
+			const formData = new FormData();
+			for (const opId of opIds) {
+				formData.append('opIds', String(opId));
+			}
+
+			const response = await fetch('?/drop', {
+				method: 'POST',
+				body: formData,
+				headers: { Accept: 'application/json' }
+			});
+
+			let result:
+				| {
+						type?: string;
+						data?: { success?: boolean; error?: string; dropped?: number };
+						dropped?: number;
+						error?: string;
+					}
+				| null = null;
+			try {
+				result = await response.json();
+			} catch {
+				result = null;
+			}
+
+			const isSuccess =
+				response.ok &&
+				(result?.type === 'success' ||
+					result?.type === 'redirect' ||
+					result?.data?.success);
+			const droppedCount =
+				typeof result?.data?.dropped === 'number'
+					? result.data.dropped
+					: typeof result?.dropped === 'number'
+						? result.dropped
+						: opIds.size;
+			const errorMessage = result?.data?.error || result?.error;
+
+			if (isSuccess) {
+				alertStore.add('success', `Dropped ${droppedCount} ops`);
+				await fetchChanges();
+			} else {
+				const message =
+					errorMessage ||
+					`Failed to drop changes${response.ok ? '' : ` (HTTP ${response.status})`}`;
+				alertStore.add('error', message);
+			}
+		} finally {
+			dropping = false;
+			showDropModal = false;
+		}
+	}
+
+	function handleDropCancel() {
+		showDropModal = false;
 	}
 
 	async function handlePull() {
@@ -450,23 +595,67 @@
 				</div>
 			{:else}
 				<div class="mb-4">
-					<div
-						class="rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
-					>
-						<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<ActionsBar className="w-full">
+						<div>
 							<button
 								type="button"
 								on:click={toggleAll}
-								class="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300"
+								class="flex h-10 items-center gap-2 border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
 							>
 								<IconCheckbox checked={allSelected} icon={Check} color="blue" />
 								Select all ({selectableKeys.length})
 							</button>
-							<span class="text-xs text-neutral-500 dark:text-neutral-400">
-								{selectedPrimaryCount} selected
-							</span>
 						</div>
-					</div>
+
+						<div class="flex-1">
+							<div
+								class="relative flex h-10 w-full items-center border border-neutral-200 bg-white px-3 text-sm text-neutral-600 transition-colors dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+							>
+								<input
+									type="text"
+									bind:value={commitMessage}
+									placeholder={hasIncomingChanges ? 'Pull incoming changes first...' : 'Commit message...'}
+									disabled={hasIncomingChanges}
+									class="h-full w-full bg-transparent font-mono text-sm text-neutral-700 placeholder-neutral-400 outline-none disabled:cursor-not-allowed dark:text-neutral-300 dark:placeholder-neutral-500"
+								/>
+							</div>
+						</div>
+
+						<div>
+							{#if aiEnabled}
+								<ActionButton
+									icon={Sparkles}
+									title="Generate commit message"
+									disabled={hasIncomingChanges || selectedCount === 0 || generating}
+									on:click={() => handleGenerate()}
+								/>
+							{/if}
+						</div>
+
+						<div>
+							<ActionButton
+								icon={committing ? Upload : Upload}
+								title="Commit changes"
+								disabled={
+									hasIncomingChanges ||
+									selectedCount === 0 ||
+									!commitMessage.trim() ||
+									committing
+								}
+								on:click={handleCommit}
+							/>
+						</div>
+
+						<div class="flex">
+							<ActionButton
+								icon={Trash2}
+								variant="danger"
+								title="Drop selected changes"
+								disabled={primaryKeys.length === 0 || dropping}
+								on:click={requestDrop}
+							/>
+						</div>
+					</ActionsBar>
 				</div>
 			{/if}
 
@@ -612,3 +801,15 @@
 		</section>
 	{/if}
 </div>
+
+<Modal
+	open={showDropModal}
+	header="Drop changes"
+	bodyMessage={`Drop ${primaryKeys.length} change${primaryKeys.length === 1 ? '' : 's'}? This cannot be undone.`}
+	confirmText="Drop"
+	cancelText="Cancel"
+	confirmDanger={true}
+	loading={dropping}
+	on:confirm={handleDropConfirm}
+	on:cancel={handleDropCancel}
+/>

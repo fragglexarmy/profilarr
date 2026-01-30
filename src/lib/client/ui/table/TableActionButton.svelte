@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	export let icon: ComponentType;
 	export let title: string;
@@ -8,6 +9,8 @@
 	export let type: 'button' | 'submit' = 'button';
 	export let disabled: boolean = false;
 	export let stopPropagation: boolean = false;
+
+	const dispatch = createEventDispatcher<{ click: MouseEvent }>();
 
 	const sizeClasses = {
 		sm: 'h-6 w-6',
@@ -32,6 +35,7 @@
 		if (stopPropagation) {
 			event.stopPropagation();
 		}
+		dispatch('click', event);
 	}
 </script>
 

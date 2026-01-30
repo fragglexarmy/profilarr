@@ -17,7 +17,22 @@
 		border-bottom-left-radius: 0.5rem !important;
 	}
 
+	.actions-bar :global(> *:first-child > button) {
+		border-top-left-radius: 0.5rem !important;
+		border-bottom-left-radius: 0.5rem !important;
+	}
+
 	.actions-bar :global(> *:last-child > *) {
+		border-top-right-radius: 0.5rem !important;
+		border-bottom-right-radius: 0.5rem !important;
+	}
+
+	.actions-bar :global(> *:last-child > button) {
+		border-top-right-radius: 0.5rem !important;
+		border-bottom-right-radius: 0.5rem !important;
+	}
+
+	.actions-bar :global(> *:last-child > * > button) {
 		border-top-right-radius: 0.5rem !important;
 		border-bottom-right-radius: 0.5rem !important;
 	}

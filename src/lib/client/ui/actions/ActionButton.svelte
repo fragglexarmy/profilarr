@@ -32,12 +32,17 @@
 
 	const variantClasses = {
 		neutral: 'hover:bg-neutral-100 dark:hover:bg-neutral-700',
-		danger: 'hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400'
+		danger: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'
+	};
+
+	const iconVariantClasses = {
+		neutral: '',
+		danger: 'group-hover:text-red-600 dark:group-hover:text-red-400'
 	};
 </script>
 
 <div
-	class="relative flex"
+	class="group relative flex"
 	on:mouseenter={handleMouseEnter}
 	on:mouseleave={handleMouseLeave}
 	role="group"
@@ -55,7 +60,9 @@
 			<svelte:component
 				this={icon}
 				size={20}
-				class="text-neutral-700 dark:text-neutral-300 {iconClass}"
+				class="text-neutral-700 dark:text-neutral-300 {variant === 'danger'
+					? iconVariantClasses.danger
+					: ''} {iconClass}"
 			/>
 		{/if}
 		<slot />
