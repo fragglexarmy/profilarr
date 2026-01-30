@@ -19,9 +19,18 @@
 		return trimmed.replace(/\b\w/g, (char) => char.toUpperCase());
 	}
 
-	function formatPosition(position: number): number {
-		return position;
+	function getPositionOffset(items: OrderedItem[]): number {
+		if (!items || items.length === 0) return 0;
+		const minPosition = items.reduce((min, item) => Math.min(min, item.position), items[0].position);
+		return minPosition === 0 ? 1 : 0;
 	}
+
+	function formatPosition(position: number, offset: number): number {
+		return position + offset;
+	}
+
+	$: beforeOffset = getPositionOffset(beforeItems);
+	$: afterOffset = getPositionOffset(afterItems);
 </script>
 
 {#if operation === 'create'}
@@ -30,7 +39,9 @@
 		<Table {columns} data={afterItems} compact hoverable={false} emptyMessage="—" responsive>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'position'}
-					<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
+					<Badge variant="neutral" size="md" mono>
+						{formatPosition(row.position, afterOffset)}
+					</Badge>
 				{:else if column.key === 'name'}
 					<div class="flex flex-wrap items-center gap-2">
 						<span class="font-medium text-sm text-neutral-700 dark:text-neutral-200">
@@ -61,7 +72,9 @@
 		<Table {columns} data={beforeItems} compact hoverable={false} emptyMessage="—" responsive>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'position'}
-					<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
+					<Badge variant="neutral" size="md" mono>
+						{formatPosition(row.position, beforeOffset)}
+					</Badge>
 				{:else if column.key === 'name'}
 					<div class="flex flex-wrap items-center gap-2">
 						<span class="font-medium text-sm text-neutral-700 dark:text-neutral-200">
@@ -93,7 +106,9 @@
 			<Table {columns} data={beforeItems} compact hoverable={false} emptyMessage="—" responsive>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'position'}
-						<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
+						<Badge variant="neutral" size="md" mono>
+							{formatPosition(row.position, beforeOffset)}
+						</Badge>
 					{:else if column.key === 'name'}
 						<div class="flex flex-wrap items-center gap-2">
 							<span class="font-medium text-sm text-neutral-700 dark:text-neutral-200">
@@ -123,7 +138,9 @@
 			<Table {columns} data={afterItems} compact hoverable={false} emptyMessage="—" responsive>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'position'}
-						<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
+						<Badge variant="neutral" size="md" mono>
+							{formatPosition(row.position, afterOffset)}
+						</Badge>
 					{:else if column.key === 'name'}
 						<div class="flex flex-wrap items-center gap-2">
 							<span class="font-medium text-sm text-neutral-700 dark:text-neutral-200">
