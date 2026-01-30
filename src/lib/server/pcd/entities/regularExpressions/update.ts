@@ -5,7 +5,9 @@
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { RegularExpressionWithTags } from '$shared/pcd/display.ts';
+import { uuid } from '$shared/utils/uuid.ts';
 import { logger } from '$logger/logger.ts';
+import type { CompiledQuery } from 'kysely';
 
 interface UpdateRegularExpressionInput {
 	name: string;
@@ -39,8 +41,119 @@ function esc(value: string): string {
 export async function update(options: UpdateRegularExpressionOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
+	const isRename = input.name !== current.name;
+	const groupId = isRename ? uuid() : undefined;
 
 	const queries = [];
+
+	const dependentOps: Array<{
+		formatName: string;
+		queries: CompiledQuery[];
+		updatedConditions: Array<{
+			name: string;
+			base: {
+				from: { type?: string; arrType?: string; negate: boolean; required: boolean };
+				to: { type?: string; arrType?: string; negate: boolean; required: boolean };
+			};
+			values: {
+				from: { patterns: Array<{ name: string; pattern: string }> };
+				to: { patterns: Array<{ name: string; pattern: string }> };
+			};
+		}>;
+	}> = [];
+
+	if (isRename) {
+		const dependentConditions = await db
+			.selectFrom('condition_patterns as cp')
+			.innerJoin('custom_format_conditions as cfc', (join) =>
+				join
+					.onRef('cfc.custom_format_name', '=', 'cp.custom_format_name')
+					.onRef('cfc.name', '=', 'cp.condition_name')
+			)
+			.select([
+				'cp.custom_format_name',
+				'cp.condition_name',
+				'cfc.type',
+				'cfc.arr_type',
+				'cfc.negate',
+				'cfc.required'
+			])
+			.where('cp.regular_expression_name', '=', current.name)
+			.orderBy('cp.custom_format_name')
+			.orderBy('cp.condition_name')
+			.execute();
+
+		const conditionsByFormat = new Map<
+			string,
+			Array<{
+				custom_format_name: string;
+				condition_name: string;
+				type?: string;
+				arr_type?: string;
+				negate?: number;
+				required?: number;
+			}>
+		>();
+
+		for (const condition of dependentConditions) {
+			if (!conditionsByFormat.has(condition.custom_format_name)) {
+				conditionsByFormat.set(condition.custom_format_name, []);
+			}
+			conditionsByFormat.get(condition.custom_format_name)!.push(condition);
+		}
+
+		for (const [formatName, conditions] of conditionsByFormat.entries()) {
+			const conditionQueries = conditions.map((condition) =>
+				db
+					.updateTable('condition_patterns')
+					.set({ regular_expression_name: input.name })
+					.where('custom_format_name', '=', condition.custom_format_name)
+					.where('condition_name', '=', condition.condition_name)
+					.where('regular_expression_name', '=', current.name)
+					.compile()
+			);
+
+			const updatedConditions = conditions.map((condition) => ({
+				name: condition.condition_name,
+				base: {
+					from: {
+						type: condition.type,
+						arrType: condition.arr_type,
+						negate: !!condition.negate,
+						required: !!condition.required
+					},
+					to: {
+						type: condition.type,
+						arrType: condition.arr_type,
+						negate: !!condition.negate,
+						required: !!condition.required
+					}
+				},
+				values: {
+					from: {
+						patterns: [
+							{
+								name: current.name,
+								pattern: current.pattern
+							}
+						]
+					},
+					to: {
+						patterns: [
+							{
+								name: input.name,
+								pattern: input.pattern
+							}
+						]
+					}
+				}
+			}));
+
+			if (conditionQueries.length > 0) {
+				dependentOps.push({ formatName, queries: conditionQueries, updatedConditions });
+			}
+		}
+	}
 
 	if (input.name !== current.name) {
 		const existing = await db
@@ -191,7 +304,6 @@ SELECT name, '${esc(tagName)}' FROM regular_expressions WHERE name IN (${tagPare
 
 	// Write the operation with metadata
 	// Include previousName if this is a rename
-	const isRename = input.name !== current.name;
 	const changedFields = Object.keys(changes);
 	const desiredState: Record<string, unknown> = {};
 	if (changes.name) {
@@ -228,11 +340,55 @@ SELECT name, '${esc(tagName)}' FROM regular_expressions WHERE name IN (${tagPare
 			name: input.name,
 			...(isRename && { previousName: current.name }),
 			stableKey: { key: 'regular_expression_name', value: current.name },
+			...(groupId && { groupId }),
 			changedFields,
 			summary: 'Update regular expression',
 			title: `Update regular expression "${input.name}"`
 		}
 	});
+
+	if (!result.success || !isRename || !groupId) {
+		return result;
+	}
+	if (dependentOps.length === 0) {
+		return result;
+	}
+
+	for (const op of dependentOps) {
+		const conditionResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-conditions-${op.formatName}`,
+			queries: op.queries,
+			desiredState: {
+				conditions: {
+					updated: op.updatedConditions
+				}
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'custom_format',
+				name: op.formatName,
+				stableKey: { key: 'custom_format_name', value: op.formatName },
+				groupId,
+				generated: true,
+				dependsOn: [
+					{
+						entity: 'regular_expression',
+						key: 'regular_expression_name',
+						value: input.name
+					}
+				],
+				changedFields: ['conditions'],
+				summary: 'Update custom format conditions',
+				title: `Update conditions for custom format "${op.formatName}"`
+			}
+		});
+
+		if (!conditionResult.success) {
+			return conditionResult;
+		}
+	}
 
 	return result;
 }

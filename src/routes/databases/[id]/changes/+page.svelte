@@ -35,9 +35,8 @@
 	$: changeByKey = new Map(draftChanges.map((change) => [change.key, change]));
 	$: groupMap = buildGroupMap(draftChanges);
 	$: dependencyMap = buildDependencyMap(draftChanges);
-	$: reverseDependencyMap = buildReverseDependencyMap(dependencyMap);
 	$: selected = expandSelection(primarySelected);
-	$: autoSelectedKeys = buildAutoSelectedKeys(selected, reverseDependencyMap);
+	$: autoSelectedKeys = buildAutoSelectedKeys(selected, primarySelected);
 
 	async function fetchChanges() {
 		loading = true;
@@ -144,18 +143,6 @@
 		return map;
 	}
 
-	function buildReverseDependencyMap(map: Map<string, string[]>): Map<string, string[]> {
-		const reverse = new Map<string, string[]>();
-		for (const [parent, deps] of map.entries()) {
-			for (const dep of deps) {
-				const list = reverse.get(dep) ?? [];
-				list.push(parent);
-				reverse.set(dep, list);
-			}
-		}
-		return reverse;
-	}
-
 	function expandSelection(keys: Set<string>): Set<string> {
 		const expanded = new Set<string>();
 		const queue = Array.from(keys);
@@ -187,12 +174,11 @@
 
 	function buildAutoSelectedKeys(
 		currentSelected: Set<string>,
-		reverseMap: Map<string, string[]>
+		primaryKeys: Set<string>
 	): Set<string> {
 		const autoSelected = new Set<string>();
 		for (const key of currentSelected) {
-			const parents = reverseMap.get(key) ?? [];
-			if (parents.some((parent) => currentSelected.has(parent))) {
+			if (!primaryKeys.has(key)) {
 				autoSelected.add(key);
 			}
 		}

@@ -898,6 +898,14 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 		results.push(group);
 	}
 
-	results.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+	results.sort((a, b) => {
+		if (a.groupId && a.groupId === b.groupId && a.generated !== b.generated) {
+			return a.generated ? 1 : -1;
+		}
+		if (a.updatedAt === b.updatedAt) {
+			return a.key.localeCompare(b.key);
+		}
+		return a.updatedAt < b.updatedAt ? 1 : -1;
+	});
 	return results;
 }

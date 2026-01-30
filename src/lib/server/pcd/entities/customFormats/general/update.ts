@@ -5,7 +5,9 @@
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { CustomFormatGeneral } from '$shared/pcd/display.ts';
+import { uuid } from '$shared/utils/uuid.ts';
 import { logger } from '$logger/logger.ts';
+import type { CompiledQuery } from 'kysely';
 
 interface UpdateGeneralInput {
 	name: string;
@@ -37,6 +39,8 @@ function esc(value: string): string {
 export async function updateGeneral(options: UpdateGeneralOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
+	const isRename = input.name !== current.name;
+	const groupId = isRename ? uuid() : undefined;
 
 	const queries = [];
 
@@ -138,6 +142,73 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		queries.push(linkTag);
 	}
 
+	const dependentScores = isRename
+		? await db
+				.selectFrom('quality_profile_custom_formats')
+				.select(['quality_profile_name', 'custom_format_name', 'arr_type', 'score'])
+				.where('custom_format_name', '=', current.name)
+				.execute()
+		: [];
+
+	const dependentOps: Array<{
+		profileName: string;
+		queries: CompiledQuery[];
+		customFormatScores: Array<{
+			custom_format_name: string;
+			arr_type: string;
+			from: number | null;
+			to: number | null;
+		}>;
+	}> = [];
+
+	if (dependentScores.length > 0) {
+		const scoresByProfile = new Map<
+			string,
+			Array<{ custom_format_name: string; arr_type: string; score: number }>
+		>();
+
+		for (const score of dependentScores) {
+			if (!scoresByProfile.has(score.quality_profile_name)) {
+				scoresByProfile.set(score.quality_profile_name, []);
+			}
+			scoresByProfile.get(score.quality_profile_name)!.push({
+				custom_format_name: score.custom_format_name,
+				arr_type: score.arr_type,
+				score: score.score
+			});
+		}
+
+		for (const [profileName, scores] of scoresByProfile.entries()) {
+			const scoreQueries = scores.map((score) =>
+				db
+					.updateTable('quality_profile_custom_formats')
+					.set({ custom_format_name: input.name })
+					.where('quality_profile_name', '=', profileName)
+					.where('custom_format_name', '=', current.name)
+					.where('arr_type', '=', score.arr_type)
+					.where('score', '=', score.score)
+					.compile()
+			);
+
+			const customFormatScores = scores.flatMap((score) => [
+				{
+					custom_format_name: current.name,
+					arr_type: score.arr_type,
+					from: score.score,
+					to: null
+				},
+				{
+					custom_format_name: input.name,
+					arr_type: score.arr_type,
+					from: null,
+					to: score.score
+				}
+			]);
+
+			dependentOps.push({ profileName, queries: scoreQueries, customFormatScores });
+		}
+	}
+
 	// Log what's being changed
 	const changes: Record<string, { from: unknown; to: unknown }> = {};
 
@@ -166,7 +237,6 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	});
 
 	// Write the operation with metadata
-	const isRename = input.name !== current.name;
 	const changedFields = Object.keys(changes);
 	const desiredState: Record<string, unknown> = {};
 	if (changes.name) {
@@ -200,11 +270,53 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 			name: input.name,
 			...(isRename && { previousName: current.name }),
 			stableKey: { key: 'custom_format_name', value: current.name },
+			...(groupId && { groupId }),
 			changedFields,
 			summary: 'Update custom format',
 			title: `Update custom format "${input.name}"`
 		}
 	});
+
+	if (!result.success || !isRename || dependentScores.length === 0 || !groupId) {
+		return result;
+	}
+	if (dependentOps.length === 0) {
+		return result;
+	}
+
+	for (const op of dependentOps) {
+		const scoreResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-quality-profile-scoring-${op.profileName}`,
+			queries: op.queries,
+			desiredState: {
+				custom_format_scores: op.customFormatScores
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'quality_profile',
+				name: op.profileName,
+				stableKey: { key: 'quality_profile_name', value: op.profileName },
+				groupId,
+				generated: true,
+				dependsOn: [
+					{
+						entity: 'custom_format',
+						key: 'custom_format_name',
+						value: input.name
+					}
+				],
+				changedFields: ['custom_format_scores'],
+				summary: 'Update quality profile scoring',
+				title: `Update scoring for quality profile "${op.profileName}"`
+			}
+		});
+
+		if (!scoreResult.success) {
+			return scoreResult;
+		}
+	}
 
 	return result;
 }
