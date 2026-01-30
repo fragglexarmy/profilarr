@@ -17,6 +17,7 @@
 	export let expandOnRowClick: boolean = true;
 	export let onRowClick: ((row: T) => void) | null = null;
 	export let primaryColumnKey: string | null = null;
+	export let disableExpandWhen: ((row: T) => boolean) | null = null;
 	// Mobile responsive mode - switches to card layout on small screens
 	export let responsive: boolean = false;
 
@@ -58,7 +59,7 @@
 		if (onRowClick) {
 			onRowClick(row);
 		}
-		if (expandOnRowClick) {
+		if (expandOnRowClick && !shouldDisableExpand(row)) {
 			toggleRow(rowId);
 		}
 	}
@@ -145,6 +146,10 @@
 	function getCellValue(row: T, key: string): unknown {
 		return key.split('.').reduce<unknown>((obj, k) => (obj as Record<string, unknown>)?.[k], row);
 	}
+
+	function shouldDisableExpand(row: T): boolean {
+		return disableExpandWhen ? disableExpandWhen(row) : false;
+	}
 </script>
 
 {#if useMobileLayout}
@@ -188,23 +193,25 @@
 										<slot name="actions" {row} />
 									</div>
 								{/if}
-								<span
-									role="button"
-									tabindex="0"
-									class="inline-flex h-6 w-6 items-center justify-center border text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 {expandOnRowClick
-										? 'border-transparent'
-										: 'border-neutral-300 bg-neutral-50 shadow-sm dark:border-neutral-600 dark:bg-neutral-700/60'}"
-									on:click|stopPropagation={() => toggleRow(rowId)}
-									on:keydown|stopPropagation={(event) => {
-										if (event.key === 'Enter' || event.key === ' ') toggleRow(rowId);
-									}}
-								>
-									{#if expandedRows.has(rowId)}
-										<ChevronUp size={18} />
-									{:else}
-										<ChevronDown size={18} />
-									{/if}
-								</span>
+								{#if !shouldDisableExpand(row)}
+									<span
+										role="button"
+										tabindex="0"
+										class="inline-flex h-6 w-6 items-center justify-center border text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 {expandOnRowClick
+											? 'border-transparent'
+											: 'border-neutral-300 bg-neutral-50 shadow-sm dark:border-neutral-600 dark:bg-neutral-700/60'}"
+										on:click|stopPropagation={() => toggleRow(rowId)}
+										on:keydown|stopPropagation={(event) => {
+											if (event.key === 'Enter' || event.key === ' ') toggleRow(rowId);
+										}}
+									>
+										{#if expandedRows.has(rowId)}
+											<ChevronUp size={18} />
+										{:else}
+											<ChevronDown size={18} />
+										{/if}
+									</span>
+								{/if}
 							</div>
 						</div>
 
@@ -226,7 +233,7 @@
 					</button>
 
 					<!-- Expanded Content -->
-					{#if expandedRows.has(rowId)}
+					{#if !shouldDisableExpand(row) && expandedRows.has(rowId)}
 						<div class="border-t border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/30">
 							<slot name="expanded" {row}>
 								<div class="p-4 text-sm text-neutral-500 dark:text-neutral-400">
@@ -325,14 +332,16 @@
 							<!-- Expand Icon (left) -->
 							{#if chevronPosition === 'left'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400">
-									<span on:click|stopPropagation={() => toggleRow(rowId)}>
-										<TableActionButton
-											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
-											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
-											size="sm"
-											variant={expandOnRowClick ? 'neutral' : 'accent'}
-										/>
-									</span>
+									{#if !shouldDisableExpand(row)}
+										<span on:click|stopPropagation={() => toggleRow(rowId)}>
+											<TableActionButton
+												icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+												title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+												size="sm"
+												variant={expandOnRowClick ? 'neutral' : 'accent'}
+											/>
+										</span>
+									{/if}
 								</td>
 							{/if}
 
@@ -361,20 +370,22 @@
 							<!-- Expand Icon (right) -->
 							{#if chevronPosition === 'right'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-right text-neutral-400">
-									<span on:click|stopPropagation={() => toggleRow(rowId)}>
-										<TableActionButton
-											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
-											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
-											size="sm"
-											variant={expandOnRowClick ? 'neutral' : 'accent'}
-										/>
-									</span>
+									{#if !shouldDisableExpand(row)}
+										<span on:click|stopPropagation={() => toggleRow(rowId)}>
+											<TableActionButton
+												icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+												title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+												size="sm"
+												variant={expandOnRowClick ? 'neutral' : 'accent'}
+											/>
+										</span>
+									{/if}
 								</td>
 							{/if}
 						</tr>
 
 						<!-- Expanded Row -->
-						{#if expandedRows.has(rowId)}
+						{#if !shouldDisableExpand(row) && expandedRows.has(rowId)}
 							<tr class="bg-neutral-50 dark:bg-neutral-800/30">
 								<td
 									colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)}

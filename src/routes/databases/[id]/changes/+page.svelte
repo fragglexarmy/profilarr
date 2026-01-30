@@ -424,6 +424,7 @@
 					flushExpanded={true}
 					onRowClick={(row) => toggleRow(row.key)}
 					primaryColumnKey="name"
+					disableExpandWhen={(row) => row.operation === 'delete'}
 				>
 					<svelte:fragment slot="cell" let:row let:column>
 						{#if column.key === 'select'}
