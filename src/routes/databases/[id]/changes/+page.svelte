@@ -22,11 +22,22 @@
 	let draftChanges: DraftEntityChange[] = [];
 	let branches: string[] = [];
 	let repoInfo: RepoInfo | null = null;
+	let primarySelected = new Set<string>();
 	let selected = new Set<string>();
 
 	$: isDeveloper = data.isDeveloper;
 	$: hasIncomingChanges = incomingChanges?.hasUpdates ?? false;
-	$: allSelected = draftChanges.length > 0 && selected.size === draftChanges.length;
+	$: selectableChanges = draftChanges.filter((change) => !change.generated);
+	$: selectableKeys = selectableChanges.map((change) => change.key);
+	$: selectedPrimaryCount = selectableKeys.filter((key) => primarySelected.has(key)).length;
+	$: allSelected = selectableKeys.length > 0 && selectedPrimaryCount === selectableKeys.length;
+
+	$: changeByKey = new Map(draftChanges.map((change) => [change.key, change]));
+	$: groupMap = buildGroupMap(draftChanges);
+	$: dependencyMap = buildDependencyMap(draftChanges);
+	$: reverseDependencyMap = buildReverseDependencyMap(dependencyMap);
+	$: selected = expandSelection(primarySelected);
+	$: autoSelectedKeys = buildAutoSelectedKeys(selected, reverseDependencyMap);
 
 	async function fetchChanges() {
 		loading = true;
@@ -51,20 +62,141 @@
 
 	function toggleAll() {
 		if (allSelected) {
-			selected = new Set();
+			primarySelected = new Set();
 		} else {
-			selected = new Set(draftChanges.map((change) => change.key));
+			primarySelected = new Set(selectableKeys);
 		}
 	}
 
 	function toggleRow(key: string) {
-		const newSelected = new Set(selected);
-		if (newSelected.has(key)) {
-			newSelected.delete(key);
-		} else {
-			newSelected.add(key);
+		const change = changeByKey.get(key);
+		if (!change || change.generated) return;
+
+		const groupKeys = getSelectableGroupKeys(change, groupMap);
+		const newSelected = new Set(primarySelected);
+		const isSelected = groupKeys.some((groupKey) => newSelected.has(groupKey));
+		for (const groupKey of groupKeys) {
+			if (isSelected) {
+				newSelected.delete(groupKey);
+			} else {
+				newSelected.add(groupKey);
+			}
 		}
-		selected = newSelected;
+
+		if (!isSelected) {
+			const expanded = expandSelection(newSelected);
+			const primaryAdded = new Set(groupKeys);
+			const autoAdded = Array.from(expanded).filter(
+				expandedKey => !selected.has(expandedKey) && !primaryAdded.has(expandedKey)
+			);
+			const autoAddedDetails = autoAdded
+				.map((depKey) => changeByKey.get(depKey))
+				.filter((dep): dep is DraftEntityChange => Boolean(dep) && !dep!.generated);
+
+			if (autoAddedDetails.length > 0) {
+				const label = autoAddedDetails
+					.map((dep) => `${formatEntity(dep.entity)} "${dep.name}"`)
+					.join(', ');
+				const noun = autoAddedDetails.length === 1 ? 'dependency' : 'dependencies';
+				alertStore.add(
+					'info',
+					`Auto-selected ${autoAddedDetails.length} ${noun}: ${label}`
+				);
+			}
+		}
+
+		primarySelected = newSelected;
+	}
+
+	function buildGroupMap(changes: DraftEntityChange[]): Map<string, string[]> {
+		const map = new Map<string, string[]>();
+		for (const change of changes) {
+			if (!change.groupId) continue;
+			const list = map.get(change.groupId) ?? [];
+			list.push(change.key);
+			map.set(change.groupId, list);
+		}
+		return map;
+	}
+
+	function getGroupKeys(change: DraftEntityChange, map: Map<string, string[]>): string[] {
+		if (!change.groupId) return [change.key];
+		return map.get(change.groupId) ?? [change.key];
+	}
+
+	function getSelectableGroupKeys(change: DraftEntityChange, map: Map<string, string[]>): string[] {
+		const keys = getGroupKeys(change, map);
+		return keys.filter((key) => {
+			const entry = changeByKey.get(key);
+			return entry && !entry.generated;
+		});
+	}
+
+	function buildDependencyMap(changes: DraftEntityChange[]): Map<string, string[]> {
+		const map = new Map<string, string[]>();
+		for (const change of changes) {
+			if (!change.requires || change.requires.length === 0) continue;
+			map.set(
+				change.key,
+				change.requires.map((requirement) => requirement.key)
+			);
+		}
+		return map;
+	}
+
+	function buildReverseDependencyMap(map: Map<string, string[]>): Map<string, string[]> {
+		const reverse = new Map<string, string[]>();
+		for (const [parent, deps] of map.entries()) {
+			for (const dep of deps) {
+				const list = reverse.get(dep) ?? [];
+				list.push(parent);
+				reverse.set(dep, list);
+			}
+		}
+		return reverse;
+	}
+
+	function expandSelection(keys: Set<string>): Set<string> {
+		const expanded = new Set<string>();
+		const queue = Array.from(keys);
+
+		while (queue.length > 0) {
+			const key = queue.pop();
+			if (!key || expanded.has(key)) continue;
+			expanded.add(key);
+
+			const change = changeByKey.get(key);
+			if (!change) continue;
+
+			for (const groupKey of getGroupKeys(change, groupMap)) {
+				if (!expanded.has(groupKey)) {
+					queue.push(groupKey);
+				}
+			}
+
+			const deps = dependencyMap.get(key) ?? [];
+			for (const depKey of deps) {
+				if (!expanded.has(depKey)) {
+					queue.push(depKey);
+				}
+			}
+		}
+
+		return expanded;
+	}
+
+	function buildAutoSelectedKeys(
+		currentSelected: Set<string>,
+		reverseMap: Map<string, string[]>
+	): Set<string> {
+		const autoSelected = new Set<string>();
+		for (const key of currentSelected) {
+			const parents = reverseMap.get(key) ?? [];
+			if (parents.some((parent) => currentSelected.has(parent))) {
+				autoSelected.add(key);
+			}
+		}
+		return autoSelected;
 	}
 
 	async function handlePull() {
@@ -342,10 +474,10 @@
 								class="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300"
 							>
 								<IconCheckbox checked={allSelected} icon={Check} color="blue" />
-								Select all ({draftChanges.length})
+								Select all ({selectableKeys.length})
 							</button>
 							<span class="text-xs text-neutral-500 dark:text-neutral-400">
-								{selected.size} selected
+								{selectedPrimaryCount} selected
 							</span>
 						</div>
 					</div>
@@ -428,9 +560,21 @@
 				>
 					<svelte:fragment slot="cell" let:row let:column>
 						{#if column.key === 'select'}
-							<span on:click|stopPropagation={() => toggleRow(row.key)}>
-								<IconCheckbox checked={selected.has(row.key)} icon={Check} color="blue" />
-							</span>
+							{#if row.generated}
+								<span class="inline-block h-5 w-5"></span>
+							{:else}
+								<span
+									on:click|stopPropagation={() => toggleRow(row.key)}
+									title={autoSelectedKeys.has(row.key) ? 'Auto-selected (required by other changes)' : 'Selected'}
+								>
+									<IconCheckbox
+										checked={selected.has(row.key)}
+										icon={Check}
+										color={autoSelectedKeys.has(row.key) ? '#f59e0b' : 'blue'}
+										variant={autoSelectedKeys.has(row.key) ? 'filled' : 'filled'}
+									/>
+								</span>
+							{/if}
 						{:else if column.key === 'operation'}
 							<span
 								class="inline-flex rounded px-2 py-0.5 font-mono text-xs {getOperationClass(
@@ -448,9 +592,19 @@
 								{row.summary}
 							</span>
 						{:else if column.key === 'name'}
-							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								{row.name}
-							</span>
+							<div class="flex flex-col gap-1">
+								<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+									{row.name}
+								</span>
+								{#if row.requires && row.requires.length > 0}
+									<span class="text-xs text-neutral-500 dark:text-neutral-400">
+										Requires:{' '}
+										{row.requires
+											.map((requirement) => `${formatEntity(requirement.entity)} "${requirement.name}"`)
+											.join(', ')}
+									</span>
+								{/if}
+							</div>
 						{:else if column.key === 'updatedAt'}
 							<span class="font-mono text-xs text-neutral-500 dark:text-neutral-400">
 								{formatDate(row.updatedAt)}
