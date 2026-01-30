@@ -27,6 +27,25 @@
 		return field === 'regex101_id';
 	}
 
+	function isPreferredProtocolField(field: string): boolean {
+		return field === 'preferred_protocol';
+	}
+
+	function formatPreferredProtocol(value: string): string {
+		switch (value) {
+			case 'prefer_usenet':
+				return 'Prefer Usenet';
+			case 'prefer_torrent':
+				return 'Prefer Torrent';
+			case 'only_usenet':
+				return 'Only Usenet';
+			case 'only_torrent':
+				return 'Only Torrent';
+			default:
+				return value;
+		}
+	}
+
 	function regex101Url(value: string): string {
 		return `https://regex101.com/r/${value}`;
 	}
@@ -83,6 +102,8 @@
 			{@const beforeValue = getFieldBefore(row)}
 			{#if row.field === 'language' && typeof beforeValue === 'string'}
 				<Badge variant="info" size="md">{beforeValue}</Badge>
+			{:else if isPreferredProtocolField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md">{formatPreferredProtocol(beforeValue)}</Badge>
 			{:else if isRegex101Field(row.field) && typeof beforeValue === 'string' && beforeValue.trim()}
 				<Badge variant="neutral" size="md" mono>
 					<a
@@ -121,6 +142,8 @@
 			{@const afterValue = getFieldAfter(row)}
 			{#if row.field === 'language' && typeof afterValue === 'string'}
 				<Badge variant="info" size="md">{afterValue}</Badge>
+			{:else if isPreferredProtocolField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md">{formatPreferredProtocol(afterValue)}</Badge>
 			{:else if isRegex101Field(row.field) && typeof afterValue === 'string' && afterValue.trim()}
 				<Badge variant="neutral" size="md" mono>
 					<a
