@@ -3,6 +3,7 @@ node_modules
 # Claude context
 CLAUDE.md
 .claudeignore
+AGENTS.md
 
 # Local TODO/planning docs
 docs/todo/
