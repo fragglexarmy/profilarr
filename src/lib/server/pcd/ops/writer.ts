@@ -20,7 +20,7 @@ function buildMetadataJson(metadata?: OperationMetadata): string | null {
 		name: metadata.name
 	};
 	if (metadata.previousName) {
-		payload.previous_name = metadata.previousName;
+		payload.previousName = metadata.previousName;
 	}
 	if (metadata.summary) {
 		payload.summary = metadata.summary;

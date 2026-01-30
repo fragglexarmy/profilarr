@@ -24,7 +24,7 @@ async function parseOperationMetadata(filepath: string): Promise<Partial<Operati
 				if (key === 'operation') metadata.operation = value;
 				if (key === 'entity') metadata.entity = value;
 				if (key === 'name') metadata.name = value;
-				if (key === 'previous_name') metadata.previousName = value;
+				if (key === 'previousName') metadata.previousName = value;
 			}
 		}
 

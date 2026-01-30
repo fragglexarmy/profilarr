@@ -5,7 +5,7 @@ type ParsedMetadata = {
 	operation?: OperationType;
 	entity?: string;
 	name?: string;
-	previous_name?: string;
+	previousName?: string;
 	summary?: string;
 	title?: string;
 	changed_fields?: string[];
@@ -359,18 +359,39 @@ function buildSections(entity: string, aggregates: Map<string, FieldAggregate>):
 
 export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] {
 	const ops = pcdOpsQueries.listByDatabaseAndOrigin(databaseId, 'base', { states: ['draft'] });
+	const parsedOps = ops.map((op) => ({
+		op,
+		metadata: parseJson<ParsedMetadata>(op.metadata)
+	}));
+	const nameAliases = new Map<string, string>();
+	for (const { metadata } of parsedOps) {
+		if (!metadata?.name) continue;
+		const previousName = metadata.previousName;
+		if (previousName) {
+			nameAliases.set(metadata.name, previousName);
+		}
+	}
+
+	const resolveAlias = (value: string): string => {
+		let current = value;
+		const seen = new Set<string>();
+		while (nameAliases.has(current) && !seen.has(current)) {
+			seen.add(current);
+			current = nameAliases.get(current) ?? current;
+		}
+		return current;
+	};
 	const groups = new Map<string, DraftEntityChange>();
 	const aggregates = new Map<string, Map<string, FieldAggregate>>();
 
-	for (const op of ops) {
-		const metadata = parseJson<ParsedMetadata>(op.metadata);
+	for (const { op, metadata } of parsedOps) {
 		if (!metadata?.entity || !metadata?.name || !metadata.operation) {
 			continue;
 		}
 
 		const desiredState = parseJson<Record<string, unknown>>(op.desired_state);
 		const stableKey = metadata.stable_key?.value ?? metadata.name;
-		const groupKey = `${metadata.entity}:${stableKey}`;
+		const groupKey = `${metadata.entity}:${resolveAlias(stableKey)}`;
 
 		const existing = groups.get(groupKey);
 		const updatedAt = op.updated_at ?? op.created_at;
