@@ -5,6 +5,7 @@
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { RegularExpressionWithTags } from '$shared/pcd/display.ts';
+import { uuid } from '$shared/utils/uuid.ts';
 
 interface DeleteRegularExpressionOptions {
 	databaseId: number;
@@ -30,6 +31,7 @@ export async function remove(options: DeleteRegularExpressionOptions) {
 	const db = cache.kb;
 
 	const queries = [];
+	const groupId = uuid();
 
 	// 1. Capture any custom format conditions that reference this regex
 	const dependentConditions = await db
@@ -137,6 +139,8 @@ export async function remove(options: DeleteRegularExpressionOptions) {
 				entity: 'custom_format',
 				name: conditionOp.formatName,
 				stableKey: { key: 'custom_format_name', value: conditionOp.formatName },
+				groupId,
+				generated: true,
 				changedFields: ['conditions'],
 				summary: 'Update custom format conditions',
 				title: `Update conditions for custom format "${conditionOp.formatName}"`
@@ -180,6 +184,7 @@ export async function remove(options: DeleteRegularExpressionOptions) {
 			entity: 'regular_expression',
 			name: current.name,
 			stableKey: { key: 'regular_expression_name', value: current.name },
+			groupId,
 			changedFields: ['deleted'],
 			summary: 'Delete regular expression',
 			title: `Delete regular expression "${current.name}"`

@@ -4,6 +4,7 @@
 
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
+import { uuid } from '$shared/utils/uuid.ts';
 
 interface DeleteCustomFormatOptions {
 	databaseId: number;
@@ -31,6 +32,7 @@ export async function remove(options: DeleteCustomFormatOptions) {
 	const db = cache.kb;
 
 	const queries = [];
+	const groupId = uuid();
 
 	const dependentScores = await db
 		.selectFrom('quality_profile_custom_formats')
@@ -115,6 +117,8 @@ export async function remove(options: DeleteCustomFormatOptions) {
 				entity: 'quality_profile',
 				name: profileName,
 				stableKey: { key: 'quality_profile_name', value: profileName },
+				groupId,
+				generated: true,
 				changedFields: ['custom_format_scores'],
 				summary: 'Update quality profile scoring',
 				title: `Update scoring for quality profile "${profileName}"`
@@ -155,6 +159,7 @@ export async function remove(options: DeleteCustomFormatOptions) {
 			entity: 'custom_format',
 			name: formatName,
 			stableKey: { key: 'custom_format_name', value: formatName },
+			groupId,
 			changedFields: ['deleted'],
 			summary: 'Delete custom format',
 			title: `Delete custom format "${formatName}"`

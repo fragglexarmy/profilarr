@@ -318,6 +318,14 @@ WHERE custom_format_name = '${esc(formatName)}'
 		}
 	});
 
+	const regexDependencies = Array.from(
+		new Set(
+			conditions.flatMap((condition) =>
+				(condition.patterns ?? []).map((pattern) => pattern.name.trim()).filter(Boolean)
+			)
+		)
+	);
+
 	// Write the operation
 	const result = await writeOperation({
 		databaseId,
@@ -371,7 +379,12 @@ WHERE custom_format_name = '${esc(formatName)}'
 			stableKey: { key: 'custom_format_name', value: formatName },
 			changedFields: ['conditions'],
 			summary: 'Update custom format conditions',
-			title: `Update conditions for custom format "${formatName}"`
+			title: `Update conditions for custom format "${formatName}"`,
+			dependsOn: regexDependencies.map((name) => ({
+				entity: 'regular_expression',
+				key: 'regular_expression_name',
+				value: name
+			}))
 		}
 	});
 

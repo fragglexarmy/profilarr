@@ -80,8 +80,12 @@ export async function updateScoring(options: UpdateScoringOptions) {
 	const desiredState: Record<string, unknown> = {};
 
 	// 1. Update profile-level scoring settings
-	const setValues: Record<string, number> = {};
-	const profileGuards: Array<{ column: string; op: '='; value: number }> = [];
+	type ProfileGuardColumn =
+		| 'minimum_custom_format_score'
+		| 'upgrade_until_score'
+		| 'upgrade_score_increment';
+	const setValues: Partial<Record<ProfileGuardColumn, number>> = {};
+	const profileGuards: Array<{ column: ProfileGuardColumn; op: '='; value: number }> = [];
 
 	if (currentProfile.minimum_custom_format_score !== input.minimumScore) {
 		setValues.minimum_custom_format_score = input.minimumScore;
@@ -250,6 +254,12 @@ WHERE quality_profile_name = '${esc(profileName)}'
 		}
 	});
 
+	const customFormatDependencies = Array.from(
+		new Set(
+			input.customFormatScores.map((score) => score.customFormatName.trim()).filter(Boolean)
+		)
+	);
+
 	// Write the operation
 	const result = await writeOperation({
 		databaseId,
@@ -264,7 +274,12 @@ WHERE quality_profile_name = '${esc(profileName)}'
 			stableKey: { key: 'quality_profile_name', value: profileName },
 			changedFields,
 			summary: 'Update quality profile scoring',
-			title: `Update scoring for quality profile "${profileName}"`
+			title: `Update scoring for quality profile "${profileName}"`,
+			dependsOn: customFormatDependencies.map((name) => ({
+				entity: 'custom_format',
+				key: 'custom_format_name',
+				value: name
+			}))
 		}
 	});
 
