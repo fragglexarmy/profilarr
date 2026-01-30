@@ -31,4 +31,6 @@ export interface Column<T> {
 	defaultSortDirection?: SortDirection;
 	/** Custom cell renderer - receives the full row object */
 	cell?: (row: T) => string | ComponentType | { html: string };
+	/** Hide column in mobile responsive layout */
+	hideOnMobile?: boolean;
 }

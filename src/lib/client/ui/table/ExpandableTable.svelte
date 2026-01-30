@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { ChevronDown, ChevronUp, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-svelte';
 	import type { Column, SortState } from './types';
+	import TableActionButton from './TableActionButton.svelte';
 
 	export let columns: Column<T>[];
 	export let data: T[];
@@ -13,6 +14,9 @@
 	export let flushBottom: boolean = false;
 	export let expandedRows: Set<string | number> = new Set();
 	export let chevronPosition: 'left' | 'right' = 'left';
+	export let expandOnRowClick: boolean = true;
+	export let onRowClick: ((row: T) => void) | null = null;
+	export let primaryColumnKey: string | null = null;
 	// Mobile responsive mode - switches to card layout on small screens
 	export let responsive: boolean = false;
 
@@ -48,6 +52,15 @@
 			expandedRows.add(id);
 		}
 		expandedRows = expandedRows;
+	}
+
+	function handleRowClick(rowId: string | number, row: T) {
+		if (onRowClick) {
+			onRowClick(row);
+		}
+		if (expandOnRowClick) {
+			toggleRow(rowId);
+		}
 	}
 
 	function handleSort(column: Column<T>) {
@@ -111,6 +124,12 @@
 	}
 
 	$: sortedData = getSortedData(data, sortState);
+	$: visibleColumns = columns.filter((column) => !column.hideOnMobile);
+	$: mobilePrimaryColumn =
+		primaryColumnKey != null
+			? visibleColumns.find((column) => column.key === primaryColumnKey) ?? visibleColumns[0]
+			: visibleColumns[0];
+	$: mobileSecondaryColumns = visibleColumns.filter((column) => column !== mobilePrimaryColumn);
 
 	function getAlignClass(align?: 'left' | 'center' | 'right'): string {
 		switch (align) {
@@ -147,13 +166,19 @@
 					<button
 						type="button"
 						class="w-full text-left"
-						on:click={() => toggleRow(rowId)}
+						on:click={() => handleRowClick(rowId, row)}
 					>
 						<!-- Primary row: first column as title + actions + chevron -->
 						<div class="flex items-start justify-between gap-3 px-4 py-3">
 							<div class="min-w-0 flex-1 break-all font-medium text-neutral-900 dark:text-neutral-100">
-								<slot name="cell" {row} column={columns[0]} {index} expanded={expandedRows.has(rowId)}>
-									{getCellValue(row, columns[0].key)}
+								<slot
+									name="cell"
+									{row}
+									column={mobilePrimaryColumn}
+									{index}
+									expanded={expandedRows.has(rowId)}
+								>
+									{mobilePrimaryColumn ? getCellValue(row, mobilePrimaryColumn.key) : ''}
 								</slot>
 							</div>
 							<div class="flex shrink-0 items-center gap-2 pt-0.5">
@@ -163,18 +188,30 @@
 										<slot name="actions" {row} />
 									</div>
 								{/if}
-								{#if expandedRows.has(rowId)}
-									<ChevronUp size={18} class="text-neutral-400" />
-								{:else}
-									<ChevronDown size={18} class="text-neutral-400" />
-								{/if}
+								<span
+									role="button"
+									tabindex="0"
+									class="inline-flex h-6 w-6 items-center justify-center border text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 {expandOnRowClick
+										? 'border-transparent'
+										: 'border-neutral-300 bg-neutral-50 shadow-sm dark:border-neutral-600 dark:bg-neutral-700/60'}"
+									on:click|stopPropagation={() => toggleRow(rowId)}
+									on:keydown|stopPropagation={(event) => {
+										if (event.key === 'Enter' || event.key === ' ') toggleRow(rowId);
+									}}
+								>
+									{#if expandedRows.has(rowId)}
+										<ChevronUp size={18} />
+									{:else}
+										<ChevronDown size={18} />
+									{/if}
+								</span>
 							</div>
 						</div>
 
 						<!-- Secondary columns as label-value pairs -->
-						{#if columns.length > 1}
+						{#if mobileSecondaryColumns.length > 0}
 							<div class="space-y-2 border-t border-neutral-100 px-4 py-3 dark:border-neutral-800">
-								{#each columns.slice(1) as column, colIndex}
+								{#each mobileSecondaryColumns as column, colIndex}
 									<div class="flex items-center justify-between gap-4 text-sm">
 										<span class="shrink-0 text-neutral-500 dark:text-neutral-400">{column.header}</span>
 										<span class="min-w-0 text-right text-neutral-700 dark:text-neutral-300">
@@ -283,16 +320,19 @@
 						<!-- Main Row -->
 						<tr
 							class="cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
-							on:click={() => toggleRow(rowId)}
+							on:click={() => handleRowClick(rowId, row)}
 						>
 							<!-- Expand Icon (left) -->
 							{#if chevronPosition === 'left'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400">
-									{#if expandedRows.has(rowId)}
-										<ChevronUp size={16} />
-									{:else}
-										<ChevronDown size={16} />
-									{/if}
+									<span on:click|stopPropagation={() => toggleRow(rowId)}>
+										<TableActionButton
+											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+											size="sm"
+											variant={expandOnRowClick ? 'neutral' : 'accent'}
+										/>
+									</span>
 								</td>
 							{/if}
 
@@ -321,11 +361,14 @@
 							<!-- Expand Icon (right) -->
 							{#if chevronPosition === 'right'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-right text-neutral-400">
-									{#if expandedRows.has(rowId)}
-										<ChevronUp size={16} class="inline-block" />
-									{:else}
-										<ChevronDown size={16} class="inline-block" />
-									{/if}
+									<span on:click|stopPropagation={() => toggleRow(rowId)}>
+										<TableActionButton
+											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+											size="sm"
+											variant={expandOnRowClick ? 'neutral' : 'accent'}
+										/>
+									</span>
 								</td>
 							{/if}
 						</tr>
