@@ -20,14 +20,14 @@
 	}
 
 	function formatPosition(position: number): number {
-		return position + 1;
+		return position;
 	}
 </script>
 
 {#if operation === 'create'}
 	<div class="space-y-2">
 		<div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Value</div>
-		<Table {columns} data={afterItems} compact hoverable={false} emptyMessage="—">
+		<Table {columns} data={afterItems} compact hoverable={false} emptyMessage="—" responsive>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'position'}
 					<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
@@ -58,7 +58,7 @@
 {:else if operation === 'delete'}
 	<div class="space-y-2">
 		<div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Value</div>
-		<Table {columns} data={beforeItems} compact hoverable={false} emptyMessage="—">
+		<Table {columns} data={beforeItems} compact hoverable={false} emptyMessage="—" responsive>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'position'}
 					<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
@@ -90,7 +90,7 @@
 	<div class="grid gap-4 md:grid-cols-2">
 		<div class="space-y-2">
 			<div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Before</div>
-			<Table {columns} data={beforeItems} compact hoverable={false} emptyMessage="—">
+			<Table {columns} data={beforeItems} compact hoverable={false} emptyMessage="—" responsive>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'position'}
 						<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>
@@ -120,7 +120,7 @@
 		</div>
 		<div class="space-y-2">
 			<div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">After</div>
-			<Table {columns} data={afterItems} compact hoverable={false} emptyMessage="—">
+			<Table {columns} data={afterItems} compact hoverable={false} emptyMessage="—" responsive>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'position'}
 						<Badge variant="neutral" size="md" mono>{formatPosition(row.position)}</Badge>

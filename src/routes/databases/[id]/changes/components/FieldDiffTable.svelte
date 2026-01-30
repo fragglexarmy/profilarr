@@ -60,7 +60,7 @@
 	}
 </script>
 
-<Table {columns} data={rows} compact hoverable={false}>
+<Table {columns} data={rows} compact hoverable={false} responsive>
 	<svelte:fragment slot="cell" let:row let:column>
 		{#if column.key === 'label'}
 			<span class="text-sm text-neutral-700 dark:text-neutral-200">

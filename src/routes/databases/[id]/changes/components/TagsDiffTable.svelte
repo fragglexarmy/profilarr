@@ -35,6 +35,7 @@
 	]}
 	compact
 	hoverable={false}
+	responsive
 >
 	<svelte:fragment slot="cell" let:row let:column>
 		{#if column.key === 'removed'}
