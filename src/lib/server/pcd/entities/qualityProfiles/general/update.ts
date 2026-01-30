@@ -59,6 +59,22 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 
 	const queries = [];
 
+	if (input.name !== current.name) {
+		const existing = await db
+			.selectFrom('quality_profiles')
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
+			.select('name')
+			.executeTakeFirst();
+
+		if (existing) {
+			await logger.warn(`Duplicate quality profile name "${input.name}"`, {
+				source: 'QualityProfile',
+				meta: { databaseId, name: input.name }
+			});
+			throw new Error(`A quality profile with name "${input.name}" already exists`);
+		}
+	}
+
 	// 1. Update the quality profile with value guards
 	const setValues: Record<string, unknown> = {};
 

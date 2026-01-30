@@ -35,6 +35,22 @@ export async function update(options: UpdateDelayProfileOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
 
+	if (input.name !== current.name) {
+		const existing = await db
+			.selectFrom('delay_profiles')
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
+			.select('name')
+			.executeTakeFirst();
+
+		if (existing) {
+			await logger.warn(`Duplicate delay profile name "${input.name}"`, {
+				source: 'DelayProfile',
+				meta: { databaseId, name: input.name }
+			});
+			throw new Error(`A delay profile with name "${input.name}" already exists`);
+		}
+	}
+
 	// Determine delay values based on protocol (schema has CHECK constraints)
 	// only_torrent -> usenet_delay must be NULL
 	// only_usenet -> torrent_delay must be NULL

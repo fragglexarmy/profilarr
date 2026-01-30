@@ -25,7 +25,7 @@ export async function createRadarrQualityDefinitions(options: CreateQualityDefin
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('radarr_quality_definitions')
-		.where('name', '=', input.name)
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 		.select('name')
 		.executeTakeFirst();
 
@@ -73,7 +73,7 @@ export async function createSonarrQualityDefinitions(options: CreateQualityDefin
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('sonarr_quality_definitions')
-		.where('name', '=', input.name)
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 		.select('name')
 		.executeTakeFirst();
 

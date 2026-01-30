@@ -97,16 +97,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Name is required' });
 		}
 
-		// Check for duplicate name if renaming
-		if (name.trim().toLowerCase() !== current.name.toLowerCase()) {
-			const existingProfiles = await qualityProfileQueries.list(cache);
-			const duplicate = existingProfiles.find(
-				(p) => p.id !== profileId && p.name.toLowerCase() === name.trim().toLowerCase()
-			);
-			if (duplicate) {
-				return fail(400, { error: `A quality profile named "${name.trim()}" already exists` });
-			}
-		}
+		// Duplicate name checks are enforced at the entity layer.
 
 		let tags: string[] = [];
 		try {
@@ -121,18 +112,27 @@ export const actions: Actions = {
 		}
 
 		// Update the quality profile
-		const result = await qualityProfileQueries.updateGeneral({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: name.trim(),
-				description: description.trim(),
-				tags,
-				language
+		let result;
+		try {
+			result = await qualityProfileQueries.updateGeneral({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: name.trim(),
+					description: description.trim(),
+					tags,
+					language
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update quality profile';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update quality profile' });

@@ -28,7 +28,7 @@ export async function updateRadarrMediaSettings(options: UpdateMediaSettingsOpti
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('radarr_media_settings')
-			.where('name', '=', input.name)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 			.select('name')
 			.executeTakeFirst();
 
@@ -128,7 +128,7 @@ export async function updateSonarrMediaSettings(options: UpdateSonarrMediaSettin
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('sonarr_media_settings')
-			.where('name', '=', input.name)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 			.select('name')
 			.executeTakeFirst();
 

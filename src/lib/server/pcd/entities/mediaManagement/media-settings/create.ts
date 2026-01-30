@@ -26,7 +26,7 @@ export async function createRadarrMediaSettings(options: CreateMediaSettingsOpti
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('radarr_media_settings')
-		.where('name', '=', input.name)
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 		.select('name')
 		.executeTakeFirst();
 
@@ -71,7 +71,7 @@ export async function createSonarrMediaSettings(options: CreateMediaSettingsOpti
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('sonarr_media_settings')
-		.where('name', '=', input.name)
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 		.select('name')
 		.executeTakeFirst();
 

@@ -27,7 +27,7 @@ export async function updateRadarrQualityDefinitions(options: UpdateQualityDefin
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('radarr_quality_definitions')
-			.where('name', '=', input.name)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 			.select('name')
 			.executeTakeFirst();
 
@@ -107,7 +107,7 @@ export async function updateSonarrQualityDefinitions(options: UpdateQualityDefin
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('sonarr_quality_definitions')
-			.where('name', '=', input.name)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 			.select('name')
 			.executeTakeFirst();
 

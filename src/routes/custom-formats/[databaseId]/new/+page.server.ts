@@ -60,14 +60,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Name is required' });
 		}
 
-		// Check for duplicate name
-		const existingFormats = await customFormatQueries.list(cache);
-		const duplicate = existingFormats.find(
-			(f) => f.name.toLowerCase() === name.trim().toLowerCase()
-		);
-		if (duplicate) {
-			return fail(400, { error: `A custom format named "${name.trim()}" already exists` });
-		}
+		// Duplicate name checks are enforced at the entity layer.
 
 		let tags: string[] = [];
 		try {
@@ -82,17 +75,26 @@ export const actions: Actions = {
 		}
 
 		// Create the custom format
-		const result = await customFormatQueries.create({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			input: {
-				name: name.trim(),
-				description: description?.trim() || null,
-				includeInRename,
-				tags
+		let result;
+		try {
+			result = await customFormatQueries.create({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				input: {
+					name: name.trim(),
+					description: description?.trim() || null,
+					includeInRename,
+					tags
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to create custom format';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to create custom format' });

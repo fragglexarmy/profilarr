@@ -99,14 +99,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Pattern is required' });
 		}
 
-		// Check for duplicate name
-		const existingExpressions = await regularExpressionQueries.list(cache);
-		const duplicate = existingExpressions.find(
-			(e) => e.name.toLowerCase() === name.trim().toLowerCase()
-		);
-		if (duplicate) {
-			return fail(400, { error: `A regular expression named "${name.trim()}" already exists` });
-		}
+		// Duplicate name checks are enforced at the entity layer.
 
 		let tags: string[] = [];
 		try {
@@ -121,18 +114,27 @@ export const actions: Actions = {
 		}
 
 		// Create the regular expression
-		const result = await regularExpressionQueries.create({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			input: {
-				name: name.trim(),
-				pattern: pattern.trim(),
-				tags,
-				description: description?.trim() || null,
-				regex101Id: regex101Id?.trim() || null
+		let result;
+		try {
+			result = await regularExpressionQueries.create({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				input: {
+					name: name.trim(),
+					pattern: pattern.trim(),
+					tags,
+					description: description?.trim() || null,
+					regex101Id: regex101Id?.trim() || null
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to create regular expression';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to create regular expression' });

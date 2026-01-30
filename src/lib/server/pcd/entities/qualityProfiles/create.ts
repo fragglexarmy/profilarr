@@ -4,6 +4,7 @@
 
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
+import { logger } from '$logger/logger.ts';
 
 // ============================================================================
 // Input types
@@ -42,6 +43,20 @@ export async function create(options: CreateQualityProfileOptions) {
 	const db = cache.kb;
 
 	const queries = [];
+
+	const existing = await db
+		.selectFrom('quality_profiles')
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
+		.select('name')
+		.executeTakeFirst();
+
+	if (existing) {
+		await logger.warn(`Duplicate quality profile name "${input.name}"`, {
+			source: 'QualityProfile',
+			meta: { databaseId, name: input.name }
+		});
+		throw new Error(`A quality profile with name "${input.name}" already exists`);
+	}
 
 	// 1. Insert the quality profile with default values
 	const insertProfile = db

@@ -30,7 +30,7 @@ export async function createRadarrNaming(options: CreateRadarrNamingOptions) {
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('radarr_naming')
-		.where('name', '=', input.name)
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 		.select('name')
 		.executeTakeFirst();
 
@@ -102,7 +102,7 @@ export async function createSonarrNaming(options: CreateSonarrNamingOptions) {
 	// Check if name already exists
 	const existing = await db
 		.selectFrom('sonarr_naming')
-		.where('name', '=', input.name)
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 		.select('name')
 		.executeTakeFirst();
 

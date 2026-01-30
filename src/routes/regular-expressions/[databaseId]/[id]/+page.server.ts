@@ -87,16 +87,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Pattern is required' });
 		}
 
-		// Check for duplicate name if renaming
-		if (name.trim().toLowerCase() !== current.name.toLowerCase()) {
-			const existingExpressions = await regularExpressionQueries.list(cache);
-			const duplicate = existingExpressions.find(
-				(e) => e.id !== regexId && e.name.toLowerCase() === name.trim().toLowerCase()
-			);
-			if (duplicate) {
-				return fail(400, { error: `A regular expression named "${name.trim()}" already exists` });
-			}
-		}
+		// Duplicate name checks are enforced at the entity layer.
 
 		let tags: string[] = [];
 		try {
@@ -111,19 +102,28 @@ export const actions: Actions = {
 		}
 
 		// Update the regular expression
-		const result = await regularExpressionQueries.update({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: name.trim(),
-				pattern: pattern.trim(),
-				tags,
-				description: description?.trim() || null,
-				regex101Id: regex101Id?.trim() || null
+		let result;
+		try {
+			result = await regularExpressionQueries.update({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: name.trim(),
+					pattern: pattern.trim(),
+					tags,
+					description: description?.trim() || null,
+					regex101Id: regex101Id?.trim() || null
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update regular expression';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update regular expression' });

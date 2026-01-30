@@ -40,6 +40,22 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 
 	const queries = [];
 
+	if (input.name !== current.name) {
+		const existing = await db
+			.selectFrom('custom_formats')
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
+			.select('name')
+			.executeTakeFirst();
+
+		if (existing) {
+			await logger.warn(`Duplicate custom format name "${input.name}"`, {
+				source: 'CustomFormat',
+				meta: { databaseId, name: input.name }
+			});
+			throw new Error(`A custom format with name "${input.name}" already exists`);
+		}
+	}
+
 	const currentDescription = current.description === '' ? null : current.description;
 	const nextDescription = input.description === '' ? null : input.description;
 

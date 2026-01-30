@@ -42,6 +42,22 @@ export async function update(options: UpdateRegularExpressionOptions) {
 
 	const queries = [];
 
+	if (input.name !== current.name) {
+		const existing = await db
+			.selectFrom('regular_expressions')
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
+			.select('name')
+			.executeTakeFirst();
+
+		if (existing) {
+			await logger.warn(`Duplicate regular expression name "${input.name}"`, {
+				source: 'RegularExpression',
+				meta: { databaseId, name: input.name }
+			});
+			throw new Error(`A regular expression with name "${input.name}" already exists`);
+		}
+	}
+
 	const currentDescription = current.description === '' ? null : current.description;
 	const nextDescription = input.description === '' ? null : input.description;
 	const currentRegex101Id = current.regex101_id === '' ? null : current.regex101_id;

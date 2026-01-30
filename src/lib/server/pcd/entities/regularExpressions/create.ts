@@ -4,6 +4,7 @@
 
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer } from '$pcd/index.ts';
+import { logger } from '$logger/logger.ts';
 
 interface CreateRegularExpressionInput {
 	name: string;
@@ -35,6 +36,20 @@ export async function create(options: CreateRegularExpressionOptions) {
 	const db = cache.kb;
 
 	const queries = [];
+
+	const existing = await db
+		.selectFrom('regular_expressions')
+		.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
+		.select('name')
+		.executeTakeFirst();
+
+	if (existing) {
+		await logger.warn(`Duplicate regular expression name "${input.name}"`, {
+			source: 'RegularExpression',
+			meta: { databaseId, name: input.name }
+		});
+		throw new Error(`A regular expression with name "${input.name}" already exists`);
+	}
 
 	// 1. Insert the regular expression
 	const insertRegex = db

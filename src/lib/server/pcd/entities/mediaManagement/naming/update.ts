@@ -32,7 +32,7 @@ export async function updateRadarrNaming(options: UpdateRadarrNamingOptions) {
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('radarr_naming')
-			.where('name', '=', input.name)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 			.select('name')
 			.executeTakeFirst();
 
@@ -190,7 +190,7 @@ export async function updateSonarrNaming(options: UpdateSonarrNamingOptions) {
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('sonarr_naming')
-			.where('name', '=', input.name)
+			.where((eb) => eb(eb.fn('lower', [eb.ref('name')]), '=', input.name.toLowerCase()))
 			.select('name')
 			.executeTakeFirst();
 

@@ -92,21 +92,30 @@ export const actions: Actions = {
 		}
 
 		// Update the delay profile
-		const result = await delayProfileQueries.update({
-			databaseId: currentDatabaseId,
-			cache,
-			layer,
-			current,
-			input: {
-				name: name.trim(),
-				preferredProtocol,
-				usenetDelay,
-				torrentDelay,
-				bypassIfHighestQuality,
-				bypassIfAboveCfScore,
-				minimumCfScore
+		let result;
+		try {
+			result = await delayProfileQueries.update({
+				databaseId: currentDatabaseId,
+				cache,
+				layer,
+				current,
+				input: {
+					name: name.trim(),
+					preferredProtocol,
+					usenetDelay,
+					torrentDelay,
+					bypassIfHighestQuality,
+					bypassIfAboveCfScore,
+					minimumCfScore
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update delay profile';
+			if (message.includes('already exists')) {
+				return fail(400, { error: message });
 			}
-		});
+			return fail(500, { error: message });
+		}
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update delay profile' });
