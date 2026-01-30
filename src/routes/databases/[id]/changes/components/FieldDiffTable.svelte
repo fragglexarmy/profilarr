@@ -2,6 +2,7 @@
 	import Table from '$ui/table/Table.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import { marked } from 'marked';
+	import { ExternalLink } from 'lucide-svelte';
 	import type { Column } from '$ui/table/types';
 	import type { FieldRow, OperationType } from './types';
 
@@ -16,6 +17,18 @@
 
 	function isMarkdownField(field: string): boolean {
 		return ['description', 'readme', 'notes'].includes(field);
+	}
+
+	function isPatternField(field: string): boolean {
+		return field === 'pattern';
+	}
+
+	function isRegex101Field(field: string): boolean {
+		return field === 'regex101_id';
+	}
+
+	function regex101Url(value: string): string {
+		return `https://regex101.com/r/${value}`;
 	}
 
 	function formatValue(value: unknown): string {
@@ -70,6 +83,23 @@
 			{@const beforeValue = getFieldBefore(row)}
 			{#if row.field === 'language' && typeof beforeValue === 'string'}
 				<Badge variant="info" size="md">{beforeValue}</Badge>
+			{:else if isRegex101Field(row.field) && typeof beforeValue === 'string' && beforeValue.trim()}
+				<Badge variant="neutral" size="md" mono>
+					<a
+						href={regex101Url(beforeValue)}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center gap-1 text-accent-700 hover:underline dark:text-accent-300"
+						title="Open on regex101"
+					>
+						{beforeValue}
+						<ExternalLink size={12} />
+					</a>
+				</Badge>
+			{:else if isPatternField(row.field) && typeof beforeValue === 'string'}
+				<Badge variant="neutral" size="md" mono>
+					{beforeValue}
+				</Badge>
 			{:else if typeof beforeValue === 'boolean'}
 				<Badge variant={beforeValue ? 'success' : 'neutral'} size="md">
 					{beforeValue ? 'Yes' : 'No'}
@@ -91,6 +121,23 @@
 			{@const afterValue = getFieldAfter(row)}
 			{#if row.field === 'language' && typeof afterValue === 'string'}
 				<Badge variant="info" size="md">{afterValue}</Badge>
+			{:else if isRegex101Field(row.field) && typeof afterValue === 'string' && afterValue.trim()}
+				<Badge variant="neutral" size="md" mono>
+					<a
+						href={regex101Url(afterValue)}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center gap-1 text-accent-700 hover:underline dark:text-accent-300"
+						title="Open on regex101"
+					>
+						{afterValue}
+						<ExternalLink size={12} />
+					</a>
+				</Badge>
+			{:else if isPatternField(row.field) && typeof afterValue === 'string'}
+				<Badge variant="neutral" size="md" mono>
+					{afterValue}
+				</Badge>
 			{:else if typeof afterValue === 'boolean'}
 				<Badge variant={afterValue ? 'success' : 'neutral'} size="md">
 					{afterValue ? 'Yes' : 'No'}

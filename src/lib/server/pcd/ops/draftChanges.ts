@@ -142,6 +142,7 @@ const FIELD_LABELS: Record<string, string> = {
 	custom_format_name: 'Custom format',
 	delay_profile_name: 'Delay profile',
 	regular_expression_name: 'Regular expression',
+	regex101_id: 'Regex101 ID',
 	ordered_items: 'Ordered items',
 	conditions: 'Conditions',
 	tests: 'Tests',
