@@ -6,7 +6,7 @@
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import { Check, ArrowDown, ExternalLink, FileText, Sparkles, Upload, Trash2 } from 'lucide-svelte';
+	import { Check, ArrowDown, ExternalLink, FileText, Upload, Trash2 } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
@@ -28,11 +28,9 @@
 	let primarySelected = new Set<string>();
 	let selected = new Set<string>();
 	let commitMessage = '';
-	let generating = false;
 	let committing = false;
 	let dropping = false;
 	let showDropModal = false;
-	let aiEnabled = false;
 
 	$: isDeveloper = data.isDeveloper;
 	$: hasIncomingChanges = incomingChanges?.hasUpdates ?? false;
@@ -68,23 +66,8 @@
 		}
 	}
 
-	async function fetchAIStatus() {
-		try {
-			const response = await fetch('/api/ai/status');
-			if (response.ok) {
-				const result = await response.json();
-				aiEnabled = !!result.enabled;
-			} else {
-				aiEnabled = false;
-			}
-		} catch {
-			aiEnabled = false;
-		}
-	}
-
 	afterNavigate(() => {
 		fetchChanges();
-		fetchAIStatus();
 	});
 
 	function toggleAll() {
@@ -227,27 +210,6 @@
 			}
 		}
 		return keysToDrop;
-	}
-
-	function buildCommitMessage(changes: DraftEntityChange[]): string {
-		if (changes.length === 0) return '';
-		if (changes.length === 1) {
-			const change = changes[0];
-			return `${formatOperation(change.operation)} ${formatEntity(change.entity)} "${change.name}"`;
-		}
-		if (changes.length <= 3) {
-			const detail = changes
-				.map((change) => `${formatOperation(change.operation)} ${formatEntity(change.entity)} "${change.name}"`)
-				.join(', ');
-			return `Update ${changes.length} changes: ${detail}`;
-		}
-		return `Update ${changes.length} changes`;
-	}
-
-	function handleGenerate() {
-		if (!aiEnabled) return;
-		if (!selectedChanges.length) return;
-		commitMessage = buildCommitMessage(selectedChanges);
 	}
 
 	async function handleCommit() {
@@ -619,17 +581,6 @@
 									class="h-full w-full bg-transparent font-mono text-sm text-neutral-700 placeholder-neutral-400 outline-none disabled:cursor-not-allowed dark:text-neutral-300 dark:placeholder-neutral-500"
 								/>
 							</div>
-						</div>
-
-						<div>
-							{#if aiEnabled}
-								<ActionButton
-									icon={Sparkles}
-									title="Generate commit message"
-									disabled={hasIncomingChanges || selectedCount === 0 || generating}
-									on:click={() => handleGenerate()}
-								/>
-							{/if}
 						</div>
 
 						<div>
