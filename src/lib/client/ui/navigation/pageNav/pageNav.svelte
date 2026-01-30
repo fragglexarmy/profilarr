@@ -2,7 +2,7 @@
 	import Group from './group.svelte';
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
-	import { Database, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X } from 'lucide-svelte';
+	import { FolderTree, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X } from 'lucide-svelte';
 	import { navIconStore } from '$stores/navIcons';
 	import { mobileNavOpen } from '$stores/mobileNav';
 	import { page } from '$app/stores';
@@ -57,7 +57,7 @@
 		<Group
 			label={useEmoji ? '📦 Databases' : 'Databases'}
 			href="/databases"
-			icon={useEmoji ? undefined : Database}
+			icon={useEmoji ? undefined : FolderTree}
 		/>
 
 		<Group

@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { navIconStore } from '$stores/navIcons';
 	import {
-		Database,
+		FolderTree,
 		Link,
 		Sliders,
 		Palette,
@@ -16,13 +16,13 @@
 		href: string;
 		label: string;
 		shortLabel?: string;
-		icon: typeof Database;
+		icon: typeof FolderTree;
 		emoji: string;
 		priority: 'always' | 'medium' | 'low';
 	};
 
 	const items: NavItem[] = [
-		{ href: '/databases', label: 'Databases', icon: Database, emoji: '📦', priority: 'always' },
+		{ href: '/databases', label: 'Databases', icon: FolderTree, emoji: '📦', priority: 'always' },
 		{ href: '/arr', label: 'Arrs', icon: Link, emoji: '🔗', priority: 'always' },
 		{ href: '/quality-profiles', label: 'Profiles', icon: Sliders, emoji: '⚡', priority: 'always' },
 		{ href: '/custom-formats', label: 'Formats', icon: Palette, emoji: '🎨', priority: 'always' },
