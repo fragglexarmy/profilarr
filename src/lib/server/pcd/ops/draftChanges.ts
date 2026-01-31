@@ -748,7 +748,9 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 
 		const desiredState = parseJson<Record<string, unknown>>(op.desired_state);
 		const stableKey = metadata.stable_key?.value ?? metadata.name;
-		const groupKey = `${metadata.entity}:${resolveAlias(stableKey)}`;
+		const baseKey = `${metadata.entity}:${resolveAlias(stableKey)}`;
+		const groupKey =
+			metadata.generated && metadata.group_id ? `${baseKey}::${metadata.group_id}` : baseKey;
 
 		if (metadata.depends_on && metadata.depends_on.length > 0) {
 			const depSet = dependencies.get(groupKey) ?? new Set<string>();
