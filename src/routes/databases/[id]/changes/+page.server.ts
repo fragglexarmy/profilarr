@@ -6,6 +6,7 @@ import { Git } from '$utils/git/index.ts';
 import { logger } from '$logger/logger.ts';
 import { compile, pcdManager } from '$pcd/index.ts';
 import { listDraftEntityChanges } from '$pcd/ops/draftChanges.ts';
+import { exportDraftOps } from '$pcd/ops/exporter.ts';
 import { uuid } from '$shared/utils/uuid.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -143,6 +144,36 @@ export const actions: Actions = {
 				error: err instanceof Error ? err.message : 'Failed to drop changes'
 			};
 		}
+	},
+	commit: async ({ request, params }) => {
+		const id = parseInt(params.id || '', 10);
+		const database = databaseInstancesQueries.getById(id);
+
+		if (!database) {
+			return { success: false, error: 'Database not found' };
+		}
+
+		const formData = await request.formData();
+		const opIds = (formData.getAll('opIds') as string[])
+			.map((value) => Number(value))
+			.filter((value) => Number.isFinite(value));
+		const message = (formData.get('message') as string) ?? '';
+
+		if (opIds.length === 0) {
+			return { success: false, error: 'No changes selected' };
+		}
+
+		const result = await exportDraftOps(id, opIds, message);
+		if (!result.success) {
+			return result;
+		}
+
+		return {
+			success: true,
+			filename: result.filename,
+			opId: result.opId,
+			dropped: result.dropped
+		};
 	},
 	discard: async ({ request, params }) => {
 		const id = parseInt(params.id || '', 10);

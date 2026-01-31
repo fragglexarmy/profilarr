@@ -6,7 +6,7 @@
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import { Check, ArrowDown, ExternalLink, FileText, Upload, Trash2 } from 'lucide-svelte';
+	import { Check, ArrowDown, ExternalLink, FileText, Loader2, Upload, Trash2 } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
@@ -213,7 +213,65 @@
 	}
 
 	async function handleCommit() {
-		alertStore.add('info', 'Exporter not implemented yet');
+		if (!commitMessage.trim() || selectedChanges.length === 0) return;
+		committing = true;
+		try {
+			const opIds = new Set<number>();
+			for (const change of selectedChanges) {
+				for (const op of change.ops) {
+					opIds.add(op.id);
+				}
+			}
+
+			const formData = new FormData();
+			for (const opId of opIds) {
+				formData.append('opIds', String(opId));
+			}
+			formData.append('message', commitMessage.trim());
+
+			const response = await fetch('?/commit', {
+				method: 'POST',
+				body: formData,
+				headers: { Accept: 'application/json' }
+			});
+
+			let result:
+				| {
+						type?: string;
+						data?: { success?: boolean; error?: string; filename?: string; dropped?: number };
+						error?: string;
+					}
+				| null = null;
+			try {
+				result = await response.json();
+			} catch {
+				result = null;
+			}
+
+			const isSuccess =
+				response.ok &&
+				(result?.type === 'success' ||
+					result?.type === 'redirect' ||
+					result?.data?.success);
+			const errorMessage = result?.data?.error || result?.error;
+
+			if (isSuccess) {
+				const droppedCount = result?.data?.dropped ?? opIds.size;
+				const filename = result?.data?.filename;
+				const label = filename ? ` (${filename})` : '';
+				alertStore.add('success', `Exported ${droppedCount} ops${label}`);
+				await fetchChanges();
+				commitMessage = '';
+				primarySelected = new Set();
+			} else {
+				const message =
+					errorMessage ||
+					`Failed to export changes${response.ok ? '' : ` (HTTP ${response.status})`}`;
+				alertStore.add('error', message);
+			}
+		} finally {
+			committing = false;
+		}
 	}
 
 	function requestDrop() {
@@ -585,8 +643,9 @@
 
 						<div>
 							<ActionButton
-								icon={committing ? Upload : Upload}
-								title="Commit changes"
+								icon={committing ? Loader2 : Upload}
+								iconClass={committing ? 'animate-spin' : ''}
+								title={committing ? 'Exporting changes' : 'Commit changes'}
 								disabled={
 									hasIncomingChanges ||
 									selectedCount === 0 ||

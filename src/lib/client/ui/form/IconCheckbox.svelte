@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	export let checked: boolean = false;
 	export let icon: ComponentType;
@@ -10,6 +11,8 @@
 	export let iconColor: string = '';
 	export let stopPropagation: boolean = false;
 	export let title: string | undefined = undefined;
+
+	const dispatch = createEventDispatcher<{ click: MouseEvent }>();
 
 	// Shape classes
 	const shapeClasses: Record<string, string> = {
@@ -39,6 +42,7 @@
 		if (stopPropagation) {
 			event.stopPropagation();
 		}
+		dispatch('click', event);
 	}
 </script>
 
