@@ -15,6 +15,8 @@ export interface DatabaseInstance {
 	personal_access_token: string | null;
 	is_private: number;
 	local_ops_enabled: number;
+	git_user_name: string | null;
+	git_user_email: string | null;
 	last_synced_at: string | null;
 	created_at: string;
 	updated_at: string;
@@ -29,6 +31,8 @@ export interface CreateDatabaseInstanceInput {
 	autoPull?: boolean;
 	enabled?: boolean;
 	personalAccessToken?: string;
+	gitUserName?: string;
+	gitUserEmail?: string;
 	isPrivate?: boolean;
 	localOpsEnabled?: boolean;
 }
@@ -41,6 +45,8 @@ export interface UpdateDatabaseInstanceInput {
 	enabled?: boolean;
 	personalAccessToken?: string;
 	localOpsEnabled?: boolean;
+	gitUserName?: string | null;
+	gitUserEmail?: string | null;
 }
 
 /**
@@ -57,10 +63,12 @@ export const databaseInstancesQueries = {
 		const personalAccessToken = input.personalAccessToken || null;
 		const isPrivate = input.isPrivate ? 1 : 0;
 		const localOpsEnabled = input.localOpsEnabled ? 1 : 0;
+		const gitUserName = input.gitUserName || null;
+		const gitUserEmail = input.gitUserEmail || null;
 
 		db.execute(
-			`INSERT INTO database_instances (uuid, name, repository_url, local_path, sync_strategy, auto_pull, enabled, personal_access_token, is_private, local_ops_enabled)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO database_instances (uuid, name, repository_url, local_path, sync_strategy, auto_pull, enabled, personal_access_token, is_private, local_ops_enabled, git_user_name, git_user_email)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			input.uuid,
 			input.name,
 			input.repositoryUrl,
@@ -70,7 +78,9 @@ export const databaseInstancesQueries = {
 			enabled,
 			personalAccessToken,
 			isPrivate,
-			localOpsEnabled
+			localOpsEnabled,
+			gitUserName,
+			gitUserEmail
 		);
 
 		// Get the last inserted ID
@@ -159,6 +169,14 @@ export const databaseInstancesQueries = {
 		if (input.localOpsEnabled !== undefined) {
 			updates.push('local_ops_enabled = ?');
 			params.push(input.localOpsEnabled ? 1 : 0);
+		}
+		if (input.gitUserName !== undefined) {
+			updates.push('git_user_name = ?');
+			params.push(input.gitUserName || null);
+		}
+		if (input.gitUserEmail !== undefined) {
+			updates.push('git_user_email = ?');
+			params.push(input.gitUserEmail || null);
 		}
 
 		if (updates.length === 0) {

@@ -36,6 +36,12 @@ export const actions: Actions = {
 		const localOpsEnabled = formData.get('local_ops_enabled') === '1';
 		const personalAccessToken =
 			formData.get('personal_access_token')?.toString().trim() || undefined;
+		const gitUserName = formData.has('git_user_name')
+			? formData.get('git_user_name')?.toString().trim() || null
+			: undefined;
+		const gitUserEmail = formData.has('git_user_email')
+			? formData.get('git_user_email')?.toString().trim() || null
+			: undefined;
 
 		// Validation
 		if (!name) {
@@ -70,7 +76,9 @@ export const actions: Actions = {
 				syncStrategy,
 				autoPull,
 				personalAccessToken,
-				localOpsEnabled
+				localOpsEnabled,
+				gitUserName,
+				gitUserEmail
 			});
 
 			if (!updated) {

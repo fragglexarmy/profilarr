@@ -31,7 +31,7 @@
 	},
 	"tasks": {
 		"dev": "deno run -A scripts/dev.ts",
-		"dev:noauth": "AUTH=local deno run -A scripts/dev.ts",
+		"dev:noauth": "AUTH=off deno run -A scripts/dev.ts",
 		"dev:oidc": "AUTH=oidc OIDC_DISCOVERY_URL=http://localhost:8080/realms/profilarr/.well-known/openid-configuration OIDC_CLIENT_ID=profilarr OIDC_CLIENT_SECRET=secret deno run -A scripts/dev.ts",
 		"dev:server": "DENO_ENV=development PORT=6969 HOST=0.0.0.0 APP_BASE_PATH=./dist/dev PARSER_HOST=localhost PARSER_PORT=5000 VITE_PLATFORM=linux-amd64 VITE_CHANNEL=dev deno run -A npm:vite dev",
 		"dev:parser": "cd src/services/parser && dotnet watch run --urls http://localhost:5000",

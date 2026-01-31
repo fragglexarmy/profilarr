@@ -27,6 +27,8 @@
 				name: instance.name,
 				repositoryUrl: instance.repository_url,
 				personalAccessToken: '', // Never pre-populate for security
+				gitUserName: instance.git_user_name ?? '',
+				gitUserEmail: instance.git_user_email ?? '',
 				localOpsEnabled: instance.local_ops_enabled ? 'true' : 'false',
 				syncStrategy: String(instance.sync_strategy),
 				autoPull: instance.auto_pull ? 'true' : 'false'
@@ -37,6 +39,8 @@
 				repositoryUrl: '',
 				branch: data?.formData?.branch ?? '',
 				personalAccessToken: data?.formData?.personalAccessToken ?? '',
+				gitUserName: data?.formData?.gitUserName ?? '',
+				gitUserEmail: data?.formData?.gitUserEmail ?? '',
 				localOpsEnabled: data?.formData?.localOpsEnabled === '1' ? 'true' : 'false',
 				syncStrategy: data?.formData?.syncStrategy ? String(data.formData.syncStrategy) : '60',
 				autoPull: data?.formData?.autoPull === '0' ? 'false' : 'true'
@@ -50,9 +54,12 @@
 	$: repositoryUrl = ($current.repositoryUrl ?? '') as string;
 	$: branch = ($current.branch ?? '') as string;
 	$: personalAccessToken = ($current.personalAccessToken ?? '') as string;
+	$: gitUserName = ($current.gitUserName ?? '') as string;
+	$: gitUserEmail = ($current.gitUserEmail ?? '') as string;
 	$: localOpsEnabled = ($current.localOpsEnabled ?? 'false') as string;
 	$: syncStrategy = ($current.syncStrategy ?? '60') as string;
 	$: autoPull = ($current.autoPull ?? 'true') as string;
+	$: showGitIdentity = !!personalAccessToken || (mode === 'edit' && !!instance?.personal_access_token);
 
 	// UI state
 	let saving = false;
@@ -112,6 +119,8 @@
 				name,
 				repositoryUrl,
 				personalAccessToken: '',
+				gitUserName,
+				gitUserEmail,
 				localOpsEnabled,
 				syncStrategy,
 				autoPull
@@ -211,6 +220,27 @@
 			on:input={(e) => update('personalAccessToken', e.detail)}
 		/>
 
+		<!-- Git Author Identity -->
+		{#if showGitIdentity}
+			<FormInput
+				label="Git Author Name"
+				name="git_user_name"
+				value={gitUserName}
+				placeholder="e.g., Jane Doe"
+				description="Used for commits when exporting changes to Git."
+				on:input={(e) => update('gitUserName', e.detail)}
+			/>
+			<FormInput
+				label="Git Author Email"
+				name="git_user_email"
+				type="email"
+				value={gitUserEmail}
+				placeholder="jane@example.com"
+				description="Used for commits when exporting changes to Git."
+				on:input={(e) => update('gitUserEmail', e.detail)}
+			/>
+		{/if}
+
 		<!-- Local Ops Only Row -->
 		<div class="space-y-2">
 			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -291,6 +321,8 @@
 		<input type="hidden" name="branch" value={branch} />
 	{/if}
 	<input type="hidden" name="personal_access_token" value={personalAccessToken} />
+	<input type="hidden" name="git_user_name" value={gitUserName} />
+	<input type="hidden" name="git_user_email" value={gitUserEmail} />
 	<input type="hidden" name="local_ops_enabled" value={localOpsEnabled === 'true' ? '1' : '0'} />
 	<input type="hidden" name="sync_strategy" value={syncStrategy} />
 	<input type="hidden" name="auto_pull" value={autoPull === 'true' ? '1' : '0'} />

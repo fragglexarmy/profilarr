@@ -132,6 +132,8 @@ export interface LinkOptions {
 	autoPull?: boolean;
 	personalAccessToken?: string;
 	localOpsEnabled?: boolean;
+	gitUserName?: string;
+	gitUserEmail?: string;
 }
 
 /**

@@ -2,7 +2,7 @@ import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import { logger } from '$logger/logger.ts';
-import { pull, stage, commit, push } from '$utils/git/write.ts';
+import { pull, stage, commit, push, configureIdentity } from '$utils/git/write.ts';
 import { compile } from '../database/compiler.ts';
 import { canWriteToBase } from './writer.ts';
 import { listDraftEntityChanges } from './draftChanges.ts';
@@ -106,6 +106,15 @@ export async function exportDraftOps(
 		return { success: false, error: 'This database cannot publish changes.' };
 	}
 
+	const gitUserName = database.git_user_name?.trim() ?? '';
+	const gitUserEmail = database.git_user_email?.trim() ?? '';
+	if (!gitUserName || !gitUserEmail) {
+		return {
+			success: false,
+			error: 'Git author name and email are required to export changes.'
+		};
+	}
+
 	const trimmedMessage = message.trim();
 	if (!trimmedMessage) {
 		return { success: false, error: 'Commit message is required' };
@@ -198,6 +207,7 @@ export async function exportDraftOps(
 
 		try {
 			await stage(database.local_path, [filepath]);
+			await configureIdentity(database.local_path, gitUserName, gitUserEmail);
 			await commit(database.local_path, trimmedMessage);
 			await push(database.local_path);
 		} catch (err) {

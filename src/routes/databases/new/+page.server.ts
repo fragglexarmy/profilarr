@@ -10,6 +10,8 @@ export const load: ServerLoad = ({ url }) => {
 	const syncStrategy = url.searchParams.get('sync_strategy') || '';
 	const autoPull = url.searchParams.get('auto_pull') || '';
 	const localOpsEnabled = url.searchParams.get('local_ops_enabled') || '';
+	const gitUserName = url.searchParams.get('git_user_name') || '';
+	const gitUserEmail = url.searchParams.get('git_user_email') || '';
 
 	return {
 		formData: {
@@ -17,7 +19,9 @@ export const load: ServerLoad = ({ url }) => {
 			branch,
 			syncStrategy,
 			autoPull,
-			localOpsEnabled
+			localOpsEnabled,
+			gitUserName,
+			gitUserEmail
 		}
 	};
 };
@@ -34,6 +38,8 @@ export const actions = {
 		const localOpsEnabled = formData.get('local_ops_enabled') === '1';
 		const personalAccessToken =
 			formData.get('personal_access_token')?.toString().trim() || undefined;
+		const gitUserName = formData.get('git_user_name')?.toString().trim() || undefined;
+		const gitUserEmail = formData.get('git_user_email')?.toString().trim() || undefined;
 
 		// Validation
 		if (!name || !repositoryUrl) {
@@ -54,7 +60,9 @@ export const actions = {
 			branch: branch || '',
 			sync_strategy: syncStrategy.toString(),
 			auto_pull: autoPull ? '1' : '0',
-			local_ops_enabled: localOpsEnabled ? '1' : '0'
+			local_ops_enabled: localOpsEnabled ? '1' : '0',
+			git_user_name: gitUserName || '',
+			git_user_email: gitUserEmail || ''
 		});
 
 		if (repositoryUrl.includes('youtube.com') || repositoryUrl.includes('youtu.be')) {
@@ -98,7 +106,9 @@ export const actions = {
 				syncStrategy,
 				autoPull,
 				personalAccessToken,
-				localOpsEnabled
+				localOpsEnabled,
+				gitUserName,
+				gitUserEmail
 			});
 
 			await logger.info(`Linked new database: ${name}`, {

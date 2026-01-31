@@ -69,7 +69,9 @@ class PCDManager {
 				autoPull: options.autoPull,
 				personalAccessToken: options.personalAccessToken,
 				isPrivate,
-				localOpsEnabled: options.localOpsEnabled
+				localOpsEnabled: options.localOpsEnabled,
+				gitUserName: options.gitUserName,
+				gitUserEmail: options.gitUserEmail
 			});
 
 			// Get and return the created instance

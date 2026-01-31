@@ -177,6 +177,25 @@ export async function commit(repoPath: string, message: string): Promise<void> {
 }
 
 /**
+ * Configure local git author identity for the repository
+ */
+export async function configureIdentity(
+	repoPath: string,
+	name: string,
+	email: string
+): Promise<void> {
+	const trimmedName = name.trim();
+	const trimmedEmail = email.trim();
+
+	if (!trimmedName || !trimmedEmail) {
+		throw new Error('Git author name and email are required');
+	}
+
+	await execGit(['config', 'user.name', trimmedName], repoPath);
+	await execGit(['config', 'user.email', trimmedEmail], repoPath);
+}
+
+/**
  * Get repository info from GitHub API (cached)
  */
 export async function getRepoInfo(
