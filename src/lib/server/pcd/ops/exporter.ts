@@ -2,12 +2,12 @@ import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import { logger } from '$logger/logger.ts';
-import { Git } from '$utils/git/index.ts';
-import { pull, stage, commit, push } from '$utils/git/repo.ts';
+import { pull, stage, commit, push } from '$utils/git/write.ts';
 import { compile } from '../database/compiler.ts';
 import { canWriteToBase } from './writer.ts';
 import { listDraftEntityChanges } from './draftChanges.ts';
 import { uuid } from '$shared/utils/uuid.ts';
+import { getMaxOpNumber } from '$pcd/utils/git.ts';
 
 type ExportResult =
 	| { success: true; filename: string; opId: number; dropped: number }
@@ -185,11 +185,9 @@ export async function exportDraftOps(
 				.join('')
 		);
 
-	const git = new Git(database.local_path);
-
 	try {
 		await pull(database.local_path);
-		const maxOpNumber = await git.getMaxOpNumber();
+		const maxOpNumber = await getMaxOpNumber(database.local_path);
 		const opNumber = maxOpNumber + 1;
 		const filename = `${opNumber}.${slugify(trimmedMessage)}.sql`;
 		const opsDir = `${database.local_path}/ops`;

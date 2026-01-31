@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
-import { Git, getRepoInfo } from '$utils/git/index.ts';
+import { getBranches, getIncomingChanges, getRepoInfo, getStatus } from '$utils/git/index.ts';
 import { listDraftEntityChanges } from '$pcd/ops/draftChanges.ts';
 
 export const GET: RequestHandler = async ({ params }) => {
@@ -12,13 +12,11 @@ export const GET: RequestHandler = async ({ params }) => {
 		error(404, 'Database not found');
 	}
 
-	const git = new Git(database.local_path);
-
 	// Fetch data for everyone
 	const [status, incomingChanges, branches, repoInfo] = await Promise.all([
-		git.status(),
-		git.getIncomingChanges(),
-		git.getBranches(),
+		getStatus(database.local_path),
+		getIncomingChanges(database.local_path),
+		getBranches(database.local_path),
 		getRepoInfo(database.repository_url, database.personal_access_token)
 	]);
 

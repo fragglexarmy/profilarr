@@ -156,11 +156,6 @@ export async function checkout(repoPath: string, branch: string): Promise<void> 
 /**
  * Reset repository to match remote (discards local changes)
  */
-export async function resetToRemote(repoPath: string): Promise<void> {
-	const branch = await execGit(['branch', '--show-current'], repoPath);
-	await execGit(['reset', '--hard', `origin/${branch}`], repoPath);
-}
-
 /**
  * Stage files
  */

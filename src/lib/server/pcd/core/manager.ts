@@ -2,7 +2,15 @@
  * PCD Manager - High-level orchestration for PCD lifecycle
  */
 
-import { Git, clone, type GitStatus, type UpdateInfo } from '$utils/git/index.ts';
+import {
+	checkForUpdates,
+	checkout,
+	clone,
+	getStatus,
+	pull,
+	type GitStatus,
+	type UpdateInfo
+} from '$utils/git/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 import { loadManifest, type Manifest } from '../manifest/manifest.ts';
@@ -148,11 +156,9 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		const git = new Git(instance.local_path);
-
 		try {
 			// Check for updates first
-			const updateInfo = await git.checkForUpdates();
+			const updateInfo = await checkForUpdates(instance.local_path);
 
 			if (!updateInfo.hasUpdates) {
 				// Already up to date
@@ -164,7 +170,7 @@ class PCDManager {
 			}
 
 			// Pull updates
-			await git.pull();
+			await pull(instance.local_path);
 
 			// Sync dependencies (schema, etc.) if versions changed
 			await syncDependencies(instance.local_path);
@@ -218,8 +224,7 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		const git = new Git(instance.local_path);
-		return await git.checkForUpdates();
+		return await checkForUpdates(instance.local_path);
 	}
 
 	/**
@@ -243,9 +248,8 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		const git = new Git(instance.local_path);
-		await git.checkout(branch);
-		await git.pull();
+		await checkout(instance.local_path, branch);
+		await pull(instance.local_path);
 		try {
 			await importBaseOps(id, instance.local_path);
 		} catch (error) {
@@ -266,8 +270,7 @@ class PCDManager {
 			throw new Error(`Database instance ${id} not found`);
 		}
 
-		const git = new Git(instance.local_path);
-		return await git.status();
+		return await getStatus(instance.local_path);
 	}
 
 	/**

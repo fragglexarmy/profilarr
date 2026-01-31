@@ -1,8 +1,4 @@
-/**
- * Git operations for PCD operation files
- */
-
-import { execGitSafe } from './exec.ts';
+import { execGitSafe } from '$utils/git/exec.ts';
 
 /**
  * Get the highest operation number from COMMITTED files in ops/

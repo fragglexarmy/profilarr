@@ -3,7 +3,7 @@
  */
 
 import { execGit, execGitSafe } from './exec.ts';
-import { fetch } from './repo.ts';
+import { fetch } from './write.ts';
 import type { GitStatus, UpdateInfo, Commit, IncomingChanges } from './types.ts';
 
 /**
@@ -115,15 +115,6 @@ export async function checkForUpdates(repoPath: string): Promise<UpdateInfo> {
 }
 
 /**
- * Get the last push timestamp (approximate via remote HEAD)
- */
-export async function getLastPushed(repoPath: string): Promise<string | null> {
-	const branch = await getBranch(repoPath);
-	const output = await execGitSafe(['log', '-1', '--format=%cI', `origin/${branch}`], repoPath);
-	return output || null;
-}
-
-/**
  * Get all local and remote branches
  */
 export async function getBranches(repoPath: string): Promise<string[]> {
@@ -137,23 +128,6 @@ export async function getBranches(repoPath: string): Promise<string[]> {
 		.filter((b, i, arr) => arr.indexOf(b) === i); // dedupe
 
 	return branches;
-}
-
-/**
- * Check if a file is uncommitted (untracked or staged but not yet committed)
- */
-export async function isFileUncommitted(repoPath: string, filepath: string): Promise<boolean> {
-	// Get relative path from repo root
-	const relativePath = filepath.startsWith(repoPath + '/')
-		? filepath.slice(repoPath.length + 1)
-		: filepath;
-
-	const output = await execGitSafe(['status', '--porcelain', relativePath], repoPath);
-	if (!output) return false;
-
-	const status = output.substring(0, 2);
-	// ?? = untracked, A = added (staged), AM = added and modified
-	return status.startsWith('??') || status[0] === 'A';
 }
 
 /**

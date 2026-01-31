@@ -3,7 +3,7 @@
  * Handles cloning and managing PCD dependencies using git tags
  */
 
-import { Git, clone } from '$utils/git/index.ts';
+import { checkout, clone, fetchTags } from '$utils/git/index.ts';
 import { loadManifest } from '../manifest/manifest.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -47,8 +47,7 @@ async function cloneDependency(pcdPath: string, repoUrl: string, version: string
 	await clone(repoUrl, depPath);
 
 	// Checkout the specific version tag
-	const git = new Git(depPath);
-	await git.checkout(version);
+	await checkout(depPath, version);
 
 	// Clean up dependency - keep only .git, ops folder and pcd.json
 	const keepItems = new Set(['.git', 'ops', 'pcd.json']);
@@ -79,9 +78,8 @@ async function getInstalledVersion(pcdPath: string, repoName: string): Promise<s
  * Update a dependency to a new version using fetch + checkout
  */
 async function updateDependency(depPath: string, version: string): Promise<void> {
-	const git = new Git(depPath);
-	await git.fetchTags();
-	await git.checkout(version);
+	await fetchTags(depPath);
+	await checkout(depPath, version);
 }
 
 /**
