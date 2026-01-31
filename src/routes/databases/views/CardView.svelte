@@ -5,6 +5,7 @@
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 	import { parseUTC } from '$shared/utils/dates';
 	import { createEventDispatcher } from 'svelte';
+	import DatabaseAvatar from '../components/DatabaseAvatar.svelte';
 
 	export let databases: DatabaseInstance[];
 
@@ -12,22 +13,7 @@
 		unlink: DatabaseInstance;
 	}>();
 
-	// Track loaded images
-	let loadedImages: Set<number> = new Set();
-
-	// Extract GitHub username/org from repository URL and use local proxy
-	function getGitHubAvatar(repoUrl: string): string {
-		const match = repoUrl.match(/github\.com\/([^\/]+)\//);
-		if (match) {
-			return `/api/github/avatar/${match[1]}`;
-		}
-		return '';
-	}
-
-	function handleImageLoad(id: number) {
-		loadedImages.add(id);
-		loadedImages = loadedImages;
-	}
+	// Avatar handled by DatabaseAvatar component
 
 	// Format sync strategy for display
 	function formatSyncStrategy(minutes: number): string {
@@ -73,21 +59,7 @@
 		>
 			<!-- Top row: Avatar, Name, Action buttons -->
 			<div class="flex items-center gap-3">
-				<div class="relative h-10 w-10 flex-shrink-0">
-					{#if !loadedImages.has(database.id)}
-						<div
-							class="absolute inset-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-700"
-						></div>
-					{/if}
-					<img
-						src={getGitHubAvatar(database.repository_url)}
-						alt="{database.name} avatar"
-						class="h-10 w-10 rounded-lg {loadedImages.has(database.id)
-							? 'opacity-100'
-							: 'opacity-0'}"
-						on:load={() => handleImageLoad(database.id)}
-					/>
-				</div>
+				<DatabaseAvatar name={database.name} repoUrl={database.repository_url} size="md" />
 				<div class="min-w-0 flex-1">
 					<div class="flex items-center gap-2">
 						<span class="truncate font-medium text-neutral-900 dark:text-neutral-100">
