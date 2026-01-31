@@ -213,7 +213,18 @@
 	}
 
 	async function handleCommit() {
-		if (!commitMessage.trim() || selectedChanges.length === 0) return;
+		if (hasIncomingChanges) {
+			alertStore.add('warning', 'Pull incoming changes before exporting.');
+			return;
+		}
+		if (selectedChanges.length === 0) {
+			alertStore.add('warning', 'Select at least one change to export.');
+			return;
+		}
+		if (!commitMessage.trim()) {
+			alertStore.add('warning', 'Commit message required before exporting.');
+			return;
+		}
 		committing = true;
 		try {
 			const opIds = new Set<number>();
@@ -275,7 +286,10 @@
 	}
 
 	function requestDrop() {
-		if (!primaryKeys.length) return;
+		if (!primaryKeys.length) {
+			alertStore.add('warning', 'Select at least one change to drop.');
+			return;
+		}
 		showDropModal = true;
 	}
 
@@ -648,8 +662,6 @@
 								title={committing ? 'Exporting changes' : 'Commit changes'}
 								disabled={
 									hasIncomingChanges ||
-									selectedCount === 0 ||
-									!commitMessage.trim() ||
 									committing
 								}
 								on:click={handleCommit}
@@ -661,7 +673,7 @@
 								icon={Trash2}
 								variant="danger"
 								title="Drop selected changes"
-								disabled={primaryKeys.length === 0 || dropping}
+								disabled={dropping}
 								on:click={requestDrop}
 							/>
 						</div>
