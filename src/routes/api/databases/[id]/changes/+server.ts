@@ -22,11 +22,9 @@ export const GET: RequestHandler = async ({ params }) => {
 		getRepoInfo(database.repository_url, database.personal_access_token)
 	]);
 
-	// Only fetch outgoing changes for developers
-	let uncommittedOps = null;
+	// Only fetch draft changes for developers
 	let draftChanges = null;
 	if (database.personal_access_token) {
-		uncommittedOps = await git.getUncommittedOps();
 		draftChanges = listDraftEntityChanges(id);
 	}
 
@@ -35,7 +33,6 @@ export const GET: RequestHandler = async ({ params }) => {
 		incomingChanges,
 		branches,
 		repoInfo,
-		uncommittedOps,
 		draftChanges
 	});
 };

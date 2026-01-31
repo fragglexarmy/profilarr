@@ -12,20 +12,6 @@ export interface GitStatus {
 	staged: string[];
 }
 
-export interface OperationFile {
-	filename: string;
-	filepath: string;
-	operation: string | null;
-	entity: string | null;
-	name: string | null;
-	previousName: string | null;
-}
-
-export interface CommitResult {
-	success: boolean;
-	error?: string;
-}
-
 export interface UpdateInfo {
 	hasUpdates: boolean;
 	commitsBehind: number;

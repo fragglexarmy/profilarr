@@ -4,8 +4,6 @@
 
 import type {
 	GitStatus,
-	OperationFile,
-	CommitResult,
 	UpdateInfo,
 	Commit,
 	IncomingChanges
@@ -37,9 +35,5 @@ export class Git {
 	getDiff = (filepaths?: string[]): Promise<string> => status.getDiff(this.repoPath, filepaths);
 
 	// Operation file methods
-	getUncommittedOps = (): Promise<OperationFile[]> => ops.getUncommittedOps(this.repoPath);
 	getMaxOpNumber = () => ops.getMaxOpNumber(this.repoPath);
-	discardOps = (filepaths: string[]) => ops.discardOps(this.repoPath, filepaths);
-	addOps = (filepaths: string[], message: string): Promise<CommitResult> =>
-		ops.addOps(this.repoPath, filepaths, message);
 }

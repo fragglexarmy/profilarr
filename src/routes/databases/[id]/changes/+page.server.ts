@@ -2,7 +2,6 @@ import type { PageServerLoad, Actions } from './$types';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
-import { Git } from '$utils/git/index.ts';
 import { logger } from '$logger/logger.ts';
 import { compile, pcdManager } from '$pcd/index.ts';
 import { listDraftEntityChanges } from '$pcd/ops/draftChanges.ts';
@@ -175,96 +174,6 @@ export const actions: Actions = {
 			dropped: result.dropped
 		};
 	},
-	discard: async ({ request, params }) => {
-		const id = parseInt(params.id || '', 10);
-		const database = databaseInstancesQueries.getById(id);
-
-		if (!database) {
-			return { success: false, error: 'Database not found' };
-		}
-
-		const formData = await request.formData();
-		const files = formData.getAll('files') as string[];
-
-		if (files.length === 0) {
-			return { success: false, error: 'No files selected' };
-		}
-
-		const git = new Git(database.local_path);
-		await git.discardOps(files);
-
-		// Recompile cache after discarding changes
-		if (database.enabled) {
-			try {
-				await compile(database.local_path, id);
-			} catch (err) {
-				await logger.error('Failed to recompile cache after discard', {
-					source: 'changes',
-					meta: { databaseId: id, error: String(err) }
-				});
-			}
-		}
-
-		return { success: true };
-	},
-
-	add: async ({ request, params }) => {
-		const id = parseInt(params.id || '', 10);
-		const database = databaseInstancesQueries.getById(id);
-
-		if (!database) {
-			return { success: false, error: 'Database not found' };
-		}
-
-		const formData = await request.formData();
-		const files = formData.getAll('files') as string[];
-		const message = formData.get('message') as string;
-
-		const git = new Git(database.local_path);
-		const result = await git.addOps(files, message);
-
-		if (result.success) {
-			await logger.info('Changes committed and pushed', {
-				source: 'changes',
-				meta: { databaseId: id, files: files.length, message }
-			});
-		} else {
-			await logger.error('Failed to add changes', {
-				source: 'changes',
-				meta: { databaseId: id, error: result.error, files }
-			});
-		}
-
-		return result;
-	},
-
-	checkout: async ({ request, params }) => {
-		const id = parseInt(params.id || '', 10);
-		const database = databaseInstancesQueries.getById(id);
-
-		if (!database) {
-			return { success: false, error: 'Database not found' };
-		}
-
-		const formData = await request.formData();
-		const branch = formData.get('branch') as string;
-
-		if (!branch) {
-			return { success: false, error: 'No branch specified' };
-		}
-
-		try {
-			const git = new Git(database.local_path);
-			await git.checkout(branch);
-			return { success: true };
-		} catch (err) {
-			return {
-				success: false,
-				error: err instanceof Error ? err.message : 'Failed to switch branch'
-			};
-		}
-	},
-
 	pull: async ({ params }) => {
 		const id = parseInt(params.id || '', 10);
 		const database = databaseInstancesQueries.getById(id);
