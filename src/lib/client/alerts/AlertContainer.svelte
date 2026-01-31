@@ -22,9 +22,10 @@
 	$: layoutPaddingClass = isAuthPage
 		? ''
 		: 'pt-16 pb-16 md:pt-0 md:pb-0 md:pl-80';
+	$: mobileVisibilityClass = isAuthPage ? '' : 'hidden md:block';
 </script>
 
-<div class="pointer-events-none fixed inset-0 z-50 {layoutPaddingClass}">
+<div class="pointer-events-none fixed inset-0 z-50 {layoutPaddingClass} {mobileVisibilityClass}">
 	<div class="relative h-full w-full">
 		<div class="{baseClasses} {positionClass}">
 			{#each $alertStore as alert (alert.id)}
