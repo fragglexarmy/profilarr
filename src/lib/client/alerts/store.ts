@@ -1,5 +1,6 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { uuid } from '$shared/utils/uuid';
+import { alertSettingsStore } from './settings';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 
@@ -15,17 +16,19 @@ function createAlertStore() {
 
 	return {
 		subscribe,
-		add: (type: AlertType, message: string, duration = 5000) => {
+		add: (type: AlertType, message: string, duration?: number) => {
+			const settingsDuration = get(alertSettingsStore).durationMs;
+			const resolvedDuration = typeof duration === 'number' ? duration : settingsDuration;
 			const id = uuid();
-			const alert: Alert = { id, type, message, duration };
+			const alert: Alert = { id, type, message, duration: resolvedDuration };
 
 			update((alerts) => [...alerts, alert]);
 
 			// Auto-dismiss after duration
-			if (duration > 0) {
+			if (resolvedDuration > 0) {
 				setTimeout(() => {
 					update((alerts) => alerts.filter((a) => a.id !== id));
-				}, duration);
+				}, resolvedDuration);
 			}
 
 			return id;

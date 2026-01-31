@@ -55,6 +55,12 @@ export const actions: Actions = {
 				values: { name }
 			});
 		}
+		if (personalAccessToken && (!gitUserName || !gitUserEmail)) {
+			return fail(400, {
+				error: 'Git author name and email are required when a personal access token is set',
+				values: { name }
+			});
+		}
 
 		// Check if name already exists (excluding current instance)
 		if (databaseInstancesQueries.nameExists(name, id)) {

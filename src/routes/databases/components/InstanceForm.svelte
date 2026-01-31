@@ -60,6 +60,7 @@
 	$: syncStrategy = ($current.syncStrategy ?? '60') as string;
 	$: autoPull = ($current.autoPull ?? 'true') as string;
 	$: showGitIdentity = !!personalAccessToken || (mode === 'edit' && !!instance?.personal_access_token);
+	$: requiresGitIdentity = !!personalAccessToken;
 
 	// UI state
 	let saving = false;
@@ -98,6 +99,10 @@
 			alertStore.add('error', 'Repository URL is required');
 			return;
 		}
+		if (requiresGitIdentity && (!gitUserName || !gitUserEmail)) {
+			alertStore.add('error', 'Git author name and email are required when a personal access token is set.');
+			return;
+		}
 
 		saving = true;
 		const saveForm = document.getElementById('save-form');
@@ -106,7 +111,11 @@
 		}
 	}
 
-	$: canSubmit = $isDirty && !!name && (mode === 'edit' || !!repositoryUrl);
+	$: canSubmit =
+		$isDirty &&
+		!!name &&
+		(mode === 'edit' || !!repositoryUrl) &&
+		(!requiresGitIdentity || (!!gitUserName && !!gitUserEmail));
 
 	// Handle form response
 	let lastFormId: unknown = null;
@@ -228,6 +237,7 @@
 				value={gitUserName}
 				placeholder="e.g., Jane Doe"
 				description="Used for commits when exporting changes to Git."
+				required={requiresGitIdentity}
 				on:input={(e) => update('gitUserName', e.detail)}
 			/>
 			<FormInput
@@ -237,6 +247,7 @@
 				value={gitUserEmail}
 				placeholder="jane@example.com"
 				description="Used for commits when exporting changes to Git."
+				required={requiresGitIdentity}
 				on:input={(e) => update('gitUserEmail', e.detail)}
 			/>
 		{/if}

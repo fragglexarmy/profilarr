@@ -1,12 +1,37 @@
 <script lang="ts">
 	import { alertStore } from './store';
 	import Alert from './Alert.svelte';
+	import { alertSettingsStore, type AlertPosition } from './settings';
+	import { page } from '$app/stores';
+
+	const positionClasses: Record<AlertPosition, string> = {
+		'top-left': 'top-4 left-4',
+		'top-center': 'top-4 left-1/2 -translate-x-1/2',
+		'top-right': 'top-4 right-4',
+		'bottom-left': 'bottom-4 left-4',
+		'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+		'bottom-right': 'bottom-4 right-4'
+	};
+
+	const baseClasses =
+		'pointer-events-none absolute flex w-[calc(100%-2rem)] max-w-md flex-col gap-3';
+
+	$: positionClass =
+		positionClasses[$alertSettingsStore.position] ?? positionClasses['top-right'];
+	$: isAuthPage = $page.url.pathname.startsWith('/auth/');
+	$: layoutPaddingClass = isAuthPage
+		? ''
+		: 'pt-16 pb-16 md:pt-0 md:pb-0 md:pl-80';
 </script>
 
-<div class="pointer-events-none fixed top-4 left-4 right-4 z-50 mx-auto flex max-w-md flex-col gap-3 md:left-auto md:mx-0">
-	{#each $alertStore as alert (alert.id)}
-		<div class="pointer-events-auto">
-			<Alert id={alert.id} type={alert.type} message={alert.message} />
+<div class="pointer-events-none fixed inset-0 z-50 {layoutPaddingClass}">
+	<div class="relative h-full w-full">
+		<div class="{baseClasses} {positionClass}">
+			{#each $alertStore as alert (alert.id)}
+				<div class="pointer-events-auto">
+					<Alert id={alert.id} type={alert.type} message={alert.message} />
+				</div>
+			{/each}
 		</div>
-	{/each}
+	</div>
 </div>

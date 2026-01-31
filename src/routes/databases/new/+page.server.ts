@@ -53,6 +53,18 @@ export const actions = {
 				values: { name, repository_url: repositoryUrl }
 			});
 		}
+		if (personalAccessToken && (!gitUserName || !gitUserEmail)) {
+			return fail(400, {
+				error: 'Git author name and email are required when a personal access token is set',
+				values: {
+					name,
+					repository_url: repositoryUrl,
+					branch: branch ?? '',
+					git_user_name: gitUserName ?? '',
+					git_user_email: gitUserEmail ?? ''
+				}
+			});
+		}
 
 		// Check for common non-GitHub URLs and redirect to bruh page
 		const bruhParams = new URLSearchParams({

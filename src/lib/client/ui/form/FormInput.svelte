@@ -18,6 +18,9 @@
 	const dispatch = createEventDispatcher<{ input: string }>();
 
 	$: fontClass = mono ? 'font-mono' : '';
+	$: readonlyClass = readonly
+		? 'bg-neutral-100 text-neutral-500 cursor-not-allowed dark:bg-neutral-800/40 dark:text-neutral-500'
+		: 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600';
 
 	let showPassword = false;
 
@@ -63,7 +66,7 @@
 				readonly={readonly}
 				oninput={handleInput}
 				autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-				class="block w-full rounded-xl border border-neutral-300 px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {fontClass} {readonly ? 'bg-white cursor-default dark:bg-neutral-800/50' : 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600'}"
+				class="block w-full rounded-xl border border-neutral-300 px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {fontClass} {readonlyClass}"
 			/>
 			<button
 				type="button"
@@ -88,7 +91,7 @@
 			readonly={readonly}
 			oninput={handleInput}
 			autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-			class="block w-full rounded-xl border border-neutral-300 px-3 py-2 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {fontClass} {readonly ? 'bg-white cursor-default dark:bg-neutral-800/50' : 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600'}"
+			class="block w-full rounded-xl border border-neutral-300 px-3 py-2 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {fontClass} {readonlyClass}"
 		/>
 	{/if}
 </div>

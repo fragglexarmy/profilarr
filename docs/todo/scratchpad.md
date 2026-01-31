@@ -6,14 +6,15 @@
 - rethink job polling architecture
 - adding a database requires double click??? im not running into this personally
 - set auth settings using GUI, not env vars
-- change auto link to actual db
 - lock fields on database edit so link cant be changed after linked
-- persist search when going back to list page
 - move alert to different position so it doesnt cover save buttons, maybe have
   settings for position - top right, top middle, bottom right, etc. alert
   duration. themes? turn off completely?
-- make it clearer that commit message must be entered bef
-- add git identity to database config
+- add transactions to ops export so that aborted files can be cleaned up
+- announcement system - push to website, profilarr polls for announcements
+- change wording/logs for pcd exports
+- database icons cached from github sometimes gets stuck and requires a route
+  change back and forth to fix itself
 
 # Adaptive Backoff
 
