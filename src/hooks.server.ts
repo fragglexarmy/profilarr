@@ -39,11 +39,10 @@ await pcdManager.initialize();
 // Auto-link default database on first startup (only once)
 if (!setupStateQueries.isDefaultDatabaseLinked()) {
 	try {
-		// TODO: Update to https://github.com/Dictionarry-Hub/database when ready
 		await pcdManager.link({
 			name: 'Dictionarry',
-			repositoryUrl: 'https://github.com/Dictionarry-Hub/db',
-			branch: undefined,
+			repositoryUrl: 'https://github.com/Dictionarry-Hub/database',
+			branch: 'v2',
 			syncStrategy: 60,
 			autoPull: true,
 			personalAccessToken: undefined
