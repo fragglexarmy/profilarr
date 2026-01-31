@@ -57,7 +57,8 @@
 	// Initialize data page store (we'll use search and view, but do our own filtering)
 	const { search, view, setItems } = createDataPageStore(data.customFormats, {
 		storageKey: 'customFormatsView',
-		searchKeys: ['name'] // Placeholder, we do our own filtering
+		searchKeys: ['name'], // Placeholder, we do our own filtering
+		searchKey: `customFormatsSearch:${data.currentDatabase.id}`
 	});
 
 	// Extract the debounced query store for reactive access

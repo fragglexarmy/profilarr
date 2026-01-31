@@ -19,7 +19,8 @@
 	// Initialize data page store
 	const { search, view, filtered, setItems } = createDataPageStore(data.delayProfiles, {
 		storageKey: 'delayProfilesView',
-		searchKeys: ['name']
+		searchKeys: ['name'],
+		searchKey: `delayProfilesSearch:${data.currentDatabase.id}`
 	});
 
 	// Update items when data changes (e.g., switching databases)

@@ -218,7 +218,8 @@
 	// Initialize data page store
 	const { search, filtered, setItems } = createDataPageStore(data.testEntities, {
 		storageKey: 'entityTestingView',
-		searchKeys: ['title']
+		searchKeys: ['title'],
+		searchKey: `entityTestingSearch:${data.currentDatabase.id}`
 	});
 
 	// Update items when data changes (e.g., switching databases)

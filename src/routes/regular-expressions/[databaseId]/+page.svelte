@@ -61,7 +61,8 @@
 	// Initialize data page store (we'll use search and view, but do our own filtering)
 	const { search, view, setItems } = createDataPageStore(data.regularExpressions, {
 		storageKey: 'regularExpressionsView',
-		searchKeys: ['name'] // Placeholder, we do our own filtering
+		searchKeys: ['name'], // Placeholder, we do our own filtering
+		searchKey: `regularExpressionsSearch:${data.currentDatabase.id}`
 	});
 
 	// Extract the debounced query store for reactive access

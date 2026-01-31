@@ -15,7 +15,8 @@
 	// Initialize data page store
 	const { search, view, filtered, setItems } = createDataPageStore(data.qualityDefinitionsConfigs, {
 		storageKey: 'qualityDefinitionsView',
-		searchKeys: ['name']
+		searchKeys: ['name'],
+		searchKey: `qualityDefinitionsConfigsSearch:${data.currentDatabase.id}`
 	});
 
 	// Update items when data changes

@@ -3,6 +3,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
+import { browser } from '$app/environment';
 
 export interface SearchState {
 	query: string;
@@ -14,6 +15,8 @@ export interface SearchStoreConfig {
 	debounceMs?: number;
 	caseSensitive?: boolean;
 }
+
+const persistentStores = new Map<string, SearchStore>();
 
 export function createSearchStore(config: SearchStoreConfig = {}) {
 	const { debounceMs = 300, caseSensitive = false } = config;
@@ -139,3 +142,26 @@ export function createSearchStore(config: SearchStoreConfig = {}) {
 }
 
 export type SearchStore = ReturnType<typeof createSearchStore>;
+
+export function getPersistentSearchStore(key: string, config: SearchStoreConfig = {}): SearchStore {
+	const existing = persistentStores.get(key);
+	if (existing) return existing;
+
+	const store = createSearchStore(config);
+	if (browser) {
+		const saved = localStorage.getItem(key);
+		if (saved) {
+			store.setQuery(saved);
+		}
+		store.subscribe((state) => {
+			if (state.query) {
+				localStorage.setItem(key, state.query);
+			} else {
+				localStorage.removeItem(key);
+			}
+		});
+	}
+
+	persistentStores.set(key, store);
+	return store;
+}

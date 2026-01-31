@@ -5,7 +5,7 @@
 
 import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
-import { createSearchStore, type SearchStore } from './search.ts';
+import { createSearchStore, getPersistentSearchStore, type SearchStore } from './search.ts';
 
 export type ViewMode = 'table' | 'cards';
 
@@ -18,6 +18,10 @@ export interface DataPageConfig<T> {
 	defaultView?: ViewMode;
 	/** Debounce time for search in ms */
 	debounceMs?: number;
+	/** Optional persistent search key */
+	searchKey?: string;
+	/** Optional external search store */
+	searchStore?: SearchStore;
 }
 
 export interface DataPageStore<T> {
@@ -55,7 +59,11 @@ export function createDataPageStore<T>(
 	const items = writable<T[]>(initialItems);
 
 	// Search store
-	const search = createSearchStore({ debounceMs });
+	const search =
+		config.searchStore ??
+		(config.searchKey
+			? getPersistentSearchStore(config.searchKey, { debounceMs })
+			: createSearchStore({ debounceMs }));
 
 	// Determine initial view: localStorage > mobile detection > defaultView
 	const storedView = browser ? (localStorage.getItem(storageKey) as ViewMode | null) : null;

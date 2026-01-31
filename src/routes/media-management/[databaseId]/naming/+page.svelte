@@ -15,7 +15,8 @@
 	// Initialize data page store
 	const { search, view, filtered, setItems } = createDataPageStore(data.namingConfigs, {
 		storageKey: 'namingSettingsView',
-		searchKeys: ['name']
+		searchKeys: ['name'],
+		searchKey: `namingConfigsSearch:${data.currentDatabase.id}`
 	});
 
 	// Update items when data changes
