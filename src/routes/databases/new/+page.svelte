@@ -10,6 +10,6 @@
 	<title>Link Database - Profilarr</title>
 </svelte:head>
 
-<div class="p-8">
+<div class="p-4 md:p-8">
 	<InstanceForm mode="create" {form} {data} />
 </div>
