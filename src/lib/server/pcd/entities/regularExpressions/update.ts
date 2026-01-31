@@ -172,10 +172,10 @@ export async function update(options: UpdateRegularExpressionOptions) {
 	}
 
 	const rawCurrentDescription = current.description;
-	const normalizedCurrentDescription = rawCurrentDescription ?? '';
+	const normalizedCurrentDescription = rawCurrentDescription?.trim() ?? '';
 	const normalizedNextDescription = input.description?.trim() ?? '';
 	const rawCurrentRegex101Id = current.regex101_id;
-	const normalizedCurrentRegex101Id = rawCurrentRegex101Id ?? '';
+	const normalizedCurrentRegex101Id = rawCurrentRegex101Id?.trim() ?? '';
 	const normalizedNextRegex101Id = input.regex101Id?.trim() ?? '';
 	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
 	const regex101Changed = normalizedCurrentRegex101Id !== normalizedNextRegex101Id;
