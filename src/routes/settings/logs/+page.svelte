@@ -6,7 +6,7 @@
 	import Table from '$ui/table/Table.svelte';
 	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
-	import type { Column } from '$ui/table/types';
+	import type { Column, SortDirection, SortState } from '$ui/table/types';
 	import LogsActionsBar from './components/LogsActionsBar.svelte';
 	import { createSearchStore } from '$lib/client/stores/search';
 	import { invalidateAll } from '$app/navigation';
@@ -33,6 +33,7 @@
 	// Pagination state
 	let currentPage = 1;
 	let itemsPerPage = 100;
+	let sortState: SortState | null = { key: 'timestamp', direction: 'desc' };
 
 	// Extract unique sources from logs (excluding 'ALL' since empty set means all)
 	$: uniqueSources = [...new Set(data.logs.map((log) => log.source).filter(Boolean))] as string[];
@@ -175,16 +176,83 @@
 		return true;
 	});
 
+	function getCellValue(row: LogEntry, key: string): unknown {
+		return key.split('.').reduce((obj, k) => (obj as Record<string, unknown> | undefined)?.[k], row);
+	}
+
+	function compareValues(a: unknown, b: unknown): number {
+		if (a == null && b == null) return 0;
+		if (a == null) return -1;
+		if (b == null) return 1;
+
+		if (typeof a === 'number' && typeof b === 'number') {
+			return a - b;
+		}
+
+		if (a instanceof Date && b instanceof Date) {
+			return a.getTime() - b.getTime();
+		}
+
+		return String(a).localeCompare(String(b));
+	}
+
+	function getSortValue(row: LogEntry, column: Column<LogEntry>) {
+		if (column.sortAccessor) {
+			return column.sortAccessor(row);
+		}
+		return getCellValue(row, column.key);
+	}
+
+	function sortLogs(
+		rows: LogEntry[],
+		state: SortState | null,
+		fallbackDirection: SortDirection
+	): LogEntry[] {
+		const baseSorted = [...rows].sort(
+			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+		);
+
+		if (!state) {
+			return baseSorted;
+		}
+
+		if (state.key === 'timestamp' && state.direction === fallbackDirection) {
+			return baseSorted;
+		}
+
+		const column = columns.find((col) => col.key === state.key);
+		if (!column) {
+			return baseSorted;
+		}
+
+		const sorted = [...rows].sort((a, b) => {
+			if (column.sortComparator) {
+				return column.sortComparator(a, b);
+			}
+
+			const aValue = getSortValue(a, column);
+			const bValue = getSortValue(b, column);
+			return compareValues(aValue, bValue);
+		});
+
+		return state.direction === 'desc' ? sorted.reverse() : sorted;
+	}
+
+	const defaultSortDirection: SortDirection = 'desc';
+
+	// Sorted ordering for pagination and display
+	$: sortedLogs = sortLogs(filteredLogs, sortState, defaultSortDirection);
+
 	// Reset to page 1 when filters change
 	$: if (selectedLevel || selectedSources || $searchStore.query) {
 		currentPage = 1;
 	}
 
 	// Pagination computed values
-	$: totalPages = Math.max(1, Math.ceil(filteredLogs.length / itemsPerPage));
+	$: totalPages = Math.max(1, Math.ceil(sortedLogs.length / itemsPerPage));
 	$: startIndex = (currentPage - 1) * itemsPerPage;
-	$: endIndex = Math.min(startIndex + itemsPerPage, filteredLogs.length);
-	$: paginatedLogs = filteredLogs.slice(startIndex, endIndex);
+	$: endIndex = Math.min(startIndex + itemsPerPage, sortedLogs.length);
+	$: paginatedLogs = sortedLogs.slice(startIndex, endIndex);
 
 	// Ensure currentPage stays within bounds when itemsPerPage changes
 	$: if (currentPage > totalPages) {
@@ -201,6 +269,11 @@
 		if (currentPage < totalPages) {
 			currentPage++;
 		}
+	}
+
+	function handleSortChange(nextSort: SortState | null) {
+		sortState = nextSort;
+		currentPage = 1;
 	}
 </script>
 
@@ -274,7 +347,8 @@
 		hoverable={true}
 		compact={true}
 		responsive
-		initialSort={{ key: 'timestamp', direction: 'desc' }}
+		initialSort={{ key: 'timestamp', direction: defaultSortDirection }}
+		onSortChange={handleSortChange}
 	>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
