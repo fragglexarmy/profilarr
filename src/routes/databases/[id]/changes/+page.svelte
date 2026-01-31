@@ -269,16 +269,17 @@
 			if (isSuccess) {
 				const droppedCount = result?.data?.dropped ?? opIds.size;
 				const filename = result?.data?.filename;
+				const noun = droppedCount === 1 ? 'change' : 'changes';
 				const label = filename ? ` (${filename})` : '';
-				alertStore.add('success', `Exported ${droppedCount} ops${label}`);
+				alertStore.add('success', `Exported and pushed ${droppedCount} ${noun}${label}`);
 				await fetchChanges();
 				commitMessage = '';
 				primarySelected = new Set();
 			} else {
-				const message =
+				const detail =
 					errorMessage ||
-					`Failed to export changes${response.ok ? '' : ` (HTTP ${response.status})`}`;
-				alertStore.add('error', message);
+					`HTTP ${response.status}`;
+				alertStore.add('error', `Export failed: ${detail}`);
 			}
 		} finally {
 			committing = false;
@@ -349,10 +350,10 @@
 				alertStore.add('success', `Dropped ${droppedCount} ops`);
 				await fetchChanges();
 			} else {
-				const message =
+				const detail =
 					errorMessage ||
-					`Failed to drop changes${response.ok ? '' : ` (HTTP ${response.status})`}`;
-				alertStore.add('error', message);
+					`HTTP ${response.status}`;
+				alertStore.add('error', `Drop failed: ${detail}`);
 			}
 		} finally {
 			dropping = false;
@@ -382,7 +383,7 @@
 				const commits = result.data?.commitsBehind || incomingChanges?.commitsBehind || 0;
 				alertStore.add('success', `Pulled ${commits} commit${commits === 1 ? '' : 's'}`);
 			} else {
-				alertStore.add('error', errorMsg || 'Failed to pull changes');
+				alertStore.add('error', `Pull failed: ${errorMsg || 'Unknown error'}`);
 			}
 
 			await fetchChanges();

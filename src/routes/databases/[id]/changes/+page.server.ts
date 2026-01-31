@@ -1,3 +1,4 @@
+import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
@@ -164,7 +165,7 @@ export const actions: Actions = {
 
 		const result = await exportDraftOps(id, opIds, message);
 		if (!result.success) {
-			return result;
+			return fail(500, { error: result.error || 'Failed to export changes' });
 		}
 
 		return {
