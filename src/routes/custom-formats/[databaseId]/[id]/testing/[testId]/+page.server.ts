@@ -61,6 +61,9 @@ export const actions: Actions = {
 		if (isNaN(currentDatabaseId)) {
 			return fail(400, { error: 'Invalid parameters' });
 		}
+		if (!canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Entity tests are read-only for this database' });
+		}
 
 		const cache = pcdManager.getCache(currentDatabaseId);
 		if (!cache) {
@@ -142,6 +145,9 @@ export const actions: Actions = {
 
 		if (isNaN(currentDatabaseId)) {
 			return fail(400, { error: 'Invalid parameters' });
+		}
+		if (!canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Entity tests are read-only for this database' });
 		}
 
 		const cache = pcdManager.getCache(currentDatabaseId);

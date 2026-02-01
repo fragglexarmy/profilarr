@@ -145,6 +145,9 @@ export const actions: Actions = {
 		if (isNaN(currentDatabaseId)) {
 			return fail(400, { error: 'Invalid database ID' });
 		}
+		if (!canWriteToBase(currentDatabaseId)) {
+			return fail(403, { error: 'Entity tests are read-only for this database' });
+		}
 
 		const cache = pcdManager.getCache(currentDatabaseId);
 		if (!cache) {

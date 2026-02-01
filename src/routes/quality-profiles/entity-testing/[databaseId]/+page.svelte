@@ -40,6 +40,11 @@
 		fetchedEntityIds = new Set();
 		expandedRows = new Set();
 	}
+	const readOnlyMessage = 'Entity tests are read-only for this database.';
+
+	function notifyReadOnly() {
+		alertStore.add('info', readOnlyMessage);
+	}
 
 	// Persist selected database tab
 	$: if (browser && data.currentDatabase?.id) {
@@ -248,6 +253,10 @@
 
 	// Entity delete handlers
 	function handleConfirmDelete(e: CustomEvent<{ entity: TestEntity; formRef: HTMLFormElement }>) {
+		if (!data.canWriteToBase) {
+			notifyReadOnly();
+			return;
+		}
 		entityToDelete = e.detail.entity;
 		deleteFormRef = e.detail.formRef;
 		showDeleteModal = true;
@@ -274,6 +283,10 @@
 	function handleAddRelease(
 		e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number }>
 	) {
+		if (!data.canWriteToBase) {
+			notifyReadOnly();
+			return;
+		}
 		releaseEntityType = e.detail.entityType;
 		releaseEntityTmdbId = e.detail.entityTmdbId;
 		releaseModalMode = 'create';
@@ -284,6 +297,10 @@
 	function handleEditRelease(
 		e: CustomEvent<{ entityType: 'movie' | 'series'; entityTmdbId: number; release: TestRelease }>
 	) {
+		if (!data.canWriteToBase) {
+			notifyReadOnly();
+			return;
+		}
 		releaseEntityType = e.detail.entityType;
 		releaseEntityTmdbId = e.detail.entityTmdbId;
 		releaseModalMode = 'edit';
@@ -295,6 +312,10 @@
 	function handleConfirmDeleteRelease(
 		e: CustomEvent<{ release: TestRelease; formRef: HTMLFormElement }>
 	) {
+		if (!data.canWriteToBase) {
+			notifyReadOnly();
+			return;
+		}
 		releaseToDelete = e.detail.release;
 		deleteReleaseFormRef = e.detail.formRef;
 		showDeleteReleaseModal = true;
@@ -319,6 +340,10 @@
 
 	// Import releases handler
 	function handleImportReleases(e: CustomEvent<{ entity: TestEntity }>) {
+		if (!data.canWriteToBase) {
+			notifyReadOnly();
+			return;
+		}
 		importEntity = e.detail.entity;
 		showImportModal = true;
 	}
@@ -335,7 +360,7 @@
 	<!-- Actions Bar -->
 	<ActionsBar className="w-full justify-center md:w-full md:mx-auto">
 		<SearchAction searchStore={search} placeholder={searchPlaceholder} responsive />
-		<ActionButton icon={Plus} on:click={() => (showAddModal = true)} />
+		<ActionButton icon={Plus} on:click={() => (data.canWriteToBase ? (showAddModal = true) : notifyReadOnly())} />
 		<ActionButton
 			icon={Sliders}
 			hasDropdown={true}

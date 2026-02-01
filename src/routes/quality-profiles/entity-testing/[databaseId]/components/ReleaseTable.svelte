@@ -330,7 +330,6 @@
 		{/key}
 	{/if}
 
-	<!-- Clickable add row -->
 	<button
 		type="button"
 		on:click={() => dispatch('add', { entityType, entityTmdbId })}

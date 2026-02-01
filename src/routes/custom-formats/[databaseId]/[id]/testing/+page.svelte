@@ -13,8 +13,16 @@
 	import type { PageData } from './$types';
 	import type { TestWithResult } from './+page.server';
 	import { clear } from '$lib/client/stores/dirty';
+	import { alertStore } from '$lib/client/alerts/store';
 
 	export let data: PageData;
+	let readOnly = false;
+
+	const readOnlyMessage = 'Entity tests are read-only for this database.';
+
+	function notifyReadOnly() {
+		alertStore.add('info', readOnlyMessage);
+	}
 
 	// Clear dirty state - this is a read-only listing page
 	clear();
@@ -51,7 +59,13 @@
 		}
 	];
 
+	$: readOnly = !data.canWriteToBase;
+
 	function handleAddTest() {
+		if (readOnly) {
+			notifyReadOnly();
+			return;
+		}
 		goto(`/custom-formats/${$page.params.databaseId}/${$page.params.id}/testing/new`);
 	}
 
@@ -536,10 +550,15 @@
 						icon={Pencil}
 						title="Edit test case"
 						variant="accent"
-						on:click={() =>
+						on:click={() => {
+							if (readOnly) {
+								notifyReadOnly();
+								return;
+							}
 							goto(
 								`/custom-formats/${$page.params.databaseId}/${$page.params.id}/testing/edit?title=${encodeURIComponent(row.title)}&type=${encodeURIComponent(row.type)}`
-							)}
+							);
+						}}
 					/>
 					<form method="POST" action="?/delete" use:enhance>
 						<input type="hidden" name="testTitle" value={row.title} />
@@ -551,6 +570,10 @@
 							title="Delete test case"
 							variant="danger"
 							on:click={(e) => {
+								if (readOnly) {
+									notifyReadOnly();
+									return;
+								}
 								const form = (e.currentTarget as HTMLElement | null)?.closest('form');
 								if (form) handleDeleteClick(row, form);
 							}}
