@@ -2,16 +2,72 @@ import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import { logger } from '$logger/logger.ts';
-import { pull, stage, commit, push, configureIdentity } from '$utils/git/write.ts';
+import { stage, commit, configureIdentity } from '$utils/git/write.ts';
+import { execGit } from '$utils/git/exec.ts';
+import { getBranch, getStatus } from '$utils/git/read.ts';
 import { compile } from '../database/compiler.ts';
 import { canWriteToBase } from './writer.ts';
 import { listDraftEntityChanges } from './draftChanges.ts';
 import { uuid } from '$shared/utils/uuid.ts';
 import { getMaxOpNumber } from '$pcd/utils/git.ts';
+import { loadManifest } from '$pcd/manifest/manifest.ts';
 
 type ExportResult =
 	| { success: true; filename: string; opId: number; dropped: number }
 	| { success: false; error: string };
+
+type ExportPreflightChecks = {
+	repoExists: boolean;
+	manifestValid: boolean;
+	remoteReachable: boolean;
+	clean: boolean;
+	upToDate: boolean;
+	ahead: number;
+	behind: number;
+	identitySet: boolean;
+	canWriteToBase: boolean;
+	branch: string | null;
+};
+
+type ExportPreflightStatus = Awaited<ReturnType<typeof getStatus>>;
+
+type ExportPreflight = {
+	ok: boolean;
+	errors: string[];
+	checks: ExportPreflightChecks;
+	status?: ExportPreflightStatus;
+};
+
+type ExportPlan = {
+	filename: string;
+	filepath: string;
+	fileContent: string;
+	dbSql: string;
+	metadataJson: string;
+	contentHash: string;
+	opIds: number[];
+	exportedAt: string;
+	opNumber: number;
+	ops: Array<NonNullable<ReturnType<typeof pcdOpsQueries.getById>>>;
+};
+
+type ExportPreview = {
+	ok: boolean;
+	errors: string[];
+	checks: ExportPreflightChecks;
+	status?: ExportPreflightStatus;
+	filename?: string;
+	filepath?: string;
+	content?: string;
+	contentHash?: string;
+	opIds?: number[];
+	opCount?: number;
+	exportedAt?: string;
+	commitMessage?: string;
+	gitIdentity?: { name: string; email: string };
+};
+
+type PreviewResult = { success: true; preview: ExportPreview } | { success: false; error: string };
 
 type ParsedMetadata = {
 	operation?: string;
@@ -19,6 +75,20 @@ type ParsedMetadata = {
 	name?: string;
 	group_id?: string;
 };
+
+const ALLOWED_UNTRACKED_PREFIXES = ['deps/'];
+
+function isCleanEnough(status: ExportPreflightStatus): boolean {
+	const onlyAllowedUntracked =
+		status.untracked.length > 0 &&
+		status.modified.length === 0 &&
+		status.staged.length === 0 &&
+		status.untracked.every((entry) =>
+			ALLOWED_UNTRACKED_PREFIXES.some((prefix) => entry.startsWith(prefix))
+		);
+
+	return !status.isDirty || onlyAllowedUntracked;
+}
 
 function slugify(value: string): string {
 	const slug = value
@@ -92,34 +162,142 @@ function buildChangeMaps(databaseId: number) {
 	return { changes, changeByKey, changeByOpId, groupMap };
 }
 
-export async function exportDraftOps(
-	databaseId: number,
-	opIds: number[],
-	message: string
-): Promise<ExportResult> {
+function buildRemoteUrl(repositoryUrl: string, personalAccessToken?: string | null): string {
+	if (!personalAccessToken) return repositoryUrl;
+	if (!repositoryUrl.startsWith('https://github.com')) return repositoryUrl;
+	return repositoryUrl.replace('https://github.com', `https://${personalAccessToken}@github.com`);
+}
+
+async function fetchRemoteBranch(
+	repoPath: string,
+	remoteUrl: string,
+	branch: string
+): Promise<void> {
+	await execGit(
+		['fetch', '--quiet', remoteUrl, `${branch}:refs/remotes/origin/${branch}`],
+		repoPath
+	);
+}
+
+async function getAheadBehind(
+	repoPath: string,
+	branch: string
+): Promise<{ ahead: number; behind: number }> {
+	const output = await execGit(
+		['rev-list', '--left-right', '--count', `origin/${branch}...HEAD`],
+		repoPath
+	);
+	const parts = output.split('\t').map((value) => parseInt(value, 10) || 0);
+	return {
+		behind: parts[0] || 0,
+		ahead: parts[1] || 0
+	};
+}
+
+async function runPreflight(databaseId: number): Promise<ExportPreflight> {
 	const database = databaseInstancesQueries.getById(databaseId);
+	const checks: ExportPreflightChecks = {
+		repoExists: false,
+		manifestValid: false,
+		remoteReachable: false,
+		clean: false,
+		upToDate: false,
+		ahead: 0,
+		behind: 0,
+		identitySet: false,
+		canWriteToBase: false,
+		branch: null
+	};
+	const errors: string[] = [];
+	let status: ExportPreflightStatus | undefined = undefined;
+
 	if (!database) {
-		return { success: false, error: 'Database not found' };
+		return {
+			ok: false,
+			errors: ['Database not found'],
+			checks,
+			status
+		};
 	}
 
-	if (!canWriteToBase(databaseId)) {
-		return { success: false, error: 'This database cannot publish changes.' };
+	checks.canWriteToBase = canWriteToBase(databaseId);
+	if (!checks.canWriteToBase) {
+		errors.push('This database cannot publish changes.');
 	}
 
 	const gitUserName = database.git_user_name?.trim() ?? '';
 	const gitUserEmail = database.git_user_email?.trim() ?? '';
-	if (!gitUserName || !gitUserEmail) {
-		return {
-			success: false,
-			error: 'Git author name and email are required to export changes.'
-		};
+	if (gitUserName && gitUserEmail) {
+		checks.identitySet = true;
+	} else {
+		errors.push('Git author name and email are required to export changes.');
 	}
 
-	const trimmedMessage = message.trim();
-	if (!trimmedMessage) {
-		return { success: false, error: 'Commit message is required' };
+	try {
+		await Deno.stat(database.local_path);
+		checks.repoExists = true;
+	} catch {
+		errors.push('Repository not found on disk.');
 	}
 
+	if (!checks.repoExists) {
+		return { ok: false, errors, checks, status };
+	}
+
+	try {
+		await loadManifest(database.local_path);
+		checks.manifestValid = true;
+	} catch (error) {
+		errors.push(
+			error instanceof Error ? error.message : 'Manifest validation failed.'
+		);
+	}
+
+	try {
+		const branch = await getBranch(database.local_path);
+		checks.branch = branch || null;
+		if (!branch) {
+			errors.push('Repository is not on a branch.');
+		} else {
+			const remoteUrl = buildRemoteUrl(
+				database.repository_url,
+				database.personal_access_token
+			);
+			await fetchRemoteBranch(database.local_path, remoteUrl, branch);
+			checks.remoteReachable = true;
+
+			status = await getStatus(database.local_path);
+			const { ahead, behind } = await getAheadBehind(database.local_path, branch);
+			status = { ...status, ahead, behind };
+			checks.ahead = ahead;
+			checks.behind = behind;
+
+			checks.clean = isCleanEnough(status);
+			if (!checks.clean) {
+				errors.push('Repository has uncommitted changes.');
+			}
+
+			checks.upToDate = ahead === 0 && behind === 0;
+			if (behind > 0) {
+				errors.push(`Repository is behind remote by ${behind} commit${behind === 1 ? '' : 's'}.`);
+			}
+			if (ahead > 0) {
+				errors.push(`Repository has ${ahead} unpushed commit${ahead === 1 ? '' : 's'}.`);
+			}
+		}
+	} catch (error) {
+		errors.push('Failed to reach remote repository.');
+	}
+
+	return {
+		ok: errors.length === 0,
+		errors,
+		checks,
+		status
+	};
+}
+
+function resolveSelectedOps(databaseId: number, opIds: number[]) {
 	const { changeByKey, changeByOpId, groupMap } = buildChangeMaps(databaseId);
 	const selectedKeys = new Set<string>();
 	for (const opId of opIds) {
@@ -128,7 +306,7 @@ export async function exportDraftOps(
 	}
 
 	if (selectedKeys.size === 0) {
-		return { success: false, error: 'No draft operations selected' };
+		return { ops: [], selectedKeys };
 	}
 
 	const queue = Array.from(selectedKeys);
@@ -176,16 +354,37 @@ export async function exportDraftOps(
 		.filter((op): op is NonNullable<typeof op> => !!op)
 		.sort((a, b) => (a.sequence ?? a.id) - (b.sequence ?? b.id));
 
+	return { ops, selectedKeys };
+}
+
+async function buildExportPlan(
+	databaseId: number,
+	opIds: number[],
+	message: string,
+	repoPath: string,
+	exportedAtOverride?: string | null
+): Promise<{ success: true; plan: ExportPlan } | { success: false; error: string }> {
+	const trimmedMessage = message.trim();
+	if (!trimmedMessage) {
+		return { success: false, error: 'Commit message is required' };
+	}
+
+	const { ops } = resolveSelectedOps(databaseId, opIds);
 	if (ops.length === 0) {
 		return { success: false, error: 'No draft operations selected' };
 	}
 
-	const exportedAt = new Date().toISOString();
-	const header = buildHeader(trimmedMessage, ops.map((op) => op.id), exportedAt);
+	const fallbackTimestamp = new Date().toISOString();
+	const exportedAt =
+		exportedAtOverride && !Number.isNaN(Date.parse(exportedAtOverride))
+			? new Date(exportedAtOverride).toISOString()
+			: fallbackTimestamp;
+	const opIdList = ops.map((op) => op.id);
+	const header = buildHeader(trimmedMessage, opIdList, exportedAt);
 	const body = ops.map((op) => formatOpBlock(op)).join('\n\n');
 	const fileContent = `${header}\n\n${body}\n`;
 	const dbSql = body.trim();
-	const metadataJson = buildMetadataJson(trimmedMessage, ops.map((op) => op.id), exportedAt);
+	const metadataJson = buildMetadataJson(trimmedMessage, opIdList, exportedAt);
 	const contentHash = await crypto.subtle
 		.digest('SHA-256', new TextEncoder().encode(`${dbSql}\n${metadataJson}`))
 		.then((hashBuffer) =>
@@ -194,29 +393,192 @@ export async function exportDraftOps(
 				.join('')
 		);
 
-	try {
-		await pull(database.local_path);
-		const maxOpNumber = await getMaxOpNumber(database.local_path);
-		const opNumber = maxOpNumber + 1;
-		const filename = `${opNumber}.${slugify(trimmedMessage)}.sql`;
-		const opsDir = `${database.local_path}/ops`;
-		const filepath = `${opsDir}/${filename}`;
+	const maxOpNumber = await getMaxOpNumber(repoPath);
+	const opNumber = maxOpNumber + 1;
+	const filename = `${opNumber}.${slugify(trimmedMessage)}.sql`;
 
-		await Deno.mkdir(opsDir, { recursive: true });
-		await Deno.writeTextFile(filepath, fileContent);
+	return {
+		success: true,
+		plan: {
+			filename,
+			filepath: `ops/${filename}`,
+			fileContent,
+			dbSql,
+			metadataJson,
+			contentHash,
+			opIds: opIdList,
+			exportedAt,
+			opNumber,
+			ops
+		}
+	};
+}
+
+async function cloneForExport(
+	sourcePath: string,
+	targetPath: string,
+	workdir: string
+): Promise<void> {
+	await execGit(['clone', '--quiet', sourcePath, targetPath], workdir);
+}
+
+async function pushHeadToBranch(repoPath: string, branch: string): Promise<void> {
+	await execGit(['push', 'origin', `HEAD:refs/heads/${branch}`], repoPath);
+}
+
+export async function previewDraftOps(
+	databaseId: number,
+	opIds: number[],
+	message: string
+): Promise<PreviewResult> {
+	const database = databaseInstancesQueries.getById(databaseId);
+	if (!database) {
+		return { success: false, error: 'Database not found' };
+	}
+
+	if (opIds.length === 0) {
+		return { success: false, error: 'No changes selected' };
+	}
+
+	const trimmedMessage = message.trim();
+	if (!trimmedMessage) {
+		return { success: false, error: 'Commit message is required' };
+	}
+
+	const preflight = await runPreflight(databaseId);
+	const gitIdentity = {
+		name: database.git_user_name?.trim() ?? '',
+		email: database.git_user_email?.trim() ?? ''
+	};
+
+	if (!preflight.ok) {
+		return {
+			success: true,
+			preview: {
+				ok: false,
+				errors: preflight.errors,
+				checks: preflight.checks,
+				status: preflight.status,
+				commitMessage: trimmedMessage,
+				gitIdentity
+			}
+		};
+	}
+
+	const planResult = await buildExportPlan(databaseId, opIds, trimmedMessage, database.local_path);
+	if (!planResult.success) {
+		return { success: false, error: planResult.error };
+	}
+
+	const { plan } = planResult;
+
+	return {
+		success: true,
+		preview: {
+			ok: true,
+			errors: [],
+			checks: preflight.checks,
+			status: preflight.status,
+			filename: plan.filename,
+			filepath: plan.filepath,
+			content: plan.fileContent,
+			contentHash: plan.contentHash,
+			opIds: plan.opIds,
+			opCount: plan.opIds.length,
+			exportedAt: plan.exportedAt,
+			commitMessage: trimmedMessage,
+			gitIdentity
+		}
+	};
+}
+
+export async function exportDraftOps(
+	databaseId: number,
+	opIds: number[],
+	message: string,
+	exportedAtOverride?: string | null
+): Promise<ExportResult> {
+	const database = databaseInstancesQueries.getById(databaseId);
+	if (!database) {
+		return { success: false, error: 'Database not found' };
+	}
+
+	const trimmedMessage = message.trim();
+	if (!trimmedMessage) {
+		return { success: false, error: 'Commit message is required' };
+	}
+
+	if (opIds.length === 0) {
+		return { success: false, error: 'No changes selected' };
+	}
+
+	const preflight = await runPreflight(databaseId);
+	if (!preflight.ok) {
+		return {
+			success: false,
+			error: preflight.errors.length > 0 ? preflight.errors[0] : 'Export preflight failed'
+		};
+	}
+
+	const planResult = await buildExportPlan(
+		databaseId,
+		opIds,
+		trimmedMessage,
+		database.local_path,
+		exportedAtOverride
+	);
+	if (!planResult.success) {
+		return { success: false, error: planResult.error };
+	}
+
+	const { plan } = planResult;
+	const gitUserName = database.git_user_name?.trim() ?? '';
+	const gitUserEmail = database.git_user_email?.trim() ?? '';
+	const branch = preflight.checks.branch ?? '';
+	if (!branch) {
+		return { success: false, error: 'Repository is not on a branch.' };
+	}
+
+	try {
+		const tempDir = await Deno.makeTempDir({ prefix: 'profilarr-export-' });
+		const repoDir = `${tempDir}/repo`;
+		const authUrl = buildRemoteUrl(database.repository_url, database.personal_access_token);
+		const filepath = `${repoDir}/ops/${plan.filename}`;
+		let sourcePath = database.local_path;
+		try {
+			sourcePath = await Deno.realPath(database.local_path);
+		} catch {
+			// fall back to the stored path
+		}
 
 		try {
-			await stage(database.local_path, [filepath]);
-			await configureIdentity(database.local_path, gitUserName, gitUserEmail);
-			await commit(database.local_path, trimmedMessage);
-			await push(database.local_path);
-		} catch (err) {
+			await cloneForExport(sourcePath, repoDir, tempDir);
+			await execGit(['remote', 'set-url', 'origin', authUrl], repoDir);
+			await Deno.mkdir(`${repoDir}/ops`, { recursive: true });
+			await Deno.writeTextFile(filepath, plan.fileContent);
+
+			await stage(repoDir, [filepath]);
+			await configureIdentity(repoDir, gitUserName, gitUserEmail);
+			await commit(repoDir, trimmedMessage);
+			await pushHeadToBranch(repoDir, branch);
+		} finally {
 			try {
-				await Deno.remove(filepath);
+				await Deno.remove(tempDir, { recursive: true });
 			} catch {
 				// ignore cleanup failure
 			}
-			throw err;
+		}
+
+		try {
+			const status = await getStatus(database.local_path);
+			if (isCleanEnough(status)) {
+				await execGit(['pull', '--ff-only'], database.local_path);
+			}
+		} catch (error) {
+			await logger.warn('Failed to update local repo after export', {
+				source: 'PCDExporter',
+				meta: { databaseId, error: String(error) }
+			});
 		}
 
 		const newOpId = pcdOpsQueries.create({
@@ -224,17 +586,17 @@ export async function exportDraftOps(
 			origin: 'base',
 			state: 'published',
 			source: 'repo',
-			filename,
-			opNumber,
-			sequence: opNumber,
-			sql: dbSql,
-			metadata: metadataJson,
-			contentHash,
-			lastSeenInRepoAt: exportedAt
+			filename: plan.filename,
+			opNumber: plan.opNumber,
+			sequence: plan.opNumber,
+			sql: plan.dbSql,
+			metadata: plan.metadataJson,
+			contentHash: plan.contentHash,
+			lastSeenInRepoAt: plan.exportedAt
 		});
 
 		const batchId = uuid();
-		for (const op of ops) {
+		for (const op of plan.ops) {
 			pcdOpsQueries.update(op.id, { state: 'superseded', supersededByOpId: newOpId });
 			pcdOpHistoryQueries.create({
 				opId: op.id,
@@ -253,13 +615,13 @@ export async function exportDraftOps(
 			meta: {
 				databaseId,
 				databaseName: database.name,
-				filename,
+				filename: plan.filename,
 				opId: newOpId,
-				opsExported: ops.length
+				opsExported: plan.opIds.length
 			}
 		});
 
-		return { success: true, filename, opId: newOpId, dropped: ops.length };
+		return { success: true, filename: plan.filename, opId: newOpId, dropped: plan.opIds.length };
 	} catch (error) {
 		await logger.error('Failed to export draft ops', {
 			source: 'PCDExporter',

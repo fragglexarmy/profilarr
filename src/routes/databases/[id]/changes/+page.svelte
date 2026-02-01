@@ -6,9 +6,12 @@
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import Badge from '$ui/badge/Badge.svelte';
+	import CodeBlock from '$ui/meta/CodeBlock.svelte';
 	import { Check, ArrowDown, ExternalLink, FileText, Loader2, Upload, Trash2 } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { afterNavigate } from '$app/navigation';
+	import { deserialize } from '$app/forms';
 	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
 	import type { GitStatus, RepoInfo, IncomingChanges, Commit } from '$utils/git/types';
@@ -17,6 +20,35 @@
 	import { parseUTC } from '$shared/utils/dates';
 
 	export let data: PageData;
+
+	type ExportPreflightChecks = {
+		repoExists: boolean;
+		manifestValid: boolean;
+		remoteReachable: boolean;
+		clean: boolean;
+		upToDate: boolean;
+		ahead: number;
+		behind: number;
+		identitySet: boolean;
+		canWriteToBase: boolean;
+		branch: string | null;
+	};
+
+	type ExportPreview = {
+		ok: boolean;
+		errors: string[];
+		checks: ExportPreflightChecks;
+		status?: GitStatus;
+		filename?: string;
+		filepath?: string;
+		content?: string;
+		contentHash?: string;
+		opIds?: number[];
+		opCount?: number;
+		exportedAt?: string;
+		commitMessage?: string;
+		gitIdentity?: { name: string; email: string };
+	};
 
 	let loading = true;
 	let pulling = false;
@@ -31,6 +63,16 @@
 	let committing = false;
 	let dropping = false;
 	let showDropModal = false;
+	let previewing = false;
+	let showPreviewModal = false;
+	let previewError: string | null = null;
+	let previewData: ExportPreview | null = null;
+	let previewSelectionKey: string | null = null;
+	let selectionKey = '';
+	let previewSelectionMismatch = false;
+	let previewMessageMismatch = false;
+	let previewConfirmDisabled = true;
+	let previewOpCount = 0;
 
 	$: isDeveloper = data.isDeveloper;
 	$: hasIncomingChanges = incomingChanges?.hasUpdates ?? false;
@@ -42,6 +84,17 @@
 	$: primaryKeys = Array.from(primarySelected);
 	$: selectedKeys = Array.from(selected);
 	$: selectedChanges = draftChanges.filter((change) => selected.has(change.key));
+	$: selectionKey = buildSelectionKey(collectOpIds());
+	$: previewSelectionMismatch =
+		!!previewData?.ok && !!previewSelectionKey && selectionKey !== previewSelectionKey;
+	$: previewMessageMismatch =
+		!!previewData?.ok &&
+		!!previewData?.commitMessage &&
+		commitMessage.trim() !== previewData.commitMessage;
+	$: previewConfirmDisabled =
+		previewing || committing || !previewData?.ok || previewSelectionMismatch || previewMessageMismatch;
+	$: previewOpCount = previewData?.opCount ?? previewData?.opIds?.length ?? 0;
+	$: selectedOpCount = collectOpIds().length;
 
 	$: changeByKey = new Map(draftChanges.map((change) => [change.key, change]));
 	$: groupMap = buildGroupMap(draftChanges);
@@ -69,6 +122,20 @@
 	afterNavigate(() => {
 		fetchChanges();
 	});
+
+	async function parseActionResult(response: Response): Promise<any> {
+		const text = await response.text();
+		if (!text) return null;
+		try {
+			return deserialize(text);
+		} catch {
+			try {
+				return JSON.parse(text);
+			} catch {
+				return null;
+			}
+		}
+	}
 
 	function toggleAll() {
 		if (allSelected) {
@@ -116,6 +183,20 @@
 		}
 
 		primarySelected = newSelected;
+	}
+
+	function collectOpIds(): number[] {
+		const opIds = new Set<number>();
+		for (const change of selectedChanges) {
+			for (const op of change.ops) {
+				opIds.add(op.id);
+			}
+		}
+		return Array.from(opIds).sort((a, b) => a - b);
+	}
+
+	function buildSelectionKey(opIds: number[]): string {
+		return [...opIds].sort((a, b) => a - b).join(',');
 	}
 
 	function buildGroupMap(changes: DraftEntityChange[]): Map<string, string[]> {
@@ -212,7 +293,7 @@
 		return keysToDrop;
 	}
 
-	async function handleCommit() {
+	async function handlePreview() {
 		if (hasIncomingChanges) {
 			alertStore.add('warning', 'Pull incoming changes before exporting.');
 			return;
@@ -225,14 +306,14 @@
 			alertStore.add('warning', 'Commit message required before exporting.');
 			return;
 		}
-		committing = true;
+
+		previewing = true;
+		previewError = null;
+		previewData = null;
+		previewSelectionKey = null;
+		showPreviewModal = true;
 		try {
-			const opIds = new Set<number>();
-			for (const change of selectedChanges) {
-				for (const op of change.ops) {
-					opIds.add(op.id);
-				}
-			}
+			const opIds = collectOpIds();
 
 			const formData = new FormData();
 			for (const opId of opIds) {
@@ -240,24 +321,71 @@
 			}
 			formData.append('message', commitMessage.trim());
 
+			const response = await fetch('?/preview', {
+				method: 'POST',
+				body: formData,
+				headers: { Accept: 'application/json' }
+			});
+
+			const result = await parseActionResult(response);
+
+			const isSuccess =
+				response.ok &&
+				(result?.type === 'success' ||
+					result?.type === 'redirect' ||
+					result?.data?.success ||
+					result?.success);
+			const errorMessage = result?.data?.error || result?.error;
+			const preview = result?.data?.preview ?? result?.preview;
+
+			if (isSuccess && preview) {
+				previewData = preview;
+				previewSelectionKey = preview.ok ? selectionKey : null;
+			} else if (isSuccess) {
+				const detail = 'Preview response missing data.';
+				previewError = detail;
+				alertStore.add('error', detail);
+			} else {
+				const detail = errorMessage || `HTTP ${response.status}`;
+				previewError = detail;
+				alertStore.add('error', `Preview failed: ${detail}`);
+			}
+		} catch (err) {
+			const detail = err instanceof Error ? err.message : 'Preview request failed.';
+			previewError = detail;
+			alertStore.add('error', detail);
+		} finally {
+			previewing = false;
+		}
+	}
+
+	async function handleExportConfirm() {
+		if (!previewData?.ok) return;
+		if (previewSelectionMismatch || previewMessageMismatch) {
+			alertStore.add('warning', 'Preview is out of date. Preview again before exporting.');
+			return;
+		}
+
+		committing = true;
+		try {
+			const opIds = collectOpIds();
+
+			const formData = new FormData();
+			for (const opId of opIds) {
+				formData.append('opIds', String(opId));
+			}
+			formData.append('message', commitMessage.trim());
+			if (previewData?.exportedAt) {
+				formData.append('exportedAt', previewData.exportedAt);
+			}
+
 			const response = await fetch('?/commit', {
 				method: 'POST',
 				body: formData,
 				headers: { Accept: 'application/json' }
 			});
 
-			let result:
-				| {
-						type?: string;
-						data?: { success?: boolean; error?: string; filename?: string; dropped?: number };
-						error?: string;
-					}
-				| null = null;
-			try {
-				result = await response.json();
-			} catch {
-				result = null;
-			}
+			const result = await parseActionResult(response);
 
 			const isSuccess =
 				response.ok &&
@@ -267,7 +395,7 @@
 			const errorMessage = result?.data?.error || result?.error;
 
 			if (isSuccess) {
-				const droppedCount = result?.data?.dropped ?? opIds.size;
+				const droppedCount = result?.data?.dropped ?? opIds.length;
 				const filename = result?.data?.filename;
 				const noun = droppedCount === 1 ? 'change' : 'changes';
 				const label = filename ? ` (${filename})` : '';
@@ -275,15 +403,23 @@
 				await fetchChanges();
 				commitMessage = '';
 				primarySelected = new Set();
+				showPreviewModal = false;
+				previewData = null;
+				previewSelectionKey = null;
 			} else {
-				const detail =
-					errorMessage ||
-					`HTTP ${response.status}`;
+				const detail = errorMessage || `HTTP ${response.status}`;
 				alertStore.add('error', `Export failed: ${detail}`);
 			}
 		} finally {
 			committing = false;
 		}
+	}
+
+	function handlePreviewCancel() {
+		showPreviewModal = false;
+		previewError = null;
+		previewData = null;
+		previewSelectionKey = null;
 	}
 
 	function requestDrop() {
@@ -319,19 +455,7 @@
 				headers: { Accept: 'application/json' }
 			});
 
-			let result:
-				| {
-						type?: string;
-						data?: { success?: boolean; error?: string; dropped?: number };
-						dropped?: number;
-						error?: string;
-					}
-				| null = null;
-			try {
-				result = await response.json();
-			} catch {
-				result = null;
-			}
+			const result = await parseActionResult(response);
 
 			const isSuccess =
 				response.ok &&
@@ -374,7 +498,7 @@
 				headers: { Accept: 'application/json' }
 			});
 
-			const result = await response.json();
+			const result = await parseActionResult(response);
 			const isSuccess =
 				result.type === 'success' || result.type === 'redirect' || result.data?.success;
 			const errorMsg = result.data?.error || result.error;
@@ -420,13 +544,25 @@
 		return formatTitle(entity);
 	}
 
+	function parseDate(dateStr: string): Date | null {
+		const parsed = parseUTC(dateStr) ?? new Date(dateStr);
+		if (Number.isNaN(parsed.getTime())) return null;
+		return parsed;
+	}
+
+	function getDateSortValue(dateStr: string): number {
+		const parsed = parseDate(dateStr);
+		return parsed ? parsed.getTime() : Number.NEGATIVE_INFINITY;
+	}
+
 	function formatDate(dateStr: string): string {
-		const parsed = parseUTC(dateStr);
-		const date = parsed ?? new Date(dateStr);
+		const date = parseDate(dateStr);
+		if (!date) return '-';
 		const now = new Date();
 		const diffMs = now.getTime() - date.getTime();
 		const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+		if (diffMs < 0) return date.toLocaleDateString();
 		if (diffDays === 0) {
 			const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 			if (diffHours === 0) {
@@ -441,6 +577,20 @@
 		return date.toLocaleDateString();
 	}
 
+	function formatExportedAt(value: string | null | undefined): string {
+		if (!value) return '-';
+		const parsed = parseUTC(value);
+		const date = parsed ?? new Date(value);
+		if (Number.isNaN(date.getTime())) return value;
+		return date.toLocaleString(undefined, {
+			year: 'numeric',
+			month: 'short',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
 	function getCommitUrl(hash: string): string {
 		return `${data.database.repository_url}/commit/${hash}`;
 	}
@@ -449,7 +599,14 @@
 		{ key: 'shortHash', header: 'Commit', width: 'w-24' },
 		{ key: 'message', header: 'Message' },
 		{ key: 'author', header: 'Author', width: 'w-40' },
-		{ key: 'date', header: 'Date', width: 'w-28', align: 'right' }
+		{
+			key: 'date',
+			header: 'Date',
+			width: 'w-28',
+			align: 'right',
+			sortable: true,
+			sortAccessor: (row) => getDateSortValue(row.date)
+		}
 	];
 
 	const outgoingColumns: Column<DraftEntityChange>[] = [
@@ -658,14 +815,15 @@
 
 						<div>
 							<ActionButton
-								icon={committing ? Loader2 : Upload}
-								iconClass={committing ? 'animate-spin' : ''}
-								title={committing ? 'Exporting changes' : 'Commit changes'}
+								icon={previewing ? Loader2 : Upload}
+								iconClass={previewing ? 'animate-spin' : ''}
+								title={previewing ? 'Preparing preview' : 'Preview export'}
 								disabled={
 									hasIncomingChanges ||
+									previewing ||
 									committing
 								}
-								on:click={handleCommit}
+								on:click={handlePreview}
 							/>
 						</div>
 
@@ -836,3 +994,133 @@
 	on:confirm={handleDropConfirm}
 	on:cancel={handleDropCancel}
 />
+
+<Modal
+	open={showPreviewModal}
+	header="Export preview"
+	confirmText="Approve & Export"
+	cancelText="Close"
+	confirmDisabled={previewConfirmDisabled}
+	loading={committing}
+	size="2xl"
+	height="lg"
+	on:confirm={handleExportConfirm}
+	on:cancel={handlePreviewCancel}
+>
+	<svelte:fragment slot="body">
+		{#if previewing}
+			<div class="flex items-center gap-3 text-sm text-neutral-600 dark:text-neutral-400">
+				<div class="h-4 w-4 animate-spin rounded-full border-2 border-neutral-400 border-t-transparent"></div>
+				Preparing preview...
+			</div>
+		{:else if previewError}
+			<p class="text-sm text-red-600 dark:text-red-400">Preview failed: {previewError}</p>
+		{:else if previewData}
+			<div class="space-y-4">
+				<div class="space-y-1 text-sm text-neutral-600 dark:text-neutral-400">
+					<span class="font-medium text-neutral-900 dark:text-neutral-100">Commit message</span>
+					<code class="block rounded bg-neutral-100 px-3 py-2 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+						{commitMessage.trim()}
+					</code>
+				</div>
+
+				<div class="flex flex-wrap gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+					<Badge variant="neutral" size="md" mono>
+						File: {previewData.ok ? previewData.filepath ?? 'ops/unknown.sql' : '-'}
+					</Badge>
+					<Badge variant="neutral" size="md" mono>
+						Ops: {previewData.ok ? previewOpCount : selectedOpCount}
+					</Badge>
+					<Badge variant="neutral" size="md">
+						Exported: {formatExportedAt(previewData.exportedAt)}
+					</Badge>
+					<Badge variant="neutral" size="md">
+						Identity: {previewData.gitIdentity?.name ?? '-'} ({previewData.gitIdentity?.email ?? '-'})
+					</Badge>
+				</div>
+
+				<div class="rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+					<div class="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+						Preflight
+					</div>
+					<div class="grid gap-2 text-xs text-neutral-600 dark:text-neutral-400 md:grid-cols-2">
+						<div class="flex items-center justify-between">
+							<span>Repo clean</span>
+							<Badge variant={previewData.checks.clean ? 'success' : 'danger'} size="sm">
+								{previewData.checks.clean ? 'OK' : 'Dirty'}
+							</Badge>
+						</div>
+						<div class="flex items-center justify-between">
+							<span>Up to date</span>
+							<Badge variant={previewData.checks.upToDate ? 'success' : 'warning'} size="sm" mono>
+								{previewData.checks.upToDate
+									? 'OK'
+									: `A${previewData.checks.ahead}/B${previewData.checks.behind}`}
+							</Badge>
+						</div>
+						<div class="flex items-center justify-between">
+							<span>Remote reachable</span>
+							<Badge variant={previewData.checks.remoteReachable ? 'success' : 'danger'} size="sm">
+								{previewData.checks.remoteReachable ? 'OK' : 'Failed'}
+							</Badge>
+						</div>
+						<div class="flex items-center justify-between">
+							<span>Manifest valid</span>
+							<Badge variant={previewData.checks.manifestValid ? 'success' : 'danger'} size="sm">
+								{previewData.checks.manifestValid ? 'OK' : 'Invalid'}
+							</Badge>
+						</div>
+						<div class="flex items-center justify-between">
+							<span>Identity set</span>
+							<Badge variant={previewData.checks.identitySet ? 'success' : 'danger'} size="sm">
+								{previewData.checks.identitySet ? 'OK' : 'Missing'}
+							</Badge>
+						</div>
+						<div class="flex items-center justify-between">
+							<span>Can publish</span>
+							<Badge variant={previewData.checks.canWriteToBase ? 'success' : 'danger'} size="sm">
+								{previewData.checks.canWriteToBase ? 'OK' : 'Blocked'}
+							</Badge>
+						</div>
+					</div>
+
+					{#if previewData.errors.length > 0}
+						<div class="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200">
+							{#each previewData.errors as error}
+								<div>{error}</div>
+							{/each}
+						</div>
+					{/if}
+
+					{#if previewSelectionMismatch}
+						<div class="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200">
+							Selection changed since preview. Preview again before exporting.
+						</div>
+					{/if}
+
+					{#if previewMessageMismatch}
+						<div class="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200">
+							Commit message changed since preview. Preview again before exporting.
+						</div>
+					{/if}
+				</div>
+
+				{#if previewData.ok}
+					<CodeBlock code={previewData.content ?? ''} language="sql" label="Exported SQL">
+						<svelte:fragment slot="icon">
+							<FileText size={14} />
+						</svelte:fragment>
+					</CodeBlock>
+				{:else}
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
+						Resolve the preflight errors, then preview again to see the export output.
+					</p>
+				{/if}
+			</div>
+		{:else}
+			<p class="text-sm text-neutral-600 dark:text-neutral-400">
+				No preview data returned.
+			</p>
+		{/if}
+	</svelte:fragment>
+</Modal>
