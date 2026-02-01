@@ -22,6 +22,8 @@
 	export let onMinBlocked: (() => void) | undefined = undefined;
 	export let onMaxBlocked: (() => void) | undefined = undefined;
 
+	let inputValue = value === undefined || value === null ? '' : String(value);
+	let isFocused = false;
 	let isSmallScreen = false;
 	let mediaQuery: MediaQueryList | null = null;
 
@@ -54,8 +56,13 @@
 	$: buttonSizeClasses = isCompact ? 'h-2.5 w-4' : 'h-4 w-6';
 	$: iconSize = isCompact ? 10 : 12;
 
+	$: if (!isFocused) {
+		inputValue = value === undefined || value === null ? '' : String(value);
+	}
+
 	function updateValue(newValue: number) {
 		value = newValue;
+		inputValue = String(newValue);
 		onchange?.(newValue);
 		dispatch('change', newValue);
 	}
@@ -83,17 +90,17 @@
 	function handleInput(event: Event) {
 		const target = event.target as HTMLInputElement;
 
-		// Allow clearing the input (show placeholder)
-		if (target.value === '') {
-			value = undefined;
-			dispatch('change', undefined);
+		inputValue = target.value;
+
+		// Allow partial input states (e.g., "-", ".", "-.")
+		if (inputValue === '' || inputValue === '-' || inputValue === '.' || inputValue === '-.') {
 			return;
 		}
 
-		let newValue = parseFloat(target.value);
+		let newValue = Number(inputValue);
 
-		if (isNaN(newValue)) {
-			return; // Don't update for invalid input
+		if (Number.isNaN(newValue)) {
+			return;
 		}
 
 		if (min !== undefined && newValue < min) {
@@ -106,6 +113,36 @@
 
 		updateValue(newValue);
 	}
+
+	function handleBlur() {
+		isFocused = false;
+		if (inputValue === '' || inputValue === '-' || inputValue === '.' || inputValue === '-.') {
+			value = undefined;
+			dispatch('change', undefined);
+			inputValue = '';
+			return;
+		}
+
+		let newValue = Number(inputValue);
+		if (Number.isNaN(newValue)) {
+			inputValue = value === undefined || value === null ? '' : String(value);
+			return;
+		}
+
+		if (min !== undefined && newValue < min) {
+			newValue = min;
+		}
+
+		if (max !== undefined && newValue > max) {
+			newValue = max;
+		}
+
+		updateValue(newValue);
+	}
+
+	function handleFocus() {
+		isFocused = true;
+	}
 </script>
 
 <div class="relative">
@@ -113,8 +150,10 @@
 		type="number"
 		{id}
 		{name}
-		bind:value
+		bind:value={inputValue}
 		on:input={handleInput}
+		on:focus={handleFocus}
+		on:blur={handleBlur}
 		{min}
 		{max}
 		{step}
