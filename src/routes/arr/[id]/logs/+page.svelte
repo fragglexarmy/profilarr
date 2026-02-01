@@ -11,7 +11,7 @@
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import type { Column } from '$ui/table/types';
-	import { createSearchStore } from '$lib/client/stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -26,7 +26,10 @@
 	}
 
 	// Initialize search store
-	const searchStore = createSearchStore({ debounceMs: 300 });
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(`arrLogsSearch:${$page.params.id}`, {
+		debounceMs: 300
+	});
 
 	// Filter state
 	let selectedLevel: string = data.filters.level || 'ALL';

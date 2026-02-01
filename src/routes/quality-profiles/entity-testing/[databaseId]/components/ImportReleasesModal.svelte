@@ -19,9 +19,10 @@
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
-	import { createSearchStore } from '$stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
 	import type { TestEntity } from '$shared/pcd/display.ts';
+	import { page } from '$app/stores';
 
 	export let open = false;
 	export let entity: TestEntity | null = null;
@@ -53,7 +54,10 @@
 	let loadingLibrary = false;
 
 	// Search store for library filtering
-	const searchStore = createSearchStore();
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(
+		`entityTestingImportLibrarySearch:${$page.params.databaseId}`
+	);
 
 	// Selected item from library
 	let selectedItem: LibraryItem | null = null;
@@ -72,7 +76,10 @@
 	let selectedReleases: Set<string> = new Set(); // Track by title
 
 	// Search store for release filtering
-	const releaseSearchStore = createSearchStore();
+	let releaseSearchStore: SearchStore;
+	$: releaseSearchStore = getPersistentSearchStore(
+		`entityTestingImportReleaseSearch:${$page.params.databaseId}`
+	);
 
 	// Season selection for TV series (null = not selected yet)
 	let selectedSeason: number | null = null;

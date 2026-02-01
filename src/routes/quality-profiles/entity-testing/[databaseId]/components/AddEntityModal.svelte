@@ -20,8 +20,9 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import { createSearchStore } from '$stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$stores/search';
 	import { alertStore } from '$alerts/store';
+	import { page } from '$app/stores';
 
 	export let open = false;
 	export let actionUrl: string = '?/addEntities';
@@ -68,7 +69,10 @@
 		return existingKeys.has(`${item.type}-${item.id}`);
 	}
 
-	const searchStore = createSearchStore();
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(
+		`entityTestingAddEntitySearch:${$page.params.databaseId}`
+	);
 
 	let activeQuery = '';
 	let isSearching = false;

@@ -8,7 +8,7 @@
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import type { Column, SortDirection, SortState } from '$ui/table/types';
 	import LogsActionsBar from './components/LogsActionsBar.svelte';
-	import { createSearchStore } from '$lib/client/stores/search';
+	import { getPersistentSearchStore } from '$lib/client/stores/search';
 	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 
@@ -23,7 +23,7 @@
 	}
 
 	// Initialize search store
-	const searchStore = createSearchStore({ debounceMs: 300 });
+	const searchStore = getPersistentSearchStore('settingsLogsSearch', { debounceMs: 300 });
 
 	// Filter state
 	let selectedLevel: 'ALL' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' = 'ALL';

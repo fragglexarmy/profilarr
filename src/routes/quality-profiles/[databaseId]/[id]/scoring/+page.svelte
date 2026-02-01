@@ -24,8 +24,9 @@
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import CustomGroupManager from '$ui/dropdown/CustomGroupManager.svelte';
 	import ScoringTable from './components/ScoringTable.svelte';
-	import { createSearchStore } from '$lib/client/stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
 	import { onMount, tick } from 'svelte';
+	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
@@ -34,7 +35,11 @@
 
 	export let data: PageData;
 
-	const searchStore = createSearchStore({ debounceMs: 200 });
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(
+		`qualityProfileScoringSearch:${$page.params.databaseId}:${$page.params.id}`,
+		{ debounceMs: 200 }
+	);
 
 	let showInfoModal = false;
 	let showOptionsInfoModal = false;

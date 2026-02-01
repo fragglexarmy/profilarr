@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { AlertTriangle, X, Search, Calendar, Filter, CircleDot, Check } from 'lucide-svelte';
 	import type { UpgradeJobLog } from '$lib/server/upgrades/types.ts';
-	import { createSearchStore } from '$lib/client/stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
+	import { page } from '$app/stores';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -12,7 +13,8 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { Column } from '$ui/table/types';
 
-	const searchStore = createSearchStore();
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(`upgradeRunHistorySearch:${$page.params.id}`);
 	const debouncedQuery = searchStore.debouncedQuery;
 
 	export let runs: UpgradeJobLog[] = [];

@@ -7,7 +7,7 @@
 	import type { Column, SortState } from '$ui/table/types';
 	import type { PageData } from './$types';
 	import type { RadarrLibraryItem } from '$utils/arr/types.ts';
-	import { createSearchStore } from '$stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$stores/search';
 	import { libraryCache } from '$stores/libraryCache';
 
 	import LibraryActionBar from './components/LibraryActionBar.svelte';
@@ -16,7 +16,10 @@
 
 	export let data: PageData;
 
-	const searchStore = createSearchStore({ debounceMs: 150 });
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(`arrLibrarySearch:${data.instance.id}`, {
+		debounceMs: 150
+	});
 
 	// ==========================================================================
 	// Library Data State

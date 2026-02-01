@@ -12,7 +12,8 @@
 	import { createEmptyFilterConfig, type FilterConfig } from '$shared/upgrades/filters';
 	import { uuid } from '$shared/utils/uuid';
 	import { selectors } from '$shared/upgrades/selectors';
-	import { createSearchStore } from '$lib/client/stores/search';
+	import { getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
+	import { page } from '$app/stores';
 	import FilterGroupComponent from './FilterGroup.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
@@ -25,7 +26,8 @@
 	import type { Column } from '$ui/table/types';
 	import { alertStore } from '$alerts/store';
 
-	const searchStore = createSearchStore();
+	let searchStore: SearchStore;
+	$: searchStore = getPersistentSearchStore(`upgradeFiltersSearch:${$page.params.id}`);
 	const debouncedQuery = searchStore.debouncedQuery;
 
 	export let filters: FilterConfig[] = [];

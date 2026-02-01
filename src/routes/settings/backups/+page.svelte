@@ -12,14 +12,14 @@
 	import ActionButton from '$lib/client/ui/actions/ActionButton.svelte';
 	import SearchAction from '$lib/client/ui/actions/SearchAction.svelte';
 	import Dropdown from '$lib/client/ui/dropdown/Dropdown.svelte';
-	import { createSearchStore } from '$lib/client/stores/search';
+	import { getPersistentSearchStore } from '$lib/client/stores/search';
 
 	export let data: PageData;
 
 	type Backup = (typeof data.backups)[0];
 
 	// Search store
-	const searchStore = createSearchStore();
+	const searchStore = getPersistentSearchStore('settingsBackupsSearch');
 
 	// Filtered backups
 	$: filteredBackups = searchStore.filterItems(data.backups, ['filename']);
