@@ -6,6 +6,16 @@ import { execGit, execGitSafe } from './exec.ts';
 import { fetch } from './write.ts';
 import type { GitStatus, UpdateInfo, Commit, IncomingChanges } from './types.ts';
 
+function normalizeAuthorName(name: string): string {
+	const trimmed = name.trim();
+	const normalized = trimmed.toLowerCase().replace(/\s+/g, ' ');
+	if (normalized === 'xshatterx') return 'Seraphys';
+	if (normalized === 'sam chau' || normalized === 'samuel chau') {
+		return 'santiagosayshey';
+	}
+	return trimmed;
+}
+
 /**
  * Get current branch name
  */
@@ -185,10 +195,16 @@ ${content
 /**
  * Get commit history
  */
-export async function getCommits(repoPath: string, limit: number = 50): Promise<Commit[]> {
+export async function getCommits(
+	repoPath: string,
+	limit: number = 50,
+	ref?: string
+): Promise<Commit[]> {
 	// Format: hash|shortHash|message|author|email|date
 	const format = '%H|%h|%s|%an|%ae|%cI';
-	const output = await execGit(['log', `--format=${format}`, `-${limit}`], repoPath);
+	const args = ['log', `--format=${format}`, `-${limit}`];
+	if (ref) args.push(ref);
+	const output = await execGit(args, repoPath);
 
 	if (!output.trim()) {
 		return [];
@@ -212,7 +228,7 @@ export async function getCommits(repoPath: string, limit: number = 50): Promise<
 			hash,
 			shortHash,
 			message,
-			author,
+			author: normalizeAuthorName(author),
 			authorEmail,
 			date,
 			files
@@ -261,7 +277,7 @@ export async function getIncomingChanges(repoPath: string): Promise<IncomingChan
 			hash,
 			shortHash,
 			message,
-			author,
+			author: normalizeAuthorName(author),
 			authorEmail,
 			date,
 			files

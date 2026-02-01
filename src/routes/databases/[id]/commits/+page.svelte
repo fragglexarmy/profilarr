@@ -5,6 +5,7 @@
 	import { ExternalLink, FileText } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { Commit } from '$utils/git/types';
+	import { parseUTC } from '$shared/utils/dates';
 
 	export let data: PageData;
 
@@ -32,12 +33,25 @@
 		fetchCommits();
 	});
 
+	function parseDate(dateStr: string): Date | null {
+		const parsed = parseUTC(dateStr) ?? new Date(dateStr);
+		if (Number.isNaN(parsed.getTime())) return null;
+		return parsed;
+	}
+
+	function getDateSortValue(dateStr: string): number {
+		const parsed = parseDate(dateStr);
+		return parsed ? parsed.getTime() : Number.NEGATIVE_INFINITY;
+	}
+
 	function formatDate(dateStr: string): string {
-		const date = new Date(dateStr);
+		const date = parseDate(dateStr);
+		if (!date) return '-';
 		const now = new Date();
 		const diffMs = now.getTime() - date.getTime();
 		const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+		if (diffMs < 0) return date.toLocaleDateString();
 		if (diffDays === 0) {
 			const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 			if (diffHours === 0) {
@@ -78,7 +92,8 @@
 			width: 'w-28',
 			align: 'right',
 			sortable: true,
-			defaultSortDirection: 'desc'
+			defaultSortDirection: 'desc',
+			sortAccessor: (row) => getDateSortValue(row.date)
 		}
 	];
 </script>
@@ -147,6 +162,7 @@
 			getRowId={(row) => row.hash}
 			emptyMessage="No commits found"
 			defaultSort={{ key: 'date', direction: 'desc' }}
+			chevronPosition="right"
 			responsive
 		>
 			<svelte:fragment slot="cell" let:row let:column>

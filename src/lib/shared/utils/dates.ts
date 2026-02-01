@@ -26,11 +26,12 @@
 export function toUTC(timestamp: string | null | undefined): string | null {
 	if (!timestamp) return null;
 
-	// Already has Z suffix - return as-is
-	if (timestamp.endsWith('Z')) return timestamp;
+	const trimmed = timestamp.trim();
+	// Already has timezone info - return as-is
+	if (/[+-]\d{2}:\d{2}$/.test(trimmed) || trimmed.endsWith('Z')) return trimmed;
 
 	// Replace space with T (SQLite format) and add Z
-	return timestamp.replace(' ', 'T') + 'Z';
+	return trimmed.replace(' ', 'T') + 'Z';
 }
 
 /**
