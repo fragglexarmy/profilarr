@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { browser } from '$app/environment';
 	import { Info, Clapperboard, Film, Tv, Plus, AlertTriangle, Sliders, Check } from 'lucide-svelte';
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -38,6 +39,11 @@
 		loadingEntityIds = new Set();
 		fetchedEntityIds = new Set();
 		expandedRows = new Set();
+	}
+
+	// Persist selected database tab
+	$: if (browser && data.currentDatabase?.id) {
+		localStorage.setItem('entityTestingDatabase', String(data.currentDatabase.id));
 	}
 
 	// Show warning if parser is unavailable

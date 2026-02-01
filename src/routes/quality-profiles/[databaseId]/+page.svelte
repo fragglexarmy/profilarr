@@ -9,6 +9,7 @@
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
+	import { browser } from '$app/environment';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -29,6 +30,11 @@
 		href: `/quality-profiles/${db.id}`,
 		active: db.id === data.currentDatabase.id
 	}));
+
+	// Persist selected database tab
+	$: if (browser && data.currentDatabase?.id) {
+		localStorage.setItem('qualityProfilesDatabase', String(data.currentDatabase.id));
+	}
 </script>
 
 <svelte:head>
