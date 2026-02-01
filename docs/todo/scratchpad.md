@@ -6,7 +6,6 @@
 - rethink job polling architecture
 - adding a database requires double click??? im not running into this personally
 - set auth settings using GUI, not env vars
-- add transactions to ops export so that aborted files can be cleaned up
 - announcement system - push to website, profilarr polls for announcements
 
 # Adaptive Backoff
