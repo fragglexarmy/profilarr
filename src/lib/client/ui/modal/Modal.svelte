@@ -65,63 +65,65 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 	<div
-		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+		class="fixed inset-0 z-[100] bg-black/50 p-4 backdrop-blur-sm overflow-y-auto sm:p-6"
 		on:click={handleBackdropClick}
 		role="dialog"
 		aria-modal="true"
 		tabindex="-1"
 	>
-		<!-- Modal -->
-		<div
-			class="relative flex max-h-[90vh] w-full flex-col {sizeClasses[size]} {heightClasses[
-				height
-			]} rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
-		>
-			<!-- Header -->
-			<div class="flex-shrink-0 border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
-				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{header}</h2>
-			</div>
-
-			<!-- Body -->
-			<div class="flex-1 overflow-auto px-6 py-4">
-				<slot name="body">
-					<p class="text-sm text-neutral-600 dark:text-neutral-400">{bodyMessage}</p>
-				</slot>
-			</div>
-
-			<!-- Footer -->
+		<div class="min-h-full w-full flex items-start justify-center sm:items-center">
+			<!-- Modal -->
 			<div
-				class="flex flex-shrink-0 justify-between border-t border-neutral-200 px-6 py-4 dark:border-neutral-800"
+				class="relative my-4 flex w-full flex-col {sizeClasses[size]} {heightClasses[
+					height
+				]} max-h-[calc(100svh-2rem)] rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900 sm:my-0"
 			>
-				<button
-					type="button"
-					on:click={handleCancel}
-					disabled={loading}
-					class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 {loading
-						? 'cursor-not-allowed opacity-50'
-						: ''}"
+				<!-- Header -->
+				<div class="flex-shrink-0 border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
+					<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{header}</h2>
+				</div>
+
+				<!-- Body -->
+				<div class="flex-1 overflow-auto px-6 py-4">
+					<slot name="body">
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">{bodyMessage}</p>
+					</slot>
+				</div>
+
+				<!-- Footer -->
+				<div
+					class="flex flex-shrink-0 justify-between border-t border-neutral-200 px-6 py-4 dark:border-neutral-800"
 				>
-					<X size={16} />
-					{cancelText}
-				</button>
-				<button
-					type="button"
-					on:click={handleConfirm}
-					disabled={confirmDisabled || loading}
-					class="{confirmDanger
-						? 'border border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
-						: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled ||
-					loading
-						? 'cursor-not-allowed opacity-50'
-						: ''}"
-				>
-					{#if loading}
-						<Loader2 size={16} class="animate-spin" />
-					{:else}
-						<Check size={16} />
-					{/if}
-					{confirmText}
-				</button>
+					<button
+						type="button"
+						on:click={handleCancel}
+						disabled={loading}
+						class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 {loading
+							? 'cursor-not-allowed opacity-50'
+							: ''}"
+					>
+						<X size={16} />
+						{cancelText}
+					</button>
+					<button
+						type="button"
+						on:click={handleConfirm}
+						disabled={confirmDisabled || loading}
+						class="{confirmDanger
+							? 'border border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
+							: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled ||
+						loading
+							? 'cursor-not-allowed opacity-50'
+							: ''}"
+					>
+						{#if loading}
+							<Loader2 size={16} class="animate-spin" />
+						{:else}
+							<Check size={16} />
+						{/if}
+						{confirmText}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
