@@ -8,8 +8,6 @@
 - set auth settings using GUI, not env vars
 - add transactions to ops export so that aborted files can be cleaned up
 - announcement system - push to website, profilarr polls for announcements
-- database icons cached from github sometimes gets stuck and requires a route
-  change back and forth to fix itself
 
 # Adaptive Backoff
 
