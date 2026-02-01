@@ -2,7 +2,7 @@ import type { RequestHandler } from './$types';
 import { getCachedAvatar } from '$lib/server/utils/github/cache.ts';
 
 async function hashBytes(bytes: Uint8Array): Promise<string> {
-	const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', bytes as unknown as ArrayBuffer);
 	const hashArray = Array.from(new Uint8Array(hashBuffer));
 	return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }

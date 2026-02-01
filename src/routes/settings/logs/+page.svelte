@@ -177,7 +177,7 @@
 	});
 
 	function getCellValue(row: LogEntry, key: string): unknown {
-		return key.split('.').reduce((obj, k) => (obj as Record<string, unknown> | undefined)?.[k], row);
+		return key.split('.').reduce<unknown>((obj, k) => (obj as Record<string, unknown> | undefined)?.[k], row as unknown);
 	}
 
 	function compareValues(a: unknown, b: unknown): number {
