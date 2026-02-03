@@ -3,7 +3,7 @@
  */
 
 import type { PCDCache } from '$pcd/index.ts';
-import { writeOperation, type OperationLayer } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer, type WriteResult } from '$pcd/index.ts';
 import type { CustomFormatGeneral } from '$shared/pcd/display.ts';
 import { uuid } from '$shared/utils/uuid.ts';
 import { logger } from '$logger/logger.ts';
@@ -40,9 +40,6 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
 	const isRename = input.name !== current.name;
-	const groupId = isRename ? uuid() : undefined;
-
-	const queries = [];
 
 	if (input.name !== current.name) {
 		const existing = await db
@@ -65,59 +62,58 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	const normalizedNextDescription = input.description?.trim() ?? '';
 	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
 
-	// 1. Update the custom format with value guards
-	const setValues: Record<string, unknown> = {};
-
-	if (current.name !== input.name) {
-		setValues.name = input.name;
-	}
+	// 1. Build per-field update queries with value guards
+	const descriptionNext = normalizedNextDescription === '' ? null : normalizedNextDescription;
+	const descriptionQueries: CompiledQuery[] = [];
 	if (descriptionChanged) {
-		setValues.description = normalizedNextDescription === '' ? null : normalizedNextDescription;
-	}
-	if (current.include_in_rename !== input.includeInRename) {
-		setValues.include_in_rename = input.includeInRename ? 1 : 0;
-	}
-
-	let updateFormat = db
-		.updateTable('custom_formats')
-		.set(setValues)
-		// Value guards - ensure current values match what we expect
-		.where('name', '=', current.name);
-
-	if (descriptionChanged) {
+		let updateDescription = db
+			.updateTable('custom_formats')
+			.set({ description: descriptionNext })
+			.where('name', '=', current.name);
 		if (rawCurrentDescription === null) {
-			updateFormat = updateFormat.where('description', 'is', null);
+			updateDescription = updateDescription.where('description', 'is', null);
 		} else {
-			updateFormat = updateFormat.where('description', '=', rawCurrentDescription);
+			updateDescription = updateDescription.where('description', '=', rawCurrentDescription);
 		}
-	}
-	if (current.include_in_rename !== input.includeInRename) {
-		updateFormat = updateFormat.where(
-			'include_in_rename',
-			'=',
-			current.include_in_rename ? 1 : 0
-		);
+		descriptionQueries.push(updateDescription.compile());
 	}
 
-	if (Object.keys(setValues).length > 0) {
-		const updateFormatQuery = updateFormat.compile();
-		queries.push(updateFormatQuery);
+	const includeChanged = current.include_in_rename !== input.includeInRename;
+	const includeQueries: CompiledQuery[] = [];
+	if (includeChanged) {
+		let updateInclude = db
+			.updateTable('custom_formats')
+			.set({ include_in_rename: input.includeInRename ? 1 : 0 })
+			.where('name', '=', current.name)
+			.where('include_in_rename', '=', current.include_in_rename ? 1 : 0);
+		includeQueries.push(updateInclude.compile());
+	}
+
+	const renameQueries: CompiledQuery[] = [];
+	if (isRename) {
+		const updateName = db
+			.updateTable('custom_formats')
+			.set({ name: input.name })
+			.where('name', '=', current.name);
+		renameQueries.push(updateName.compile());
 	}
 
 	// 2. Handle tag changes
 	const currentTagNames = current.tags.map((t) => t.name);
 	const newTagNames = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
-	const formatNameForTags = input.name !== current.name ? input.name : current.name;
+
+	const formatNameForTags = current.name;
 
 	// Tags to remove
 	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
+	const tagQueries: CompiledQuery[] = [];
 	for (const tagName of tagsToRemove) {
 		const removeTag = {
 			sql: `DELETE FROM custom_format_tags WHERE custom_format_name = '${esc(formatNameForTags)}' AND tag_name = '${esc(tagName)}'`,
 			parameters: [],
 			query: {} as never
 		};
-		queries.push(removeTag);
+		tagQueries.push(removeTag);
 	}
 
 	// Tags to add
@@ -130,7 +126,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 			.onConflict((oc) => oc.column('name').doNothing())
 			.compile();
 
-		queries.push(insertTag);
+		tagQueries.push(insertTag);
 
 		// Link tag to custom format
 		const linkTag = {
@@ -139,7 +135,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 			query: {} as never
 		};
 
-		queries.push(linkTag);
+		tagQueries.push(linkTag);
 	}
 
 	const dependentScores = isRename
@@ -222,7 +218,10 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		};
 	}
 	if (current.include_in_rename !== input.includeInRename) {
-		changes.includeInRename = { from: current.include_in_rename, to: input.includeInRename };
+		changes.include_in_rename = {
+			from: current.include_in_rename,
+			to: input.includeInRename
+		};
 	}
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
 		changes.tags = { from: currentTagNames, to: newTagNames };
@@ -236,52 +235,143 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		}
 	});
 
-	// Write the operation with metadata
-	const changedFields = Object.keys(changes);
-	const desiredState: Record<string, unknown> = {};
-	if (changes.name) {
-		desiredState.name = { from: current.name, to: input.name };
-	}
-	if (changes.description) {
-		desiredState.description = {
-			from: rawCurrentDescription ?? null,
-			to: normalizedNextDescription === '' ? null : normalizedNextDescription
-		};
-	}
-	if (changes.includeInRename) {
-		desiredState.include_in_rename = {
-			from: current.include_in_rename,
-			to: input.includeInRename
-		};
-	}
-	if (changes.tags) {
-		desiredState.tags = { add: tagsToAdd, remove: tagsToRemove };
+	const hasDescriptionChanges = descriptionQueries.length > 0;
+	const hasIncludeChanges = includeQueries.length > 0;
+	const hasTagChanges = tagsToAdd.length > 0 || tagsToRemove.length > 0;
+	const hasRenameChanges = renameQueries.length > 0;
+	const opCount = [
+		hasDescriptionChanges,
+		hasIncludeChanges,
+		hasTagChanges,
+		hasRenameChanges
+	].filter(Boolean).length;
+	const shouldGroup = opCount > 1 || (hasRenameChanges && dependentOps.length > 0);
+	const groupId = shouldGroup ? uuid() : undefined;
+
+	if (opCount === 0) {
+		return { success: true };
 	}
 
-	const result = await writeOperation({
-		databaseId,
-		layer,
-		description: `update-custom-format-${input.name}`,
-		queries,
-		desiredState,
-		metadata: {
-			operation: 'update',
-			entity: 'custom_format',
-			name: input.name,
-			...(isRename && { previousName: current.name }),
-			stableKey: { key: 'custom_format_name', value: current.name },
-			...(groupId && { groupId }),
-			changedFields,
-			summary: 'Update custom format',
-			title: `Update custom format "${input.name}"`
+	let lastResult: WriteResult | null = null;
+
+	if (hasDescriptionChanges) {
+		const descriptionResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-custom-format-description-${input.name}`,
+			queries: descriptionQueries,
+			desiredState: {
+				description: {
+					from: rawCurrentDescription ?? null,
+					to: normalizedNextDescription === '' ? null : normalizedNextDescription
+				}
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'custom_format',
+				name: input.name,
+				stableKey: { key: 'custom_format_name', value: current.name },
+				...(groupId && { groupId }),
+				changedFields: ['description'],
+				summary: 'Update custom format description',
+				title: `Update description for custom format "${input.name}"`
+			}
+		});
+
+		if (!descriptionResult.success) {
+			return descriptionResult;
 		}
-	});
+		lastResult = descriptionResult;
+	}
 
-	if (!result.success || !isRename || dependentScores.length === 0 || !groupId) {
-		return result;
+	if (hasIncludeChanges) {
+		const includeResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-custom-format-include-rename-${input.name}`,
+			queries: includeQueries,
+			desiredState: {
+				include_in_rename: {
+					from: current.include_in_rename,
+					to: input.includeInRename
+				}
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'custom_format',
+				name: input.name,
+				stableKey: { key: 'custom_format_name', value: current.name },
+				...(groupId && { groupId }),
+				changedFields: ['include_in_rename'],
+				summary: 'Update custom format include in rename',
+				title: `Update include in rename for custom format "${input.name}"`
+			}
+		});
+
+		if (!includeResult.success) {
+			return includeResult;
+		}
+		lastResult = includeResult;
+	}
+
+	if (hasTagChanges) {
+		const tagsResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-custom-format-tags-${input.name}`,
+			queries: tagQueries,
+			desiredState: { tags: { add: tagsToAdd, remove: tagsToRemove } },
+			metadata: {
+				operation: 'update',
+				entity: 'custom_format',
+				name: input.name,
+				stableKey: { key: 'custom_format_name', value: current.name },
+				...(groupId && { groupId }),
+				changedFields: ['tags'],
+				summary: 'Update custom format tags',
+				title: `Update tags for custom format "${input.name}"`
+			}
+		});
+
+		if (!tagsResult.success) {
+			return tagsResult;
+		}
+		lastResult = tagsResult;
+	}
+
+	if (hasRenameChanges) {
+		const renameResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-custom-format-name-${input.name}`,
+			queries: renameQueries,
+			desiredState: {
+				name: { from: current.name, to: input.name }
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'custom_format',
+				name: input.name,
+				previousName: current.name,
+				stableKey: { key: 'custom_format_name', value: current.name },
+				...(groupId && { groupId }),
+				changedFields: ['name'],
+				summary: 'Rename custom format',
+				title: `Rename custom format "${current.name}"`
+			}
+		});
+
+		if (!renameResult.success) {
+			return renameResult;
+		}
+		lastResult = renameResult;
+	}
+
+	if (!hasRenameChanges || dependentScores.length === 0 || !groupId) {
+		return lastResult ?? { success: true };
 	}
 	if (dependentOps.length === 0) {
-		return result;
+		return lastResult ?? { success: true };
 	}
 
 	for (const op of dependentOps) {
@@ -318,5 +408,5 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		}
 	}
 
-	return result;
+	return lastResult ?? { success: true };
 }

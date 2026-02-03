@@ -8,7 +8,7 @@
  */
 
 import type { PCDCache } from '$pcd/index.ts';
-import { writeOperation, type OperationLayer } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer, type WriteResult } from '$pcd/index.ts';
 import type { ConditionData } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -182,17 +182,25 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const queries: any[] = [];
-
 	// Get names of conditions to keep
 	const newConditionNames = new Set(conditions.map((c) => c.name));
 	const originalConditionNames = new Set(originalConditions.map((c) => c.name));
 
+	const conditionOps: Array<{
+		description: string;
+		queries: Array<{ sql: string; parameters: unknown[]; query: never }>;
+		desiredState: Record<string, unknown>;
+		summary: string;
+		title: string;
+		changedFields: string[];
+		dependsOn?: Array<{ entity: string; key: string; value: string }>;
+	}> = [];
+
 	// 1. Delete removed conditions (cascade will handle type-specific tables)
 	const conditionsToDelete = originalConditions.filter((c) => !newConditionNames.has(c.name));
 	for (const condition of conditionsToDelete) {
-		queries.push({
+		const deleteQueries = [
+			{
 			sql: `DELETE FROM custom_format_conditions
 WHERE custom_format_name = '${esc(formatName)}'
   AND name = '${esc(condition.name)}'
@@ -202,14 +210,36 @@ WHERE custom_format_name = '${esc(formatName)}'
   AND required = ${condition.required ? 1 : 0}`,
 			parameters: [],
 			query: {} as never
+			}
+		];
+
+		conditionOps.push({
+			description: `delete-condition-${formatName}-${condition.name}`,
+			queries: deleteQueries,
+			desiredState: {
+				conditions: {
+					removed: [
+						{
+							name: condition.name,
+							base: baseSnapshot(condition),
+							values: getConditionValues(condition)
+						}
+					]
+				}
+			},
+			summary: 'Remove custom format condition',
+			title: `Remove condition "${condition.name}" from "${formatName}"`,
+			changedFields: ['conditions', `condition:${condition.name}`]
 		});
 	}
 
 	// 2. Handle new conditions (names not in original)
 	const newConditions = conditions.filter((c) => !originalConditionNames.has(c.name));
 	for (const condition of newConditions) {
+		const insertQueries: Array<{ sql: string; parameters: unknown[]; query: never }> = [];
+
 		// Insert the base condition
-		queries.push({
+		insertQueries.push({
 			sql: `INSERT INTO custom_format_conditions (custom_format_name, name, type, arr_type, negate, required)
 VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}', '${esc(condition.arrType ?? 'all')}', ${condition.negate ? 1 : 0}, ${condition.required ? 1 : 0})`,
 			parameters: [],
@@ -219,16 +249,43 @@ VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}'
 		// Insert type-specific data
 		const valueSqls = generateConditionValueSql(formatName, condition.name, condition);
 		for (const sql of valueSqls) {
-			queries.push({
+			insertQueries.push({
 				sql,
 				parameters: [],
 				query: {} as never
 			});
 		}
+
+		const regexDependencies = getRegexDependencies(condition);
+
+		conditionOps.push({
+			description: `add-condition-${formatName}-${condition.name}`,
+			queries: insertQueries,
+			desiredState: {
+				conditions: {
+					added: [
+						{
+							name: condition.name,
+							base: baseSnapshot(condition),
+							values: getConditionValues(condition)
+						}
+					]
+				}
+			},
+			summary: 'Add custom format condition',
+			title: `Add condition "${condition.name}" to "${formatName}"`,
+			changedFields: ['conditions', `condition:${condition.name}`],
+			dependsOn: regexDependencies.map((name) => ({
+				entity: 'regular_expression',
+				key: 'regular_expression_name',
+				value: name
+			}))
+		});
 	}
 
 	// 3. Handle updated conditions (names that exist in both)
 	const existingConditions = conditions.filter((c) => originalConditionNames.has(c.name));
+	const updatedConditions: ConditionData[] = [];
 	for (const condition of existingConditions) {
 		const original = originalConditions.find((c) => c.name === condition.name);
 		if (!original) continue;
@@ -242,6 +299,19 @@ VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}'
 			originalArrType !== nextArrType ||
 			original.negate !== condition.negate ||
 			original.required !== condition.required;
+
+		// For type-specific data, if type changed, delete old and insert new
+		// If type same but values changed, also delete and insert
+		const typeChanged = original.type !== condition.type;
+		const valuesChanged = !deepEquals(getConditionValues(original), getConditionValues(condition));
+
+		if (!baseChanged && !valuesChanged) {
+			continue;
+		}
+
+		updatedConditions.push(condition);
+
+		const updateQueries: Array<{ sql: string; parameters: unknown[]; query: never }> = [];
 
 		if (baseChanged) {
 			const setParts: string[] = [];
@@ -259,7 +329,7 @@ VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}'
 			}
 
 			if (setParts.length > 0) {
-				queries.push({
+				updateQueries.push({
 					sql: `UPDATE custom_format_conditions
 SET ${setParts.join(', ')}
 WHERE custom_format_name = '${esc(formatName)}'
@@ -274,16 +344,11 @@ WHERE custom_format_name = '${esc(formatName)}'
 			}
 		}
 
-		// For type-specific data, if type changed, delete old and insert new
-		// If type same but values changed, also delete and insert
-		const typeChanged = original.type !== condition.type;
-		const valuesChanged = !deepEquals(getConditionValues(original), getConditionValues(condition));
-
 		if (typeChanged || valuesChanged) {
 			// Delete old type-specific data based on original values
 			const deleteSqls = generateConditionValueDeleteSql(formatName, condition.name, original);
 			for (const sql of deleteSqls) {
-				queries.push({
+				updateQueries.push({
 					sql,
 					parameters: [],
 					query: {} as never
@@ -293,17 +358,49 @@ WHERE custom_format_name = '${esc(formatName)}'
 			// Insert new type-specific data
 			const valueSqls = generateConditionValueSql(formatName, condition.name, condition);
 			for (const sql of valueSqls) {
-				queries.push({
+				updateQueries.push({
 					sql,
 					parameters: [],
 					query: {} as never
 				});
 			}
 		}
+
+		const regexDependencies = getRegexDependencies(condition);
+
+		conditionOps.push({
+			description: `update-condition-${formatName}-${condition.name}`,
+			queries: updateQueries,
+			desiredState: {
+				conditions: {
+					updated: [
+						{
+							name: condition.name,
+							base: {
+								from: baseSnapshot(original),
+								to: baseSnapshot(condition)
+							},
+							values: {
+								from: getConditionValues(original),
+								to: getConditionValues(condition)
+							}
+						}
+					]
+				}
+			},
+			summary: 'Update custom format condition',
+			title: `Update condition "${condition.name}" on "${formatName}"`,
+			changedFields: ['conditions', `condition:${condition.name}`],
+			dependsOn: regexDependencies.map((name) => ({
+				entity: 'regular_expression',
+				key: 'regular_expression_name',
+				value: name
+			}))
+		});
 	}
 
 	// If no changes, return success without writing
-	if (queries.length === 0) {
+	if (conditionOps.length === 0) {
 		return { success: true };
 	}
 
@@ -314,81 +411,39 @@ WHERE custom_format_name = '${esc(formatName)}'
 			formatName,
 			deleted: conditionsToDelete.length,
 			added: newConditions.length,
-			updated: existingConditions.length
+			updated: updatedConditions.length
 		}
 	});
 
-	const regexDependencies = Array.from(
-		new Set(
-			conditions.flatMap((condition) =>
-				(condition.patterns ?? []).map((pattern) => pattern.name.trim()).filter(Boolean)
-			)
-		)
-	);
+	let lastResult: WriteResult | null = null;
 
-	// Write the operation
-	const result = await writeOperation({
-		databaseId,
-		layer,
-		description: `update-conditions-${formatName}`,
-		queries,
-		desiredState: {
-		conditions: {
-			added: newConditions.map((c) => ({
-				name: c.name,
-				base: baseSnapshot(c),
-				values: getConditionValues(c)
-			})),
-			removed: conditionsToDelete.map((c) => ({
-				name: c.name,
-				base: baseSnapshot(c),
-				values: getConditionValues(c)
-			})),
-			updated: existingConditions
-					.filter((c) => {
-						const original = originalConditions.find((o) => o.name === c.name);
-						if (!original) return false;
-						const baseChanged =
-							original.type !== c.type ||
-							original.arrType !== c.arrType ||
-							original.negate !== c.negate ||
-							original.required !== c.required;
-						const valuesChanged = !deepEquals(getConditionValues(original), getConditionValues(c));
-						return baseChanged || valuesChanged;
-					})
-					.map((c) => {
-						const original = originalConditions.find((o) => o.name === c.name);
-						return {
-							name: c.name,
-							base: {
-								from: baseSnapshot(original!),
-								to: baseSnapshot(c)
-							},
-							values: {
-								from: getConditionValues(original!),
-								to: getConditionValues(c)
-							}
-						};
-					})
+	for (const op of conditionOps) {
+		const result = await writeOperation({
+			databaseId,
+			layer,
+			description: op.description,
+			queries: op.queries,
+			desiredState: op.desiredState,
+			metadata: {
+				operation: 'update',
+				entity: 'custom_format',
+				name: formatName,
+				stableKey: { key: 'custom_format_name', value: formatName },
+				changedFields: op.changedFields,
+				summary: op.summary,
+				title: op.title,
+				...(op.dependsOn && op.dependsOn.length > 0 ? { dependsOn: op.dependsOn } : {})
 			}
-		},
-		metadata: {
-			operation: 'update',
-			entity: 'custom_format',
-			name: formatName,
-			stableKey: { key: 'custom_format_name', value: formatName },
-			changedFields: ['conditions'],
-			summary: 'Update custom format conditions',
-			title: `Update conditions for custom format "${formatName}"`,
-			dependsOn: regexDependencies.map((name) => ({
-				entity: 'regular_expression',
-				key: 'regular_expression_name',
-				value: name
-			}))
-		}
-	});
+		});
 
-	return result;
+		if (!result.success) {
+			return result;
+		}
+
+		lastResult = result;
+	}
+
+	return lastResult ?? { success: true };
 }
 
 /**
@@ -589,6 +644,12 @@ function getConditionValues(condition: ConditionData): unknown {
 		size: condition.size,
 		years: condition.years
 	};
+}
+
+function getRegexDependencies(condition: ConditionData): string[] {
+	return (condition.patterns ?? [])
+		.map((pattern) => pattern.name.trim())
+		.filter(Boolean);
 }
 
 /**
