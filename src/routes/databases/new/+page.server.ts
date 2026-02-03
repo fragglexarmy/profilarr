@@ -40,6 +40,7 @@ export const actions = {
 			formData.get('personal_access_token')?.toString().trim() || undefined;
 		const gitUserName = formData.get('git_user_name')?.toString().trim() || undefined;
 		const gitUserEmail = formData.get('git_user_email')?.toString().trim() || undefined;
+		const conflictStrategy = formData.get('conflict_strategy')?.toString().trim() || 'override';
 
 		// Validation
 		if (!name || !repositoryUrl) {
@@ -120,7 +121,8 @@ export const actions = {
 				personalAccessToken,
 				localOpsEnabled,
 				gitUserName,
-				gitUserEmail
+				gitUserEmail,
+				conflictStrategy
 			});
 
 			await logger.info(`Linked new database: ${name}`, {

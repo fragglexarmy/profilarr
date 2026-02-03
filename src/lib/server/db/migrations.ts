@@ -45,6 +45,7 @@ import { migration as migration040 } from './migrations/040_add_local_ops_enable
 import { migration as migration041 } from './migrations/041_create_pcd_ops.ts';
 import { migration as migration042 } from './migrations/042_create_pcd_op_history.ts';
 import { migration as migration043 } from './migrations/043_add_git_identity_to_database_instances.ts';
+import { migration as migration044 } from './migrations/044_add_conflict_strategy_to_database_instances.ts';
 
 export interface Migration {
 	version: number;
@@ -308,7 +309,8 @@ export function loadMigrations(): Migration[] {
 		migration040,
 		migration041,
 		migration042,
-		migration043
+		migration043,
+		migration044
 	];
 
 	// Sort by version number

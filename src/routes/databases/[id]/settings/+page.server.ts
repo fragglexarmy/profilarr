@@ -1,6 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from '@sveltejs/kit';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+import type { ConflictStrategy } from '$db/queries/databaseInstances.ts';
 import { pcdManager } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -42,6 +43,21 @@ export const actions: Actions = {
 		const gitUserEmail = formData.has('git_user_email')
 			? formData.get('git_user_email')?.toString().trim() || null
 			: undefined;
+		const conflictStrategyRaw = formData.get('conflict_strategy')?.toString().trim() || '';
+		const validConflictStrategies: ConflictStrategy[] = ['override', 'align', 'ask'];
+		const conflictStrategy = validConflictStrategies.includes(
+			conflictStrategyRaw as ConflictStrategy
+		)
+			? (conflictStrategyRaw as ConflictStrategy)
+			: instance.conflict_strategy;
+
+		if (conflictStrategyRaw && !validConflictStrategies.includes(conflictStrategyRaw as ConflictStrategy)) {
+			await logger.warn('Attempted to update database with invalid conflict strategy', {
+				source: 'databases/[id]/settings',
+				meta: { id, conflictStrategy: conflictStrategyRaw }
+			});
+			return fail(400, { error: 'Invalid conflict strategy' });
+		}
 
 		// Validation
 		if (!name) {
@@ -84,7 +100,8 @@ export const actions: Actions = {
 				personalAccessToken,
 				localOpsEnabled,
 				gitUserName,
-				gitUserEmail
+				gitUserEmail,
+				conflictStrategy
 			});
 
 			if (!updated) {

@@ -1,5 +1,7 @@
 import { db } from '../db.ts';
 
+export type ConflictStrategy = 'override' | 'align' | 'ask';
+
 /**
  * Types for database_instances table
  */
@@ -17,6 +19,7 @@ export interface DatabaseInstance {
 	local_ops_enabled: number;
 	git_user_name: string | null;
 	git_user_email: string | null;
+	conflict_strategy: ConflictStrategy;
 	last_synced_at: string | null;
 	created_at: string;
 	updated_at: string;
@@ -35,6 +38,7 @@ export interface CreateDatabaseInstanceInput {
 	gitUserEmail?: string;
 	isPrivate?: boolean;
 	localOpsEnabled?: boolean;
+	conflictStrategy?: ConflictStrategy;
 }
 
 export interface UpdateDatabaseInstanceInput {
@@ -47,6 +51,7 @@ export interface UpdateDatabaseInstanceInput {
 	localOpsEnabled?: boolean;
 	gitUserName?: string | null;
 	gitUserEmail?: string | null;
+	conflictStrategy?: ConflictStrategy;
 }
 
 /**
@@ -65,10 +70,24 @@ export const databaseInstancesQueries = {
 		const localOpsEnabled = input.localOpsEnabled ? 1 : 0;
 		const gitUserName = input.gitUserName || null;
 		const gitUserEmail = input.gitUserEmail || null;
+		const conflictStrategy = input.conflictStrategy ?? 'override';
 
 		db.execute(
-			`INSERT INTO database_instances (uuid, name, repository_url, local_path, sync_strategy, auto_pull, enabled, personal_access_token, is_private, local_ops_enabled, git_user_name, git_user_email)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO database_instances (
+				uuid,
+				name,
+				repository_url,
+				local_path,
+				sync_strategy,
+				auto_pull,
+				enabled,
+				personal_access_token,
+				is_private,
+				local_ops_enabled,
+				git_user_name,
+				git_user_email,
+				conflict_strategy
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			input.uuid,
 			input.name,
 			input.repositoryUrl,
@@ -80,7 +99,8 @@ export const databaseInstancesQueries = {
 			isPrivate,
 			localOpsEnabled,
 			gitUserName,
-			gitUserEmail
+			gitUserEmail,
+			conflictStrategy
 		);
 
 		// Get the last inserted ID
@@ -177,6 +197,10 @@ export const databaseInstancesQueries = {
 		if (input.gitUserEmail !== undefined) {
 			updates.push('git_user_email = ?');
 			params.push(input.gitUserEmail || null);
+		}
+		if (input.conflictStrategy !== undefined) {
+			updates.push('conflict_strategy = ?');
+			params.push(input.conflictStrategy);
 		}
 
 		if (updates.length === 0) {

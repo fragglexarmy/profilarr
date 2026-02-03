@@ -30,6 +30,7 @@
 				gitUserName: instance.git_user_name ?? '',
 				gitUserEmail: instance.git_user_email ?? '',
 				localOpsEnabled: instance.local_ops_enabled ? 'true' : 'false',
+				conflictStrategy: instance.conflict_strategy ?? 'override',
 				syncStrategy: String(instance.sync_strategy),
 				autoPull: instance.auto_pull ? 'true' : 'false'
 			});
@@ -42,6 +43,7 @@
 				gitUserName: data?.formData?.gitUserName ?? '',
 				gitUserEmail: data?.formData?.gitUserEmail ?? '',
 				localOpsEnabled: data?.formData?.localOpsEnabled === '1' ? 'true' : 'false',
+				conflictStrategy: 'override',
 				syncStrategy: data?.formData?.syncStrategy ? String(data.formData.syncStrategy) : '60',
 				autoPull: data?.formData?.autoPull === '0' ? 'false' : 'true'
 			});
@@ -57,6 +59,7 @@
 	$: gitUserName = ($current.gitUserName ?? '') as string;
 	$: gitUserEmail = ($current.gitUserEmail ?? '') as string;
 	$: localOpsEnabled = ($current.localOpsEnabled ?? 'false') as string;
+	$: conflictStrategy = ($current.conflictStrategy ?? 'override') as string;
 	$: syncStrategy = ($current.syncStrategy ?? '60') as string;
 	$: autoPull = ($current.autoPull ?? 'true') as string;
 	$: showGitIdentity = !!personalAccessToken || (mode === 'edit' && !!instance?.personal_access_token);
@@ -87,6 +90,12 @@
 	const localOpsOptions = [
 		{ value: 'false', label: 'Disabled' },
 		{ value: 'true', label: 'Enabled' }
+	];
+
+	const conflictStrategyOptions = [
+		{ value: 'override', label: 'Override (default)' },
+		{ value: 'align', label: 'Align' },
+		{ value: 'ask', label: 'Ask every time' }
 	];
 
 	// Submit handler
@@ -131,6 +140,7 @@
 				gitUserName,
 				gitUserEmail,
 				localOpsEnabled,
+				conflictStrategy,
 				syncStrategy,
 				autoPull
 			});
@@ -253,20 +263,54 @@
 		{/if}
 
 		<!-- Local Ops Only Row -->
-		<div class="space-y-2">
-			<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-				Local Ops Only
-			</span>
-			<p class="text-xs text-neutral-500 dark:text-neutral-400">
-				Force changes to save as local user ops even when a personal access token is set.
-			</p>
-			<DropdownSelect
-				value={localOpsEnabled}
-				options={localOpsOptions}
-				fullWidth
-				on:change={(e) => update('localOpsEnabled', e.detail)}
-			/>
-		</div>
+		{#if showGitIdentity}
+			<div class="space-y-2">
+				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+					Local Ops Only
+				</span>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					Force changes to save as local user ops even when a personal access token is set.
+				</p>
+				<DropdownSelect
+					value={localOpsEnabled}
+					options={localOpsOptions}
+					fullWidth
+					on:change={(e) => update('localOpsEnabled', e.detail)}
+				/>
+			</div>
+		{/if}
+
+		<!-- Conflict Strategy Row -->
+		{#if !showGitIdentity || localOpsEnabled === 'true'}
+			<div class="space-y-2">
+				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+					Conflict Strategy
+				</span>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					How to handle user ops that conflict with upstream changes.
+				</p>
+				<ul class="list-disc space-y-1 pl-5 text-xs text-neutral-500 dark:text-neutral-400">
+					<li>
+						<span class="font-medium text-neutral-700 dark:text-neutral-200">Override:</span>
+						reapply your local change with updated guards.
+					</li>
+					<li>
+						<span class="font-medium text-neutral-700 dark:text-neutral-200">Align:</span>
+						drop the local op and accept upstream changes.
+					</li>
+					<li>
+						<span class="font-medium text-neutral-700 dark:text-neutral-200">Ask:</span>
+						mark conflicts as pending for manual review.
+					</li>
+				</ul>
+				<DropdownSelect
+					value={conflictStrategy}
+					options={conflictStrategyOptions}
+					fullWidth
+					on:change={(e) => update('conflictStrategy', e.detail)}
+				/>
+			</div>
+		{/if}
 
 		<!-- Sync Strategy Row -->
 		<div class="space-y-2">
@@ -335,6 +379,7 @@
 	<input type="hidden" name="git_user_name" value={gitUserName} />
 	<input type="hidden" name="git_user_email" value={gitUserEmail} />
 	<input type="hidden" name="local_ops_enabled" value={localOpsEnabled === 'true' ? '1' : '0'} />
+	<input type="hidden" name="conflict_strategy" value={conflictStrategy} />
 	<input type="hidden" name="sync_strategy" value={syncStrategy} />
 	<input type="hidden" name="auto_pull" value={autoPull === 'true' ? '1' : '0'} />
 </form>
