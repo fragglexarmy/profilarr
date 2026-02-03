@@ -50,7 +50,10 @@
 		"docker:build": "docker compose -f compose.dev.yml build --no-cache",
 		"docker:up": "docker compose -f compose.dev.yml up --build",
 		"docker:down": "docker compose -f compose.dev.yml down",
-		"docker:clean": "docker compose -f compose.dev.yml down -v --rmi local"
+		"docker:clean": "docker compose -f compose.dev.yml down -v --rmi local",
+		"test:e2e": "deno run -A scripts/e2e.ts",
+		"test:e2e:headed": "deno run -A scripts/e2e.ts --headed",
+		"test:e2e:debug": "deno run -A scripts/e2e.ts --debug"
 	},
 	"compilerOptions": {
 		"lib": ["deno.window", "dom"],

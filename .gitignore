@@ -5,9 +5,6 @@ CLAUDE.md
 .claudeignore
 AGENTS.md
 
-# Local TODO/planning docs
-docs/todo/
-
 # Output
 .output
 .vercel
@@ -45,7 +42,13 @@ obj/
 bruno/environments/
 
 # OIDC testing (local Keycloak config)
-test/oidc/
+src/tests/oidc/
+
+# Playwright
+test-results/
+playwright-report/
+src/tests/e2e/test-results/
+src/tests/e2e/playwright-report/
 
 # Research repos
 research/
