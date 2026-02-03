@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
-	import { GitBranch, History, Wrench, Settings, FileCog } from 'lucide-svelte';
+	import { GitBranch, History, GitPullRequestClosed, Wrench, Settings, FileCog } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
 	$: database = $page.data.database;
@@ -19,6 +19,12 @@
 					href: `/databases/${database.id}/commits`,
 					icon: History,
 					active: currentPath.includes('/commits')
+				},
+				{
+					label: 'Conflicts',
+					href: `/databases/${database.id}/conflicts`,
+					icon: GitPullRequestClosed,
+					active: currentPath.includes('/conflicts')
 				},
 				{
 					label: 'Tweaks',
