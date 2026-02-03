@@ -134,6 +134,7 @@ export interface LinkOptions {
 	localOpsEnabled?: boolean;
 	gitUserName?: string;
 	gitUserEmail?: string;
+	conflictStrategy?: string;
 }
 
 /**

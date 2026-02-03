@@ -15,18 +15,16 @@ export async function compile(
 	pcdPath: string,
 	databaseInstanceId: number
 ): Promise<CacheBuildStats> {
-	// Close existing cache if present
+	// Build the new cache first so we don't leave a window with no usable cache.
 	const existing = getCache(databaseInstanceId);
-	if (existing) {
-		existing.close();
-	}
-
-	// Create and build new cache
 	const cache = new PCDCache(pcdPath, databaseInstanceId);
 	const stats = await cache.build();
 
-	// Store in registry
+	// Swap the cache in the registry, then close the old one.
 	setCache(databaseInstanceId, cache);
+	if (existing && existing !== cache) {
+		existing.close();
+	}
 
 	return stats;
 }

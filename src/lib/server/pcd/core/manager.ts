@@ -71,7 +71,8 @@ class PCDManager {
 				isPrivate,
 				localOpsEnabled: options.localOpsEnabled,
 				gitUserName: options.gitUserName,
-				gitUserEmail: options.gitUserEmail
+				gitUserEmail: options.gitUserEmail,
+				conflictStrategy: options.conflictStrategy as 'override' | 'align' | 'ask' | undefined
 			});
 
 			// Get and return the created instance

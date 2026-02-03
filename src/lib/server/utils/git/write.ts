@@ -32,16 +32,8 @@ async function validateRepository(
 		'User-Agent': 'Profilarr'
 	};
 
-	// Try without auth first
-	const response = await globalThis.fetch(apiUrl, { headers });
-
-	if (response.ok) {
-		const data = await response.json();
-		return data.private === true;
-	}
-
-	// If 404/403 and we have PAT, try with auth
-	if ((response.status === 404 || response.status === 403) && personalAccessToken) {
+	// If we have a PAT, use it directly to avoid burning unauthenticated rate limit
+	if (personalAccessToken) {
 		const authResponse = await globalThis.fetch(apiUrl, {
 			headers: { ...headers, Authorization: `Bearer ${personalAccessToken}` }
 		});
@@ -60,6 +52,14 @@ async function validateRepository(
 		}
 
 		throw new Error(`GitHub API error: ${authResponse.status}`);
+	}
+
+	// No PAT — try unauthenticated
+	const response = await globalThis.fetch(apiUrl, { headers });
+
+	if (response.ok) {
+		const data = await response.json();
+		return data.private === true;
 	}
 
 	if (response.status === 404 || response.status === 403) {
