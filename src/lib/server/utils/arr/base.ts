@@ -20,15 +20,22 @@ import { logger } from '$logger/logger.ts';
  * Base client for all *arr applications
  * Extends BaseHttpClient with arr-specific features
  */
+export interface ArrClientOptions {
+	timeout?: number;
+	retries?: number;
+}
+
 export class BaseArrClient extends BaseHttpClient {
 	private apiKey: string;
 	protected apiVersion: string = 'v3'; // Default to v3, can be overridden by subclasses
 
-	constructor(url: string, apiKey: string) {
+	constructor(url: string, apiKey: string, options?: ArrClientOptions) {
 		super(url, {
 			headers: {
 				'X-Api-Key': apiKey
-			}
+			},
+			timeout: options?.timeout,
+			retries: options?.retries
 		});
 		this.apiKey = apiKey;
 	}

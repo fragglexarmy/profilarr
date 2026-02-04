@@ -18,8 +18,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ success: false, error: 'Invalid arr type' }, { status: 400 });
 		}
 
-		// Create client and test connection
-		const client = createArrClient(type as ArrType, url, apiKey);
+		// Create client and test connection (3 second timeout, no retries for quick feedback)
+		const client = createArrClient(type as ArrType, url, apiKey, { timeout: 3000, retries: 0 });
 		const isConnected = await client.testConnection();
 		client.close();
 
