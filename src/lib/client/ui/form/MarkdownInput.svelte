@@ -1,62 +1,30 @@
 <script lang="ts">
 	import { Bold, Italic, List, ListOrdered, Link, Code, Eye, Edit3 } from 'lucide-svelte';
 	import { marked } from 'marked';
-	import { onMount } from 'svelte';
 
 	// Props
 	export let value: string = '';
 	export let placeholder: string = '';
 	export let label: string = '';
 	export let description: string = '';
-	export let rows: number = 4;
-	export let minRows: number = 2;
+	export let rows: number = 6;
 	export let multiline: boolean = true;
 	export let markdown: boolean = true;
 	export let required: boolean = false;
 	export let disabled: boolean = false;
 	export let name: string = '';
 	export let id: string = name;
-	export let autoResize: boolean = true;
 	export let onchange: ((value: string) => void) | undefined = undefined;
 
 	// State
-	let showPreview = true;
+	let showPreview = false;
 	let textareaElement: HTMLTextAreaElement;
 	let inputElement: HTMLInputElement;
-
-	// Auto-resize textarea to fit content
-	function resizeTextarea() {
-		if (!textareaElement || !autoResize || !multiline) return;
-
-		// Reset height to auto to get the correct scrollHeight
-		textareaElement.style.height = 'auto';
-
-		// Calculate min height based on minRows
-		const lineHeight = parseFloat(getComputedStyle(textareaElement).lineHeight) || 20;
-		const paddingTop = parseFloat(getComputedStyle(textareaElement).paddingTop) || 8;
-		const paddingBottom = parseFloat(getComputedStyle(textareaElement).paddingBottom) || 8;
-		const minHeight = lineHeight * minRows + paddingTop + paddingBottom;
-
-		// Set height to scrollHeight (actual content height) or minHeight
-		const newHeight = Math.max(textareaElement.scrollHeight, minHeight);
-		textareaElement.style.height = `${newHeight}px`;
-	}
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
 		value = target.value;
 		onchange?.(value);
-		resizeTextarea();
-	}
-
-	// Resize on mount and when value changes externally
-	onMount(() => {
-		resizeTextarea();
-	});
-
-	$: if (textareaElement && value !== undefined) {
-		// Use requestAnimationFrame to ensure DOM is updated
-		requestAnimationFrame(resizeTextarea);
 	}
 
 	function insertMarkdown(before: string, after: string = '') {
@@ -73,11 +41,10 @@
 		value = newValue;
 		onchange?.(value);
 
-		// Restore cursor position and resize
+		// Restore cursor position
 		requestAnimationFrame(() => {
 			element.focus();
 			element.setSelectionRange(start + before.length, start + before.length + selectedText.length);
-			resizeTextarea();
 		});
 	}
 
@@ -233,7 +200,6 @@
 			<!-- Preview -->
 			<div
 				class="prose prose-sm max-w-none rounded-b-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-				style="min-height: {minRows * 1.5}rem"
 			>
 				{@html renderMarkdown(value)}
 			</div>
@@ -248,14 +214,14 @@
 				{name}
 				{value}
 				{placeholder}
-				rows={autoResize ? minRows : rows}
+				{rows}
 				{disabled}
 				{required}
 				oninput={handleInput}
 				onkeydown={handleKeydown}
-				class="{markdown ? 'rounded-t-none rounded-b-lg border-t-0' : 'rounded-lg'} {autoResize
-					? 'resize-none overflow-hidden'
-					: ''} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+				class="{markdown
+					? 'rounded-t-none rounded-b-lg border-t-0'
+					: 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
 			></textarea>
 		{:else}
 			<!-- Single-line input -->
@@ -272,7 +238,7 @@
 				onkeydown={handleKeydown}
 				class="{markdown
 					? 'rounded-t-none rounded-b-lg border-t-0'
-					: 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+					: 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
 			/>
 		{/if}
 	</div>
