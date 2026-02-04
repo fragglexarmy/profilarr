@@ -42,21 +42,22 @@ export async function create(options: CreateCustomFormatOptions) {
 		throw new Error(`A custom format with name "${input.name}" already exists`);
 	}
 
+	// Normalize description: empty/whitespace → '' (matches v1 translator behavior)
 	const normalizedDescription = input.description?.trim() ?? '';
-	const descriptionNext = normalizedDescription === '' ? null : normalizedDescription;
 
 	const includeChanged = input.includeInRename;
-	const descriptionChanged = descriptionNext !== null;
+	const descriptionChanged = normalizedDescription !== '';
 	const uniqueTags = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
 	const opCount =
 		(descriptionChanged ? 1 : 0) + (includeChanged ? 1 : 0) + (uniqueTags.length > 0 ? 1 : 0);
 	const groupId = opCount > 0 ? uuid() : undefined;
 
-	// 1. Insert the custom format (name only)
+	// 1. Insert the custom format with name and empty description
+	// Always include description as '' to match v1 translator behavior (not NULL)
 	const formatQueries = [];
 	const insertFormat = db
 		.insertInto('custom_formats')
-		.values({ name: input.name })
+		.values({ name: input.name, description: '' })
 		.compile();
 
 	formatQueries.push(insertFormat);
@@ -108,9 +109,9 @@ export async function create(options: CreateCustomFormatOptions) {
 	if (descriptionChanged) {
 		const descriptionQuery = db
 			.updateTable('custom_formats')
-			.set({ description: descriptionNext })
+			.set({ description: normalizedDescription })
 			.where('name', '=', input.name)
-			.where('description', 'is', null)
+			.where('description', '=', '')
 			.compile();
 
 		const descriptionResult = await writeOperation({
@@ -119,7 +120,7 @@ export async function create(options: CreateCustomFormatOptions) {
 			description: `update-custom-format-description-${input.name}`,
 			queries: [descriptionQuery],
 			desiredState: {
-				description: { from: null, to: descriptionNext }
+				description: { from: '', to: normalizedDescription }
 			},
 			metadata: {
 				operation: 'update',

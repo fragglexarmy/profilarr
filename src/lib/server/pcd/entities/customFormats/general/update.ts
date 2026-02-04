@@ -57,19 +57,29 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 		}
 	}
 
-	const rawCurrentDescription = current.description;
+	// Query actual DB value for description (read.ts converts null to '' which breaks value guards)
+	// This handles backwards compatibility for existing CFs with NULL descriptions
+	const rawFormat = await db
+		.selectFrom('custom_formats')
+		.select('description')
+		.where('name', '=', current.name)
+		.executeTakeFirst();
+	const rawCurrentDescription = rawFormat?.description ?? null;
+
 	const normalizedCurrentDescription = rawCurrentDescription ?? '';
 	const normalizedNextDescription = input.description?.trim() ?? '';
 	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
 
 	// 1. Build per-field update queries with value guards
-	const descriptionNext = normalizedNextDescription === '' ? null : normalizedNextDescription;
+	// Store empty descriptions as '' (not null) to match v1 translator behavior
+	const descriptionNext = normalizedNextDescription;
 	const descriptionQueries: CompiledQuery[] = [];
 	if (descriptionChanged) {
 		let updateDescription = db
 			.updateTable('custom_formats')
 			.set({ description: descriptionNext })
 			.where('name', '=', current.name);
+		// Use actual DB value for value guard (handles both NULL and '' for backwards compat)
 		if (rawCurrentDescription === null) {
 			updateDescription = updateDescription.where('description', 'is', null);
 		} else {
@@ -213,8 +223,8 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	}
 	if (descriptionChanged) {
 		changes.description = {
-			from: rawCurrentDescription ?? null,
-			to: normalizedNextDescription === '' ? null : normalizedNextDescription
+			from: rawCurrentDescription ?? '',
+			to: normalizedNextDescription
 		};
 	}
 	if (current.include_in_rename !== input.includeInRename) {
@@ -262,8 +272,8 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 			queries: descriptionQueries,
 			desiredState: {
 				description: {
-					from: rawCurrentDescription ?? null,
-					to: normalizedNextDescription === '' ? null : normalizedNextDescription
+					from: rawCurrentDescription ?? '',
+					to: normalizedNextDescription
 				}
 			},
 			metadata: {
