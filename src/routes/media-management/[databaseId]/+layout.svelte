@@ -31,12 +31,7 @@
 	}
 
 	// Back button for nested pages
-	$: backButton = isNestedPage
-		? {
-				label: 'Back',
-				href: `/media-management/${data.currentDatabase.id}/${currentConfigType}`
-			}
-		: undefined;
+	$: backButton = isNestedPage ? { label: 'Back' } : undefined;
 </script>
 
 <svelte:head>

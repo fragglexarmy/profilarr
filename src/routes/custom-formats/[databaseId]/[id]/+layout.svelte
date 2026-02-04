@@ -29,10 +29,7 @@
 		}
 	];
 
-	$: backButton = {
-		label: 'Back',
-		href: `/custom-formats/${databaseId}`
-	};
+	$: backButton = { label: 'Back' };
 </script>
 
 <div class="p-4 md:p-8">

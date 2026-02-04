@@ -16,7 +16,6 @@
 
 	interface BackButton {
 		label: string;
-		href: string;
 	}
 
 	interface Breadcrumb {
@@ -142,13 +141,14 @@
 					<span class="font-medium text-neutral-900 dark:text-neutral-50">{breadcrumb.current}</span>
 				</div>
 			{:else if backButton}
-				<a
-					href={backButton.href}
+				<button
+					type="button"
+					on:click={() => history.back()}
 					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
 				>
 					<ArrowLeft size={14} />
 					{backButton.label}
-				</a>
+				</button>
 			{/if}
 		</nav>
 	</div>
