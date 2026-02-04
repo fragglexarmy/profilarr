@@ -1,6 +1,6 @@
-name: 💬 Quick Feedback
+name: 🪄 Tweak
 description: Small suggestions, UI tweaks, or minor improvements
-labels: ["type: feedback"]
+type: Tweak
 
 body:
   - type: textarea
