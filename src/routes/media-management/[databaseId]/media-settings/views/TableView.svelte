@@ -2,7 +2,6 @@
 	import Table from '$ui/table/Table.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { Column } from '$ui/table/types';
-	import { goto } from '$app/navigation';
 	import { Tag, Info, RefreshCw } from 'lucide-svelte';
 	import type { MediaSettingsListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
@@ -23,8 +22,8 @@
 		doNotUpgradeAutomatically: { variant: 'warning', label: 'No Auto Upgrade' }
 	};
 
-	function handleRowClick(config: MediaSettingsListItem) {
-		goto(`/media-management/${databaseId}/media-settings/${config.arr_type}/${encodeURIComponent(config.name)}`);
+	function getRowHref(config: MediaSettingsListItem): string {
+		return `/media-management/${databaseId}/media-settings/${config.arr_type}/${encodeURIComponent(config.name)}`;
 	}
 
 	const columns: Column<MediaSettingsListItem>[] = [
@@ -53,7 +52,7 @@
 	];
 </script>
 
-<Table {columns} data={configs} onRowClick={handleRowClick} hoverable={true}>
+<Table {columns} data={configs} rowHref={getRowHref} hoverable={true}>
 	<svelte:fragment slot="cell" let:row let:column>
 		{#if column.key === 'name'}
 			<span class="font-medium">{row.name}</span>

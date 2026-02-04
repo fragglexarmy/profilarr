@@ -4,15 +4,15 @@
 	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
 	import { Tag, FileText, Layers, FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { sortConditions } from '$shared/pcd/conditions';
 
 	export let formats: CustomFormatTableRow[];
 
-	function handleRowClick(row: CustomFormatTableRow) {
-		const databaseId = $page.params.databaseId;
-		goto(`/custom-formats/${databaseId}/${row.id}`);
+	$: databaseId = $page.params.databaseId;
+
+	function getRowHref(row: CustomFormatTableRow): string {
+		return `/custom-formats/${databaseId}/${row.id}`;
 	}
 
 	function escapeHtml(text: string): string {
@@ -130,7 +130,7 @@
 	emptyMessage="No custom formats found"
 	hoverable={true}
 	compact={false}
-	onRowClick={handleRowClick}
+	rowHref={getRowHref}
 />
 
 <style>

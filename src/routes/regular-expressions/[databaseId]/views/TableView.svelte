@@ -4,11 +4,12 @@
 	import type { RegularExpressionWithTags } from '$shared/pcd/display';
 	import { Tag, Code, FileText, Link, Calendar } from 'lucide-svelte';
 	import { marked } from 'marked';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { parseUTC } from '$shared/utils/dates';
 
 	export let expressions: RegularExpressionWithTags[];
+
+	$: databaseId = $page.params.databaseId;
 
 	function formatDate(dateString: string): string {
 		const date = parseUTC(dateString);
@@ -22,9 +23,8 @@
 		});
 	}
 
-	function handleRowClick(row: RegularExpressionWithTags) {
-		const databaseId = $page.params.databaseId;
-		goto(`/regular-expressions/${databaseId}/${row.id}`);
+	function getRowHref(row: RegularExpressionWithTags): string {
+		return `/regular-expressions/${databaseId}/${row.id}`;
 	}
 
 	function escapeHtml(text: string): string {
@@ -137,7 +137,7 @@
 	emptyMessage="No regular expressions found"
 	hoverable={true}
 	compact={false}
-	onRowClick={handleRowClick}
+	rowHref={getRowHref}
 />
 
 <style>

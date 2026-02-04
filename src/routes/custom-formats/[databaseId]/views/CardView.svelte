@@ -2,15 +2,11 @@
 	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
 	import { Layers, FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let formats: CustomFormatTableRow[];
 
-	function handleCardClick(format: CustomFormatTableRow) {
-		const databaseId = $page.params.databaseId;
-		goto(`/custom-formats/${databaseId}/${format.id}`);
-	}
+	$: databaseId = $page.params.databaseId;
 
 	// Configure marked for inline parsing (no wrapping <p> tags for short text)
 	function parseMarkdown(text: string | null): string {
@@ -21,9 +17,8 @@
 
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 	{#each formats as format}
-		<button
-			type="button"
-			on:click={() => handleCardClick(format)}
+		<a
+			href="/custom-formats/{databaseId}/{format.id}"
 			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name and condition count -->
@@ -74,7 +69,7 @@
 			{:else}
 				<div class="text-xs text-neutral-400 italic dark:text-neutral-500">No description</div>
 			{/if}
-		</button>
+		</a>
 	{/each}
 </div>
 

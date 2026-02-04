@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { QualityDefinitionListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
@@ -19,21 +18,12 @@
 		loadedImages.add(name);
 		loadedImages = loadedImages;
 	}
-
-	function handleCardClick(config: QualityDefinitionListItem) {
-		goto(
-			`/media-management/${databaseId}/quality-definitions/${config.arr_type}/${encodeURIComponent(config.name)}`
-		);
-	}
 </script>
 
 <div class="grid grid-cols-1 gap-3">
 	{#each configs as config}
-		<div
-			on:click={() => handleCardClick(config)}
-			on:keydown={(e) => e.key === 'Enter' && handleCardClick(config)}
-			role="button"
-			tabindex="0"
+		<a
+			href="/media-management/{databaseId}/quality-definitions/{config.arr_type}/{encodeURIComponent(config.name)}"
 			class="group flex cursor-pointer items-center gap-4 rounded-lg border border-neutral-200 bg-white p-3 transition-all hover:border-neutral-300 hover:shadow-md active:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700 dark:active:bg-neutral-800"
 		>
 			<!-- Left: Logo + Name -->
@@ -62,6 +52,6 @@
 					</div>
 				</div>
 			</div>
-		</div>
+		</a>
 	{/each}
 </div>

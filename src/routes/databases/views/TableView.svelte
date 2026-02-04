@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { ExternalLink, Unlink, Lock, Code } from 'lucide-svelte';
 	import Table from '$ui/table/Table.svelte';
 	import TableActionButton from '$ui/table/TableActionButton.svelte';
@@ -39,15 +38,22 @@
 		});
 	}
 
-	// Handle row click - navigate to database details
-	function handleRowClick(database: DatabaseInstance) {
-		goto(`/databases/${database.id}`);
+	function getRowHref(database: DatabaseInstance): string {
+		return `/databases/${database.id}`;
 	}
 
 	// Handle unlink click
 	function handleUnlinkClick(e: Event, database: DatabaseInstance) {
 		e.stopPropagation();
+		e.preventDefault();
 		dispatch('unlink', database);
+	}
+
+	// Handle external link click
+	function handleExternalClick(e: Event, url: string) {
+		e.stopPropagation();
+		e.preventDefault();
+		window.open(url, '_blank');
 	}
 
 	// Define table columns
@@ -59,51 +65,37 @@
 	];
 </script>
 
-<Table {columns} data={databases} hoverable={true}>
+<Table {columns} data={databases} hoverable={true} rowHref={getRowHref}>
 	<svelte:fragment slot="cell" let:row let:column>
-		<div
-			on:click={() => handleRowClick(row)}
-			role="button"
-			tabindex="0"
-			on:keydown={(e) => e.key === 'Enter' && handleRowClick(row)}
-			class="cursor-pointer"
-		>
-			{#if column.key === 'name'}
-				<div class="flex items-center gap-3">
-					<DatabaseAvatar name={row.name} repoUrl={row.repository_url} size="sm" />
-					<div class="flex items-center gap-2">
-						<div class="font-medium text-neutral-900 dark:text-neutral-50">
-							{row.name}
-						</div>
-						{#if row.is_private}
-							<Badge variant="neutral" icon={Lock} mono>Private</Badge>
-						{/if}
-						{#if row.personal_access_token}
-							<Badge variant="info" icon={Code} mono>Dev</Badge>
-						{/if}
+		{#if column.key === 'name'}
+			<div class="flex items-center gap-3">
+				<DatabaseAvatar name={row.name} repoUrl={row.repository_url} size="sm" />
+				<div class="flex items-center gap-2">
+					<div class="font-medium text-neutral-900 dark:text-neutral-50">
+						{row.name}
 					</div>
+					{#if row.is_private}
+						<Badge variant="neutral" icon={Lock} mono>Private</Badge>
+					{/if}
+					{#if row.personal_access_token}
+						<Badge variant="info" icon={Code} mono>Dev</Badge>
+					{/if}
 				</div>
-			{:else if column.key === 'repository_url'}
-				<Badge variant="neutral" mono>{row.repository_url.replace('https://github.com/', '')}</Badge
-				>
-			{:else if column.key === 'sync_strategy'}
-				<Badge variant="neutral" mono>{formatSyncStrategy(row.sync_strategy)}</Badge>
-			{:else if column.key === 'last_synced_at'}
-				<Badge variant="neutral" mono>{formatLastSynced(row.last_synced_at)}</Badge>
-			{/if}
-		</div>
+			</div>
+		{:else if column.key === 'repository_url'}
+			<Badge variant="neutral" mono>{row.repository_url.replace('https://github.com/', '')}</Badge>
+		{:else if column.key === 'sync_strategy'}
+			<Badge variant="neutral" mono>{formatSyncStrategy(row.sync_strategy)}</Badge>
+		{:else if column.key === 'last_synced_at'}
+			<Badge variant="neutral" mono>{formatLastSynced(row.last_synced_at)}</Badge>
+		{/if}
 	</svelte:fragment>
 
 	<svelte:fragment slot="actions" let:row>
-		<div class="flex items-center justify-end gap-1">
-			<a
-				href={row.repository_url}
-				target="_blank"
-				rel="noopener noreferrer"
-				on:click={(e) => e.stopPropagation()}
-			>
+		<div class="relative z-10 flex items-center justify-end gap-1">
+			<button type="button" on:click={(e) => handleExternalClick(e, row.repository_url)}>
 				<TableActionButton icon={ExternalLink} title="View on GitHub" />
-			</a>
+			</button>
 			<TableActionButton
 				icon={Unlink}
 				title="Unlink database"

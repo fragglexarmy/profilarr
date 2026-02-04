@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { ExternalLink, Unlink, Lock, Code } from 'lucide-svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
@@ -36,25 +35,25 @@
 		});
 	}
 
-	// Handle card click - navigate to database details
-	function handleCardClick(database: DatabaseInstance) {
-		goto(`/databases/${database.id}`);
-	}
-
 	// Handle unlink click
 	function handleUnlinkClick(e: MouseEvent, database: DatabaseInstance) {
 		e.stopPropagation();
+		e.preventDefault();
 		dispatch('unlink', database);
+	}
+
+	// Handle external link click
+	function handleExternalClick(e: MouseEvent, url: string) {
+		e.stopPropagation();
+		e.preventDefault();
+		window.open(url, '_blank');
 	}
 </script>
 
 <div class="grid grid-cols-1 gap-3">
 	{#each databases as database}
-		<div
-			on:click={() => handleCardClick(database)}
-			on:keydown={(e) => e.key === 'Enter' && handleCardClick(database)}
-			role="button"
-			tabindex="0"
+		<a
+			href="/databases/{database.id}"
 			class="group cursor-pointer rounded-lg border border-neutral-200 bg-white p-4 transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Top row: Avatar, Name, Action buttons -->
@@ -74,17 +73,16 @@
 					</div>
 				</div>
 				<!-- Action buttons -->
-				<div class="flex flex-shrink-0 items-center gap-1">
-					<a
-						href={database.repository_url}
-						target="_blank"
-						rel="noopener noreferrer"
-						on:click={(e) => e.stopPropagation()}
+				<div class="relative z-10 flex flex-shrink-0 items-center gap-1">
+					<button
+						type="button"
+						on:click={(e) => handleExternalClick(e, database.repository_url)}
 						class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
 					>
 						<ExternalLink size={16} />
-					</a>
+					</button>
 					<button
+						type="button"
 						on:click={(e) => handleUnlinkClick(e, database)}
 						class="rounded-md p-1.5 text-neutral-400 transition-colors hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400"
 					>
@@ -101,6 +99,6 @@
 				<Badge variant="neutral" mono>{formatSyncStrategy(database.sync_strategy)}</Badge>
 				<Badge variant="neutral" mono>{formatLastSynced(database.last_synced_at)}</Badge>
 			</div>
-		</div>
+		</a>
 	{/each}
 </div>

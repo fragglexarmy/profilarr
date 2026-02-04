@@ -3,15 +3,14 @@
 	import type { Column } from '$ui/table/types';
 	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
 	import { Tag, FileText, Layers, BookOpenText, Gauge, Earth } from 'lucide-svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let profiles: QualityProfileTableRow[];
 
-	function handleRowClick(row: QualityProfileTableRow) {
-		// Get the current database ID from the URL
-		const databaseId = $page.params.databaseId;
-		goto(`/quality-profiles/${databaseId}/${row.id}/general`);
+	$: databaseId = $page.params.databaseId;
+
+	function getRowHref(row: QualityProfileTableRow): string {
+		return `/quality-profiles/${databaseId}/${row.id}/general`;
 	}
 
 	// Define table columns for quality profiles
@@ -160,5 +159,5 @@
 	emptyMessage="No quality profiles found"
 	hoverable={true}
 	compact={false}
-	onRowClick={handleRowClick}
+	rowHref={getRowHref}
 />

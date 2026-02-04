@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
-	import { goto } from '$app/navigation';
 	import { Tag } from 'lucide-svelte';
 	import type { QualityDefinitionListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
@@ -15,8 +14,8 @@
 		sonarr: sonarrLogo
 	};
 
-	function handleRowClick(config: QualityDefinitionListItem) {
-		goto(`/media-management/${databaseId}/quality-definitions/${config.arr_type}/${encodeURIComponent(config.name)}`);
+	function getRowHref(config: QualityDefinitionListItem): string {
+		return `/media-management/${databaseId}/quality-definitions/${config.arr_type}/${encodeURIComponent(config.name)}`;
 	}
 
 	const columns: Column<QualityDefinitionListItem>[] = [
@@ -35,7 +34,7 @@
 	];
 </script>
 
-<Table {columns} data={configs} onRowClick={handleRowClick} hoverable={true}>
+<Table {columns} data={configs} rowHref={getRowHref} hoverable={true}>
 	<svelte:fragment slot="cell" let:row let:column>
 		{#if column.key === 'name'}
 			<span class="font-medium">{row.name}</span>

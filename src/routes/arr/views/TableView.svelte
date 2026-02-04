@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { ExternalLink, Trash2 } from 'lucide-svelte';
 	import Table from '$ui/table/Table.svelte';
 	import TableActionButton from '$ui/table/TableActionButton.svelte';
@@ -40,15 +39,22 @@
 		return type.charAt(0).toUpperCase() + type.slice(1);
 	}
 
-	// Handle row click
-	function handleRowClick(instance: ArrInstance) {
-		goto(`/arr/${instance.id}`);
+	function getRowHref(instance: ArrInstance): string {
+		return `/arr/${instance.id}`;
 	}
 
 	// Handle delete click
 	function handleDeleteClick(e: Event, instance: ArrInstance) {
 		e.stopPropagation();
+		e.preventDefault();
 		dispatch('delete', instance);
+	}
+
+	// Handle external link click
+	function handleExternalClick(e: Event, url: string) {
+		e.stopPropagation();
+		e.preventDefault();
+		window.open(url, '_blank');
 	}
 
 	// Define table columns
@@ -59,7 +65,7 @@
 	];
 </script>
 
-<Table {columns} data={instances} hoverable={true} onRowClick={handleRowClick}>
+<Table {columns} data={instances} hoverable={true} rowHref={getRowHref}>
 	<svelte:fragment slot="cell" let:row let:column>
 		{#if column.key === 'name'}
 			<div class="flex items-center gap-3">
@@ -96,15 +102,10 @@
 	</svelte:fragment>
 
 	<svelte:fragment slot="actions" let:row>
-		<div class="flex items-center justify-end gap-1">
-			<a
-				href={row.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				on:click={(e) => e.stopPropagation()}
-			>
+		<div class="relative z-10 flex items-center justify-end gap-1">
+			<button type="button" on:click={(e) => handleExternalClick(e, row.url)}>
 				<TableActionButton icon={ExternalLink} title="Open in {formatType(row.type)}" />
-			</a>
+			</button>
 			<TableActionButton
 				icon={Trash2}
 				title="Delete instance"

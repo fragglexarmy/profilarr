@@ -2,15 +2,11 @@
 	import type { RegularExpressionWithTags } from '$shared/pcd/display';
 	import { ExternalLink } from 'lucide-svelte';
 	import { marked } from 'marked';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let expressions: RegularExpressionWithTags[];
 
-	function handleCardClick(expression: RegularExpressionWithTags) {
-		const databaseId = $page.params.databaseId;
-		goto(`/regular-expressions/${databaseId}/${expression.id}`);
-	}
+	$: databaseId = $page.params.databaseId;
 
 	// Configure marked for inline parsing (no wrapping <p> tags for short text)
 	function parseMarkdown(text: string | null): string {
@@ -21,9 +17,8 @@
 
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 	{#each expressions as expression}
-		<button
-			type="button"
-			on:click={() => handleCardClick(expression)}
+		<a
+			href="/regular-expressions/{databaseId}/{expression.id}"
 			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name and tags -->
@@ -33,16 +28,14 @@
 						{expression.name}
 					</h3>
 					{#if expression.regex101_id}
-						<a
-							href="https://regex101.com/r/{expression.regex101_id}"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="flex-shrink-0 text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
+						<button
+							type="button"
+							class="relative z-10 flex-shrink-0 text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
 							title="View on regex101"
-							on:click|stopPropagation
+							on:click|preventDefault|stopPropagation={() => window.open(`https://regex101.com/r/${expression.regex101_id}`, '_blank')}
 						>
 							<ExternalLink size={14} />
-						</a>
+						</button>
 					{/if}
 				</div>
 				{#if expression.tags.length > 0}
@@ -71,7 +64,7 @@
 					{@html parseMarkdown(expression.description)}
 				</div>
 			{/if}
-		</button>
+		</a>
 	{/each}
 </div>
 

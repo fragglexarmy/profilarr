@@ -3,11 +3,12 @@
 	import type { Column } from '$ui/table/types';
 	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 	import { Tag, Clock, Zap, Shield, Calendar } from 'lucide-svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { parseUTC } from '$shared/utils/dates';
 
 	export let profiles: DelayProfilesRow[];
+
+	$: databaseId = $page.params.databaseId;
 
 	function formatDate(dateString: string): string {
 		const date = parseUTC(dateString);
@@ -21,9 +22,8 @@
 		});
 	}
 
-	function handleRowClick(row: DelayProfilesRow) {
-		const databaseId = $page.params.databaseId;
-		goto(`/delay-profiles/${databaseId}/${row.id}`);
+	function getRowHref(row: DelayProfilesRow): string {
+		return `/delay-profiles/${databaseId}/${row.id}`;
 	}
 
 	function formatProtocol(protocol: string): string {
@@ -145,5 +145,5 @@
 	emptyMessage="No delay profiles found"
 	hoverable={true}
 	compact={false}
-	onRowClick={handleRowClick}
+	rowHref={getRowHref}
 />

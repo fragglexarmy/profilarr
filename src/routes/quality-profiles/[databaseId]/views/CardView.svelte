@@ -1,21 +1,17 @@
 <script lang="ts">
 	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { BookOpenText, Gauge, Earth } from 'lucide-svelte';
 
 	export let profiles: QualityProfileTableRow[];
 
-	function handleCardClick(profile: QualityProfileTableRow) {
-		const databaseId = $page.params.databaseId;
-		goto(`/quality-profiles/${databaseId}/${profile.id}/general`);
-	}
+	$: databaseId = $page.params.databaseId;
 </script>
 
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 	{#each profiles as profile}
-		<button
-			on:click={() => handleCardClick(profile)}
+		<a
+			href="/quality-profiles/{databaseId}/{profile.id}/general"
 			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name and tags -->
@@ -99,7 +95,7 @@
 					</div>
 				{/if}
 			</div>
-		</button>
+		</a>
 	{/each}
 </div>
 

@@ -1,15 +1,11 @@
 <script lang="ts">
 	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { Clock, Zap, Shield } from 'lucide-svelte';
 
 	export let profiles: DelayProfilesRow[];
 
-	function handleCardClick(profile: DelayProfilesRow) {
-		const databaseId = $page.params.databaseId;
-		goto(`/delay-profiles/${databaseId}/${profile.id}`);
-	}
+	$: databaseId = $page.params.databaseId;
 
 	function formatProtocol(protocol: string): string {
 		switch (protocol) {
@@ -45,8 +41,8 @@
 
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 	{#each profiles as profile}
-		<button
-			on:click={() => handleCardClick(profile)}
+		<a
+			href="/delay-profiles/{databaseId}/{profile.id}"
 			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name -->
@@ -116,6 +112,6 @@
 					</div>
 				</div>
 			{/if}
-		</button>
+		</a>
 	{/each}
 </div>

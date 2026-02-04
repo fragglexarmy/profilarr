@@ -11,6 +11,7 @@
 	export let compact: boolean = false;
 	export let emptyMessage: string = 'No data available';
 	export let onRowClick: ((row: T) => void) | undefined = undefined;
+	export let rowHref: ((row: T) => string) | undefined = undefined;
 	export let initialSort: SortState | null = null;
 	export let onSortChange: ((sort: SortState | null) => void) | undefined = undefined;
 	export let actionsHeader: string = 'Actions';
@@ -149,9 +150,12 @@
 			{#each sortedData as row, rowIndex}
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 				<div
-					class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 {onRowClick ? 'cursor-pointer' : ''}"
+					class="group/row relative overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 {onRowClick || rowHref ? 'cursor-pointer' : ''}"
 					on:click={() => onRowClick && onRowClick(row)}
 				>
+					{#if rowHref}
+						<a href={rowHref(row)} class="absolute inset-0 z-10" aria-label="Open {columns[0]?.header || 'item'}"></a>
+					{/if}
 					<!-- Primary row: first column as title + actions -->
 					<div class="flex items-center justify-between gap-3 px-4 py-3">
 						<div class="min-w-0 flex-1 font-medium text-neutral-900 dark:text-neutral-100">
@@ -289,15 +293,18 @@
 				{:else}
 					{#each sortedData as row, rowIndex}
 						<tr
-							class="{hoverable
+							class="group/row {hoverable
 								? 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900'
-								: ''} {onRowClick ? 'cursor-pointer' : ''}"
+								: ''} {onRowClick || rowHref ? 'cursor-pointer' : ''}"
 							on:click={() => onRowClick && onRowClick(row)}
 						>
-							{#each columns as column}
+							{#each columns as column, colIndex}
 								<td
-									class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 ${getAlignClass(column.align)} ${column.width || ''}`}
+									class={`${compact ? 'px-4 py-2' : 'px-6 py-4'} text-sm text-neutral-900 dark:text-neutral-100 ${getAlignClass(column.align)} ${column.width || ''} ${rowHref ? 'relative' : ''}`}
 								>
+									{#if rowHref}
+										<a href={rowHref(row)} class="cell-link" aria-label="Open row"></a>
+									{/if}
 									{#if column.cell}
 										{@const rendered = column.cell(row)}
 										{#if typeof rendered === 'string'}
@@ -330,6 +337,13 @@
 {/if}
 
 <style>
+	/* Cell link covers the entire cell for click/right-click */
+	.cell-link {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+	}
+
 	td :global(ul) {
 		list-style-type: disc;
 		padding-left: 1.5rem;
