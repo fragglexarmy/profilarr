@@ -18,7 +18,7 @@ export interface AlertSettings {
 }
 
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
-	position: 'top-right',
+	position: 'top-center',
 	durationMs: 5000
 };
 
