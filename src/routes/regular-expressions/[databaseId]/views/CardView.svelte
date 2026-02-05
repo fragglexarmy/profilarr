@@ -52,15 +52,17 @@
 			</div>
 
 			<!-- Pattern -->
-			<div class="overflow-hidden rounded bg-neutral-100 p-2 dark:bg-neutral-800">
-				<code class="block truncate font-mono text-xs text-neutral-900 dark:text-neutral-100">
+			<div class="rounded bg-neutral-100 p-2 dark:bg-neutral-800">
+				<code
+					class="block whitespace-pre-wrap break-all font-mono text-xs text-neutral-900 dark:text-neutral-100"
+				>
 					{expression.pattern}
 				</code>
 			</div>
 
 			<!-- Description -->
 			{#if expression.description}
-				<div class="prose-inline line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400">
+				<div class="prose-inline text-xs text-neutral-600 dark:text-neutral-400">
 					{@html parseMarkdown(expression.description)}
 				</div>
 			{/if}
