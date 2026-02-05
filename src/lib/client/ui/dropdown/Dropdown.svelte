@@ -33,7 +33,7 @@
 
 	$: marginClass = compact ? 'mt-1' : 'mt-3';
 	$: gap = compact ? 4 : 12; // pixels gap below trigger
-	$: roundedClass = compact ? 'rounded-md' : 'rounded-lg';
+	$: roundedClass = compact ? 'rounded-lg' : 'rounded-xl';
 
 	function updateFixedPosition() {
 		if (!fixed || !triggerEl) return;
@@ -82,7 +82,7 @@
 
 <div
 	bind:this={dropdownEl}
-	class="z-50 border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800 {roundedClass} {fixed
+	class="z-50 border border-neutral-300 bg-white shadow-lg dark:border-neutral-700/60 dark:bg-neutral-800/50 {roundedClass} {fixed
 		? 'fixed'
 		: 'absolute top-full ' + marginClass} {positionClass}"
 	style="min-width: {minWidth}; {fixed ? fixedStyle : ''}"

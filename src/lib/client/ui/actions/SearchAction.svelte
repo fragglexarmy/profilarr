@@ -99,15 +99,15 @@
 	}
 </script>
 
-{#if useMobileMode}
-	<!-- Mobile: Search button -->
-	<div class="relative flex flex-1 min-w-0">
-		<button
-			type="button"
-			on:click={openModal}
-			class="relative flex h-10 w-full items-center justify-between border border-neutral-200 bg-white px-3 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-			title="Search"
-		>
+	{#if useMobileMode}
+		<!-- Mobile: Search button -->
+		<div class="relative flex flex-1 min-w-0">
+			<button
+				type="button"
+				on:click={openModal}
+				class="relative flex h-10 w-full items-center justify-between rounded-xl border border-neutral-300 bg-white px-3 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:hover:bg-neutral-800"
+				title="Search"
+			>
 			<span class="flex items-center gap-2">
 				<Search size={20} class="text-neutral-700 dark:text-neutral-300" />
 				<span class="max-w-[14rem] truncate text-sm text-neutral-600 dark:text-neutral-300">
@@ -121,17 +121,17 @@
 	</div>
 
 	<!-- Mobile: Search modal -->
-	{#if modalOpen}
-		<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-		<div
-			class="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 pt-4 px-4"
-			on:click={handleBackdropClick}
-			transition:fade={{ duration: 150 }}
-		>
+		{#if modalOpen}
+			<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 			<div
-				class="w-full max-w-lg rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800"
-				transition:fly={{ y: -20, duration: 200 }}
+				class="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 pt-4 px-4"
+				on:click={handleBackdropClick}
+			transition:fade={{ duration: 150 }}
 			>
+				<div
+					class="w-full max-w-lg rounded-xl border border-neutral-300 bg-white shadow-xl dark:border-neutral-700/60 dark:bg-neutral-800/50"
+					transition:fly={{ y: -20, duration: 200 }}
+				>
 				<div class="relative flex items-center p-3">
 					<!-- Search icon -->
 					<div class="pointer-events-none absolute left-6 flex items-center">
@@ -153,7 +153,7 @@
 						on:input={handleInput}
 						on:keydown={handleKeydown}
 						{placeholder}
-						class="h-10 w-full rounded-md bg-transparent pr-10 text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
+						class="h-10 w-full rounded-lg bg-transparent pr-10 text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
 							? 'pl-2'
 							: 'pl-10'}"
 					/>
@@ -162,21 +162,21 @@
 					{#if query}
 						<button
 							on:click={handleClear}
-							class="absolute right-6 flex h-8 w-8 items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-700"
+							class="absolute right-6 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
 						>
 							<X size={18} class="text-neutral-500 dark:text-neutral-400" />
 						</button>
 					{:else if activeQuery}
 						<button
 							on:click={handleClearQuery}
-							class="absolute right-6 flex h-8 w-8 items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-700"
+							class="absolute right-6 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
 						>
 							<X size={18} class="text-neutral-500 dark:text-neutral-400" />
 						</button>
 					{:else}
 						<button
 							on:click={closeModal}
-							class="absolute right-6 flex h-8 w-8 items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-700"
+							class="absolute right-6 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
 						>
 							<X size={18} class="text-neutral-500 dark:text-neutral-400" />
 						</button>
@@ -185,12 +185,12 @@
 			</div>
 		</div>
 	{/if}
-{:else}
-	<!-- Desktop: Inline search -->
-	<div class="relative flex flex-1">
-		<div
-			class="relative flex h-10 w-full items-center border border-neutral-200 bg-white transition-all dark:border-neutral-700 dark:bg-neutral-800"
-		>
+	{:else}
+		<!-- Desktop: Inline search -->
+		<div class="relative flex flex-1">
+			<div
+				class="relative flex h-10 w-full items-center rounded-xl border border-neutral-300 bg-white transition-colors dark:border-neutral-700/60 dark:bg-neutral-800/50"
+			>
 			<!-- Search icon -->
 			<div class="pointer-events-none absolute left-3 flex items-center">
 				<Search size={18} class="text-neutral-500 dark:text-neutral-400" />
@@ -204,36 +204,36 @@
 			{/if}
 
 			<!-- Input -->
-			<input
-				bind:this={inputRef}
-				type="text"
-				value={query}
-				on:input={handleInput}
+				<input
+					bind:this={inputRef}
+					type="text"
+					value={query}
+					on:input={handleInput}
 				on:keydown={handleKeydown}
 				on:focus={() => (isFocused = true)}
 				on:blur={() => (isFocused = false)}
 				placeholder={activeQuery ? '' : placeholder}
-				class="h-full w-full bg-transparent pr-10 text-base sm:text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
-					? 'pl-2'
-					: 'pl-10'}"
-			/>
+					class="h-full w-full bg-transparent pr-10 text-base sm:text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
+						? 'pl-2'
+						: 'pl-10'}"
+				/>
 
 			<!-- Clear button -->
-			{#if query}
-				<button
-					on:click={handleClear}
-					class="absolute right-2 flex h-6 w-6 items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-700"
-				>
-					<X size={14} class="text-neutral-500 dark:text-neutral-400" />
-				</button>
-			{:else if activeQuery}
-				<button
-					on:click={handleClearQuery}
-					class="absolute right-2 flex h-6 w-6 items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-700"
-				>
-					<X size={14} class="text-neutral-500 dark:text-neutral-400" />
-				</button>
-			{/if}
+				{#if query}
+					<button
+						on:click={handleClear}
+						class="absolute right-2 flex h-6 w-6 items-center justify-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
+					>
+						<X size={14} class="text-neutral-500 dark:text-neutral-400" />
+					</button>
+				{:else if activeQuery}
+					<button
+						on:click={handleClearQuery}
+						class="absolute right-2 flex h-6 w-6 items-center justify-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
+					>
+						<X size={14} class="text-neutral-500 dark:text-neutral-400" />
+					</button>
+				{/if}
+			</div>
 		</div>
-	</div>
 {/if}

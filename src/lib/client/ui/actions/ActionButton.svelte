@@ -31,8 +31,8 @@
 	}
 
 	const variantClasses = {
-		neutral: 'hover:bg-neutral-100 dark:hover:bg-neutral-700',
-		danger: 'hover:bg-neutral-100 dark:hover:bg-neutral-700'
+		neutral: 'hover:bg-neutral-50 dark:hover:bg-neutral-800',
+		danger: 'hover:bg-neutral-50 dark:hover:bg-neutral-800'
 	};
 
 	const iconVariantClasses = {
@@ -50,7 +50,7 @@
 	<button
 		{type}
 		{title}
-		class="flex items-center justify-center border border-neutral-200 bg-white transition-colors dark:border-neutral-700 dark:bg-neutral-800 {square
+		class="flex items-center justify-center border border-neutral-300 bg-white transition-colors dark:border-neutral-700/60 dark:bg-neutral-800/50 {square
 			? 'h-10 w-10'
 			: 'h-10 px-4'} {disabled ? 'cursor-not-allowed opacity-50' : variantClasses[variant]}"
 		{disabled}
@@ -60,7 +60,7 @@
 			<svelte:component
 				this={icon}
 				size={20}
-				class="text-neutral-700 dark:text-neutral-300 {variant === 'danger'
+				class="text-neutral-700 dark:text-neutral-200 {variant === 'danger'
 					? iconVariantClasses.danger
 					: ''} {iconClass}"
 			/>

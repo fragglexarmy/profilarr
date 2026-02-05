@@ -11,33 +11,46 @@
 		margin-left: -1px;
 	}
 
+	/* Reset rounding for grouped items, then re-apply for edges */
+	.actions-bar :global(> * > *) {
+		border-radius: 0 !important;
+	}
+
+	.actions-bar :global(> * > button) {
+		border-radius: 0 !important;
+	}
+
+	.actions-bar :global(> * > * > button) {
+		border-radius: 0 !important;
+	}
+
 	/* Apply rounding to the actual bordered elements inside first/last children */
 	.actions-bar :global(> *:first-child > *) {
-		border-top-left-radius: 0.5rem !important;
-		border-bottom-left-radius: 0.5rem !important;
+		border-top-left-radius: 0.75rem !important;
+		border-bottom-left-radius: 0.75rem !important;
 	}
 
 	.actions-bar :global(> *:first-child > button) {
-		border-top-left-radius: 0.5rem !important;
-		border-bottom-left-radius: 0.5rem !important;
+		border-top-left-radius: 0.75rem !important;
+		border-bottom-left-radius: 0.75rem !important;
 	}
 
 	.actions-bar :global(> *:last-child > *) {
-		border-top-right-radius: 0.5rem !important;
-		border-bottom-right-radius: 0.5rem !important;
+		border-top-right-radius: 0.75rem !important;
+		border-bottom-right-radius: 0.75rem !important;
 	}
 
 	.actions-bar :global(> *:last-child > button) {
-		border-top-right-radius: 0.5rem !important;
-		border-bottom-right-radius: 0.5rem !important;
+		border-top-right-radius: 0.75rem !important;
+		border-bottom-right-radius: 0.75rem !important;
 	}
 
 	.actions-bar :global(> *:last-child > * > button) {
-		border-top-right-radius: 0.5rem !important;
-		border-bottom-right-radius: 0.5rem !important;
+		border-top-right-radius: 0.75rem !important;
+		border-bottom-right-radius: 0.75rem !important;
 	}
 
 	.actions-bar :global(> *:only-child > *) {
-		border-radius: 0.5rem !important;
+		border-radius: 0.75rem !important;
 	}
 </style>
