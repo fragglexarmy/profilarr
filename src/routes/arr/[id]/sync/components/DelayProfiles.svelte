@@ -14,10 +14,10 @@
 	export let databases: DatabaseWithProfiles[];
 	export let state: {
 		databaseId: number | null;
-		profileId: number | null;
+		profileName: string | null;
 	} = {
 		databaseId: null,
-		profileId: null
+		profileName: null
 	};
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
@@ -33,21 +33,21 @@
 
 	// Reactive selected key for checkbox state
 	$: selectedKey =
-		state.databaseId !== null && state.profileId !== null
-			? `${state.databaseId}-${state.profileId}`
+		state.databaseId !== null && state.profileName !== null
+			? `${state.databaseId}-${state.profileName}`
 			: null;
 
-	function isSelected(databaseId: number, profileId: number): boolean {
-		return selectedKey === `${databaseId}-${profileId}`;
+	function isSelected(databaseId: number, profileName: string): boolean {
+		return selectedKey === `${databaseId}-${profileName}`;
 	}
 
-	function toggleProfile(databaseId: number, profileId: number) {
-		if (isSelected(databaseId, profileId)) {
+	function toggleProfile(databaseId: number, profileName: string) {
+		if (isSelected(databaseId, profileName)) {
 			// Deselect
-			state = { databaseId: null, profileId: null };
+			state = { databaseId: null, profileName: null };
 		} else {
 			// Select this one (deselects any previous)
-			state = { databaseId, profileId };
+			state = { databaseId, profileName };
 		}
 	}
 
@@ -56,7 +56,7 @@
 		try {
 			const formData = new FormData();
 			formData.set('databaseId', state.databaseId?.toString() ?? '');
-			formData.set('profileId', state.profileId?.toString() ?? '');
+			formData.set('profileName', state.profileName ?? '');
 			formData.set('trigger', syncTrigger);
 			formData.set('cron', cronExpression);
 
@@ -131,13 +131,13 @@
 									<button
 										type="button"
 										class="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
-										on:click={() => toggleProfile(database.id, profile.id)}
+										on:click={() => toggleProfile(database.id, profile.name)}
 									>
 										<code class="font-mono text-sm text-neutral-900 dark:text-neutral-50">
 											{profile.name}
 										</code>
 										<IconCheckbox
-											checked={selectedKey === `${database.id}-${profile.id}`}
+											checked={selectedKey === `${database.id}-${profile.name}`}
 											icon={Check}
 											shape="rounded"
 										/>

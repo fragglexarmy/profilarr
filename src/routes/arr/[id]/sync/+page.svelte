@@ -36,7 +36,7 @@
 
 	let delayProfileState = {
 		databaseId: data.syncData.delayProfiles.databaseId,
-		profileId: data.syncData.delayProfiles.profileId
+		profileName: data.syncData.delayProfiles.profileName
 	};
 	let delayProfileTrigger: SyncTrigger = data.syncData.delayProfiles.trigger;
 	let delayProfileCron: string = data.syncData.delayProfiles.cron || '0 * * * *';
@@ -82,7 +82,7 @@
 
 	$: hasDelayProfile =
 		typeof delayProfileState.databaseId === 'number' &&
-		typeof delayProfileState.profileId === 'number';
+		typeof delayProfileState.profileName === 'string';
 
 	$: qualityProfilesCanSave =
 		!hasQualityProfilesSelected ||

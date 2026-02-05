@@ -21,7 +21,7 @@ export interface QualityProfilesSyncData {
 
 export interface DelayProfilesSyncData {
 	databaseId: number | null;
-	profileId: number | null;
+	profileName: string | null;
 	trigger: SyncTrigger;
 	cron: string | null;
 	nextRunAt?: string | null;
@@ -55,7 +55,7 @@ interface ConfigRow {
 interface DelayProfileConfigRow {
 	instance_id: number;
 	database_id: number | null;
-	profile_id: number | null;
+	profile_name: string | null;
 	trigger: string;
 	cron: string | null;
 }
@@ -141,7 +141,7 @@ export const arrSyncQueries = {
 
 		return {
 			databaseId: row?.database_id ?? null,
-			profileId: row?.profile_id ?? null,
+			profileName: row?.profile_name ?? null,
 			trigger: (row?.trigger as SyncTrigger) ?? 'manual',
 			cron: row?.cron ?? null
 		};
@@ -150,22 +150,22 @@ export const arrSyncQueries = {
 	saveDelayProfilesSync(instanceId: number, data: DelayProfilesSyncData): void {
 		db.execute(
 			`INSERT INTO arr_sync_delay_profiles_config
-			 (instance_id, database_id, profile_id, trigger, cron, next_run_at)
+			 (instance_id, database_id, profile_name, trigger, cron, next_run_at)
 			 VALUES (?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(instance_id) DO UPDATE SET
 			 database_id = ?,
-			 profile_id = ?,
+			 profile_name = ?,
 			 trigger = ?,
 			 cron = ?,
 			 next_run_at = ?`,
 			instanceId,
 			data.databaseId,
-			data.profileId,
+			data.profileName,
 			data.trigger,
 			data.cron,
 			data.nextRunAt ?? null,
 			data.databaseId,
-			data.profileId,
+			data.profileName,
 			data.trigger,
 			data.cron,
 			data.nextRunAt ?? null
@@ -252,11 +252,18 @@ export const arrSyncQueries = {
 		);
 	},
 
-	removeDelayProfileReference(databaseId: number, profileId: number): number {
+	removeDelayProfileReference(profileName: string): number {
 		return db.execute(
-			'UPDATE arr_sync_delay_profiles_config SET database_id = NULL, profile_id = NULL WHERE database_id = ? AND profile_id = ?',
-			databaseId,
-			profileId
+			'UPDATE arr_sync_delay_profiles_config SET database_id = NULL, profile_name = NULL WHERE profile_name = ?',
+			profileName
+		);
+	},
+
+	updateDelayProfileName(oldName: string, newName: string): number {
+		return db.execute(
+			'UPDATE arr_sync_delay_profiles_config SET profile_name = ? WHERE profile_name = ?',
+			newName,
+			oldName
 		);
 	},
 
@@ -293,7 +300,7 @@ export const arrSyncQueries = {
 	removeDatabaseReferences(databaseId: number): void {
 		db.execute('DELETE FROM arr_sync_quality_profiles WHERE database_id = ?', databaseId);
 		db.execute(
-			'UPDATE arr_sync_delay_profiles_config SET database_id = NULL, profile_id = NULL WHERE database_id = ?',
+			'UPDATE arr_sync_delay_profiles_config SET database_id = NULL, profile_name = NULL WHERE database_id = ?',
 			databaseId
 		);
 		db.execute(

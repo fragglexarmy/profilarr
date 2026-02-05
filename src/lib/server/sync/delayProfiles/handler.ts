@@ -49,7 +49,7 @@ export const delayProfilesHandler: SectionHandler = {
 
 	hasConfig(instanceId: number): boolean {
 		const config = arrSyncQueries.getDelayProfilesSync(instanceId);
-		return config.databaseId !== null && config.profileId !== null;
+		return config.databaseId !== null && config.profileName !== null;
 	}
 };
 

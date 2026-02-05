@@ -42,7 +42,7 @@
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 	{#each profiles as profile}
 		<a
-			href="/delay-profiles/{databaseId}/{profile.id}"
+			href="/delay-profiles/{databaseId}/{encodeURIComponent(profile.name)}"
 			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 		>
 			<!-- Header with name -->

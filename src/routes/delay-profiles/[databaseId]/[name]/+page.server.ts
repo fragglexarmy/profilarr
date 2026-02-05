@@ -6,19 +6,18 @@ import * as delayProfileQueries from '$pcd/entities/delayProfiles/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import type { PreferredProtocol } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
+import { arrSyncQueries } from '$db/queries/arrSync.ts';
 
 export const load: ServerLoad = async ({ params }) => {
-	const { databaseId, id } = params;
+	const { databaseId, name } = params;
 
-	if (!databaseId || !id) {
+	if (!databaseId || !name) {
 		throw error(400, 'Missing parameters');
 	}
 
 	const currentDatabaseId = parseInt(databaseId, 10);
-	const profileId = parseInt(id, 10);
-
-	if (isNaN(currentDatabaseId) || isNaN(profileId)) {
-		throw error(400, 'Invalid parameters');
+	if (isNaN(currentDatabaseId)) {
+		throw error(400, 'Invalid database ID');
 	}
 
 	const currentDatabase = pcdManager.getById(currentDatabaseId);
@@ -31,7 +30,8 @@ export const load: ServerLoad = async ({ params }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	const delayProfile = await delayProfileQueries.get(cache, profileId);
+	const decodedName = decodeURIComponent(name);
+	const delayProfile = await delayProfileQueries.getByName(cache, decodedName);
 	if (!delayProfile) {
 		throw error(404, 'Delay profile not found');
 	}
@@ -45,17 +45,15 @@ export const load: ServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	update: async ({ request, params }) => {
-		const { databaseId, id } = params;
+		const { databaseId, name: paramName } = params;
 
-		if (!databaseId || !id) {
+		if (!databaseId || !paramName) {
 			return fail(400, { error: 'Missing parameters' });
 		}
 
 		const currentDatabaseId = parseInt(databaseId, 10);
-		const profileId = parseInt(id, 10);
-
-		if (isNaN(currentDatabaseId) || isNaN(profileId)) {
-			return fail(400, { error: 'Invalid parameters' });
+		if (isNaN(currentDatabaseId)) {
+			return fail(400, { error: 'Invalid database ID' });
 		}
 
 		const cache = pcdManager.getCache(currentDatabaseId);
@@ -64,7 +62,8 @@ export const actions: Actions = {
 		}
 
 		// Get current profile for value guards
-		const current = await delayProfileQueries.get(cache, profileId);
+		const decodedName = decodeURIComponent(paramName);
+		const current = await delayProfileQueries.getByName(cache, decodedName);
 		if (!current) {
 			return fail(404, { error: 'Delay profile not found' });
 		}
@@ -121,21 +120,23 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update delay profile' });
 		}
 
+		if (name.trim() !== current.name) {
+			arrSyncQueries.updateDelayProfileName(current.name, name.trim());
+		}
+
 		throw redirect(303, `/delay-profiles/${databaseId}`);
 	},
 
 	delete: async ({ request, params }) => {
-		const { databaseId, id } = params;
+		const { databaseId, name: paramName } = params;
 
-		if (!databaseId || !id) {
+		if (!databaseId || !paramName) {
 			return fail(400, { error: 'Missing parameters' });
 		}
 
 		const currentDatabaseId = parseInt(databaseId, 10);
-		const profileId = parseInt(id, 10);
-
-		if (isNaN(currentDatabaseId) || isNaN(profileId)) {
-			return fail(400, { error: 'Invalid parameters' });
+		if (isNaN(currentDatabaseId)) {
+			return fail(400, { error: 'Invalid database ID' });
 		}
 
 		const cache = pcdManager.getCache(currentDatabaseId);
@@ -144,7 +145,8 @@ export const actions: Actions = {
 		}
 
 		// Get current profile for value guards
-		const current = await delayProfileQueries.get(cache, profileId);
+		const decodedName = decodeURIComponent(paramName);
+		const current = await delayProfileQueries.getByName(cache, decodedName);
 		if (!current) {
 			return fail(404, { error: 'Delay profile not found' });
 		}
@@ -156,7 +158,6 @@ export const actions: Actions = {
 		await logger.debug('Delete action received', {
 			source: 'DelayProfileDelete',
 			meta: {
-				profileId,
 				profileName: current.name,
 				layerFromForm,
 				layerUsed: layer

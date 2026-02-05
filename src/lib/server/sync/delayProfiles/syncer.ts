@@ -8,7 +8,7 @@
 import { BaseSyncer, type SyncResult } from '../base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache } from '$pcd/index.ts';
-import { get as getDelayProfile } from '$pcd/entities/delayProfiles/index.ts';
+import { getByName as getDelayProfileByName } from '$pcd/entities/delayProfiles/index.ts';
 import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 import type { ArrDelayProfile } from '$arr/types.ts';
 import { logger } from '$logger/logger.ts';
@@ -24,7 +24,7 @@ export class DelayProfileSyncer extends BaseSyncer {
 	override async sync(): Promise<SyncResult> {
 		const syncConfig = arrSyncQueries.getDelayProfilesSync(this.instanceId);
 
-		if (!syncConfig.databaseId || !syncConfig.profileId) {
+		if (!syncConfig.databaseId || !syncConfig.profileName) {
 			await logger.debug('No delay profile configured for sync', {
 				source: 'Sync:DelayProfile',
 				meta: { instanceId: this.instanceId }
@@ -41,11 +41,11 @@ export class DelayProfileSyncer extends BaseSyncer {
 			return { success: false, itemsSynced: 0, error: 'PCD cache not found' };
 		}
 
-		const profile = await getDelayProfile(cache, syncConfig.profileId);
+		const profile = await getDelayProfileByName(cache, syncConfig.profileName);
 		if (!profile) {
-			await logger.warn(`Profile ${syncConfig.profileId} not found`, {
+			await logger.warn(`Profile "${syncConfig.profileName}" not found`, {
 				source: 'Sync:DelayProfile',
-				meta: { instanceId: this.instanceId, profileId: syncConfig.profileId }
+				meta: { instanceId: this.instanceId, profileName: syncConfig.profileName }
 			});
 			return { success: false, itemsSynced: 0, error: 'Profile not found in PCD' };
 		}

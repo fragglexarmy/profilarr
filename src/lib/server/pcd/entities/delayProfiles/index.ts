@@ -3,7 +3,7 @@
  */
 
 // Read
-export { list, get } from './read.ts';
+export { list, get, getByName } from './read.ts';
 
 // Create
 export { create } from './create.ts';

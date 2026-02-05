@@ -136,7 +136,7 @@ export const actions: Actions = {
 		const instance = arrInstancesQueries.getById(id);
 		const formData = await request.formData();
 		const databaseId = formData.get('databaseId') as string | null;
-		const profileId = formData.get('profileId') as string | null;
+		const profileName = formData.get('profileName') as string | null;
 		const trigger = formData.get('trigger') as SyncTrigger;
 		const cron = formData.get('cron') as string | null;
 
@@ -145,7 +145,7 @@ export const actions: Actions = {
 			const effectiveCron = cron || null;
 			arrSyncQueries.saveDelayProfilesSync(id, {
 				databaseId: databaseId ? parseInt(databaseId, 10) : null,
-				profileId: profileId ? parseInt(profileId, 10) : null,
+				profileName: profileName || null,
 				trigger: effectiveTrigger,
 				cron: effectiveCron,
 				nextRunAt: effectiveTrigger === 'schedule' ? calculateNextRun(effectiveCron) : null
@@ -153,7 +153,7 @@ export const actions: Actions = {
 
 			await logger.info(`Delay profile sync config saved for "${instance?.name}"`, {
 				source: 'sync',
-				meta: { instanceId: id, databaseId, profileId, trigger }
+				meta: { instanceId: id, databaseId, profileName, trigger }
 			});
 
 			// Update sync_arr job enabled state based on whether any scheduled configs exist

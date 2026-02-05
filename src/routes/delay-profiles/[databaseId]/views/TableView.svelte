@@ -23,7 +23,7 @@
 	}
 
 	function getRowHref(row: DelayProfilesRow): string {
-		return `/delay-profiles/${databaseId}/${row.id}`;
+		return `/delay-profiles/${databaseId}/${encodeURIComponent(row.name)}`;
 	}
 
 	function formatProtocol(protocol: string): string {
