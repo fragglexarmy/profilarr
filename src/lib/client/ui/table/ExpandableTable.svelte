@@ -168,10 +168,18 @@
 					class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
 				>
 					<!-- Card Header - clickable to expand -->
-					<button
-						type="button"
+					<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+					<div
+						role="button"
+						tabindex="0"
 						class="w-full text-left"
 						on:click={() => handleRowClick(rowId, row)}
+						on:keydown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								handleRowClick(rowId, row);
+							}
+						}}
 					>
 						<!-- Primary row: first column as title + actions + chevron -->
 						<div class="flex items-start justify-between gap-3 px-4 py-3">
@@ -230,7 +238,7 @@
 								{/each}
 							</div>
 						{/if}
-					</button>
+					</div>
 
 					<!-- Expanded Content -->
 					{#if !shouldDisableExpand(row) && expandedRows.has(rowId)}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { parseUTC } from '$shared/utils/dates';
-	import Input from '$ui/form/Input.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let enabled: boolean = false;
@@ -164,7 +164,14 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Ignore Tag</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Ignore Tag:</span>
-			<Input value={ignoreTag} placeholder="no-rename" on:input={(e) => onIgnoreTagChange?.(e.detail)} />
+			<FormInput
+				label="Ignore Tag"
+				hideLabel
+				name="ignore-tag"
+				value={ignoreTag}
+				placeholder="no-rename"
+				on:input={(e) => onIgnoreTagChange?.(e.detail)}
+			/>
 		</div>
 	</div>
 

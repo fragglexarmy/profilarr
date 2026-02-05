@@ -11,8 +11,7 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
-	import FormInput from '$ui/form/FormInput.svelte';
-	import Input from '$ui/form/Input.svelte';
+import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import Select from '$ui/form/Select.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
@@ -48,7 +47,6 @@
 	let demoFormText = '';
 	let demoFormPassword = '';
 	let demoFormTextarea = '';
-	let demoInputValue = '';
 	let demoNumber: number | undefined = 50;
 	let demoNumberCompact: number | undefined = 10;
 	let demoTags = ['radarr', 'sonarr', '1080p'];
@@ -134,7 +132,6 @@
 		{ id: 'card', name: 'Card', category: 'card' },
 		{ id: 'dropdown', name: 'Dropdown', category: 'dropdown' },
 		{ id: 'form-input', name: 'FormInput', category: 'form' },
-		{ id: 'input', name: 'Input', category: 'form' },
 		{ id: 'number-input', name: 'NumberInput', category: 'form' },
 		{ id: 'select', name: 'Select', category: 'form' },
 		{ id: 'icon-checkbox', name: 'IconCheckbox', category: 'form' },
@@ -465,8 +462,17 @@
 		<ComponentCard
 			name="FormInput"
 			paths={['form/FormInput']}
-			description="Labeled field wrapper supporting text, textarea, password (with visibility toggle), readonly, required, and mono font. Used as the standard form field throughout the app."
+			description="Labeled field wrapper supporting text, textarea, password (with visibility toggle), readonly, required, mono font, and sizing variants (sm/md/lg)."
 		>
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Size variants</p>
+				<div class="grid gap-3 md:grid-cols-3">
+					<FormInput label="Small" size="sm" placeholder="Small input" bind:value={demoFormText} />
+					<FormInput label="Medium" size="md" placeholder="Medium input" bind:value={demoFormText} />
+					<FormInput label="Large" size="lg" placeholder="Large input" bind:value={demoFormText} />
+				</div>
+			</div>
+
 			<div class="space-y-3">
 				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Text + textarea</p>
 				<div class="grid gap-3 md:grid-cols-2">
@@ -488,31 +494,6 @@
 					<FormInput label="Readonly" value="Cannot edit" readonly />
 					<FormInput label="Required" placeholder="Required field" required />
 					<FormInput label="Mono" value="font-mono text" mono />
-				</div>
-			</div>
-		</ComponentCard>
-	{/if}
-
-	<!-- Input -->
-	{#if isVisible('input')}
-		<ComponentCard
-			name="Input"
-			paths={['form/Input']}
-			description="Compact inline text input with optional error state, disabled state, compact sizing, and responsive auto-compact on small screens. Used for inline editing in tables and tight layouts."
-		>
-			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Default + compact</p>
-				<div class="flex flex-wrap items-center gap-3">
-					<Input bind:value={demoInputValue} placeholder="Default" width="w-40" />
-					<Input bind:value={demoInputValue} placeholder="Compact" compact width="w-32" />
-				</div>
-			</div>
-
-			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Error + disabled</p>
-				<div class="flex flex-wrap items-center gap-3">
-					<Input value="Bad value" error width="w-40" />
-					<Input placeholder="Disabled" disabled width="w-40" />
 				</div>
 			</div>
 		</ComponentCard>

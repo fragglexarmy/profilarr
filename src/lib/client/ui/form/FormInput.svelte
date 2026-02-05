@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import { Eye, EyeOff } from 'lucide-svelte';
 
 	export let label: string;
@@ -9,11 +9,13 @@
 	export let textarea: boolean = false;
 	export let type: 'text' | 'number' | 'email' | 'password' | 'url' = 'text';
 	export let required: boolean = false;
+	export let hideLabel: boolean = false;
 	export let name: string = '';
 	export let autocomplete: string = '';
 	export let private_: boolean = false;
 	export let readonly: boolean = false;
 	export let mono: boolean = false;
+	export let size: 'sm' | 'md' | 'lg' | 'auto' = 'auto';
 
 	const dispatch = createEventDispatcher<{ input: string }>();
 
@@ -23,18 +25,52 @@
 		: 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600';
 
 	let showPassword = false;
+	let isSmallScreen = false;
+	let isMediumScreen = false;
+	let smallQuery: MediaQueryList | null = null;
+	let mediumQuery: MediaQueryList | null = null;
 
 	$: inputType = private_ ? (showPassword ? 'text' : 'password') : type;
+	$: sizeVariant = size === 'auto' ? (isSmallScreen ? 'sm' : isMediumScreen ? 'md' : 'lg') : size;
+	$: sizeClasses = {
+		sm: 'rounded-lg px-2.5 py-1.5 text-xs',
+		md: 'rounded-xl px-3 py-2 text-sm',
+		lg: 'rounded-xl px-4 py-2.5 text-base'
+	}[sizeVariant];
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
 		value = target.value;
 		dispatch('input', value);
 	}
+
+	function updateScreenSize() {
+		isSmallScreen = smallQuery?.matches ?? false;
+		isMediumScreen = mediumQuery?.matches ?? false;
+	}
+
+	onMount(() => {
+		if (typeof window === 'undefined') return;
+		smallQuery = window.matchMedia('(max-width: 639px)');
+		mediumQuery = window.matchMedia('(max-width: 1023px)');
+		updateScreenSize();
+		smallQuery.addEventListener('change', updateScreenSize);
+		mediumQuery.addEventListener('change', updateScreenSize);
+	});
+
+	onDestroy(() => {
+		smallQuery?.removeEventListener('change', updateScreenSize);
+		mediumQuery?.removeEventListener('change', updateScreenSize);
+	});
 </script>
 
 <div class="space-y-2">
-	<label for={name} class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+	<label
+		for={name}
+		class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 {hideLabel
+			? 'sr-only'
+			: ''}"
+	>
 		{label}{#if required}<span class="text-red-500">*</span>{/if}
 	</label>
 
@@ -52,7 +88,7 @@
 			{placeholder}
 			rows="6"
 			oninput={handleInput}
-			class="block w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-300 focus:outline-none dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-600 {fontClass}"
+			class="block w-full border border-neutral-300 bg-white text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-300 focus:outline-none dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-600 {sizeClasses} {fontClass}"
 		></textarea>
 	{:else if private_}
 		<div class="relative">
@@ -66,7 +102,7 @@
 				readonly={readonly}
 				oninput={handleInput}
 				autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-				class="block w-full rounded-xl border border-neutral-300 px-3 py-2 pr-10 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {fontClass} {readonlyClass}"
+				class="block w-full border border-neutral-300 pr-10 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {readonlyClass}"
 			/>
 			<button
 				type="button"
@@ -91,7 +127,7 @@
 			readonly={readonly}
 			oninput={handleInput}
 			autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-			class="block w-full rounded-xl border border-neutral-300 px-3 py-2 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {fontClass} {readonlyClass}"
+			class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {readonlyClass}"
 		/>
 	{/if}
 </div>

@@ -4,7 +4,7 @@
 	import SonarrIcon from '$lib/client/assets/Sonarr.svg';
 	import { createEventDispatcher } from 'svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import Input from '$ui/form/Input.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
@@ -41,6 +41,15 @@
 	// Computed states based on mode
 	$: isDraft = mode === 'draft';
 	$: rightPaddingClass = 'pr-3';
+	$: conditionNameId = `condition-name-${(condition.name || 'untitled')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')}`;
+	$: nameError =
+		nameConflict
+			? 'Duplicate condition name'
+			: invalid && !isDraft
+				? 'Invalid condition name'
+				: '';
 
 	// Helper to emit changes - creates new object to maintain immutability
 	function emitChange(updates: Partial<ConditionData>) {
@@ -274,18 +283,18 @@
 		});
 	}
 
-	const inputClass =
-		'w-full rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm font-mono text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100';
 </script>
 
 <div class="relative flex flex-col gap-3 py-3 px-3 {rightPaddingClass} md:flex-row md:items-center">
 	<!-- Name -->
 	<div class="w-full min-w-0 shrink-0 md:w-48" title={nameConflict ? 'Duplicate condition name' : ''}>
-		<Input
+		<FormInput
+			label="Name"
+			hideLabel
+			name={conditionNameId}
 			value={condition.name}
 			placeholder="Condition name"
-			width="w-full"
-			error={invalid && !isDraft}
+			description={nameError}
 			on:input={(e) => emitChange({ name: e.detail })}
 		/>
 	</div>

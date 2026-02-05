@@ -11,7 +11,7 @@
 		type FilterGroup,
 		type FilterRule
 	} from '$shared/upgrades/filters';
-	import Input from '$ui/form/Input.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
@@ -151,10 +151,11 @@
 								/>
 							{/if}
 						{:else if field?.valueType === 'text'}
-							<Input
+							<FormInput
+								label="Value"
+								hideLabel
+								name="filter-value-{childIndex}"
 								value={child.value as string}
-								width="flex-1"
-								responsive
 								on:input={(e) => {
 									child.value = e.detail;
 									notifyChange();

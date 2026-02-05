@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { AlertTriangle, X, FileText, Calendar, CircleDot, Check } from 'lucide-svelte';
 	import type { RenameJobLog } from '$lib/server/rename/types.ts';
-	import { getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
+	import { createSearchStore, getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
+	import type { Readable } from 'svelte/store';
 	import { page } from '$app/stores';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
@@ -12,9 +13,12 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import type { Column } from '$ui/table/types';
 
-	let searchStore: SearchStore;
-	$: searchStore = getPersistentSearchStore(`renameRunHistorySearch:${$page.params.id}`);
-	const debouncedQuery = searchStore.debouncedQuery;
+	let searchStore: SearchStore = createSearchStore();
+	let debouncedQuery: Readable<string> = searchStore.debouncedQuery;
+	$: if ($page?.params?.id) {
+		searchStore = getPersistentSearchStore(`renameRunHistorySearch:${$page.params.id}`);
+		debouncedQuery = searchStore.debouncedQuery;
+	}
 
 	export let runs: RenameJobLog[] = [];
 
