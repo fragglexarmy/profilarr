@@ -3,6 +3,7 @@
 	import { parseUTC } from '$shared/utils/dates';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 
 	export let enabled: boolean = false;
 	export let dryRun: boolean = true;
@@ -18,11 +19,6 @@
 	export let onIgnoreTagChange: ((value: string) => void) | undefined = undefined;
 	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
 	export let onSummaryNotificationsChange: ((value: boolean) => void) | undefined = undefined;
-
-	const enabledOptions = [
-		{ value: 'false', label: 'Disabled' },
-		{ value: 'true', label: 'Enabled' }
-	];
 
 	const scheduleOptions = [
 		{ value: '60', label: '1 hour' },
@@ -106,10 +102,11 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Status:</span>
-			<DropdownSelect
-				value={enabled ? 'true' : 'false'}
-				options={enabledOptions}
-				on:change={(e) => onEnabledChange?.(e.detail === 'true')}
+			<Toggle
+				checked={enabled}
+				label={enabled ? 'Enabled' : 'Disabled'}
+				color={enabled ? 'green' : 'red'}
+				on:change={(e) => onEnabledChange?.(e.detail)}
 			/>
 		</div>
 
@@ -117,10 +114,12 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Dry Run</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Dry Run:</span>
-			<DropdownSelect
-				value={dryRun ? 'true' : 'false'}
-				options={enabledOptions}
-				on:change={(e) => onDryRunChange?.(e.detail === 'true')}
+			<Toggle
+				checked={dryRun}
+				label={dryRun ? 'On' : 'Off'}
+				color={dryRun ? 'amber' : 'neutral'}
+				checkboxColor={dryRun ? '#F59E0B' : 'neutral'}
+				on:change={(e) => onDryRunChange?.(e.detail)}
 			/>
 		</div>
 
@@ -128,10 +127,11 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Folders</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Folders:</span>
-			<DropdownSelect
-				value={renameFolders ? 'true' : 'false'}
-				options={enabledOptions}
-				on:change={(e) => onRenameFoldersChange?.(e.detail === 'true')}
+			<Toggle
+				checked={renameFolders}
+				label={renameFolders ? 'On' : 'Off'}
+				color={renameFolders ? 'accent' : 'neutral'}
+				on:change={(e) => onRenameFoldersChange?.(e.detail)}
 			/>
 		</div>
 
@@ -139,10 +139,11 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Summary</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Summary:</span>
-			<DropdownSelect
-				value={summaryNotifications ? 'true' : 'false'}
-				options={enabledOptions}
-				on:change={(e) => onSummaryNotificationsChange?.(e.detail === 'true')}
+			<Toggle
+				checked={summaryNotifications}
+				label={summaryNotifications ? 'On' : 'Off'}
+				color={summaryNotifications ? 'accent' : 'neutral'}
+				on:change={(e) => onSummaryNotificationsChange?.(e.detail)}
 			/>
 		</div>
 
@@ -168,6 +169,7 @@
 				label="Ignore Tag"
 				hideLabel
 				name="ignore-tag"
+				size="md"
 				value={ignoreTag}
 				placeholder="no-rename"
 				on:input={(e) => onIgnoreTagChange?.(e.detail)}

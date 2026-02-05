@@ -3,6 +3,7 @@
 	import { filterModes, type FilterMode } from '$shared/upgrades/filters';
 	import { parseUTC } from '$shared/utils/dates';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 
 	export let enabled: boolean = true;
 	export let dryRun: boolean = false;
@@ -14,11 +15,6 @@
 	export let onDryRunChange: ((value: boolean) => void) | undefined = undefined;
 	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
 	export let onFilterModeChange: ((value: FilterMode) => void) | undefined = undefined;
-
-	const enabledOptions = [
-		{ value: 'false', label: 'Disabled' },
-		{ value: 'true', label: 'Enabled' }
-	];
 
 	const scheduleOptions = [
 		{ value: '30', label: '30 min' },
@@ -104,10 +100,11 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Status:</span>
-			<DropdownSelect
-				value={enabled ? 'true' : 'false'}
-				options={enabledOptions}
-				on:change={(e) => onEnabledChange?.(e.detail === 'true')}
+			<Toggle
+				checked={enabled}
+				label={enabled ? 'Enabled' : 'Disabled'}
+				color={enabled ? 'green' : 'red'}
+				on:change={(e) => onEnabledChange?.(e.detail)}
 			/>
 		</div>
 
@@ -115,10 +112,12 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Dry Run</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Dry Run:</span>
-			<DropdownSelect
-				value={dryRun ? 'true' : 'false'}
-				options={enabledOptions}
-				on:change={(e) => onDryRunChange?.(e.detail === 'true')}
+			<Toggle
+				checked={dryRun}
+				label={dryRun ? 'On' : 'Off'}
+				color={dryRun ? 'amber' : 'neutral'}
+				checkboxColor={dryRun ? '#F59E0B' : 'neutral'}
+				on:change={(e) => onDryRunChange?.(e.detail)}
 			/>
 		</div>
 

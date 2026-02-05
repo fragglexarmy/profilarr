@@ -956,27 +956,15 @@ import FormInput from '$ui/form/FormInput.svelte';
 		<ComponentCard
 			name="Toggle"
 			paths={['toggle/Toggle']}
-			description="Two-segment switch with X/Check icons. Four color variants (accent, amber, green, red) for the active state, neutral inactive state. Supports disabled state and dispatches change events."
+			description="Card-style toggle with optional label text and IconCheckbox on the right. Supports color variants, disabled state, and fires change events."
 		>
 			<div class="space-y-3">
 				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Colors</p>
-				<div class="flex flex-wrap items-center gap-4">
-					<div class="flex items-center gap-2">
-						<Toggle color="accent" bind:checked={demoToggleAccent} label="Accent" />
-						<span class="text-xs text-neutral-500 dark:text-neutral-400">Accent</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<Toggle color="green" bind:checked={demoToggleGreen} label="Green" />
-						<span class="text-xs text-neutral-500 dark:text-neutral-400">Green</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<Toggle color="red" bind:checked={demoToggleRed} label="Red" />
-						<span class="text-xs text-neutral-500 dark:text-neutral-400">Red</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<Toggle color="amber" bind:checked={demoToggleAmber} label="Amber" />
-						<span class="text-xs text-neutral-500 dark:text-neutral-400">Amber</span>
-					</div>
+				<div class="grid gap-3 md:grid-cols-2">
+					<Toggle color="accent" bind:checked={demoToggleAccent} label="Accent" />
+					<Toggle color="green" bind:checked={demoToggleGreen} label="Green" />
+					<Toggle color="red" bind:checked={demoToggleRed} label="Red" />
+					<Toggle color="amber" bind:checked={demoToggleAmber} label="Amber" />
 				</div>
 			</div>
 
@@ -985,6 +973,14 @@ import FormInput from '$ui/form/FormInput.svelte';
 				<div class="flex flex-wrap items-center gap-4">
 					<Toggle color="accent" checked disabled label="Disabled on" />
 					<Toggle color="accent" checked={false} disabled label="Disabled off" />
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">No label</p>
+				<div class="flex flex-wrap items-center gap-4">
+					<Toggle color="accent" bind:checked={demoToggleAccent} ariaLabel="Accent toggle" />
+					<Toggle color="green" bind:checked={demoToggleGreen} ariaLabel="Green toggle" />
 				</div>
 			</div>
 		</ComponentCard>
