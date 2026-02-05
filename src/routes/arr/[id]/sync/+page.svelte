@@ -18,14 +18,14 @@
 
 	// Initialize state from loaded sync data
 	function buildProfileState(
-		selections: { databaseId: number; profileId: number }[]
-	): Record<number, Record<number, boolean>> {
-		const state: Record<number, Record<number, boolean>> = {};
+		selections: { databaseId: number; profileName: string }[]
+	): Record<number, Record<string, boolean>> {
+		const state: Record<number, Record<string, boolean>> = {};
 		for (const sel of selections) {
 			if (!state[sel.databaseId]) {
 				state[sel.databaseId] = {};
 			}
-			state[sel.databaseId][sel.profileId] = true;
+			state[sel.databaseId][sel.profileName] = true;
 		}
 		return state;
 	}

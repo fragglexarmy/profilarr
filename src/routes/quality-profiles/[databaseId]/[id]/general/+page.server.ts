@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/index.ts';
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { getRadarrLanguages } from '$lib/server/sync/mappings.ts';
 import type { OperationLayer } from '$pcd/index.ts';
+import { arrSyncQueries } from '$db/queries/arrSync.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -136,6 +137,10 @@ export const actions: Actions = {
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update quality profile' });
+		}
+
+		if (name.trim() !== current.name) {
+			arrSyncQueries.updateQualityProfileName(current.name, name.trim());
 		}
 
 		throw redirect(303, `/quality-profiles/${databaseId}/${id}/general`);

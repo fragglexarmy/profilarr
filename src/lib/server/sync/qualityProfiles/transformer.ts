@@ -231,7 +231,7 @@ export function transformQualityProfile(
  */
 export async function fetchQualityProfileFromPcd(
 	cache: PCDCache,
-	profileId: number,
+	profileName: string,
 	arrType: SyncArrType
 ): Promise<PcdQualityProfile | null> {
 	const db = cache.kb;
@@ -247,7 +247,7 @@ export async function fetchQualityProfileFromPcd(
 			'upgrade_until_score',
 			'upgrade_score_increment'
 		])
-		.where('id', '=', profileId)
+		.where('name', '=', profileName)
 		.executeTakeFirst();
 
 	if (!profile) return null;
@@ -398,22 +398,13 @@ export async function getQualityApiMappings(
  */
 export async function getReferencedCustomFormatNames(
 	cache: PCDCache,
-	profileId: number,
+	profileName: string,
 	arrType: SyncArrType
 ): Promise<string[]> {
-	// First get the profile name
-	const profile = await cache.kb
-		.selectFrom('quality_profiles')
-		.select(['name'])
-		.where('id', '=', profileId)
-		.executeTakeFirst();
-
-	if (!profile) return [];
-
 	const rows = await cache.kb
 		.selectFrom('quality_profile_custom_formats')
 		.select(['custom_format_name'])
-		.where('quality_profile_name', '=', profile.name)
+		.where('quality_profile_name', '=', profileName)
 		.where((eb) => eb.or([eb('arr_type', '=', arrType), eb('arr_type', '=', 'all')]))
 		.execute();
 

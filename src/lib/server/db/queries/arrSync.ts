@@ -5,7 +5,7 @@ export type SyncTrigger = 'manual' | 'on_pull' | 'on_change' | 'schedule';
 
 export interface ProfileSelection {
 	databaseId: number;
-	profileId: number;
+	profileName: string;
 }
 
 export interface SyncConfig {
@@ -43,7 +43,7 @@ export interface MediaManagementSyncData {
 interface ProfileSelectionRow {
 	instance_id: number;
 	database_id: number;
-	profile_id: number;
+	profile_name: string;
 }
 
 interface ConfigRow {
@@ -89,7 +89,7 @@ export const arrSyncQueries = {
 		return {
 			selections: selectionRows.map((row) => ({
 				databaseId: row.database_id,
-				profileId: row.profile_id
+				profileName: row.profile_name
 			})),
 			config: {
 				trigger: (configRow?.trigger as SyncTrigger) ?? 'manual',
@@ -109,10 +109,10 @@ export const arrSyncQueries = {
 		// Insert new selections
 		for (const sel of selections) {
 			db.execute(
-				'INSERT INTO arr_sync_quality_profiles (instance_id, database_id, profile_id) VALUES (?, ?, ?)',
+				'INSERT INTO arr_sync_quality_profiles (instance_id, database_id, profile_name) VALUES (?, ?, ?)',
 				instanceId,
 				sel.databaseId,
-				sel.profileId
+				sel.profileName
 			);
 		}
 
@@ -244,11 +244,18 @@ export const arrSyncQueries = {
 	/**
 	 * Remove orphaned profile references when a profile is deleted
 	 */
-	removeQualityProfileReference(databaseId: number, profileId: number): number {
+	removeQualityProfileReference(profileName: string): number {
 		return db.execute(
-			'DELETE FROM arr_sync_quality_profiles WHERE database_id = ? AND profile_id = ?',
-			databaseId,
-			profileId
+			'DELETE FROM arr_sync_quality_profiles WHERE profile_name = ?',
+			profileName
+		);
+	},
+
+	updateQualityProfileName(oldName: string, newName: string): number {
+		return db.execute(
+			'UPDATE arr_sync_quality_profiles SET profile_name = ? WHERE profile_name = ?',
+			newName,
+			oldName
 		);
 	},
 

@@ -12,7 +12,7 @@
 	}
 
 	export let databases: DatabaseWithProfiles[];
-	export let state: Record<number, Record<number, boolean>> = {};
+	export let state: Record<number, Record<string, boolean>> = {};
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
 	export let canSave: boolean = true;
@@ -34,8 +34,8 @@
 				state[db.id] = {};
 			}
 			for (const profile of db.qualityProfiles) {
-				if (state[db.id][profile.id] === undefined) {
-					state[db.id][profile.id] = false;
+				if (state[db.id][profile.name] === undefined) {
+					state[db.id][profile.name] = false;
 				}
 			}
 		}
@@ -46,25 +46,25 @@
 		Object.entries(state).flatMap(([dbId, profiles]) =>
 			Object.entries(profiles)
 				.filter(([, selected]) => selected)
-				.map(([profileId]) => `${dbId}-${profileId}`)
+				.map(([profileName]) => `${dbId}-${profileName}`)
 		)
 	);
 
-	function isSelected(databaseId: number, profileId: number): boolean {
-		return selectedKeys.has(`${databaseId}-${profileId}`);
+	function isSelected(databaseId: number, profileName: string): boolean {
+		return selectedKeys.has(`${databaseId}-${profileName}`);
 	}
 
-	function toggleProfile(databaseId: number, profileId: number) {
-		state[databaseId][profileId] = !state[databaseId][profileId];
+	function toggleProfile(databaseId: number, profileName: string) {
+		state[databaseId][profileName] = !state[databaseId][profileName];
 		state = { ...state }; // Reassign to trigger reactivity
 	}
 
-	function getSelections(): { databaseId: number; profileId: number }[] {
-		const selections: { databaseId: number; profileId: number }[] = [];
+	function getSelections(): { databaseId: number; profileName: string }[] {
+		const selections: { databaseId: number; profileName: string }[] = [];
 		for (const [dbId, profiles] of Object.entries(state)) {
-			for (const [profileId, selected] of Object.entries(profiles)) {
+			for (const [profileName, selected] of Object.entries(profiles)) {
 				if (selected) {
-					selections.push({ databaseId: parseInt(dbId), profileId: parseInt(profileId) });
+					selections.push({ databaseId: parseInt(dbId), profileName });
 				}
 			}
 		}
@@ -150,13 +150,13 @@
 									<button
 										type="button"
 										class="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
-										on:click={() => toggleProfile(database.id, profile.id)}
+										on:click={() => toggleProfile(database.id, profile.name)}
 									>
 										<code class="font-mono text-sm text-neutral-900 dark:text-neutral-50">
 											{profile.name}
 										</code>
 										<IconCheckbox
-											checked={selectedKeys.has(`${database.id}-${profile.id}`)}
+											checked={selectedKeys.has(`${database.id}-${profile.name}`)}
 											icon={Check}
 											shape="rounded"
 										/>
