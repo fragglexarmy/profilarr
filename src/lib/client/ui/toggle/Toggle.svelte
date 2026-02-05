@@ -9,7 +9,7 @@
 	export let label: string = '';
 	export let ariaLabel: string = 'Toggle';
 	// Legacy color prop (mapped to IconCheckbox color)
-	export let color: 'accent' | 'amber' | 'green' | 'red' = 'accent';
+	export let color: 'accent' | 'amber' | 'green' | 'red' | 'neutral' = 'accent';
 	// IconCheckbox passthrough props
 	export let icon: ComponentType = Check;
 	export let checkboxColor: 'accent' | 'blue' | 'green' | 'red' | 'neutral' | `#${string}` | '' = '';

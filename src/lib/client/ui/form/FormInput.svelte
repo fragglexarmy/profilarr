@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { Eye, EyeOff } from 'lucide-svelte';
 
 	export let label: string;
@@ -15,28 +15,29 @@
 	export let private_: boolean = false;
 	export let readonly: boolean = false;
 	export let mono: boolean = false;
-	export let size: 'sm' | 'md' | 'lg' | 'auto' = 'auto';
+	export let disabled: boolean = false;
+	export let size: 'sm' | 'md' | 'lg' = 'md';
+	export let inputClass: string = '';
+	export let inputElement: HTMLInputElement | HTMLTextAreaElement | null = null;
 
-	const dispatch = createEventDispatcher<{ input: string }>();
+	const dispatch = createEventDispatcher<{ input: string; focus: void; blur: void }>();
 
 	$: fontClass = mono ? 'font-mono' : '';
-	$: readonlyClass = readonly
+	$: stateClass = readonly || disabled
 		? 'bg-neutral-100 text-neutral-500 cursor-not-allowed dark:bg-neutral-800/40 dark:text-neutral-500'
 		: 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600';
+	$: containerClass = hideLabel && !description ? 'space-y-0' : 'space-y-2';
+	$: hasSuffix = !!$$slots.suffix;
 
 	let showPassword = false;
-	let isSmallScreen = false;
-	let isMediumScreen = false;
-	let smallQuery: MediaQueryList | null = null;
-	let mediumQuery: MediaQueryList | null = null;
 
 	$: inputType = private_ ? (showPassword ? 'text' : 'password') : type;
-	$: sizeVariant = size === 'auto' ? (isSmallScreen ? 'sm' : isMediumScreen ? 'md' : 'lg') : size;
 	$: sizeClasses = {
 		sm: 'rounded-lg px-2.5 py-1.5 text-xs',
 		md: 'rounded-xl px-3 py-2 text-sm',
 		lg: 'rounded-xl px-4 py-2.5 text-base'
-	}[sizeVariant];
+	}[size];
+	$: privatePaddingClass = hasSuffix ? 'pr-16' : 'pr-10';
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
@@ -44,27 +45,16 @@
 		dispatch('input', value);
 	}
 
-	function updateScreenSize() {
-		isSmallScreen = smallQuery?.matches ?? false;
-		isMediumScreen = mediumQuery?.matches ?? false;
+	function handleFocus() {
+		dispatch('focus');
 	}
 
-	onMount(() => {
-		if (typeof window === 'undefined') return;
-		smallQuery = window.matchMedia('(max-width: 639px)');
-		mediumQuery = window.matchMedia('(max-width: 1023px)');
-		updateScreenSize();
-		smallQuery.addEventListener('change', updateScreenSize);
-		mediumQuery.addEventListener('change', updateScreenSize);
-	});
-
-	onDestroy(() => {
-		smallQuery?.removeEventListener('change', updateScreenSize);
-		mediumQuery?.removeEventListener('change', updateScreenSize);
-	});
+	function handleBlur() {
+		dispatch('blur');
+	}
 </script>
 
-<div class="space-y-2">
+<div class={containerClass}>
 	<label
 		for={name}
 		class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 {hideLabel
@@ -81,15 +71,30 @@
 	{/if}
 
 	{#if textarea}
-		<textarea
-			id={name}
-			{name}
-			{value}
-			{placeholder}
-			rows="6"
-			oninput={handleInput}
-			class="block w-full border border-neutral-300 bg-white text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-300 focus:outline-none dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-600 {sizeClasses} {fontClass}"
-		></textarea>
+		<div class={hasSuffix ? 'relative' : ''}>
+			<textarea
+				id={name}
+				{name}
+				{value}
+				{placeholder}
+				{required}
+				{disabled}
+				readonly={readonly}
+				rows="6"
+				bind:this={inputElement}
+				oninput={handleInput}
+				onfocus={handleFocus}
+				onblur={handleBlur}
+				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-300 focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-600 {sizeClasses} {fontClass} {stateClass} {inputClass} {hasSuffix
+					? 'pr-10'
+					: ''}"
+			></textarea>
+			{#if hasSuffix}
+				<div class="absolute right-3 top-3">
+					<slot name="suffix" />
+				</div>
+			{/if}
+		</div>
 	{:else if private_}
 		<div class="relative">
 			<input
@@ -99,11 +104,20 @@
 				{value}
 				{placeholder}
 				{required}
+				{disabled}
 				readonly={readonly}
+				bind:this={inputElement}
 				oninput={handleInput}
+				onfocus={handleFocus}
+				onblur={handleBlur}
 				autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-				class="block w-full border border-neutral-300 pr-10 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {readonlyClass}"
+				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {stateClass} {inputClass} {privatePaddingClass}"
 			/>
+			{#if hasSuffix}
+				<div class="absolute right-10 top-1/2 -translate-y-1/2">
+					<slot name="suffix" />
+				</div>
+			{/if}
 			<button
 				type="button"
 				class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
@@ -117,17 +131,30 @@
 			</button>
 		</div>
 	{:else}
-		<input
-			id={name}
-			{name}
-			{type}
-			{value}
-			{placeholder}
-			{required}
-			readonly={readonly}
-			oninput={handleInput}
-			autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-			class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {readonlyClass}"
-		/>
+		<div class={hasSuffix ? 'relative' : ''}>
+			<input
+				id={name}
+				{name}
+				{type}
+				{value}
+				{placeholder}
+				{required}
+				{disabled}
+				readonly={readonly}
+				bind:this={inputElement}
+				oninput={handleInput}
+				onfocus={handleFocus}
+				onblur={handleBlur}
+				autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
+				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {stateClass} {inputClass} {hasSuffix
+					? 'pr-10'
+					: ''}"
+			/>
+			{#if hasSuffix}
+				<div class="absolute right-3 top-1/2 -translate-y-1/2">
+					<slot name="suffix" />
+				</div>
+			{/if}
+		</div>
 	{/if}
 </div>

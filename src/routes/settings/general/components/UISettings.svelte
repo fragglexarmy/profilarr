@@ -6,7 +6,7 @@
 	import { alertStore } from '$alerts/store';
 	import { AlertTriangle, Check, CheckCircle, Info, Save, XCircle } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import Select from '$ui/form/Select.svelte';
+	import SearchDropdown from '$ui/form/SearchDropdown.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 
 	const alertPositionOptions = [
@@ -106,7 +106,9 @@
 						>
 							Position
 						</label>
-						<Select
+						<SearchDropdown
+							name="alert_position"
+							label="Position"
 							options={alertPositionOptions}
 							value={alertPosition}
 							on:change={(event) => (alertPosition = event.detail as AlertPosition)}

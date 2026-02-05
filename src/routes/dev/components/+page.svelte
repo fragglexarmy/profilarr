@@ -11,12 +11,10 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
-import FormInput from '$ui/form/FormInput.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
-	import Select from '$ui/form/Select.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
-	import Autocomplete from '$ui/form/Autocomplete.svelte';
 	import SearchDropdown from '$ui/form/SearchDropdown.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import RangeScale from '$ui/form/RangeScale.svelte';
@@ -58,8 +56,6 @@ import FormInput from '$ui/form/FormInput.svelte';
 		{ value: 'lidarr', label: 'Lidarr' },
 		{ value: 'readarr', label: 'Readarr' }
 	];
-	let demoAutoSelected: Array<{ value: string; label: string }> = [];
-	let demoAutoMulti: Array<{ value: string; label: string }> = [{ value: 'radarr', label: 'Radarr' }];
 	let demoSearchDropdownValue: string | null = null;
 	let demoModalOpen = false;
 	let demoModalDanger = false;
@@ -85,13 +81,6 @@ import FormInput from '$ui/form/FormInput.svelte';
 	let unchecked = false;
 	let checkedSquare = true;
 	let checkedCircle = true;
-	let demoSelectFormValue = 'radarr';
-	const demoSelectFormOptions = [
-		{ value: 'radarr', label: 'Radarr' },
-		{ value: 'sonarr', label: 'Sonarr' },
-		{ value: 'whisparr', label: 'Whisparr' },
-		{ value: 'prowlarr', label: 'Prowlarr' }
-	];
 	let demoSelectValue = 'radarr';
 	const demoSelectOptions = [
 		{ value: 'radarr', label: 'Radarr' },
@@ -133,10 +122,8 @@ import FormInput from '$ui/form/FormInput.svelte';
 		{ id: 'dropdown', name: 'Dropdown', category: 'dropdown' },
 		{ id: 'form-input', name: 'FormInput', category: 'form' },
 		{ id: 'number-input', name: 'NumberInput', category: 'form' },
-		{ id: 'select', name: 'Select', category: 'form' },
 		{ id: 'icon-checkbox', name: 'IconCheckbox', category: 'form' },
 		{ id: 'tag-input', name: 'TagInput', category: 'form' },
-		{ id: 'autocomplete', name: 'Autocomplete', category: 'form' },
 		{ id: 'search-dropdown', name: 'SearchDropdown', category: 'form' },
 		{ id: 'markdown-input', name: 'MarkdownInput', category: 'form' },
 		{ id: 'range-scale', name: 'RangeScale', category: 'form' },
@@ -532,34 +519,6 @@ import FormInput from '$ui/form/FormInput.svelte';
 		</ComponentCard>
 	{/if}
 
-	<!-- Select -->
-	{#if isVisible('select')}
-		<ComponentCard
-			name="Select"
-			paths={['form/Select']}
-			description="Custom dropdown select with keyboard navigation (arrow keys, Enter, Escape). Highlights the hovered/keyed option with accent color. Supports placeholder, mono font, and custom width."
-		>
-			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Default + mono</p>
-				<div class="flex flex-wrap items-start gap-4">
-					<div class="w-48">
-						<Select bind:value={demoSelectFormValue} options={demoSelectFormOptions} placeholder="Choose arr..." />
-					</div>
-					<div class="w-48">
-						<Select bind:value={demoSelectFormValue} options={demoSelectFormOptions} mono />
-					</div>
-				</div>
-			</div>
-
-			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">No selection (placeholder)</p>
-				<div class="w-48">
-					<Select value="" options={demoSelectFormOptions} placeholder="Pick one..." />
-				</div>
-			</div>
-		</ComponentCard>
-	{/if}
-
 	<!-- IconCheckbox -->
 	{#if isVisible('icon-checkbox')}
 		<ComponentCard
@@ -652,35 +611,12 @@ import FormInput from '$ui/form/FormInput.svelte';
 		</ComponentCard>
 	{/if}
 
-	<!-- Autocomplete -->
-	{#if isVisible('autocomplete')}
-		<ComponentCard
-			name="Autocomplete"
-			paths={['form/Autocomplete']}
-			description="Multi-select searchable dropdown built on Button + Dropdown + DropdownItem. Click to open, type to filter, keyboard navigate. Supports max selection limit, mono font, and custom item slots."
-		>
-			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Single select</p>
-				<div class="w-48">
-					<Autocomplete options={demoAutoOptions} bind:selected={demoAutoSelected} max={1} placeholder="Choose one..." />
-				</div>
-			</div>
-
-			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Multi select (max 3)</p>
-				<div class="w-64">
-					<Autocomplete options={demoAutoOptions} bind:selected={demoAutoMulti} max={3} placeholder="Pick up to 3..." />
-				</div>
-			</div>
-		</ComponentCard>
-	{/if}
-
 	<!-- SearchDropdown -->
 	{#if isVisible('search-dropdown')}
 		<ComponentCard
 			name="SearchDropdown"
 			paths={['form/SearchDropdown']}
-			description="Single-select searchable input that filters a dropdown list as you type. Shows a clear button when a value is selected. Focus ring uses accent color. Supports disabled state and custom item slot."
+			description="Single-select searchable input styled like FormInput. Filters options as you type, shows a clear button when selected, supports label/description, sizes, disabled state, and custom item slot."
 		>
 			<div class="space-y-3">
 				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Default + disabled</p>

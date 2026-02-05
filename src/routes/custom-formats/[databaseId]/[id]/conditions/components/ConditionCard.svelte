@@ -128,7 +128,7 @@
 	// Check if type is pattern-based
 	$: isPatternType = PATTERN_TYPES.includes(condition.type as (typeof PATTERN_TYPES)[number]);
 
-	// Autocomplete options for patterns
+	// SearchDropdown options for patterns
 	$: patternOptions = availablePatterns.map((p) => ({ value: p.name, label: p.name }));
 
 	function handlePatternChange(value: string) {
@@ -184,7 +184,7 @@
 		}
 	}
 
-	// Language options for Autocomplete
+	// Language options for SearchDropdown
 	$: languageOptions = availableLanguages.map((l) => ({
 		value: l.name,
 		label: l.name,
