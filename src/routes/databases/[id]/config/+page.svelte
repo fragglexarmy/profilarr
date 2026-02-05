@@ -377,7 +377,6 @@
 						onchange={updateReadme}
 						placeholder="Write your README here..."
 						rows={12}
-						autoResize={false}
 					/>
 				</div>
 			</div>

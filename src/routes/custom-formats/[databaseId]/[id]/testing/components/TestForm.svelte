@@ -228,7 +228,7 @@
 					placeholder="Why this test exists or what edge case it covers"
 					value={description}
 					onchange={(v) => (description = v)}
-					minRows={2}
+					rows={2}
 				/>
 			</div>
 
