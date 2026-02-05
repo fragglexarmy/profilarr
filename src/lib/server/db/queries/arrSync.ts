@@ -261,6 +261,33 @@ export const arrSyncQueries = {
 	},
 
 	/**
+	 * Update config name references when a media management config is renamed
+	 */
+	updateNamingConfigName(oldName: string, newName: string): number {
+		return db.execute(
+			'UPDATE arr_sync_media_management SET naming_config_name = ? WHERE naming_config_name = ?',
+			newName,
+			oldName
+		);
+	},
+
+	updateQualityDefinitionsConfigName(oldName: string, newName: string): number {
+		return db.execute(
+			'UPDATE arr_sync_media_management SET quality_definitions_config_name = ? WHERE quality_definitions_config_name = ?',
+			newName,
+			oldName
+		);
+	},
+
+	updateMediaSettingsConfigName(oldName: string, newName: string): number {
+		return db.execute(
+			'UPDATE arr_sync_media_management SET media_settings_config_name = ? WHERE media_settings_config_name = ?',
+			newName,
+			oldName
+		);
+	},
+
+	/**
 	 * Remove all references to a database (when database is deleted)
 	 */
 	removeDatabaseReferences(databaseId: number): void {

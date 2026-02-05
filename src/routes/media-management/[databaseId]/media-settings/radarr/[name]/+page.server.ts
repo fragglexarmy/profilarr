@@ -4,6 +4,7 @@ import { pcdManager } from '$pcd/index.ts';
 import { canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, updateRadarrMediaSettings, removeRadarrMediaSettings } from '$pcd/entities/mediaManagement/media-settings/index.ts';
+import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import type { PropersRepacks } from '$shared/pcd/mediaManagement.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -100,6 +101,10 @@ export const actions: Actions = {
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update media settings config' });
+		}
+
+		if (newName.trim() !== decodedName) {
+			arrSyncQueries.updateMediaSettingsConfigName(decodedName, newName.trim());
 		}
 
 		throw redirect(303, `/media-management/${databaseId}/media-settings`);

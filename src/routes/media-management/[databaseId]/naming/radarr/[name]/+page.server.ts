@@ -4,6 +4,7 @@ import { pcdManager } from '$pcd/index.ts';
 import { canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, updateRadarrNaming, removeRadarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
+import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import type { RadarrNamingRow } from '$shared/pcd/display.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -108,6 +109,10 @@ export const actions: Actions = {
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update naming config' });
+		}
+
+		if (newName.trim() !== decodedName) {
+			arrSyncQueries.updateNamingConfigName(decodedName, newName.trim());
 		}
 
 		throw redirect(303, `/media-management/${databaseId}/naming`);

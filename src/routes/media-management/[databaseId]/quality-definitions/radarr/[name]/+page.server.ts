@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, getAvailableQualities } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
 import { updateRadarrQualityDefinitions, removeRadarrQualityDefinitions } from '$pcd/entities/mediaManagement/quality-definitions/index.ts';
+import { arrSyncQueries } from '$db/queries/arrSync.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;
@@ -42,7 +43,6 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 
 export const actions: Actions = {
 	update: async ({ request, params }) => {
-		console.log('[QD-ACTION] update action called at', Date.now());
 		const { databaseId, name } = params;
 
 		if (!databaseId || !name) {
@@ -108,6 +108,10 @@ export const actions: Actions = {
 
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to update quality definitions config' });
+		}
+
+		if (newName.trim() !== decodedName) {
+			arrSyncQueries.updateQualityDefinitionsConfigName(decodedName, newName.trim());
 		}
 
 		throw redirect(303, `/media-management/${databaseId}/quality-definitions`);
