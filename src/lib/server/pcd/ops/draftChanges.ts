@@ -717,23 +717,19 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 		op,
 		metadata: parseJson<ParsedMetadata>(op.metadata)
 	}));
-	const nameAliases = new Map<string, string>();
+	// Map every name an entity has had back to its original (pre-draft) name.
+	// Handles chains (A→B→C) and cycles (A→B→A) correctly.
+	const originalName = new Map<string, string>();
 	for (const { metadata } of parsedOps) {
-		if (!metadata?.name) continue;
-		const previousName = metadata.previousName;
-		if (previousName) {
-			nameAliases.set(metadata.name, previousName);
-		}
+		if (!metadata?.name || !metadata?.entity || !metadata.previousName) continue;
+		const key = (n: string) => `${metadata.entity}:${n}`;
+		const origin = originalName.get(key(metadata.previousName)) ?? metadata.previousName;
+		originalName.set(key(metadata.name), origin);
+		originalName.set(key(metadata.previousName), origin);
 	}
 
-	const resolveAlias = (value: string): string => {
-		let current = value;
-		const seen = new Set<string>();
-		while (nameAliases.has(current) && !seen.has(current)) {
-			seen.add(current);
-			current = nameAliases.get(current) ?? current;
-		}
-		return current;
+	const resolveAlias = (entity: string, value: string): string => {
+		return originalName.get(`${entity}:${value}`) ?? value;
 	};
 	const groups = new Map<string, DraftEntityChange>();
 	const aggregates = new Map<string, Map<string, FieldAggregate>>();
@@ -748,7 +744,7 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 
 		const desiredState = parseJson<Record<string, unknown>>(op.desired_state);
 		const stableKey = metadata.stable_key?.value ?? metadata.name;
-		const baseKey = `${metadata.entity}:${resolveAlias(stableKey)}`;
+		const baseKey = `${metadata.entity}:${resolveAlias(metadata.entity, stableKey)}`;
 		const groupKey =
 			metadata.generated && metadata.group_id ? `${baseKey}::${metadata.group_id}` : baseKey;
 
@@ -760,7 +756,7 @@ export function listDraftEntityChanges(databaseId: number): DraftEntityChange[] 
 					(dependency.key ? ENTITY_BY_STABLE_KEY[dependency.key] : undefined);
 				const depValue = dependency.value;
 				if (!depEntity || !depValue) continue;
-				const depKey = `${depEntity}:${resolveAlias(depValue)}`;
+				const depKey = `${depEntity}:${resolveAlias(depEntity, depValue)}`;
 				if (depKey === groupKey) continue;
 				depSet.add(depKey);
 			}
