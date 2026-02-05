@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
-	import { Layers, FlaskConical } from 'lucide-svelte';
+	import { FlaskConical } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { page } from '$app/stores';
+	import { sortConditions } from '$shared/pcd/conditions';
 
 	export let formats: CustomFormatTableRow[];
 
@@ -12,6 +13,21 @@
 	function parseMarkdown(text: string | null): string {
 		if (!text) return '';
 		return marked.parseInline(text) as string;
+	}
+
+	function getConditionColorClass(
+		condition: CustomFormatTableRow['conditions'][number]
+	): string {
+		if (condition.required && condition.negate) {
+			return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+		}
+		if (condition.required) {
+			return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+		}
+		if (condition.negate) {
+			return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+		}
+		return 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
 	}
 </script>
 
@@ -27,26 +43,15 @@
 					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 						{format.name}
 					</h3>
-					<div class="flex flex-shrink-0 items-center gap-1.5">
+					{#if format.testCount > 0}
 						<div
 							class="flex items-center gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
-							title="{format.conditions.length} condition{format.conditions.length !== 1
-								? 's'
-								: ''}"
+							title="{format.testCount} test{format.testCount !== 1 ? 's' : ''}"
 						>
-							<Layers size={12} />
-							<span>{format.conditions.length}</span>
+							<FlaskConical size={12} />
+							<span>{format.testCount}</span>
 						</div>
-						{#if format.testCount > 0}
-							<div
-								class="flex items-center gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
-								title="{format.testCount} test{format.testCount !== 1 ? 's' : ''}"
-							>
-								<FlaskConical size={12} />
-								<span>{format.testCount}</span>
-							</div>
-						{/if}
-					</div>
+					{/if}
 				</div>
 				{#if format.tags.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">
@@ -68,6 +73,23 @@
 				</div>
 			{:else}
 				<div class="text-xs text-neutral-400 italic dark:text-neutral-500">No description</div>
+			{/if}
+
+			<!-- Conditions -->
+			{#if format.conditions.length > 0}
+				<div class="flex flex-wrap gap-1">
+					{#each sortConditions(format.conditions) as condition}
+						<span
+							class={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${getConditionColorClass(
+								condition
+							)}`}
+						>
+							{condition.name}
+						</span>
+					{/each}
+				</div>
+			{:else}
+				<div class="text-xs text-neutral-400">None</div>
 			{/if}
 		</a>
 	{/each}
