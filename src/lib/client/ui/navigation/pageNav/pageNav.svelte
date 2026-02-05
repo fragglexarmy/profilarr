@@ -2,7 +2,7 @@
 	import Group from './group.svelte';
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
-	import { FolderTree, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X } from 'lucide-svelte';
+	import { FolderTree, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X, Wrench } from 'lucide-svelte';
 	import { navIconStore } from '$stores/navIcons';
 	import { mobileNavOpen } from '$stores/mobileNav';
 	import { page } from '$app/stores';
@@ -54,6 +54,18 @@
 	</div>
 
 	<div class="flex-1 overflow-y-auto p-4">
+		{#if import.meta.env.DEV}
+			<Group
+				label={useEmoji ? '🛠️ Dev' : 'Dev'}
+				href="/dev"
+				icon={useEmoji ? undefined : Wrench}
+				initialOpen={true}
+				hasItems={true}
+			>
+				<GroupItem label="Components" href="/dev/components" />
+			</Group>
+		{/if}
+
 		<Group
 			label={useEmoji ? '📦 Databases' : 'Databases'}
 			href="/databases"

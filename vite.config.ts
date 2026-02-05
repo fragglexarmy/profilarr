@@ -11,7 +11,12 @@ export default defineConfig({
 	server: {
 		port: 6969,
 		host: true,
+		hmr: {
+			host: 'localhost'
+		},
 		watch: {
+			usePolling: true,
+			interval: 1000,
 			// Ignore temporary files created by editors
 			ignored: ['**/*.tmp.*', '**/*~', '**/.#*']
 		}
