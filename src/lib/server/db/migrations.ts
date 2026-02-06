@@ -48,6 +48,8 @@ import { migration as migration043 } from './migrations/043_add_git_identity_to_
 import { migration as migration044 } from './migrations/044_add_conflict_strategy_to_database_instances.ts';
 import { migration as migration045 } from './migrations/045_delay_profile_sync_use_name.ts';
 import { migration as migration046 } from './migrations/046_quality_profile_sync_use_name.ts';
+import { migration as migration047 } from './migrations/047_create_arr_database_namespaces.ts';
+import { migration as migration048 } from './migrations/048_fix_sync_database_foreign_keys.ts';
 
 export interface Migration {
 	version: number;
@@ -314,7 +316,9 @@ export function loadMigrations(): Migration[] {
 		migration043,
 		migration044,
 		migration045,
-		migration046
+		migration046,
+		migration047,
+		migration048
 	];
 
 	// Sort by version number

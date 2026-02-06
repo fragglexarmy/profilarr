@@ -364,8 +364,8 @@ CREATE TABLE ai_settings (
 CREATE TABLE arr_sync_quality_profiles (
     instance_id INTEGER NOT NULL,
     database_id INTEGER NOT NULL,
-    profile_id INTEGER NOT NULL,
-    PRIMARY KEY (instance_id, database_id, profile_id),
+    profile_name TEXT NOT NULL,
+    PRIMARY KEY (instance_id, database_id, profile_name),
     FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
     FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE CASCADE
 );
@@ -434,6 +434,22 @@ CREATE TABLE arr_sync_media_management (
     FOREIGN KEY (naming_database_id) REFERENCES database_instances(id) ON DELETE SET NULL,
     FOREIGN KEY (quality_definitions_database_id) REFERENCES database_instances(id) ON DELETE SET NULL,
     FOREIGN KEY (media_settings_database_id) REFERENCES database_instances(id) ON DELETE SET NULL
+);
+
+-- ==============================================================================
+-- TABLE: arr_database_namespaces
+-- Purpose: Per-(Arr instance, database) namespace index for invisible sync suffixes
+-- Migration: 047_create_arr_database_namespaces.ts
+-- ==============================================================================
+
+CREATE TABLE arr_database_namespaces (
+    instance_id    INTEGER NOT NULL,
+    database_id    INTEGER NOT NULL,
+    namespace_index INTEGER NOT NULL,
+    PRIMARY KEY (instance_id, database_id),
+    UNIQUE (instance_id, namespace_index),
+    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
+    FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE CASCADE
 );
 
 -- ==============================================================================

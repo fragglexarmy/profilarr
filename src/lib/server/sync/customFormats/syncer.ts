@@ -4,6 +4,9 @@
  *
  * This is a helper syncer used by quality profiles - custom formats must be
  * synced before quality profiles since profiles reference format IDs.
+ *
+ * Each database's CFs are suffixed with an invisible namespace character
+ * so multiple databases can coexist in the same arr instance.
  */
 
 import type { BaseArrClient } from '$arr/base.ts';
@@ -12,56 +15,69 @@ import type { SyncArrType } from '../mappings.ts';
 import { transformCustomFormat, type PcdCustomFormat } from './transformer.ts';
 
 /**
- * Sync custom formats to an arr instance
- * Returns a map of format name -> arr format ID
+ * Sync custom formats for a single database to an arr instance.
+ *
+ * @param suffix - Zero-width namespace suffix for this database
+ * @returns Map of PCD format name (unsuffixed) → arr format ID.
+ *          The caller uses this to resolve CF scores in quality profiles.
  */
 export async function syncCustomFormats(
 	client: BaseArrClient,
 	instanceId: number,
 	instanceType: SyncArrType,
-	pcdFormats: Map<string, PcdCustomFormat>
+	pcdFormats: Map<string, PcdCustomFormat>,
+	suffix: string
 ): Promise<Map<string, number>> {
-	// Get existing formats from arr
+	// Get existing formats from arr (includes suffixed names from all databases)
 	const existingFormats = await client.getCustomFormats();
 	const existingMap = new Map(existingFormats.map((f) => [f.name, f.id!]));
 
-	for (const pcdFormat of pcdFormats.values()) {
-		const arrFormat = transformCustomFormat(pcdFormat, instanceType);
+	// Maps PCD name (unsuffixed) → arr ID
+	const pcdFormatIdMap = new Map<string, number>();
 
-		await logger.debug(`Compiled custom format "${arrFormat.name}"`, {
+	for (const [pcdName, pcdFormat] of pcdFormats) {
+		const arrFormat = transformCustomFormat(pcdFormat, instanceType);
+		const suffixedName = pcdName + suffix;
+		arrFormat.name = suffixedName;
+
+		await logger.debug(`Compiled custom format "${pcdName}" (suffixed)`, {
 			source: 'Compile:CustomFormat',
 			meta: {
 				instanceId,
+				pcdName,
 				format: arrFormat
 			}
 		});
 
 		try {
-			if (existingMap.has(arrFormat.name)) {
+			if (existingMap.has(suffixedName)) {
 				// Update existing
-				const existingId = existingMap.get(arrFormat.name)!;
+				const existingId = existingMap.get(suffixedName)!;
 				arrFormat.id = existingId;
 				await client.updateCustomFormat(existingId, arrFormat);
-				await logger.debug(`Updated custom format "${arrFormat.name}"`, {
+				pcdFormatIdMap.set(pcdName, existingId);
+				await logger.debug(`Updated custom format "${pcdName}"`, {
 					source: 'Sync:CustomFormats',
-					meta: { instanceId, formatId: existingId }
+					meta: { instanceId, formatId: existingId, pcdName, suffixedName }
 				});
 			} else {
 				// Create new
 				const response = await client.createCustomFormat(arrFormat);
-				existingMap.set(arrFormat.name, response.id!);
-				await logger.debug(`Created custom format "${arrFormat.name}"`, {
+				existingMap.set(suffixedName, response.id!);
+				pcdFormatIdMap.set(pcdName, response.id!);
+				await logger.debug(`Created custom format "${pcdName}"`, {
 					source: 'Sync:CustomFormats',
-					meta: { instanceId, formatId: response.id }
+					meta: { instanceId, formatId: response.id, pcdName, suffixedName }
 				});
 			}
 		} catch (error) {
 			const errorDetails = extractErrorDetails(error);
-			await logger.error(`Failed to sync custom format "${arrFormat.name}"`, {
+			await logger.error(`Failed to sync custom format "${pcdName}"`, {
 				source: 'Sync:CustomFormats',
 				meta: {
 					instanceId,
-					formatName: arrFormat.name,
+					pcdName,
+					suffixedName,
 					request: arrFormat,
 					...errorDetails
 				}
@@ -69,14 +85,7 @@ export async function syncCustomFormats(
 		}
 	}
 
-	// Refresh format map from arr to get accurate IDs
-	const refreshedFormats = await client.getCustomFormats();
-	const formatIdMap = new Map<string, number>();
-	for (const format of refreshedFormats) {
-		formatIdMap.set(format.name, format.id!);
-	}
-
-	return formatIdMap;
+	return pcdFormatIdMap;
 }
 
 /**
