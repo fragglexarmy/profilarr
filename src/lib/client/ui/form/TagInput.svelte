@@ -51,7 +51,7 @@
 </script>
 
 <div
-	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 transition-colors focus-within:border-neutral-400 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:focus-within:border-neutral-600"
+	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus-within:border-neutral-400 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-50 dark:focus-within:border-neutral-600"
 >
 	{#each tags as tag, index (tag)}
 		<span class="inline-flex items-center gap-1">
@@ -73,6 +73,6 @@
 		bind:value={inputValue}
 		on:keydown={handleKeydown}
 		{placeholder}
-		class="min-w-[120px] flex-1 border-0 bg-transparent text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0 dark:text-neutral-50 dark:placeholder:text-neutral-500"
+		class="min-w-[120px] flex-1 border-0 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0 dark:text-neutral-50 dark:placeholder:text-neutral-500"
 	/>
 </div>

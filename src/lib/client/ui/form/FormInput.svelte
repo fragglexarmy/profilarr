@@ -7,6 +7,7 @@
 	export let placeholder: string = '';
 	export let value: string = '';
 	export let textarea: boolean = false;
+	export let rows: number = 6;
 	export let type: 'text' | 'number' | 'email' | 'password' | 'url' = 'text';
 	export let required: boolean = false;
 	export let hideLabel: boolean = false;
@@ -80,7 +81,7 @@
 				{required}
 				{disabled}
 				readonly={readonly}
-				rows="6"
+				{rows}
 				bind:this={inputElement}
 				oninput={handleInput}
 				onfocus={handleFocus}

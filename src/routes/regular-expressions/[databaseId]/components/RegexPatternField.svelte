@@ -5,6 +5,7 @@
 	import { alertStore } from '$alerts/store';
 	import { sanitizeRegex101Id } from '$lib/client/utils/regex101';
 	import Button from '$ui/button/Button.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 
 	// Props
 	export let pattern: string = '';
@@ -79,57 +80,43 @@
 
 <div class="space-y-4">
 	<!-- Regex Pattern -->
-	<div>
-		<label for="pattern" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-			Regular Expression <span class="text-red-500">*</span>
-		</label>
-		<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-			Uses .NET regex flavor (case-insensitive by default)
-		</p>
-		<textarea
-			id="pattern"
-			name="pattern"
-			value={pattern}
-			oninput={(e) => handlePatternChange(e.currentTarget.value)}
-			rows="3"
-			placeholder="e.g., \b(SPARKS)\b"
-			class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-		></textarea>
-	</div>
+	<FormInput
+		label="Regular Expression"
+		name="pattern"
+		required
+		textarea
+		rows={3}
+		mono
+		description="Uses .NET regex flavor (case-insensitive by default)"
+		value={pattern}
+		placeholder="e.g., \b(SPARKS)\b"
+		on:input={(e) => handlePatternChange(e.detail)}
+	/>
 
 	<!-- Regex101 ID -->
-	<div>
-		<label
-			for="regex101Id"
-			class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-		>
-			Regex101 ID
-		</label>
-		<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-			Link to regex101.com for testing (include version, e.g., ABC123/1)
-		</p>
-		<div class="mt-1 flex gap-2">
-			<input
-				type="text"
-				id="regex101Id"
+	<div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+		<div class="flex-1">
+			<FormInput
+				label="Regex101 ID"
 				name="regex101Id"
+				mono
+				description="Link to regex101.com for testing (include version, e.g., ABC123/1)"
 				value={regex101Id}
-				oninput={(e) => handleRegex101IdChange(e.currentTarget.value)}
 				placeholder="e.g., GMV8jd/1"
-				class="block flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+				on:input={(e) => handleRegex101IdChange(e.detail)}
 			/>
-			{#if regex101Url}
-				<Button
-					href={regex101Url}
-					target="_blank"
-					rel="noopener noreferrer"
-					icon={ExternalLink}
-					iconColor="text-blue-600 dark:text-blue-400"
-					text="Test"
-					variant="secondary"
-				/>
-			{/if}
 		</div>
+		{#if regex101Url}
+			<Button
+				href={regex101Url}
+				target="_blank"
+				rel="noopener noreferrer"
+				icon={ExternalLink}
+				iconColor="text-blue-600 dark:text-blue-400"
+				text="Test"
+				variant="secondary"
+			/>
+		{/if}
 	</div>
 
 	<!-- Unit Tests Section -->
