@@ -141,9 +141,11 @@ export class QualityProfileSyncer extends BaseSyncer {
 				meta: {
 					instanceId: this.instanceId,
 					databases: batches.length,
-					formatsSynced: totalFormatsSynced,
-					profilesSynced: allSyncedProfiles.length,
-					profiles: allSyncedProfiles
+					profiles: allSyncedProfiles.map((p) => ({
+						name: p.name,
+						action: p.action,
+						formats: p.formats.length
+					}))
 				}
 			});
 
