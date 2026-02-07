@@ -55,7 +55,8 @@
 		"docker:clean": "docker compose -f compose.dev.yml down -v --rmi local",
 		"test:e2e": "deno run -A scripts/e2e.ts",
 		"test:e2e:headed": "deno run -A scripts/e2e.ts --headed",
-		"test:e2e:debug": "deno run -A scripts/e2e.ts --debug"
+		"test:e2e:debug": "deno run -A scripts/e2e.ts --debug",
+		"stats": "bash scripts/stats.sh"
 	},
 	"compilerOptions": {
 		"lib": ["deno.window", "dom"],
