@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { Save, Wifi, Trash2 } from 'lucide-svelte';
+	import { Save, Wifi, Trash2, Eraser } from 'lucide-svelte';
+	import CleanupModal from './CleanupModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { isDirty, initEdit, initCreate, update, current, clear } from '$lib/client/stores/dirty';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';
@@ -66,6 +67,7 @@
 	let saving = false;
 	let deleting = false;
 	let showDeleteModal = false;
+	let showCleanupModal = false;
 
 	// Options for dropdowns
 	const typeOptions = [
@@ -184,6 +186,13 @@
 					iconColor="text-red-600 dark:text-red-400"
 					disabled={saving || deleting}
 					on:click={() => (showDeleteModal = true)}
+				/>
+				<Button
+					text="Cleanup"
+					icon={Eraser}
+					iconColor="text-amber-600 dark:text-amber-400"
+					disabled={saving || deleting}
+					on:click={() => (showCleanupModal = true)}
 				/>
 			{/if}
 			<Button
@@ -361,3 +370,8 @@
 {/if}
 
 <DirtyModal />
+
+<!-- Cleanup Modal (edit mode only) -->
+{#if mode === 'edit' && instance}
+	<CleanupModal bind:open={showCleanupModal} instanceId={instance.id} />
+{/if}

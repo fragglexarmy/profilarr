@@ -15,6 +15,7 @@ services:
       - TZ=Etc/UTC
     volumes:
       - ./.arr/radarr:/config
+      - ./.arr/radarr/data:/data
 
   sonarr:
     container_name: profilarr-sonarr
@@ -28,3 +29,4 @@ services:
       - TZ=Etc/UTC
     volumes:
       - ./.arr/sonarr:/config
+      - ./.arr/sonarr/data:/data

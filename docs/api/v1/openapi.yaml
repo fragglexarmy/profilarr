@@ -30,6 +30,8 @@ paths:
     $ref: './paths/arr.yaml#/library'
   /arr/releases:
     $ref: './paths/arr.yaml#/releases'
+  /arr/cleanup:
+    $ref: './paths/arr.yaml#/cleanup'
 
 components:
   schemas:
@@ -69,3 +71,14 @@ components:
       $ref: './schemas/arr.yaml#/ReleasesResponse'
     ErrorResponse:
       $ref: './schemas/arr.yaml#/ErrorResponse'
+    # Cleanup
+    StaleItem:
+      $ref: './schemas/arr.yaml#/StaleItem'
+    CleanupScanRequest:
+      $ref: './schemas/arr.yaml#/CleanupScanRequest'
+    CleanupExecuteRequest:
+      $ref: './schemas/arr.yaml#/CleanupExecuteRequest'
+    CleanupScanResult:
+      $ref: './schemas/arr.yaml#/CleanupScanResult'
+    CleanupDeleteResult:
+      $ref: './schemas/arr.yaml#/CleanupDeleteResult'
