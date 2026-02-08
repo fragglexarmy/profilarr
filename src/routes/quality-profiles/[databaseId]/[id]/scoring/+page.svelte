@@ -394,12 +394,19 @@
 		isLoadingProfile = false;
 	}
 
-	type IconCheckboxColor = 'accent' | 'blue' | 'green' | 'red' | 'neutral' | `#${string}`;
+	type IconCheckboxColor =
+		| 'accent'
+		| 'blue'
+		| 'green'
+		| 'red'
+		| 'neutral'
+		| `#${string}`
+		| `var(--${string})`;
 
 	// Arr type color mapping
 	const arrTypeColors: Record<string, IconCheckboxColor> = {
-		radarr: '#FFC230',
-		sonarr: '#00CCFF'
+		radarr: 'var(--arr-radarr-color)',
+		sonarr: 'var(--arr-sonarr-color)'
 	};
 
 	function getArrTypeColor(arrType: string): IconCheckboxColor {
