@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Plus, Trash2 } from 'lucide-svelte';
+	import FormInput from './FormInput.svelte';
 	import NumberInput from './NumberInput.svelte';
 
 	export let value: Record<string, string> = {};
@@ -156,18 +157,18 @@
 						<Trash2 size={16} />
 					</button>
 				</div>
-				<input
-					type="text"
+				<FormInput
+					label={keyLabel}
+					hideLabel
 					value={entry.key}
 					placeholder={keyPlaceholder}
-					oninput={(e) => updateKey(index, (e.target as HTMLInputElement).value)}
-					onfocus={(e) => {
+					readonly={!!isLocked}
+					on:focus={() => {
 						if (isLocked) {
 							onLockedEditAttempt?.();
-							(e.target as HTMLInputElement).blur();
 						}
 					}}
-					class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
+					on:input={(e) => updateKey(index, e.detail)}
 				/>
 				<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{valueLabel}</span>
 				{#if valueType === 'version'}
@@ -206,30 +207,30 @@
 						</div>
 					</div>
 				{:else}
-					<input
-						type="text"
+					<FormInput
+						label={valueLabel}
+						hideLabel
 						value={entry.value}
 						placeholder={valuePlaceholder}
-						oninput={(e) => updateValue(index, (e.target as HTMLInputElement).value)}
-						class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
+						on:input={(e) => updateValue(index, e.detail)}
 					/>
 				{/if}
 			</div>
 
 			<!-- Desktop: grid layout -->
 			<div class="hidden md:grid md:grid-cols-[1fr_auto_auto] md:gap-2">
-				<input
-					type="text"
+				<FormInput
+					label={keyLabel}
+					hideLabel
 					value={entry.key}
 					placeholder={keyPlaceholder}
-					oninput={(e) => updateKey(index, (e.target as HTMLInputElement).value)}
-					onfocus={(e) => {
+					readonly={!!isLocked}
+					on:focus={() => {
 						if (isLocked) {
 							onLockedEditAttempt?.();
-							(e.target as HTMLInputElement).blur();
 						}
 					}}
-					class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
+					on:input={(e) => updateKey(index, e.detail)}
 				/>
 				{#if valueType === 'version'}
 					<div class="flex items-center gap-1">
@@ -267,12 +268,12 @@
 						</div>
 					</div>
 				{:else}
-					<input
-						type="text"
+					<FormInput
+						label={valueLabel}
+						hideLabel
 						value={entry.value}
 						placeholder={valuePlaceholder}
-						oninput={(e) => updateValue(index, (e.target as HTMLInputElement).value)}
-						class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-neutral-500"
+						on:input={(e) => updateValue(index, e.detail)}
 					/>
 				{/if}
 				<button
