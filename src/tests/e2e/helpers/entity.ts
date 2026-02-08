@@ -13,7 +13,7 @@ import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { fillMarkdownInput } from './markdown';
 import { isIconCheckboxCheckedByLabel, setIconCheckboxByLabel } from './checkbox';
-import { selectDropdownOption, selectSearchDropdownOption } from './dropdown';
+import { selectSearchDropdownOption } from './dropdown';
 
 // ---------------------------------------------------------------------------
 // Custom Formats
@@ -185,8 +185,7 @@ export async function updateConditionValueByName(
 	optionLabel: string
 ): Promise<void> {
 	const card = await findConditionCardByName(page, conditionName);
-	const valueScope = card.locator('div.min-w-0.flex-1').first();
-	await selectDropdownOption(valueScope, optionLabel);
+	await selectSearchDropdownOption(card, 'Select value...', optionLabel);
 }
 
 /**
@@ -222,8 +221,7 @@ export async function updateConditionTypeByName(
 	typeLabel: string
 ): Promise<void> {
 	const card = await findConditionCardByName(page, conditionName);
-	const typeScope = card.locator('div.w-36').first();
-	await selectDropdownOption(typeScope, typeLabel);
+	await selectSearchDropdownOption(card, 'Select type...', typeLabel);
 }
 
 /**
@@ -231,10 +229,8 @@ export async function updateConditionTypeByName(
  */
 export async function getConditionValueByName(page: Page, conditionName: string): Promise<string> {
 	const card = await findConditionCardByName(page, conditionName);
-	const valueScope = card.locator('div.min-w-0.flex-1').first();
-	const button = valueScope.getByRole('button').first();
-	const text = await button.textContent();
-	return (text ?? '').trim();
+	const input = card.getByPlaceholder('Select value...');
+	return (await input.inputValue()).trim();
 }
 
 /**
@@ -266,10 +262,8 @@ export async function getConditionLanguageByName(
  */
 export async function getConditionTypeByName(page: Page, conditionName: string): Promise<string> {
 	const card = await findConditionCardByName(page, conditionName);
-	const typeScope = card.locator('div.w-36').first();
-	const button = typeScope.getByRole('button').first();
-	const text = await button.textContent();
-	return (text ?? '').trim();
+	const input = card.getByPlaceholder('Select type...');
+	return (await input.inputValue()).trim();
 }
 
 /**
@@ -280,8 +274,8 @@ export async function getConditionRequiredByName(
 	conditionName: string
 ): Promise<boolean> {
 	const card = await findConditionCardByName(page, conditionName);
-	const button = card.getByTitle('Required');
-	return (await button.getAttribute('aria-pressed')) === 'true';
+	const toggle = card.getByRole('switch', { name: 'Required' });
+	return (await toggle.getAttribute('aria-checked')) === 'true';
 }
 
 /**
@@ -293,10 +287,10 @@ export async function setConditionRequiredByName(
 	enabled: boolean
 ): Promise<void> {
 	const card = await findConditionCardByName(page, conditionName);
-	const button = card.getByTitle('Required');
-	const current = (await button.getAttribute('aria-pressed')) === 'true';
+	const toggle = card.getByRole('switch', { name: 'Required' });
+	const current = (await toggle.getAttribute('aria-checked')) === 'true';
 	if (current !== enabled) {
-		await clickConditionToggle(button);
+		await clickConditionToggle(toggle);
 	}
 }
 
@@ -308,8 +302,8 @@ export async function getConditionNegateByName(
 	conditionName: string
 ): Promise<boolean> {
 	const card = await findConditionCardByName(page, conditionName);
-	const button = card.getByTitle('Negate');
-	return (await button.getAttribute('aria-pressed')) === 'true';
+	const toggle = card.getByRole('switch', { name: 'Negate' });
+	return (await toggle.getAttribute('aria-checked')) === 'true';
 }
 
 /**
@@ -321,10 +315,10 @@ export async function setConditionNegateByName(
 	enabled: boolean
 ): Promise<void> {
 	const card = await findConditionCardByName(page, conditionName);
-	const button = card.getByTitle('Negate');
-	const current = (await button.getAttribute('aria-pressed')) === 'true';
+	const toggle = card.getByRole('switch', { name: 'Negate' });
+	const current = (await toggle.getAttribute('aria-checked')) === 'true';
 	if (current !== enabled) {
-		await clickConditionToggle(button);
+		await clickConditionToggle(toggle);
 	}
 }
 
@@ -338,24 +332,20 @@ async function clickConditionToggle(button: Locator): Promise<void> {
 }
 
 /**
- * Read a condition's current arr type ("All", "Radarr", "Sonarr").
+ * Read a condition's current arr type ("all", "radarr", "sonarr", "none").
  */
 export async function getConditionArrTypeByName(
 	page: Page,
 	conditionName: string
 ): Promise<string> {
 	const card = await findConditionCardByName(page, conditionName);
-	const options = [
-		{ title: 'All', value: 'all' },
-		{ title: 'Radarr', value: 'radarr' },
-		{ title: 'Sonarr', value: 'sonarr' }
-	];
-	for (const option of options) {
-		const button = card.getByTitle(option.title);
-		const pressed = (await button.getAttribute('aria-pressed')) === 'true';
-		if (pressed) return option.value;
-	}
-	return 'all';
+	const radarrEnabled = (await card.getByRole('switch', { name: 'Radarr' }).getAttribute('aria-checked')) === 'true';
+	const sonarrEnabled = (await card.getByRole('switch', { name: 'Sonarr' }).getAttribute('aria-checked')) === 'true';
+
+	if (radarrEnabled && sonarrEnabled) return 'all';
+	if (radarrEnabled) return 'radarr';
+	if (sonarrEnabled) return 'sonarr';
+	return 'none';
 }
 
 /**
@@ -367,8 +357,21 @@ export async function setConditionArrTypeByName(
 	arrType: 'all' | 'radarr' | 'sonarr'
 ): Promise<void> {
 	const card = await findConditionCardByName(page, conditionName);
-	const title = arrType === 'all' ? 'All' : arrType === 'radarr' ? 'Radarr' : 'Sonarr';
-	await card.getByTitle(title).click();
+	const radarrToggle = card.getByRole('switch', { name: 'Radarr' });
+	const sonarrToggle = card.getByRole('switch', { name: 'Sonarr' });
+
+	const targetRadarr = arrType === 'all' || arrType === 'radarr';
+	const targetSonarr = arrType === 'all' || arrType === 'sonarr';
+
+	const currentRadarr = (await radarrToggle.getAttribute('aria-checked')) === 'true';
+	const currentSonarr = (await sonarrToggle.getAttribute('aria-checked')) === 'true';
+
+	if (currentRadarr !== targetRadarr) {
+		await clickConditionToggle(radarrToggle);
+	}
+	if (currentSonarr !== targetSonarr) {
+		await clickConditionToggle(sonarrToggle);
+	}
 }
 
 /**
@@ -459,11 +462,9 @@ export async function addEnumCondition(
 
 	await card.locator('input[placeholder="Condition name"]').fill(input.name);
 
-	const typeScope = card.locator('div.w-36').first();
-	await selectDropdownOption(typeScope, input.typeLabel);
+	await selectSearchDropdownOption(card, 'Select type...', input.typeLabel);
 
-	const valueScope = card.locator('div.min-w-0.flex-1').first();
-	await selectDropdownOption(valueScope, input.valueLabel);
+	await selectSearchDropdownOption(card, 'Select value...', input.valueLabel);
 
 	await page.getByTitle('Confirm condition').last().click();
 }
@@ -482,8 +483,7 @@ export async function addPatternCondition(
 
 	await card.locator('input[placeholder="Condition name"]').fill(input.name);
 
-	const typeScope = card.locator('div.w-36').first();
-	await selectDropdownOption(typeScope, input.typeLabel);
+	await selectSearchDropdownOption(card, 'Select type...', input.typeLabel);
 
 	await selectSearchDropdownOption(card, 'Select pattern...', input.patternLabel);
 
@@ -504,8 +504,7 @@ export async function addLanguageCondition(
 
 	await card.locator('input[placeholder="Condition name"]').fill(input.name);
 
-	const typeScope = card.locator('div.w-36').first();
-	await selectDropdownOption(typeScope, 'Language');
+	await selectSearchDropdownOption(card, 'Select type...', 'Language');
 
 	await selectSearchDropdownOption(card, 'Select language...', input.languageLabel);
 
@@ -526,8 +525,7 @@ export async function addSizeCondition(
 
 	await card.locator('input[placeholder="Condition name"]').fill(input.name);
 
-	const typeScope = card.locator('div.w-36').first();
-	await selectDropdownOption(typeScope, 'Size');
+	await selectSearchDropdownOption(card, 'Select type...', 'Size');
 
 	if (input.minGB !== undefined) {
 		const minInput = card.getByPlaceholder('Min GB');
@@ -557,8 +555,7 @@ export async function addYearCondition(
 
 	await card.locator('input[placeholder="Condition name"]').fill(input.name);
 
-	const typeScope = card.locator('div.w-36').first();
-	await selectDropdownOption(typeScope, 'Year');
+	await selectSearchDropdownOption(card, 'Select type...', 'Year');
 
 	if (input.minYear !== undefined) {
 		const minInput = card.getByPlaceholder('Min Year');
