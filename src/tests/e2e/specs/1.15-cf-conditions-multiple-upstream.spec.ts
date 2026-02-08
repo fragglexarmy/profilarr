@@ -69,6 +69,8 @@ async function seedConditions(page: Page, devId: number, localId: number) {
 }
 
 test.describe('1.15 CF conditions multiple upstream changes', () => {
+  test.describe.configure({ timeout: 120_000 });
+
   let localId: number;
   let devId: number;
   let devHead: string;

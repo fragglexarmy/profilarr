@@ -104,14 +104,14 @@ test.describe('1.4 CF upstream rename + user description change', () => {
     await goToCustomFormat(page, localId, DEV_RENAME);
     const name = await page.locator('#name').inputValue();
     expect(name).toBe(DEV_RENAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(LOCAL_DESCRIPTION);
   });
 
   test('b) align — CF keeps upstream name and description', async ({ page }) => {
     // Capture original description, then update locally
     await goToCustomFormat(page, localId, TEST_CF_NAME);
-    const originalDescription = (await page.locator('.prose').innerText()).trim();
+    const originalDescription = (await page.locator('#description').inputValue()).trim();
     await updateCfDescription(page, LOCAL_DESCRIPTION);
 
     // Dev renames the CF
@@ -135,7 +135,7 @@ test.describe('1.4 CF upstream rename + user description change', () => {
     await goToCustomFormat(page, localId, DEV_RENAME);
     const name = await page.locator('#name').inputValue();
     expect(name).toBe(DEV_RENAME);
-    const descriptionText = (await page.locator('.prose').innerText()).trim();
+    const descriptionText = (await page.locator('#description').inputValue()).trim();
     expect(descriptionText).toBe(originalDescription);
   });
 });

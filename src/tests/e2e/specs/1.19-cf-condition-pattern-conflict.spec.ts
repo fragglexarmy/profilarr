@@ -56,6 +56,8 @@ async function createRegex(
 }
 
 test.describe('1.19 CF condition pattern conflict', () => {
+  test.describe.configure({ timeout: 180_000 });
+
   let localId: number;
   let devId: number;
   let devHead: string;

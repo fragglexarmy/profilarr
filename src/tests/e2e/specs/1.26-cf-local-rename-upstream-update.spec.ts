@@ -95,7 +95,7 @@ test.describe('1.26 CF local rename upstream update', () => {
 
     // Verify final state: renamed + upstream description
     await goToCustomFormatGeneral(page, localId, localRename);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(DEV_DESCRIPTION);
   });
 });

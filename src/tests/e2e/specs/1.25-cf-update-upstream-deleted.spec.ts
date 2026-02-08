@@ -155,7 +155,7 @@ test.describe('1.25 CF update upstream deleted', () => {
 
     // Verify CF exists with user's description
     await goToCustomFormatGeneral(page, localId, testCfName);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(LOCAL_DESCRIPTION);
   });
 

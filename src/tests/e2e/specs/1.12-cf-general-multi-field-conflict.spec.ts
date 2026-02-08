@@ -130,7 +130,7 @@ test.describe('1.12 CF general multi-field conflict', () => {
 
     // Verify local description + upstream include/tags
     await goToCustomFormatGeneral(page, localId, TEST_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(LOCAL_DESCRIPTION);
     expect(await getCfIncludeInRename(page)).toBe(includeInRename);
     await expect(page.getByText(DEV_TAG)).toBeVisible();
@@ -159,7 +159,7 @@ test.describe('1.12 CF general multi-field conflict', () => {
 
     // Verify upstream description + include/tags
     await goToCustomFormatGeneral(page, localId, TEST_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(DEV_DESCRIPTION);
     expect(descriptionText).not.toContain(LOCAL_DESCRIPTION);
     expect(await getCfIncludeInRename(page)).toBe(includeInRename);

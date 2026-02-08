@@ -130,7 +130,7 @@ test.describe('1.27 CF local rename + description vs upstream description', () =
     await overrideConflict(page, localRename);
 
     await goToCustomFormatGeneral(page, localId, localRename);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(LOCAL_DESCRIPTION);
     await expectCustomFormatMissing(page, localId, BASE_CF_NAME);
   });
@@ -153,7 +153,7 @@ test.describe('1.27 CF local rename + description vs upstream description', () =
     await alignConflict(page, localRename);
 
     await goToCustomFormatGeneral(page, localId, BASE_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(DEV_DESCRIPTION);
     await expectCustomFormatMissing(page, localId, localRename);
   });

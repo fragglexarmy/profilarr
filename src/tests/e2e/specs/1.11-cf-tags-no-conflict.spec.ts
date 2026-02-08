@@ -98,7 +98,7 @@ test.describe('1.11 CF tags-only no-conflict', () => {
     // Verify tag present and description updated
     await goToCustomFormatGeneral(page, localId, TEST_CF_NAME);
     await expect(page.getByText(LOCAL_TAG)).toBeVisible();
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(DEV_DESCRIPTION);
   });
 });

@@ -118,7 +118,7 @@ test.describe('1.9 CF create duplicate conflict', () => {
 
     // Verify CF has user's description
     await goToCustomFormat(page, localId, TEST_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(LOCAL_DESCRIPTION);
   });
 
@@ -144,7 +144,7 @@ test.describe('1.9 CF create duplicate conflict', () => {
 
     // Verify CF has upstream description
     await goToCustomFormat(page, localId, TEST_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain(DEV_DESCRIPTION);
   });
 });

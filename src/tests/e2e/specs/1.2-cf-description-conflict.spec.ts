@@ -100,7 +100,7 @@ test.describe('1.2 CF description change conflict', () => {
 
     // Verify CF has user's desired description
     await goToCustomFormat(page, localId, TEST_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain('Local description edit');
   });
 
@@ -128,7 +128,7 @@ test.describe('1.2 CF description change conflict', () => {
 
     // Verify CF has upstream's description
     await goToCustomFormat(page, localId, TEST_CF_NAME);
-    const descriptionText = await page.locator('.prose').innerText();
+    const descriptionText = await page.locator('#description').inputValue();
     expect(descriptionText).toContain('Dev description edit');
   });
 });
