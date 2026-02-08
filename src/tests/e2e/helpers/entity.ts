@@ -682,3 +682,140 @@ export async function goToDelayProfile(
 	await page.locator('table tbody tr', { hasText: name }).first().click();
 	await page.waitForLoadState('networkidle');
 }
+
+// ---------------------------------------------------------------------------
+// Quality Profiles
+// ---------------------------------------------------------------------------
+
+/**
+ * Navigate to a quality profile's general page by searching for it.
+ */
+export async function goToQualityProfile(
+	page: Page,
+	databaseId: number,
+	name: string
+): Promise<void> {
+	await page.goto(`/quality-profiles/${databaseId}`);
+	await page.waitForLoadState('networkidle');
+
+	await page.getByPlaceholder(/search/i).fill(name);
+	await page.waitForTimeout(500);
+
+	await page.locator('table tbody tr', { hasText: name }).first().click();
+	await page.waitForURL(/\/quality-profiles\/\d+\/\d+\/general/, { timeout: 15_000 });
+	await page.waitForLoadState('networkidle');
+}
+
+/**
+ * Navigate to a quality profile's general tab.
+ */
+export async function goToQualityProfileGeneral(
+	page: Page,
+	databaseId: number,
+	name: string
+): Promise<void> {
+	await goToQualityProfile(page, databaseId, name);
+	if (!/\/quality-profiles\/\d+\/\d+\/general/.test(page.url())) {
+		const match = page.url().match(/\/quality-profiles\/(\d+)\/(\d+)/);
+		if (!match) {
+			throw new Error(`Unexpected quality profile URL: ${page.url()}`);
+		}
+		await page.goto(`/quality-profiles/${match[1]}/${match[2]}/general`);
+		await page.waitForLoadState('networkidle');
+	}
+}
+
+/**
+ * Navigate to a quality profile's scoring tab.
+ */
+export async function goToQualityProfileScoring(
+	page: Page,
+	databaseId: number,
+	name: string
+): Promise<void> {
+	await goToQualityProfile(page, databaseId, name);
+	if (!/\/quality-profiles\/\d+\/\d+\/scoring/.test(page.url())) {
+		const match = page.url().match(/\/quality-profiles\/(\d+)\/(\d+)/);
+		if (!match) {
+			throw new Error(`Unexpected quality profile URL: ${page.url()}`);
+		}
+		await page.goto(`/quality-profiles/${match[1]}/${match[2]}/scoring`);
+		await page.waitForLoadState('networkidle');
+	}
+}
+
+/**
+ * Navigate to a quality profile's qualities tab.
+ */
+export async function goToQualityProfileQualities(
+	page: Page,
+	databaseId: number,
+	name: string
+): Promise<void> {
+	await goToQualityProfile(page, databaseId, name);
+	if (!/\/quality-profiles\/\d+\/\d+\/qualities/.test(page.url())) {
+		const match = page.url().match(/\/quality-profiles\/(\d+)\/(\d+)/);
+		if (!match) {
+			throw new Error(`Unexpected quality profile URL: ${page.url()}`);
+		}
+		await page.goto(`/quality-profiles/${match[1]}/${match[2]}/qualities`);
+		await page.waitForLoadState('networkidle');
+	}
+}
+
+/**
+ * Open the first quality profile in the list and return its current name.
+ */
+export async function openFirstQualityProfileGeneral(
+	page: Page,
+	databaseId: number
+): Promise<string> {
+	await page.goto(`/quality-profiles/${databaseId}`);
+	await page.waitForLoadState('networkidle');
+
+	const firstRow = page.locator('table tbody tr').first();
+	await expect(firstRow).toBeVisible();
+	await firstRow.click();
+	await page.waitForURL(/\/quality-profiles\/\d+\/\d+\/general/, { timeout: 15_000 });
+	await page.waitForLoadState('networkidle');
+
+	return (await page.locator('#name').inputValue()).trim();
+}
+
+/**
+ * Update quality profile description.
+ */
+export async function updateQpDescription(page: Page, description: string): Promise<void> {
+	await fillMarkdownInput(page, 'description', description);
+	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.waitForLoadState('networkidle');
+}
+
+/**
+ * Update quality profile name.
+ */
+export async function updateQpName(page: Page, name: string): Promise<void> {
+	await page.locator('#name').fill(name);
+	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.waitForLoadState('networkidle');
+}
+
+/**
+ * Add a tag on quality profile general page.
+ */
+export async function addQpTag(page: Page, tag: string): Promise<void> {
+	const input = page.locator('#tags-input');
+	await input.fill(tag);
+	await input.press('Enter');
+}
+
+/**
+ * Remove a tag on quality profile general page.
+ */
+export async function removeQpTag(page: Page, tag: string): Promise<void> {
+	const container = page
+		.locator('#tags-input')
+		.locator('xpath=ancestor::div[contains(@class,"flex")]');
+	const tagRow = container.locator('span', { hasText: tag }).first();
+	await tagRow.getByRole('button', { name: 'Remove tag' }).click();
+}
