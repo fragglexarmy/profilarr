@@ -517,7 +517,7 @@ function baseSnapshot(condition: ConditionData): Record<string, unknown> {
 }
 
 function normalizeArrType(condition: ConditionData): string {
-	return condition.arrType ?? 'all';
+	return condition.arrType && condition.arrType !== '' ? condition.arrType : 'all';
 }
 
 function generateConditionValueDeleteSql(

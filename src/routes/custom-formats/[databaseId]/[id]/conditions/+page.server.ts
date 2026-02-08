@@ -116,6 +116,14 @@ export const actions: Actions = {
 			return fail(400, { error: 'Condition names must be unique' });
 		}
 
+		// Validate arr type selection
+		const hasMissingArrType = conditions.some(
+			(c) => c.arrType !== 'all' && c.arrType !== 'radarr' && c.arrType !== 'sonarr'
+		);
+		if (hasMissingArrType) {
+			return fail(400, { error: 'Each condition must have at least one Arr type selected' });
+		}
+
 		// Check layer permission
 		if (layer === 'base' && !canWriteToBase(currentDatabaseId)) {
 			return fail(403, { error: 'Cannot write to base layer without personal access token' });

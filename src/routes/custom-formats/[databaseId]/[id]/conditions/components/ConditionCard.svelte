@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { Check, X, Trash2, Ban } from 'lucide-svelte';
+	import { Check, Trash2 } from 'lucide-svelte';
+	import { createEventDispatcher } from 'svelte';
 	import RadarrIcon from '$lib/client/assets/Radarr.svg';
 	import SonarrIcon from '$lib/client/assets/Sonarr.svg';
-	import { createEventDispatcher } from 'svelte';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
-	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
-	import Badge from '$ui/badge/Badge.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 	import SearchDropdown from '$ui/form/SearchDropdown.svelte';
 	import {
 		CONDITION_TYPES,
@@ -18,7 +17,6 @@
 		RELEASE_TYPE_VALUES,
 		INDEXER_FLAG_VALUES
 	} from '$shared/pcd/conditions';
-	import type { ArrType } from '$shared/pcd/types.ts';
 	import type { ConditionData } from '$shared/pcd/display.ts';
 
 	const dispatch = createEventDispatcher<{
@@ -59,47 +57,17 @@
 	$: radarrEnabled = condition.arrType === 'all' || condition.arrType === 'radarr';
 	$: sonarrEnabled = condition.arrType === 'all' || condition.arrType === 'sonarr';
 
-	function getArrType(r: boolean, s: boolean): 'all' | 'radarr' | 'sonarr' {
+	function getArrType(r: boolean, s: boolean): ConditionData['arrType'] {
 		if (r && s) return 'all';
 		if (r) return 'radarr';
 		if (s) return 'sonarr';
-		return 'all';
+		return '';
 	}
 
-	const toggleBase =
-		'inline-flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors';
-	const toggleIdle =
-		'border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700';
-	const segmentBase =
-		'inline-flex h-10 items-center gap-2 px-3 text-sm font-medium transition-colors';
-	const segmentIdle =
-		'bg-white text-neutral-600 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700';
-
-	function toggleClass(active: boolean, variant: 'danger' | 'success') {
-		if (!active) return `${toggleBase} ${toggleIdle}`;
-		return variant === 'danger'
-			? `${toggleBase} border-red-300 bg-red-50 text-red-600 dark:border-red-500/70 dark:bg-red-900/20 dark:text-red-300`
-			: `${toggleBase} border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-500/70 dark:bg-emerald-900/20 dark:text-emerald-300`;
-	}
-
-	function segmentClass(active: boolean, variant: 'neutral' | 'radarr' | 'sonarr', hasDivider: boolean) {
-		const dividerClass = hasDivider ? 'border-r border-neutral-300 dark:border-neutral-600' : '';
-		if (!active) return `${segmentBase} ${segmentIdle} ${dividerClass}`;
-		switch (variant) {
-			case 'radarr':
-				return `${segmentBase} bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-300 ${dividerClass}`;
-			case 'sonarr':
-				return `${segmentBase} bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-300 ${dividerClass}`;
-			default:
-				return `${segmentBase} bg-neutral-100 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200 ${dividerClass}`;
-		}
-	}
-
-	function actionClass(variant: 'danger' | 'success') {
-		if (variant === 'danger') {
-			return `${toggleBase} border-neutral-300 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-red-300 dark:hover:border-red-500 dark:hover:bg-red-900/20`;
-		}
-		return `${toggleBase} border-neutral-300 bg-white text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-emerald-300 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20`;
+	function handleArrTypeToggle(target: 'radarr' | 'sonarr', enabled: boolean) {
+		const nextRadarr = target === 'radarr' ? enabled : radarrEnabled;
+		const nextSonarr = target === 'sonarr' ? enabled : sonarrEnabled;
+		emitChange({ arrType: getArrType(nextRadarr, nextSonarr) });
 	}
 
 	// All condition types
@@ -204,10 +172,10 @@
 		emitChange({ languages: [{ name: value, except: languageExcept }] });
 	}
 
-	function toggleLanguageExcept() {
+	function handleLanguageExceptChange(enabled: boolean) {
 		if (hasLanguage) {
 			emitChange({
-				languages: [{ ...condition.languages![0], except: !languageExcept }]
+				languages: [{ ...condition.languages![0], except: enabled }]
 			});
 		}
 	}
@@ -285,34 +253,42 @@
 
 </script>
 
-<div class="relative flex flex-col gap-3 py-3 px-3 {rightPaddingClass} md:flex-row md:items-center">
-	<!-- Name -->
-	<div class="w-full min-w-0 shrink-0 md:w-48" title={nameConflict ? 'Duplicate condition name' : ''}>
-		<FormInput
-			label="Name"
-			hideLabel
-			name={conditionNameId}
-			value={condition.name}
-			placeholder="Condition name"
-			description={nameError}
-			on:input={(e) => emitChange({ name: e.detail })}
-		/>
+<div class="relative flex flex-col gap-3 px-3 py-3 {rightPaddingClass} md:flex-row md:items-center">
+	<!-- Identity -->
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+			Identity
+		</div>
+		<div class="grid gap-2 md:contents">
+			<div class="w-full min-w-0 shrink-0 md:w-48" title={nameConflict ? 'Duplicate condition name' : ''}>
+				<FormInput
+					label="Name"
+					hideLabel
+					name={conditionNameId}
+					value={condition.name}
+					placeholder="Condition name"
+					description={nameError}
+					on:input={(e) => emitChange({ name: e.detail })}
+				/>
+			</div>
+			<div class="w-full min-w-0 shrink-0 md:w-52">
+				<SearchDropdown
+					options={typeOptions}
+					value={condition.type}
+					placeholder="Select type..."
+					constrainMenuHeight={false}
+					on:change={(e) => handleTypeChange(e.detail)}
+				/>
+			</div>
+		</div>
 	</div>
 
-	<div class="flex w-full min-w-0 flex-row gap-3 md:contents">
-		<!-- Type dropdown -->
-		<div class="w-36 min-w-0 shrink-0 md:w-52">
-			<DropdownSelect
-				options={typeOptions}
-				value={condition.type}
-				fullWidth
-				buttonSize="md"
-				on:change={(e) => handleTypeChange(e.detail)}
-			/>
+	<!-- Value -->
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+			Value
 		</div>
-
-		<!-- Value input - changes based on type -->
-		<div class="min-w-0 flex-1">
+		<div class="min-w-0 md:flex-1">
 			{#if isPatternType}
 				<SearchDropdown
 					options={patternOptions}
@@ -330,29 +306,28 @@
 							on:change={(e) => handleLanguageChange(e.detail)}
 						>
 							<svelte:fragment slot="item" let:option>
-								<span class="flex items-center justify-between w-full">
+								<span class="flex w-full items-center justify-between">
 									<span>{option.label}</span>
 									<span class="flex gap-1">
 										{#if option.radarr}
-											<Badge variant="warning" size="sm">Radarr</Badge>
+											<img src={RadarrIcon} alt="Radarr" class="h-3.5 w-3.5" title="Radarr" />
 										{/if}
 										{#if option.sonarr}
-											<Badge variant="info" size="sm">Sonarr</Badge>
+											<img src={SonarrIcon} alt="Sonarr" class="h-3.5 w-3.5" title="Sonarr" />
 										{/if}
 									</span>
 								</span>
 							</svelte:fragment>
 						</SearchDropdown>
 					</div>
-					<button
-						type="button"
-						class={`${toggleClass(languageExcept, 'danger')} ${hasLanguage ? '' : 'cursor-not-allowed opacity-50'}`}
+					<Toggle
+						checked={languageExcept}
+						ariaLabel="Except language"
+						label="Except"
+						color="red"
 						disabled={!hasLanguage}
-						on:click={toggleLanguageExcept}
-					>
-						<X size={16} />
-						<span>Except</span>
-					</button>
+						on:change={(e) => handleLanguageExceptChange(e.detail)}
+					/>
 				</div>
 			{:else if condition.type === 'size'}
 				<div class="flex flex-col gap-2 md:flex-row md:items-center">
@@ -413,114 +388,92 @@
 					</div>
 				</div>
 			{:else}
-				<!-- Enum-based types -->
-				<DropdownSelect
+				<SearchDropdown
 					options={valueOptions}
 					value={selectedValue}
-					fullWidth
-					buttonSize="md"
+					placeholder="Select value..."
+					constrainMenuHeight={false}
 					on:change={(e) => handleSelectChange(e.detail)}
 				/>
 			{/if}
 		</div>
 	</div>
 
-	<!-- Controls - right aligned -->
-	<div class="flex flex-wrap items-center gap-2 md:ml-auto md:shrink-0">
-		<!-- Negate -->
-		<button
-			type="button"
-			class={toggleClass(condition.negate, 'danger')}
-			on:click={() => emitChange({ negate: !condition.negate })}
-			aria-pressed={condition.negate}
-			title="Negate"
-		>
-			<Ban size={16} />
-			<span>Negate</span>
-		</button>
-
-		<!-- Required -->
-		<button
-			type="button"
-			class={toggleClass(condition.required, 'success')}
-			on:click={() => emitChange({ required: !condition.required })}
-			aria-pressed={condition.required}
-			title="Required"
-		>
-			<Check size={16} />
-			<span>Required</span>
-		</button>
-
-		<!-- Arr type -->
-		<div class="inline-flex overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-600">
-			<button
-				type="button"
-				class={segmentClass(condition.arrType === 'all', 'neutral', true)}
-				on:click={() => emitChange({ arrType: 'all' })}
-				aria-pressed={condition.arrType === 'all'}
-				title="All"
-			>
-				All
-			</button>
-			<button
-				type="button"
-				class={segmentClass(condition.arrType === 'radarr', 'radarr', true)}
-				on:click={() => emitChange({ arrType: 'radarr' })}
-				aria-pressed={condition.arrType === 'radarr'}
-				title="Radarr"
-			>
-				<img src={RadarrIcon} alt="Radarr" class="h-4 w-4" />
-				Radarr
-			</button>
-			<button
-				type="button"
-				class={segmentClass(condition.arrType === 'sonarr', 'sonarr', false)}
-				on:click={() => emitChange({ arrType: 'sonarr' })}
-				aria-pressed={condition.arrType === 'sonarr'}
-				title="Sonarr"
-			>
-				<img src={SonarrIcon} alt="Sonarr" class="h-4 w-4" />
-				Sonarr
-			</button>
+	<!-- Flags -->
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+			Flags
 		</div>
-
-		<!-- Action buttons based on mode -->
-		{#if isDraft}
-			<!-- Discard -->
-			<button
-				type="button"
-				on:click={() => dispatch('discard')}
-				class={actionClass('danger')}
-				title="Discard condition"
-			>
-				<Trash2 size={16} />
-				<span>Discard</span>
-			</button>
-		{:else}
-			<!-- Remove -->
-			<button
-				type="button"
-				on:click={() => dispatch('remove')}
-				class={actionClass('danger')}
-				title="Remove condition"
-			>
-				<Trash2 size={16} />
-				<span>Remove</span>
-			</button>
-		{/if}
-
-		{#if isDraft}
-			<button
-				type="button"
-				on:click={() => dispatch('confirm', condition)}
-				class={actionClass('success')}
-				title="Confirm condition"
-			>
-				<Check size={16} />
-				<span>Save</span>
-			</button>
-		{/if}
+		<div class="grid grid-cols-2 gap-2 md:ml-auto md:flex md:flex-wrap md:items-center md:gap-2 md:shrink-0">
+			<Toggle
+				checked={condition.negate}
+				ariaLabel="Negate"
+				label="Negate"
+				color="red"
+				on:change={(e) => emitChange({ negate: e.detail })}
+			/>
+			<Toggle
+				checked={condition.required}
+				ariaLabel="Required"
+				label="Required"
+				color="green"
+				on:change={(e) => emitChange({ required: e.detail })}
+			/>
+			<Toggle
+				checked={radarrEnabled}
+				ariaLabel="Radarr"
+				label="Radarr"
+				checkboxColor="var(--arr-radarr-color)"
+				on:change={(e) => handleArrTypeToggle('radarr', e.detail)}
+			/>
+			<Toggle
+				checked={sonarrEnabled}
+				ariaLabel="Sonarr"
+				label="Sonarr"
+				checkboxColor="var(--arr-sonarr-color)"
+				on:change={(e) => handleArrTypeToggle('sonarr', e.detail)}
+			/>
+		</div>
 	</div>
 
-	<!-- Confirm button for draft mode - moved inline with other controls -->
+	<!-- Actions -->
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+			Actions
+		</div>
+		{#if isDraft}
+			<div class="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center md:gap-2">
+				<Button
+					text="Discard"
+					icon={Trash2}
+					iconColor="text-red-600 dark:text-red-400"
+					variant="secondary"
+					title="Discard condition"
+					ariaLabel="Discard condition"
+					on:click={() => dispatch('discard')}
+				/>
+				<Button
+					text="Accept"
+					icon={Check}
+					iconColor="text-green-600 dark:text-green-400"
+					variant="secondary"
+					title="Confirm condition"
+					ariaLabel="Confirm condition"
+					on:click={() => dispatch('confirm', condition)}
+				/>
+			</div>
+		{:else}
+			<div class="grid grid-cols-1 gap-2 md:flex md:flex-wrap md:items-center md:gap-2">
+				<Button
+					text="Remove"
+					icon={Trash2}
+					iconColor="text-red-600 dark:text-red-400"
+					variant="secondary"
+					title="Remove condition"
+					ariaLabel="Remove condition"
+					on:click={() => dispatch('remove')}
+				/>
+			</div>
+		{/if}
+	</div>
 </div>

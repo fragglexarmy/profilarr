@@ -66,6 +66,7 @@
 		return dupes;
 	})();
 	$: hasDuplicateNames = duplicateNames.size > 0;
+	$: hasMissingArrType = conditions.some((c) => c.arrType === '');
 
 	function hasNameConflict(condition: KeyedCondition): boolean {
 		return duplicateNames.has(condition.name.trim().toLowerCase());
@@ -181,6 +182,10 @@
 	}
 
 	async function handleSaveClick() {
+		if (hasMissingArrType) {
+			alertStore.add('warning', 'A condition must have at least one Arr type selected.');
+			return;
+		}
 		selectedLayer = data.canWriteToBase ? 'base' : 'user';
 		await tick();
 		mainFormElement?.requestSubmit();
@@ -232,7 +237,7 @@
 						Condition names must be unique
 					</span>
 				{:else if hasDrafts}
-					<span class="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400">
+					<span class="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 md:hidden">
 						<AlertTriangle size={14} class="shrink-0" />
 						Confirm or discard drafts
 					</span>
@@ -241,8 +246,19 @@
 						<AlertTriangle size={14} class="shrink-0" />
 						Missing required values
 					</span>
+				{:else if hasMissingArrType}
+					<span class="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
+						<AlertTriangle size={14} class="shrink-0" />
+						Select at least one Arr type per condition
+					</span>
 				{/if}
 				<div class="flex items-center gap-2">
+					{#if hasDrafts}
+						<span class="hidden items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 md:flex">
+							<AlertTriangle size={14} class="shrink-0" />
+							Confirm or discard drafts
+						</span>
+					{/if}
 					<Button
 						text="Add Condition"
 						icon={Plus}

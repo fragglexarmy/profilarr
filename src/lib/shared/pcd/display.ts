@@ -149,7 +149,7 @@ export type CustomFormatGeneral = Omit<CustomFormatsRow, 'description' | 'create
 export interface ConditionData {
 	name: string;
 	type: string;
-	arrType: 'all' | 'radarr' | 'sonarr';
+	arrType: 'all' | 'radarr' | 'sonarr' | '';
 	negate: boolean;
 	required: boolean;
 	// Type-specific data (only one populated based on `type`)
