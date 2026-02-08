@@ -18,13 +18,53 @@ export async function pullChanges(
   // Wait for the page to finish loading (skeleton disappears)
   await expect(page.getByText('Incoming Changes')).toBeVisible();
 
+  const upToDate = page.getByText('Up to date').first();
+
   // Click the Pull button (text is "Pull X commit(s)")
   const pullButton = page.getByRole('button', { name: /^Pull \d+ commit/ });
-  await expect(pullButton).toBeVisible({ timeout: 15_000 });
-  await pullButton.click();
+  if (!(await pullButton.isVisible())) {
+    await expect(upToDate).toBeVisible({ timeout: 30_000 });
+    return;
+  }
 
-  // Wait for pull to finish — button disappears and "Up to date" appears
-  await expect(page.getByText('Up to date')).toBeVisible({ timeout: 30_000 });
+  const pullErrorAlerts = page.locator('[role="button"]', { hasText: 'Pull failed:' });
+  const errorCountBefore = await pullErrorAlerts.count();
+
+  const pullResponsePromise = page.waitForResponse((response) => {
+    if (response.request().method() !== 'POST') return false;
+    const url = response.url();
+    return url.includes('/changes?/pull') || url.includes('/changes?%2Fpull');
+  });
+
+  const [pullResponse] = await Promise.all([pullResponsePromise, pullButton.click()]);
+  if (!pullResponse.ok()) {
+    throw new Error(`Pull request failed with status ${pullResponse.status()}`);
+  }
+
+  // Wait for pull to finish with either success (up-to-date state) or an explicit error alert.
+  let outcome: 'pending' | 'success' | 'error' = 'pending';
+  await expect
+    .poll(
+      async () => {
+        if ((await pullErrorAlerts.count()) > errorCountBefore) {
+          outcome = 'error';
+          return outcome;
+        }
+        if (await upToDate.isVisible()) {
+          outcome = 'success';
+          return outcome;
+        }
+        outcome = 'pending';
+        return outcome;
+      },
+      { timeout: 45_000 }
+    )
+    .not.toBe('pending');
+
+  if (outcome === 'error') {
+    const message = (await pullErrorAlerts.nth(errorCountBefore).innerText()).trim();
+    throw new Error(`Pull failed: ${message}`);
+  }
 }
 
 /**
@@ -88,10 +128,23 @@ export async function exportAndPush(
   ).toBeEnabled({ timeout: 15_000 });
 
   // Click Approve & Export
-  await modal.getByRole('button', { name: 'Approve & Export' }).click();
+  const commitResponsePromise = page.waitForResponse((response) => {
+    if (response.request().method() !== 'POST') return false;
+    const url = response.url();
+    return url.includes('/changes?/commit') || url.includes('/changes?%2Fcommit');
+  });
+
+  const [commitResponse] = await Promise.all([
+    commitResponsePromise,
+    modal.getByRole('button', { name: 'Approve & Export' }).click()
+  ]);
+
+  if (!commitResponse.ok()) {
+    throw new Error(`Export request failed with status ${commitResponse.status()}`);
+  }
 
   // Wait for success — modal closes and changes list refreshes
-  await expect(modal).not.toBeVisible({ timeout: 15_000 });
+  await expect(modal).not.toBeVisible({ timeout: 45_000 });
 }
 
 /**

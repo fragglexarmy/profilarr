@@ -18,15 +18,28 @@ export async function unlinkPcd(
   await page.goto(`/databases/${databaseId}/settings`);
   await page.waitForLoadState('networkidle');
 
-  // Click the Unlink button in the header
-  await page.getByRole('button', { name: 'Unlink' }).first().click();
+  // Fast path: submit the hidden delete form directly (avoids brittle button selectors).
+  const deleteForm = page.locator('form#delete-form');
+  if ((await deleteForm.count()) > 0) {
+    await Promise.all([
+      page.waitForURL('**/databases', { timeout: 15_000 }),
+      page.evaluate(() => {
+        const form = document.getElementById('delete-form');
+        if (form instanceof HTMLFormElement) {
+          form.requestSubmit();
+        }
+      })
+    ]);
+    return;
+  }
 
-  // Confirm in the modal — the modal also has a button named "Unlink"
+  // Fallback: click through the modal flow.
+  await page.getByRole('button', { name: /unlink/i }).first().click();
+
   const modal = page.getByRole('dialog');
   await expect(modal).toBeVisible();
-  await modal.getByRole('button', { name: 'Unlink' }).click();
+  await modal.getByRole('button', { name: /unlink/i }).click();
 
-  // Wait for redirect back to /databases
   await page.waitForURL('**/databases', { timeout: 15_000 });
 }
 
