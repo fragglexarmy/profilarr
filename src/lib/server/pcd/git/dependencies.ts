@@ -39,12 +39,17 @@ async function dirExists(path: string): Promise<boolean> {
  * Clone and checkout a dependency at a specific tag
  * Keeps .git, ops, and pcd.json - removes everything else
  */
-async function cloneDependency(pcdPath: string, repoUrl: string, version: string): Promise<void> {
+async function cloneDependency(
+	pcdPath: string,
+	repoUrl: string,
+	version: string,
+	personalAccessToken?: string
+): Promise<void> {
 	const repoName = getRepoName(repoUrl);
 	const depPath = getDependencyPath(pcdPath, repoName);
 
 	// Clone the dependency repository
-	await clone(repoUrl, depPath);
+	await clone(repoUrl, depPath, undefined, personalAccessToken);
 
 	// Checkout the specific version tag
 	await checkout(depPath, version);
@@ -86,7 +91,10 @@ async function updateDependency(depPath: string, version: string): Promise<void>
  * Process all dependencies for a PCD (initial clone)
  * Called when linking a new database
  */
-export async function processDependencies(pcdPath: string): Promise<void> {
+export async function processDependencies(
+	pcdPath: string,
+	personalAccessToken?: string
+): Promise<void> {
 	const manifest = await loadManifest(pcdPath);
 
 	if (!manifest.dependencies || Object.keys(manifest.dependencies).length === 0) {
@@ -102,7 +110,7 @@ export async function processDependencies(pcdPath: string): Promise<void> {
 		const depPath = getDependencyPath(pcdPath, repoName);
 
 		// Clone and checkout the dependency
-		await cloneDependency(pcdPath, repoUrl, version);
+		await cloneDependency(pcdPath, repoUrl, version, personalAccessToken);
 
 		// Validate the dependency's manifest
 		await loadManifest(depPath);
@@ -118,7 +126,7 @@ export async function processDependencies(pcdPath: string): Promise<void> {
  * Sync dependencies - update any that have changed versions
  * Uses fetch + checkout instead of re-cloning
  */
-export async function syncDependencies(pcdPath: string): Promise<void> {
+export async function syncDependencies(pcdPath: string, personalAccessToken?: string): Promise<void> {
 	const manifest = await loadManifest(pcdPath);
 
 	if (!manifest.dependencies || Object.keys(manifest.dependencies).length === 0) {
@@ -155,7 +163,7 @@ export async function syncDependencies(pcdPath: string): Promise<void> {
 			} catch {
 				// Didn't exist
 			}
-			await cloneDependency(pcdPath, repoUrl, requiredVersion);
+			await cloneDependency(pcdPath, repoUrl, requiredVersion, personalAccessToken);
 			await logger.info(`Re-cloned dependency ${repoName}@${requiredVersion}`, {
 				source: 'PCDDependencies',
 				meta: { pcdPath, repoName, version: requiredVersion }
@@ -171,7 +179,10 @@ export async function syncDependencies(pcdPath: string): Promise<void> {
  * Validate and fix dependencies on startup
  * Ensures all deps exist and are at the correct version
  */
-export async function validateDependencies(pcdPath: string): Promise<boolean> {
+export async function validateDependencies(
+	pcdPath: string,
+	personalAccessToken?: string
+): Promise<boolean> {
 	try {
 		const manifest = await loadManifest(pcdPath);
 
@@ -219,7 +230,7 @@ export async function validateDependencies(pcdPath: string): Promise<boolean> {
 
 		// If any issues found, run sync to fix them
 		if (!allValid) {
-			await syncDependencies(pcdPath);
+			await syncDependencies(pcdPath, personalAccessToken);
 		}
 
 		return true;

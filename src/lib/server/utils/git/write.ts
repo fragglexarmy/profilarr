@@ -6,6 +6,136 @@ import { execGit, execGitSafe } from './exec.ts';
 import type { RepoInfo } from './types.ts';
 import { getCachedRepoInfo } from '../github/cache.ts';
 
+type GitHubApiError = {
+	message: string;
+	rateLimited: boolean;
+};
+
+async function parseGitHubErrorResponse(response: Response): Promise<{
+	message: string;
+	rateLimited: boolean;
+	retryAfterSeconds: number | null;
+	resetAtEpoch: number | null;
+}> {
+	let apiMessage = '';
+	try {
+		const payload = await response.json();
+		if (
+			payload &&
+			typeof payload === 'object' &&
+			'message' in payload &&
+			typeof payload.message === 'string'
+		) {
+			apiMessage = payload.message;
+		}
+	} catch {
+		// Ignore JSON parse failures and rely on status/headers.
+	}
+
+	const messageLower = apiMessage.toLowerCase();
+	const retryAfterRaw = response.headers.get('retry-after');
+	const retryAfterSeconds = retryAfterRaw ? Number.parseInt(retryAfterRaw, 10) : null;
+	const resetAtRaw = response.headers.get('x-ratelimit-reset');
+	const resetAtEpoch = resetAtRaw ? Number.parseInt(resetAtRaw, 10) : null;
+	const remaining = response.headers.get('x-ratelimit-remaining');
+
+	const rateLimited =
+		response.status === 429 ||
+		remaining === '0' ||
+		messageLower.includes('rate limit') ||
+		messageLower.includes('secondary rate limit');
+
+	return {
+		message: apiMessage,
+		rateLimited,
+		retryAfterSeconds:
+			retryAfterSeconds !== null && Number.isFinite(retryAfterSeconds)
+				? retryAfterSeconds
+				: null,
+		resetAtEpoch: resetAtEpoch !== null && Number.isFinite(resetAtEpoch) ? resetAtEpoch : null
+	};
+}
+
+function formatRateLimitMessage(
+	context: 'authenticated' | 'unauthenticated',
+	retryAfterSeconds: number | null,
+	resetAtEpoch: number | null
+): string {
+	let hint = '';
+	if (retryAfterSeconds !== null && retryAfterSeconds > 0) {
+		hint = ` Retry after ~${retryAfterSeconds} seconds.`;
+	} else if (resetAtEpoch !== null && resetAtEpoch > 0) {
+		hint = ` Rate limit resets around ${new Date(resetAtEpoch * 1000).toISOString()}.`;
+	}
+
+	if (context === 'authenticated') {
+		return `GitHub API rate limit exceeded for the supplied Personal Access Token.${hint}`;
+	}
+
+	return `GitHub API rate limit exceeded for unauthenticated requests.${hint} Add a Personal Access Token to avoid this limit.`;
+}
+
+async function classifyGitHubResponseError(
+	response: Response,
+	context: 'authenticated' | 'unauthenticated'
+): Promise<GitHubApiError> {
+	const parsed = await parseGitHubErrorResponse(response);
+
+	if (parsed.rateLimited) {
+		return {
+			message: formatRateLimitMessage(context, parsed.retryAfterSeconds, parsed.resetAtEpoch),
+			rateLimited: true
+		};
+	}
+
+	if (context === 'authenticated') {
+		if (response.status === 401) {
+			return {
+				message: 'Unable to access repository. Please check your Personal Access Token.',
+				rateLimited: false
+			};
+		}
+
+		if (response.status === 404) {
+			return {
+				message:
+					'Repository not found or inaccessible with this Personal Access Token. Verify the URL and token permissions.',
+				rateLimited: false
+			};
+		}
+
+		if (response.status === 403) {
+			return {
+				message:
+					'GitHub denied access to this repository with the supplied Personal Access Token. Check token permissions.',
+				rateLimited: false
+			};
+		}
+	} else {
+		if (response.status === 404) {
+			return {
+				message:
+					'Repository not found. If this repository is private, provide a Personal Access Token.',
+				rateLimited: false
+			};
+		}
+
+		if (response.status === 403) {
+			return {
+				message:
+					'GitHub denied unauthenticated access to this repository. It may be private or access-restricted. Provide a Personal Access Token.',
+				rateLimited: false
+			};
+		}
+	}
+
+	const suffix = parsed.message ? ` (${parsed.message})` : '';
+	return {
+		message: `GitHub API error: ${response.status}${suffix}`,
+		rateLimited: false
+	};
+}
+
 /**
  * Validate that a repository URL is accessible and detect if it's private
  */
@@ -43,15 +173,8 @@ async function validateRepository(
 			return data.private === true;
 		}
 
-		if (authResponse.status === 404) {
-			throw new Error('Repository not found. Please check the URL.');
-		}
-
-		if (authResponse.status === 401 || authResponse.status === 403) {
-			throw new Error('Unable to access repository. Please check your Personal Access Token.');
-		}
-
-		throw new Error(`GitHub API error: ${authResponse.status}`);
+		const classified = await classifyGitHubResponseError(authResponse, 'authenticated');
+		throw new Error(classified.message);
 	}
 
 	// No PAT — try unauthenticated
@@ -62,13 +185,8 @@ async function validateRepository(
 		return data.private === true;
 	}
 
-	if (response.status === 404 || response.status === 403) {
-		throw new Error(
-			'Repository not found or is private. Provide a Personal Access Token for private repos.'
-		);
-	}
-
-	throw new Error(`GitHub API error: ${response.status}`);
+	const classified = await classifyGitHubResponseError(response, 'unauthenticated');
+	throw new Error(classified.message);
 }
 
 /**

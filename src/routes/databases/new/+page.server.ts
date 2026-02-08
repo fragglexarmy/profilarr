@@ -4,6 +4,14 @@ import { pcdManager } from '$pcd/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
 
+function getFirstNonEmptyFormValue(formData: FormData, key: string): string | undefined {
+	const values = formData
+		.getAll(key)
+		.map((value) => value.toString().trim())
+		.filter((value) => value.length > 0);
+	return values.length > 0 ? values[0] : undefined;
+}
+
 export const load: ServerLoad = ({ url }) => {
 	const name = url.searchParams.get('name') || '';
 	const branch = url.searchParams.get('branch') || '';
@@ -30,16 +38,15 @@ export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 
-		const name = formData.get('name')?.toString().trim();
-		const repositoryUrl = formData.get('repository_url')?.toString().trim();
-		const branch = formData.get('branch')?.toString().trim() || undefined;
+		const name = getFirstNonEmptyFormValue(formData, 'name');
+		const repositoryUrl = getFirstNonEmptyFormValue(formData, 'repository_url');
+		const branch = getFirstNonEmptyFormValue(formData, 'branch');
 		const syncStrategy = parseInt(formData.get('sync_strategy')?.toString() || '0', 10);
 		const autoPull = formData.get('auto_pull') === '1';
 		const localOpsEnabled = formData.get('local_ops_enabled') === '1';
-		const personalAccessToken =
-			formData.get('personal_access_token')?.toString().trim() || undefined;
-		const gitUserName = formData.get('git_user_name')?.toString().trim() || undefined;
-		const gitUserEmail = formData.get('git_user_email')?.toString().trim() || undefined;
+		const personalAccessToken = getFirstNonEmptyFormValue(formData, 'personal_access_token');
+		const gitUserName = getFirstNonEmptyFormValue(formData, 'git_user_name');
+		const gitUserEmail = getFirstNonEmptyFormValue(formData, 'git_user_email');
 		const conflictStrategy = formData.get('conflict_strategy')?.toString().trim() || 'override';
 
 		// Validation
@@ -111,6 +118,16 @@ export const actions = {
 		}
 
 		try {
+			await logger.debug('Link database request parsed', {
+				source: 'databases/new',
+				meta: {
+					name,
+					repositoryUrl,
+					hasPersonalAccessToken: !!personalAccessToken,
+					patValueCount: formData.getAll('personal_access_token').length
+				}
+			});
+
 			// Link the database
 			const instance = await pcdManager.link({
 				name,
@@ -140,7 +157,12 @@ export const actions = {
 
 			await logger.error('Failed to link database', {
 				source: 'databases/new',
-				meta: { error: error instanceof Error ? error.message : String(error) }
+				meta: {
+					error: error instanceof Error ? error.message : String(error),
+					name,
+					repositoryUrl,
+					hasPersonalAccessToken: !!personalAccessToken
+				}
 			});
 
 			return fail(500, {

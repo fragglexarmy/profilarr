@@ -57,7 +57,7 @@ class PCDManager {
 			await loadManifest(localPath);
 
 			// Process dependencies (clone and validate)
-			await processDependencies(localPath);
+			await processDependencies(localPath, options.personalAccessToken);
 
 			// Insert into database
 			const id = databaseInstancesQueries.create({
@@ -176,7 +176,7 @@ class PCDManager {
 			await pull(instance.local_path);
 
 			// Sync dependencies (schema, etc.) if versions changed
-			await syncDependencies(instance.local_path);
+			await syncDependencies(instance.local_path, instance.personal_access_token ?? undefined);
 
 			try {
 				await importBaseOps(id, instance.local_path);
@@ -312,7 +312,7 @@ class PCDManager {
 		// Validate dependencies for all instances first
 		for (const instance of enabledInstances) {
 			try {
-				await validateDependencies(instance.local_path);
+				await validateDependencies(instance.local_path, instance.personal_access_token ?? undefined);
 			} catch (error) {
 				await logger.error(`Failed to validate dependencies for "${instance.name}"`, {
 					source: 'PCDManager',
