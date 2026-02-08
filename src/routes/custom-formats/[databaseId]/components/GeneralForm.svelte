@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import { Check, Save, Loader2, Trash2 } from 'lucide-svelte';
+	import { Save, Loader2, Trash2 } from 'lucide-svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
@@ -88,7 +89,6 @@
 		await tick();
 		deleteFormElement?.requestSubmit();
 	}
-
 </script>
 
 <div class="space-y-6">
@@ -153,23 +153,15 @@
 
 		<div class="space-y-6">
 			<!-- Name -->
-			<div>
-				<label for="name" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-					Name <span class="text-red-500">*</span>
-				</label>
-				<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-					The name of this custom format
-				</p>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					value={name}
-					oninput={(e) => update('name', e.currentTarget.value)}
-					placeholder="Enter custom format name"
-					class="mt-2 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
+			<FormInput
+				label="Name"
+				name="name"
+				value={name}
+				required
+				description="The name of this custom format"
+				placeholder="Enter custom format name"
+				on:input={(e) => update('name', e.detail)}
+			/>
 
 			<!-- Description -->
 			<MarkdownInput
@@ -198,18 +190,13 @@
 				<p class="text-xs text-neutral-600 dark:text-neutral-400">
 					When enabled, this custom format's name will be included in the renamed filename.
 				</p>
-				<div class="flex items-center gap-2">
-					<IconCheckbox
-						icon={Check}
-						checked={includeInRename}
-						color="blue"
-						shape="circle"
-						on:click={() => update('includeInRename', !includeInRename)}
-					/>
-					<span class="text-sm text-neutral-700 dark:text-neutral-300">
-						{includeInRename ? 'Enabled' : 'Disabled'}
-					</span>
-				</div>
+				<Toggle
+					checked={includeInRename}
+					ariaLabel="Include in rename"
+					label={includeInRename ? 'Enabled' : 'Disabled'}
+					color="accent"
+					on:change={(e) => update('includeInRename', e.detail)}
+				/>
 			</div>
 		</div>
 	</form>

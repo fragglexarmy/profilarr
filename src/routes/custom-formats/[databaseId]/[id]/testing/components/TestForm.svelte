@@ -2,9 +2,12 @@
 	import { enhance } from '$app/forms';
 	import { tick, onMount } from 'svelte';
 	import { alertStore } from '$alerts/store';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
-	import { Trash2, Loader2, Check, X } from 'lucide-svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
+	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import { Trash2, Loader2, Save, X } from 'lucide-svelte';
 	import { isDirty, initEdit, initCreate, update, clear } from '$lib/client/stores/dirty';
 
 	// Props
@@ -103,13 +106,33 @@
 </script>
 
 <div class="mt-6 space-y-6">
-	<!-- Header -->
-	<div class="space-y-2">
-		<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50">{pageTitle}</h1>
-		<p class="text-sm text-neutral-600 dark:text-neutral-400">
-			{pageDescription}
-		</p>
-	</div>
+	<StickyCard position="top">
+		<svelte:fragment slot="left">
+			<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{pageTitle}</h2>
+			<p class="text-sm text-neutral-600 dark:text-neutral-400">{pageDescription}</p>
+		</svelte:fragment>
+		<svelte:fragment slot="right">
+			<div class="flex items-center gap-2">
+				{#if mode === 'edit'}
+					<Button
+						disabled={deleting}
+						icon={deleting ? Loader2 : Trash2}
+						iconColor="text-red-600 dark:text-red-400"
+						text={deleting ? 'Deleting...' : 'Delete'}
+						on:click={handleDeleteClick}
+					/>
+				{/if}
+				<Button text="Cancel" icon={X} on:click={onCancel} />
+				<Button
+					disabled={saving || !isValid || (mode === 'edit' && !$isDirty)}
+					icon={saving ? Loader2 : Save}
+					iconColor="text-blue-600 dark:text-blue-400"
+					text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
+					on:click={handleSaveClick}
+				/>
+			</div>
+		</svelte:fragment>
+	</StickyCard>
 
 	<form
 		bind:this={mainFormElement}
@@ -147,46 +170,33 @@
 		>
 			<div class="space-y-6 p-4">
 				<!-- Title -->
-				<div>
-					<label
-						for="title"
-						class="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-					>
-						Release Title <span class="text-red-500">*</span>
-					</label>
-					<input
-						type="text"
-						id="title"
-						name="title"
-						value={title}
-						oninput={(e) => (title = e.currentTarget.value)}
-						placeholder="e.g., Movie.Name.2024.1080p.BluRay.x264-GROUP"
-						class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-					/>
-				</div>
+				<FormInput
+					label="Release Title"
+					name="title"
+					bind:value={title}
+					required
+					mono
+					placeholder="e.g., Movie.Name.2024.1080p.BluRay.x264-GROUP"
+				/>
 
 				<!-- Media Type -->
 				<div>
 					<div class="mb-3 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 						Media Type
 					</div>
-					<div class="flex gap-2">
+					<div class="grid gap-2 sm:grid-cols-2">
 						{#each typeOptions as option}
-							<button
-								type="button"
-								onclick={() => (type = option.value)}
-								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
-							>
-								<IconCheckbox icon={Check} checked={type === option.value} shape="circle" />
-								<div>
-									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-										{option.label}
-									</div>
-									<div class="text-xs text-neutral-500 dark:text-neutral-400">
-										{option.description}
-									</div>
-								</div>
-							</button>
+							<div class="space-y-1">
+								<Toggle
+									checked={type === option.value}
+									label={option.label}
+									ariaLabel={`Set media type to ${option.label}`}
+									on:change={() => (type = option.value)}
+								/>
+								<p class="px-1 text-xs text-neutral-500 dark:text-neutral-400">
+									{option.description}
+								</p>
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -196,28 +206,20 @@
 					<div class="mb-3 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
 						Expected Result
 					</div>
-					<div class="flex gap-2">
+					<div class="grid gap-2 sm:grid-cols-2">
 						{#each matchOptions as option}
-							<button
-								type="button"
-								onclick={() => (shouldMatch = option.value)}
-								class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
-							>
-								<IconCheckbox
-									icon={option.value ? Check : X}
+							<div class="space-y-1">
+								<Toggle
 									checked={shouldMatch === option.value}
+									label={option.label}
+									ariaLabel={option.label}
 									color={option.value ? 'green' : 'red'}
-									shape="circle"
+									on:change={() => (shouldMatch = option.value)}
 								/>
-								<div>
-									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-										{option.label}
-									</div>
-									<div class="text-xs text-neutral-500 dark:text-neutral-400">
-										{option.description}
-									</div>
-								</div>
-							</button>
+								<p class="px-1 text-xs text-neutral-500 dark:text-neutral-400">
+									{option.description}
+								</p>
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -232,52 +234,6 @@
 				/>
 			</div>
 
-			<!-- Actions -->
-			<div
-				class="flex justify-between gap-2 border-t border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-800/50"
-			>
-				<div>
-					{#if mode === 'edit'}
-						<button
-							type="button"
-							onclick={handleDeleteClick}
-							disabled={deleting}
-							class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:bg-neutral-800 dark:text-red-300 dark:hover:bg-red-900"
-						>
-							{#if deleting}
-								<Loader2 size={14} class="animate-spin" />
-							{:else}
-								<Trash2 size={14} />
-							{/if}
-							Delete
-						</button>
-					{/if}
-				</div>
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onclick={onCancel}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-					>
-						<X size={14} />
-						Cancel
-					</button>
-					<button
-						type="button"
-						onclick={handleSaveClick}
-						disabled={saving || !isValid || (mode === 'edit' && !$isDirty)}
-						class="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
-					>
-						{#if saving}
-							<Loader2 size={14} class="animate-spin" />
-							Saving...
-						{:else}
-							<Check size={14} />
-							{submitButtonText}
-						{/if}
-					</button>
-				</div>
-			</div>
 		</div>
 	</form>
 

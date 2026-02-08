@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
 	import { Save, Loader2, Trash2 } from 'lucide-svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
@@ -70,7 +71,7 @@
 		mode === 'create'
 			? `After saving, you'll be able to configure qualities, scoring, and languages.`
 			: `Update quality profile settings`;
-	$: submitButtonText = mode === 'create' ? 'Create' : 'Save Changes';
+	$: submitButtonText = mode === 'create' ? 'Create' : 'Save';
 
 	// Reactive getters for current values
 	$: name = ($current.name ?? '') as string;
@@ -98,9 +99,8 @@
 		showLanguageDropdown = false;
 	}
 
-	function handleLanguageInput(e: Event) {
-		const target = e.target as HTMLInputElement;
-		languageSearchQuery = target.value;
+	function handleLanguageInput(value: string) {
+		languageSearchQuery = value;
 		showLanguageDropdown = true;
 
 		const exactMatch = availableLanguages.find(
@@ -122,7 +122,10 @@
 			showLanguageDropdown = false;
 			if (selectedLanguageName) {
 				languageSearchQuery = selectedLanguageName;
-			} else if (languageSearchQuery && !availableLanguages.find((l) => l.name === languageSearchQuery)) {
+			} else if (
+				languageSearchQuery &&
+				!availableLanguages.find((l) => l.name === languageSearchQuery)
+			) {
 				languageSearchQuery = '';
 			}
 		}, 200);
@@ -147,7 +150,6 @@
 		await tick();
 		deleteFormElement?.requestSubmit();
 	}
-
 </script>
 
 <div class="space-y-6">
@@ -213,23 +215,15 @@
 
 		<div class="space-y-6">
 			<!-- Name -->
-			<div>
-				<label for="name" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-					Name <span class="text-red-500">*</span>
-				</label>
-				<p class="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-					The name of this quality profile
-				</p>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					value={name}
-					oninput={(e) => update('name', e.currentTarget.value)}
-					placeholder="Enter quality profile name"
-					class="mt-2 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
+			<FormInput
+				label="Name"
+				name="name"
+				value={name}
+				required
+				description="The name of this quality profile"
+				placeholder="Enter quality profile name"
+				on:input={(e) => update('name', e.detail)}
+			/>
 
 			<!-- Description -->
 			<MarkdownInput
@@ -252,34 +246,47 @@
 			<!-- Language -->
 			{#if availableLanguages.length > 0}
 				<div class="space-y-2">
-					<div class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-						Language
-					</div>
-					<p class="text-xs text-neutral-600 dark:text-neutral-400">
-						Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.
-					</p>
 					<div class="relative">
-						<input
-							type="text"
-							bind:value={languageSearchQuery}
-							oninput={handleLanguageInput}
-							onfocus={handleLanguageFocus}
-							onblur={handleLanguageBlur}
-							placeholder="Search for a language..."
-							class="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-						/>
-
 						{#if selectedLanguageName}
-							<button
-								type="button"
-								onclick={clearLanguage}
-								aria-label="Clear language"
-								class="absolute top-1/2 right-3 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+							<FormInput
+								label="Language"
+								name="language-search"
+								value={languageSearchQuery}
+								description={`Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.`}
+								placeholder="Search for a language..."
+								on:input={(e) => handleLanguageInput(e.detail)}
+								on:focus={handleLanguageFocus}
+								on:blur={handleLanguageBlur}
 							>
-								<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
+								<svelte:fragment slot="suffix">
+									<button
+										type="button"
+										onclick={clearLanguage}
+										aria-label="Clear language"
+										class="text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+									>
+										<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M6 18L18 6M6 6l12 12"
+											/>
+										</svg>
+									</button>
+								</svelte:fragment>
+							</FormInput>
+						{:else}
+							<FormInput
+								label="Language"
+								name="language-search"
+								value={languageSearchQuery}
+								description={`Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.`}
+								placeholder="Search for a language..."
+								on:input={(e) => handleLanguageInput(e.detail)}
+								on:focus={handleLanguageFocus}
+								on:blur={handleLanguageBlur}
+							/>
 						{/if}
 
 						{#if showLanguageDropdown && filteredLanguages.length > 0}
@@ -300,7 +307,6 @@
 					</div>
 				</div>
 			{/if}
-
 		</div>
 	</form>
 
