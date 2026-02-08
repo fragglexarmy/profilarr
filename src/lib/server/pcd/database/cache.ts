@@ -9,15 +9,21 @@ import { DenoSqlite3Dialect } from '@soapbox/kysely-deno-sqlite';
 import { logger } from '$logger/logger.ts';
 import { loadAllOperations } from '../ops/loadOps.ts';
 import { validateOperations } from '../utils/operations.ts';
-import { databaseInstancesQueries, disableDatabaseInstance } from '$db/queries/databaseInstances.ts';
+import {
+	databaseInstancesQueries,
+	disableDatabaseInstance
+} from '$db/queries/databaseInstances.ts';
 import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 import type { PCDDatabase } from '$shared/pcd/types.ts';
 import type { CacheBuildStats, ValidationResult } from '../core/types.ts';
 import { uuid } from '$shared/utils/uuid.ts';
 import type { PcdOpHistoryStatus } from '$db/queries/pcdOpHistory.ts';
-import type { AutoAlignEntity } from '../entities/registry.ts';
-import { AUTO_ALIGN_ENTITIES } from '../entities/registry.ts';
+import {
+	evaluateAutoAlign,
+	parseDesiredState,
+	parseOpMetadata
+} from '$pcd/conflicts/autoAlign/index.ts';
 
 /**
  * PCDCache - Manages an in-memory compiled database for a single PCD
@@ -42,7 +48,10 @@ export class PCDCache {
 		const startTime = performance.now();
 		const batchId = uuid();
 		const instance = databaseInstancesQueries.getById(this.databaseInstanceId);
-		const conflictStrategy = instance?.conflict_strategy ?? 'override';
+		const conflictStrategy = (instance?.conflict_strategy ?? 'override') as
+			| 'override'
+			| 'align'
+			| 'ask';
 		const userOps = pcdOpsQueries.listByDatabaseAndOrigin(this.databaseInstanceId, 'user', {
 			states: ['published']
 		});
@@ -59,7 +68,10 @@ export class PCDCache {
 		} catch (error) {
 			await logger.warn('Failed to load prior conflicts', {
 				source: 'PCDCache',
-				meta: { error: String(error), databaseInstanceId: this.databaseInstanceId }
+				meta: {
+					error: String(error),
+					databaseInstanceId: this.databaseInstanceId
+				}
 			});
 		}
 
@@ -112,34 +124,34 @@ export class PCDCache {
 							if (rowcount === 0 && isUserOp) {
 								const metadata = parseOpMetadata(userOp?.metadata ?? null);
 								const desiredState = parseDesiredState(userOp?.desired_state ?? null);
-								const forceAlign = conflictStrategy === 'align';
-								const shouldAlignDelete =
-									metadata?.operation === 'delete' &&
-									shouldAutoAlignDelete(this.db!, metadata?.entity, metadata);
-								const shouldAlignUpdate =
-									metadata?.operation === 'update' &&
-									shouldAutoAlignUpdate(
-										this.db!,
-										metadata?.entity,
-										metadata,
-										desiredState
-									);
+								const autoAlignDecision = evaluateAutoAlign({
+									db: this.db!,
+									conflictStrategy,
+									metadata,
+									desiredState
+								});
 
-								if (forceAlign || shouldAlignDelete || shouldAlignUpdate) {
-									const updated = pcdOpsQueries.update(opId, { state: 'dropped' });
+								if (autoAlignDecision.shouldAlign) {
+									const updated = pcdOpsQueries.update(opId, {
+										state: 'dropped'
+									});
 									if (updated) {
 										status = 'dropped';
 										conflictReason = 'aligned';
 										await logger.info(
-											forceAlign ? 'Forced align conflict' : 'Auto-aligned conflict',
+											autoAlignDecision.reason === 'forced'
+												? 'Forced align conflict'
+												: 'Auto-aligned conflict',
 											{
-											source: 'PCDCache',
-											meta: {
-												opId,
-												databaseInstanceId: this.databaseInstanceId,
-												conflictStrategy,
-												conflictReason
-											}
+												source: 'PCDCache',
+												meta: {
+													opId,
+													databaseInstanceId: this.databaseInstanceId,
+													conflictStrategy,
+													conflictReason,
+													autoAlignReason: autoAlignDecision.reason,
+													autoAlignRule: autoAlignDecision.rule
+												}
 											}
 										);
 									}
@@ -268,7 +280,10 @@ export class PCDCache {
 		} catch (error) {
 			await logger.error('Failed to build PCD cache', {
 				source: 'PCDCache',
-				meta: { error: String(error), databaseInstanceId: this.databaseInstanceId }
+				meta: {
+					error: String(error),
+					databaseInstanceId: this.databaseInstanceId
+				}
 			});
 
 			// Disable the database instance
@@ -472,31 +487,6 @@ function parseOpId(filepath: string): number | null {
 	return Number.isFinite(opId) ? opId : null;
 }
 
-type ParsedOpMetadata = {
-	operation?: string;
-	entity?: string;
-	name?: string;
-	stableKey?: { key?: string; value?: string };
-};
-
-function parseOpMetadata(raw: string | null): ParsedOpMetadata | null {
-	if (!raw) return null;
-	try {
-		return JSON.parse(raw) as ParsedOpMetadata;
-	} catch {
-		return null;
-	}
-}
-
-function parseDesiredState(raw: string | null): Record<string, unknown> | null {
-	if (!raw) return null;
-	try {
-		return JSON.parse(raw) as Record<string, unknown>;
-	} catch {
-		return null;
-	}
-}
-
 function getConflictReason(operation?: string): string {
 	switch (operation) {
 		case 'create':
@@ -515,118 +505,4 @@ function isUniqueConstraintError(errorStr: string): boolean {
 
 function isForeignKeyConstraintError(errorStr: string): boolean {
 	return errorStr.includes('FOREIGN KEY constraint failed');
-}
-
-function isFromTo(value: unknown): value is { to: unknown } {
-	if (!value || typeof value !== 'object') return false;
-	return 'to' in value;
-}
-
-function valuesEqual(expected: unknown, actual: unknown): boolean {
-	if (expected === null || expected === undefined) {
-		return actual === null || actual === undefined;
-	}
-	if (typeof expected === 'boolean') {
-		if (typeof actual === 'boolean') return expected === actual;
-		if (typeof actual === 'number') return actual === (expected ? 1 : 0);
-		if (typeof actual === 'string') return actual === (expected ? '1' : '0');
-		return false;
-	}
-	if (typeof expected === 'number') {
-		if (typeof actual === 'number') return expected === actual;
-		if (typeof actual === 'bigint') return expected === Number(actual);
-		if (typeof actual === 'string') return expected === Number(actual);
-		return false;
-	}
-	if (typeof expected === 'string') {
-		return String(actual) === expected;
-	}
-	return false;
-}
-
-function fetchRow(
-	db: Database,
-	table: string,
-	keyColumn: string,
-	keyValue: string
-): Record<string, unknown> | null {
-	try {
-		const row = db.prepare(`SELECT * FROM ${table} WHERE ${keyColumn} = ? LIMIT 1`).get(
-			keyValue
-		);
-		return (row as Record<string, unknown> | undefined) ?? null;
-	} catch {
-		return null;
-	}
-}
-
-function resolveCurrentRow(
-	db: Database,
-	entity: AutoAlignEntity,
-	metadata: ParsedOpMetadata | null,
-	desiredState: Record<string, unknown> | null
-): Record<string, unknown> | null {
-	const stableKey = metadata?.stableKey?.value;
-	if (stableKey) {
-		const row = fetchRow(db, entity.table, entity.keyColumn, stableKey);
-		if (row) return row;
-	}
-
-	const nameKey = metadata?.name;
-	if (nameKey) {
-		const row = fetchRow(db, entity.table, entity.keyColumn, nameKey);
-		if (row) return row;
-	}
-
-	const desiredName = desiredState?.name;
-	if (isFromTo(desiredName) && typeof desiredName.to === 'string') {
-		return fetchRow(db, entity.table, entity.keyColumn, desiredName.to);
-	}
-
-	return null;
-}
-
-function shouldAutoAlignUpdate(
-	db: Database,
-	entityName: string | undefined,
-	metadata: ParsedOpMetadata | null,
-	desiredState: Record<string, unknown> | null
-): boolean {
-	if (!entityName || !desiredState) return false;
-	const entityConfig = AUTO_ALIGN_ENTITIES.get(entityName);
-	if (!entityConfig) return false;
-
-	const fields = entityConfig.fields;
-	if (!fields || fields.length === 0) return false;
-
-	const keys = Object.keys(desiredState);
-	if (keys.length === 0) return false;
-
-	for (const key of keys) {
-		if (!fields.includes(key)) {
-			return false;
-		}
-		if (!isFromTo(desiredState[key])) {
-			return false;
-		}
-	}
-
-	const row = resolveCurrentRow(db, entityConfig, metadata, desiredState);
-	if (!row) return false;
-
-	return keys.every((key) => valuesEqual((desiredState[key] as { to: unknown }).to, row[key]));
-}
-
-function shouldAutoAlignDelete(
-	db: Database,
-	entityName: string | undefined,
-	metadata: ParsedOpMetadata | null
-): boolean {
-	if (!entityName) return false;
-	const entityConfig = AUTO_ALIGN_ENTITIES.get(entityName);
-	if (!entityConfig) return false;
-	const stableKey = metadata?.stableKey?.value ?? metadata?.name;
-	if (!stableKey) return false;
-	const row = fetchRow(db, entityConfig.table, entityConfig.keyColumn, stableKey);
-	return !row;
 }
