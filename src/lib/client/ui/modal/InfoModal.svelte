@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { cubicIn, cubicOut } from 'svelte/easing';
+	import { fade, scale } from 'svelte/transition';
 	import { X } from 'lucide-svelte';
 
 	export let open = false;
@@ -10,12 +12,6 @@
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape' && open) {
-			handleClose();
-		}
-	}
-
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === e.currentTarget) {
 			handleClose();
 		}
 	}
@@ -34,16 +30,22 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 	<div
-		class="fixed inset-0 z-[100] bg-black/50 p-4 backdrop-blur-sm overflow-y-auto sm:p-6"
-		on:click={handleBackdropClick}
+		class="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:p-6"
+		in:fade={{ duration: 140 }}
+		out:fade={{ duration: 110 }}
 		role="dialog"
 		aria-modal="true"
 		tabindex="-1"
 	>
-		<div class="min-h-full w-full flex items-start justify-center sm:items-center">
+		<div
+			class="flex min-h-full w-full items-start justify-center sm:items-center"
+			on:click|self={handleClose}
+		>
 			<!-- Modal -->
 			<div
-				class="relative my-4 flex w-full max-w-lg flex-col rounded-lg border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900 sm:my-0 max-h-[calc(100svh-2rem)]"
+				class="relative my-4 flex max-h-[calc(100svh-2rem)] w-full max-w-lg flex-col rounded-lg border border-neutral-200 bg-white shadow-xl sm:my-0 dark:border-neutral-700 dark:bg-neutral-900"
+				in:scale={{ duration: 170, start: 0.97, opacity: 0.5, easing: cubicOut }}
+				out:scale={{ duration: 120, start: 0.97, opacity: 0.5, easing: cubicIn }}
 			>
 				<!-- Header -->
 				<div
