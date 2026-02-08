@@ -57,8 +57,6 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	const { databaseId, cache, layer, current, input } = options;
 	const db = cache.kb;
 
-	const queries = [];
-
 	if (input.name !== current.name) {
 		const existing = await db
 			.selectFrom('quality_profiles')
@@ -79,114 +77,18 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	const normalizedCurrentDescription = rawCurrentDescription ?? '';
 	const normalizedNextDescription = input.description?.trim() ?? '';
 	const descriptionChanged = normalizedCurrentDescription !== normalizedNextDescription;
-
-	// 1. Update the quality profile with value guards
-	const setValues: Record<string, unknown> = {};
-
-	if (current.name !== input.name) {
-		setValues.name = input.name;
-	}
-	if (descriptionChanged) {
-		setValues.description = normalizedNextDescription === '' ? null : normalizedNextDescription;
-	}
-
-	let updateProfile = db
-		.updateTable('quality_profiles')
-		.set(setValues)
-		// Value guards - ensure current values match what we expect
-		.where('name', '=', current.name);
-
-	if (descriptionChanged) {
-		if (rawCurrentDescription === null) {
-			updateProfile = updateProfile.where('description', 'is', null);
-		} else {
-			updateProfile = updateProfile.where('description', '=', rawCurrentDescription);
-		}
-	}
-
-	if (Object.keys(setValues).length > 0) {
-		const updateProfileQuery = updateProfile.compile();
-		queries.push(updateProfileQuery);
-	}
-
-	const profileNameForTags = input.name !== current.name ? input.name : current.name;
-
-	// 2. Handle tag changes
-	const currentTagNames = current.tags.map((t) => t.name);
-	const newTagNames = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
-
-	// Tags to remove
-	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
-	if (tagsToRemove.length > 0) {
-		for (const tagName of tagsToRemove) {
-			const removeTag = {
-				sql: `DELETE FROM quality_profile_tags WHERE quality_profile_name = '${esc(profileNameForTags)}' AND tag_name = '${esc(tagName)}'`,
-				parameters: [],
-				query: {} as never
-			};
-			queries.push(removeTag);
-		}
-	}
-
-	// Tags to add
-	const tagsToAdd = newTagNames.filter((t) => !currentTagNames.includes(t));
-	if (tagsToAdd.length > 0) {
-		for (const tagName of tagsToAdd) {
-			// Insert tag if not exists
-			const insertTag = db
-				.insertInto('tags')
-				.values({ name: tagName })
-				.onConflict((oc) => oc.column('name').doNothing())
-				.compile();
-
-			queries.push(insertTag);
-
-			// Link tag to quality profile
-			const linkTag = {
-				sql: `INSERT INTO quality_profile_tags (quality_profile_name, tag_name) VALUES ('${esc(profileNameForTags)}', '${esc(tagName)}')`,
-				parameters: [],
-				query: {} as never
-			};
-
-			queries.push(linkTag);
-		}
-	}
-
-	// 3. Handle language changes
-	const profileNameForLanguage = input.name !== current.name ? input.name : current.name;
+	const renameChanged = current.name !== input.name;
 	const languageChanged = current.language !== input.language;
 
-	if (languageChanged) {
-		// Delete existing language only if it matches expected current value
-		if (current.language !== null) {
-			const deleteLanguage = {
-				sql: `DELETE FROM quality_profile_languages WHERE quality_profile_name = '${esc(profileNameForLanguage)}' AND language_name = '${esc(current.language)}' AND type = 'simple'`,
-				parameters: [],
-				query: {} as never
-			};
-			queries.push(deleteLanguage);
-		}
+	// Tags are tracked independently from guarded fields.
+	const currentTagNames = current.tags.map((t) => t.name);
+	const newTagNames = Array.from(new Set(input.tags.map((tag) => tag.trim()).filter(Boolean)));
+	const tagsToRemove = currentTagNames.filter((t) => !newTagNames.includes(t));
+	const tagsToAdd = newTagNames.filter((t) => !currentTagNames.includes(t));
+	const hasTagChanges = tagsToAdd.length > 0 || tagsToRemove.length > 0;
 
-		// Insert new language if one is selected, but only if no simple language exists
-		if (input.language !== null) {
-			const insertLanguage = {
-				sql: `INSERT INTO quality_profile_languages (quality_profile_name, language_name, type)
-SELECT '${esc(profileNameForLanguage)}', '${esc(input.language)}', 'simple'
-WHERE NOT EXISTS (
-  SELECT 1 FROM quality_profile_languages
-  WHERE quality_profile_name = '${esc(profileNameForLanguage)}' AND type = 'simple'
-)`,
-				parameters: [],
-				query: {} as never
-			};
-			queries.push(insertLanguage);
-		}
-	}
-
-	// Log what's being changed
 	const changes: Record<string, { from: unknown; to: unknown }> = {};
-
-	if (current.name !== input.name) {
+	if (renameChanged) {
 		changes.name = { from: current.name, to: input.name };
 	}
 	if (descriptionChanged) {
@@ -198,8 +100,93 @@ WHERE NOT EXISTS (
 	if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
 		changes.tags = { from: currentTagNames, to: newTagNames };
 	}
-	if (current.language !== input.language) {
+	if (languageChanged) {
 		changes.language = { from: current.language, to: input.language };
+	}
+
+	// 1. Build description query
+	const descriptionQueries = [];
+	if (descriptionChanged) {
+		let updateDescription = db
+			.updateTable('quality_profiles')
+			.set({ description: normalizedNextDescription === '' ? null : normalizedNextDescription })
+			.where('name', '=', current.name);
+		if (rawCurrentDescription === null) {
+			updateDescription = updateDescription.where('description', 'is', null);
+		} else {
+			updateDescription = updateDescription.where('description', '=', rawCurrentDescription);
+		}
+		descriptionQueries.push(updateDescription.compile());
+	}
+
+	// 2. Build language queries
+	const languageQueries = [];
+	if (languageChanged) {
+		if (current.language !== null) {
+			const deleteLanguage = {
+				sql: `DELETE FROM quality_profile_languages WHERE quality_profile_name = '${esc(current.name)}' AND language_name = '${esc(current.language)}' AND type = 'simple'`,
+				parameters: [],
+				query: {} as never
+			};
+			languageQueries.push(deleteLanguage);
+		}
+
+		if (input.language !== null) {
+			const insertLanguage = {
+				sql: `INSERT INTO quality_profile_languages (quality_profile_name, language_name, type)
+SELECT '${esc(current.name)}', '${esc(input.language)}', 'simple'
+WHERE NOT EXISTS (
+  SELECT 1 FROM quality_profile_languages
+  WHERE quality_profile_name = '${esc(current.name)}' AND type = 'simple'
+)`,
+				parameters: [],
+				query: {} as never
+			};
+			languageQueries.push(insertLanguage);
+		}
+	}
+
+	// 3. Build tag queries against current name. Rename (if any) is emitted
+	// in a separate op after tags, so these queries stay valid.
+	const tagQueries = [];
+	for (const tagName of tagsToRemove) {
+		const removeTag = {
+			sql: `DELETE FROM quality_profile_tags WHERE quality_profile_name = '${esc(current.name)}' AND tag_name = '${esc(tagName)}'`,
+			parameters: [],
+			query: {} as never
+		};
+		tagQueries.push(removeTag);
+	}
+
+	for (const tagName of tagsToAdd) {
+		const insertTag = db
+			.insertInto('tags')
+			.values({ name: tagName })
+			.onConflict((oc) => oc.column('name').doNothing())
+			.compile();
+		tagQueries.push(insertTag);
+
+		const linkTag = {
+			sql: `INSERT INTO quality_profile_tags (quality_profile_name, tag_name) VALUES ('${esc(current.name)}', '${esc(tagName)}')`,
+			parameters: [],
+			query: {} as never
+		};
+		tagQueries.push(linkTag);
+	}
+
+	// 4. Build rename query (run last)
+	const renameQueries = [];
+	if (renameChanged) {
+		const updateName = db
+			.updateTable('quality_profiles')
+			.set({ name: input.name })
+			.where('name', '=', current.name)
+			.compile();
+		renameQueries.push(updateName);
+	}
+
+	if (!descriptionChanged && !languageChanged && !hasTagChanges && !renameChanged) {
+		return { success: true };
 	}
 
 	await logger.info(`Save quality profile "${input.name}"`, {
@@ -210,49 +197,119 @@ WHERE NOT EXISTS (
 		}
 	});
 
-	// Write the operation with metadata
-	const isRename = input.name !== current.name;
-	const changedFields = Object.keys(changes);
-	const desiredState: Record<string, unknown> = {};
-	if (changes.name) {
-		desiredState.name = { from: current.name, to: input.name };
-	}
-	if (changes.description) {
-		desiredState.description = {
-			from: rawCurrentDescription ?? null,
-			to: normalizedNextDescription === '' ? null : normalizedNextDescription
-		};
-	}
-	if (changes.tags) {
-		desiredState.tags = { add: tagsToAdd, remove: tagsToRemove };
-	}
-	if (changes.language) {
-		desiredState.language = {
-			from: current.language ?? null,
-			to: input.language ?? null,
-			type: 'simple'
-		};
-	}
+	let lastResult: Awaited<ReturnType<typeof writeOperation>> | null = null;
 
-	const result = await writeOperation({
-		databaseId,
-		layer,
-		description: `update-quality-profile-${input.name}`,
-		queries,
-		desiredState,
-		metadata: {
-			operation: 'update',
-			entity: 'quality_profile',
-			name: input.name,
-			...(isRename && { previousName: current.name }),
-			stableKey: { key: 'quality_profile_name', value: current.name },
-			changedFields,
-			summary: 'Update quality profile',
-			title: `Update quality profile "${input.name}"`
+	if (descriptionChanged) {
+		const descriptionResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-quality-profile-description-${input.name}`,
+			queries: descriptionQueries,
+			desiredState: {
+				description: {
+					from: rawCurrentDescription ?? null,
+					to: normalizedNextDescription === '' ? null : normalizedNextDescription
+				}
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'quality_profile',
+				name: input.name,
+				stableKey: { key: 'quality_profile_name', value: current.name },
+				changedFields: ['description'],
+				summary: 'Update quality profile description',
+				title: `Update description for quality profile "${input.name}"`
+			}
+		});
+
+		if (!descriptionResult.success) {
+			return descriptionResult;
 		}
-	});
+		lastResult = descriptionResult;
+	}
 
-	return result;
+	if (languageChanged) {
+		const languageResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-quality-profile-language-${input.name}`,
+			queries: languageQueries,
+			desiredState: {
+				language: {
+					from: current.language ?? null,
+					to: input.language ?? null,
+					type: 'simple'
+				}
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'quality_profile',
+				name: input.name,
+				stableKey: { key: 'quality_profile_name', value: current.name },
+				changedFields: ['language'],
+				summary: 'Update quality profile language',
+				title: `Update language for quality profile "${input.name}"`
+			}
+		});
+
+		if (!languageResult.success) {
+			return languageResult;
+		}
+		lastResult = languageResult;
+	}
+
+	if (hasTagChanges) {
+		const tagsResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-quality-profile-tags-${input.name}`,
+			queries: tagQueries,
+			desiredState: { tags: { add: tagsToAdd, remove: tagsToRemove } },
+			metadata: {
+				operation: 'update',
+				entity: 'quality_profile',
+				name: input.name,
+				stableKey: { key: 'quality_profile_name', value: current.name },
+				changedFields: ['tags'],
+				summary: 'Update quality profile tags',
+				title: `Update tags for quality profile "${input.name}"`
+			}
+		});
+
+		if (!tagsResult.success) {
+			return tagsResult;
+		}
+		lastResult = tagsResult;
+	}
+
+	if (renameChanged) {
+		const renameResult = await writeOperation({
+			databaseId,
+			layer,
+			description: `update-quality-profile-name-${input.name}`,
+			queries: renameQueries,
+			desiredState: {
+				name: { from: current.name, to: input.name }
+			},
+			metadata: {
+				operation: 'update',
+				entity: 'quality_profile',
+				name: input.name,
+				previousName: current.name,
+				stableKey: { key: 'quality_profile_name', value: current.name },
+				changedFields: ['name'],
+				summary: 'Rename quality profile',
+				title: `Rename quality profile "${current.name}"`
+			}
+		});
+
+		if (!renameResult.success) {
+			return renameResult;
+		}
+		lastResult = renameResult;
+	}
+
+	return lastResult ?? { success: true };
 }
 
 /**
