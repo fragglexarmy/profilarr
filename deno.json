@@ -56,6 +56,7 @@
 		"test:e2e": "deno run -A scripts/e2e.ts",
 		"test:e2e:headed": "deno run -A scripts/e2e.ts --headed",
 		"test:e2e:debug": "deno run -A scripts/e2e.ts --debug",
+		"test:e2e:reset": "deno run -A scripts/e2e-reset.ts",
 		"stats": "bash scripts/stats.sh"
 	},
 	"compilerOptions": {
