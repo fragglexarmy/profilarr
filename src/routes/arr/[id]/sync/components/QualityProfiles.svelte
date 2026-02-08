@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 	import SyncFooter from './SyncFooter.svelte';
-	import { Check } from 'lucide-svelte';
 	import { alertStore } from '$lib/client/alerts/store.ts';
 
 	interface DatabaseWithProfiles {
@@ -54,8 +53,8 @@
 		return selectedKeys.has(`${databaseId}-${profileName}`);
 	}
 
-	function toggleProfile(databaseId: number, profileName: string) {
-		state[databaseId][profileName] = !state[databaseId][profileName];
+	function setProfile(databaseId: number, profileName: string, checked: boolean) {
+		state[databaseId][profileName] = checked;
 		state = { ...state }; // Reassign to trigger reactivity
 	}
 
@@ -147,20 +146,12 @@
 						{:else}
 							<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
 								{#each database.qualityProfiles as profile}
-									<button
-										type="button"
-										class="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
-										on:click={() => toggleProfile(database.id, profile.name)}
-									>
-										<code class="font-mono text-sm text-neutral-900 dark:text-neutral-50">
-											{profile.name}
-										</code>
-										<IconCheckbox
-											checked={selectedKeys.has(`${database.id}-${profile.name}`)}
-											icon={Check}
-											shape="rounded"
-										/>
-									</button>
+									<Toggle
+										checked={isSelected(database.id, profile.name)}
+										label={profile.name}
+										ariaLabel={`Toggle quality profile ${profile.name} from ${database.name}`}
+										on:change={(e) => setProfile(database.id, profile.name, e.detail)}
+									/>
 								{/each}
 							</div>
 						{/if}

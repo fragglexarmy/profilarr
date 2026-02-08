@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, Check } from 'lucide-svelte';
+	import SearchDropdown from '$ui/form/SearchDropdown.svelte';
 	import SyncFooter from './SyncFooter.svelte';
 	import { alertStore } from '$lib/client/alerts/store.ts';
 
@@ -32,15 +32,9 @@
 		mediaSettingsConfigName: null
 	};
 
-	let showNamingDropdown = false;
-	let showQualityDropdown = false;
-	let showMediaDropdown = false;
-
-	// Build flat list of options: { databaseId, databaseName, configName }
 	type SelectionOption = {
-		databaseId: number;
-		databaseName: string;
-		configName: string;
+		value: string;
+		label: string;
 	};
 
 	function getNamingOptions(): SelectionOption[] {
@@ -48,9 +42,8 @@
 		for (const db of databases) {
 			for (const config of db.namingConfigs) {
 				options.push({
-					databaseId: db.id,
-					databaseName: db.name,
-					configName: config.name
+					value: JSON.stringify([db.id, config.name]),
+					label: `${db.name} / ${config.name}`
 				});
 			}
 		}
@@ -62,9 +55,8 @@
 		for (const db of databases) {
 			for (const config of db.qualityDefinitionsConfigs) {
 				options.push({
-					databaseId: db.id,
-					databaseName: db.name,
-					configName: config.name
+					value: JSON.stringify([db.id, config.name]),
+					label: `${db.name} / ${config.name}`
 				});
 			}
 		}
@@ -76,9 +68,8 @@
 		for (const db of databases) {
 			for (const config of db.mediaSettingsConfigs) {
 				options.push({
-					databaseId: db.id,
-					databaseName: db.name,
-					configName: config.name
+					value: JSON.stringify([db.id, config.name]),
+					label: `${db.name} / ${config.name}`
 				});
 			}
 		}
@@ -89,41 +80,61 @@
 	$: qualityDefinitionsOptions = getQualityDefinitionsOptions();
 	$: mediaSettingsOptions = getMediaSettingsOptions();
 
-	function getSelectedLabel(databaseId: number | null, configName: string | null): string {
-		if (databaseId === null || configName === null) return 'None';
-		const db = databases.find((d) => d.id === databaseId);
-		if (!db) return 'None';
-		return `${db.name} / ${configName}`;
+	function parseSelectionValue(value: string): { databaseId: number | null; configName: string | null } {
+		if (!value) return { databaseId: null, configName: null };
+		try {
+			const parsed = JSON.parse(value);
+			if (Array.isArray(parsed) && parsed.length === 2) {
+				const databaseId = Number(parsed[0]);
+				const configName = String(parsed[1]);
+				if (!Number.isNaN(databaseId) && configName) {
+					return { databaseId, configName };
+				}
+			}
+		} catch {
+			// Ignore malformed values and clear selection.
+		}
+		return { databaseId: null, configName: null };
 	}
 
-	function selectNaming(databaseId: number | null, configName: string | null) {
-		state.namingDatabaseId = databaseId;
-		state.namingConfigName = configName;
-		showNamingDropdown = false;
+	$: namingValue =
+		state.namingDatabaseId !== null && state.namingConfigName
+			? JSON.stringify([state.namingDatabaseId, state.namingConfigName])
+			: '';
+	$: qualityDefinitionsValue =
+		state.qualityDefinitionsDatabaseId !== null && state.qualityDefinitionsConfigName
+			? JSON.stringify([state.qualityDefinitionsDatabaseId, state.qualityDefinitionsConfigName])
+			: '';
+	$: mediaSettingsValue =
+		state.mediaSettingsDatabaseId !== null && state.mediaSettingsConfigName
+			? JSON.stringify([state.mediaSettingsDatabaseId, state.mediaSettingsConfigName])
+			: '';
+
+	function selectNaming(value: string) {
+		const parsed = parseSelectionValue(value);
+		state = {
+			...state,
+			namingDatabaseId: parsed.databaseId,
+			namingConfigName: parsed.configName
+		};
 	}
 
-	function selectQuality(databaseId: number | null, configName: string | null) {
-		state.qualityDefinitionsDatabaseId = databaseId;
-		state.qualityDefinitionsConfigName = configName;
-		showQualityDropdown = false;
+	function selectQuality(value: string) {
+		const parsed = parseSelectionValue(value);
+		state = {
+			...state,
+			qualityDefinitionsDatabaseId: parsed.databaseId,
+			qualityDefinitionsConfigName: parsed.configName
+		};
 	}
 
-	function selectMedia(databaseId: number | null, configName: string | null) {
-		state.mediaSettingsDatabaseId = databaseId;
-		state.mediaSettingsConfigName = configName;
-		showMediaDropdown = false;
-	}
-
-	function isNamingSelected(databaseId: number, configName: string): boolean {
-		return state.namingDatabaseId === databaseId && state.namingConfigName === configName;
-	}
-
-	function isQualitySelected(databaseId: number, configName: string): boolean {
-		return state.qualityDefinitionsDatabaseId === databaseId && state.qualityDefinitionsConfigName === configName;
-	}
-
-	function isMediaSelected(databaseId: number, configName: string): boolean {
-		return state.mediaSettingsDatabaseId === databaseId && state.mediaSettingsConfigName === configName;
+	function selectMedia(value: string) {
+		const parsed = parseSelectionValue(value);
+		state = {
+			...state,
+			mediaSettingsDatabaseId: parsed.databaseId,
+			mediaSettingsConfigName: parsed.configName
+		};
 	}
 
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
@@ -209,160 +220,49 @@
 	<div class="p-6">
 		<div class="grid gap-6 sm:grid-cols-3">
 			<!-- Naming -->
-			<div class="space-y-2">
-				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-50">
-					Naming
-				</span>
-				<div class="relative">
-					<button
-						type="button"
-						on:click={() => (showNamingDropdown = !showNamingDropdown)}
-						on:blur={() => setTimeout(() => (showNamingDropdown = false), 200)}
-						class="flex w-full items-center justify-between rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
-					>
-						<span class="truncate">{getSelectedLabel(state.namingDatabaseId, state.namingConfigName)}</span>
-						<ChevronDown size={14} class="flex-shrink-0 ml-2" />
-					</button>
-
-					{#if showNamingDropdown}
-						<div
-							class="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
-						>
-							<button
-								type="button"
-								on:click={() => selectNaming(null, null)}
-								class="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-							>
-								<span>None</span>
-								{#if state.namingDatabaseId === null}
-									<Check size={14} class="text-accent-600 dark:text-accent-400" />
-								{/if}
-							</button>
-							{#each namingOptions as option}
-								<button
-									type="button"
-									on:click={() => selectNaming(option.databaseId, option.configName)}
-									class="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-								>
-									<span class="truncate">{option.databaseName} / {option.configName}</span>
-									{#if isNamingSelected(option.databaseId, option.configName)}
-										<Check size={14} class="flex-shrink-0 ml-2 text-accent-600 dark:text-accent-400" />
-									{/if}
-								</button>
-							{/each}
-							{#if namingOptions.length === 0}
-								<div class="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400">
-									No naming configs available
-								</div>
-							{/if}
-						</div>
-					{/if}
-				</div>
-			</div>
+			<SearchDropdown
+				label="Naming"
+				hideLabel={false}
+				fullWidth
+				options={namingOptions}
+				value={namingValue}
+				placeholder={namingOptions.length === 0
+					? 'No naming configs available'
+					: 'Select naming config...'}
+				disabled={namingOptions.length === 0}
+				description="Choose the naming config to sync. Clear to unset."
+				on:change={(e) => selectNaming(e.detail)}
+			/>
 
 			<!-- Quality Definitions -->
-			<div class="space-y-2">
-				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-50">
-					Quality Definitions
-				</span>
-				<div class="relative">
-					<button
-						type="button"
-						on:click={() => (showQualityDropdown = !showQualityDropdown)}
-						on:blur={() => setTimeout(() => (showQualityDropdown = false), 200)}
-						class="flex w-full items-center justify-between rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
-					>
-						<span class="truncate">{getSelectedLabel(state.qualityDefinitionsDatabaseId, state.qualityDefinitionsConfigName)}</span>
-						<ChevronDown size={14} class="flex-shrink-0 ml-2" />
-					</button>
-
-					{#if showQualityDropdown}
-						<div
-							class="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
-						>
-							<button
-								type="button"
-								on:click={() => selectQuality(null, null)}
-								class="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-							>
-								<span>None</span>
-								{#if state.qualityDefinitionsDatabaseId === null}
-									<Check size={14} class="text-accent-600 dark:text-accent-400" />
-								{/if}
-							</button>
-							{#each qualityDefinitionsOptions as option}
-								<button
-									type="button"
-									on:click={() => selectQuality(option.databaseId, option.configName)}
-									class="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-								>
-									<span class="truncate">{option.databaseName} / {option.configName}</span>
-									{#if isQualitySelected(option.databaseId, option.configName)}
-										<Check size={14} class="flex-shrink-0 ml-2 text-accent-600 dark:text-accent-400" />
-									{/if}
-								</button>
-							{/each}
-							{#if qualityDefinitionsOptions.length === 0}
-								<div class="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400">
-									No quality definitions configs available
-								</div>
-							{/if}
-						</div>
-					{/if}
-				</div>
-			</div>
+			<SearchDropdown
+				label="Quality Definitions"
+				hideLabel={false}
+				fullWidth
+				options={qualityDefinitionsOptions}
+				value={qualityDefinitionsValue}
+				placeholder={qualityDefinitionsOptions.length === 0
+					? 'No quality definitions configs available'
+					: 'Select quality definitions config...'}
+				disabled={qualityDefinitionsOptions.length === 0}
+				description="Choose the quality definitions config to sync. Clear to unset."
+				on:change={(e) => selectQuality(e.detail)}
+			/>
 
 			<!-- Media Settings -->
-			<div class="space-y-2">
-				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-50">
-					Media Settings
-				</span>
-				<div class="relative">
-					<button
-						type="button"
-						on:click={() => (showMediaDropdown = !showMediaDropdown)}
-						on:blur={() => setTimeout(() => (showMediaDropdown = false), 200)}
-						class="flex w-full items-center justify-between rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
-					>
-						<span class="truncate">{getSelectedLabel(state.mediaSettingsDatabaseId, state.mediaSettingsConfigName)}</span>
-						<ChevronDown size={14} class="flex-shrink-0 ml-2" />
-					</button>
-
-					{#if showMediaDropdown}
-						<div
-							class="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
-						>
-							<button
-								type="button"
-								on:click={() => selectMedia(null, null)}
-								class="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-							>
-								<span>None</span>
-								{#if state.mediaSettingsDatabaseId === null}
-									<Check size={14} class="text-accent-600 dark:text-accent-400" />
-								{/if}
-							</button>
-							{#each mediaSettingsOptions as option}
-								<button
-									type="button"
-									on:click={() => selectMedia(option.databaseId, option.configName)}
-									class="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-								>
-									<span class="truncate">{option.databaseName} / {option.configName}</span>
-									{#if isMediaSelected(option.databaseId, option.configName)}
-										<Check size={14} class="flex-shrink-0 ml-2 text-accent-600 dark:text-accent-400" />
-									{/if}
-								</button>
-							{/each}
-							{#if mediaSettingsOptions.length === 0}
-								<div class="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400">
-									No media settings configs available
-								</div>
-							{/if}
-						</div>
-					{/if}
-				</div>
-			</div>
+			<SearchDropdown
+				label="Media Settings"
+				hideLabel={false}
+				fullWidth
+				options={mediaSettingsOptions}
+				value={mediaSettingsValue}
+				placeholder={mediaSettingsOptions.length === 0
+					? 'No media settings configs available'
+					: 'Select media settings config...'}
+				disabled={mediaSettingsOptions.length === 0}
+				description="Choose the media settings config to sync. Clear to unset."
+				on:change={(e) => selectMedia(e.detail)}
+			/>
 		</div>
 	</div>
 

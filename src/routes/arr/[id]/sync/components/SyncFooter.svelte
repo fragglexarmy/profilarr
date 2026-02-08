@@ -1,6 +1,7 @@
 <script lang="ts">
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
-	import { Check, RefreshCw, Save, Loader2, AlertTriangle } from 'lucide-svelte';
+	import Button from '$ui/button/Button.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
+	import { RefreshCw, Save, Loader2, AlertTriangle } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
 	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
@@ -23,6 +24,13 @@
 	// Save disabled when not dirty or can't save, Sync disabled when dirty (unsaved changes)
 	$: saveDisabled = saving || !isDirty || !canSave;
 	$: syncDisabled = syncing || isDirty;
+
+	function selectTrigger(value: (typeof triggerOptions)[number]['value'], enabled: boolean) {
+		// Keep trigger single-select: selecting a toggle sets it; unchecking the active one is ignored.
+		if (enabled) {
+			syncTrigger = value;
+		}
+	}
 </script>
 
 <div class="border-t border-neutral-200 px-4 py-4 md:px-6 dark:border-neutral-800">
@@ -31,15 +39,12 @@
 		<div class="flex flex-wrap items-center gap-3 md:gap-4">
 			<span class="text-sm text-neutral-500 dark:text-neutral-400">Trigger</span>
 			{#each triggerOptions as option}
-				<div class="flex items-center gap-2">
-					<IconCheckbox
-						checked={syncTrigger === option.value}
-						icon={Check}
-						shape="rounded"
-						on:click={() => (syncTrigger = option.value)}
-					/>
-					<span class="text-sm text-neutral-700 dark:text-neutral-300">{option.label}</span>
-				</div>
+				<Toggle
+					checked={syncTrigger === option.value}
+					label={option.label}
+					ariaLabel={`Set trigger to ${option.label}`}
+					on:change={(e) => selectTrigger(option.value, e.detail)}
+				/>
 			{/each}
 
 			{#if syncTrigger === 'schedule'}
@@ -61,33 +66,27 @@
 				</div>
 			{/if}
 			<div class="flex items-center gap-3">
-				<button
-					type="button"
+				<Button
+					text="Sync Now"
+					variant="secondary"
 					disabled={syncDisabled}
-					on:click={() => dispatch('sync')}
+					icon={syncing ? Loader2 : RefreshCw}
+					iconColor={syncing
+						? 'text-blue-600 dark:text-blue-400 animate-spin'
+						: 'text-blue-600 dark:text-blue-400'}
 					title={isDirty ? 'Save changes before syncing' : ''}
-					class="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					{#if syncing}
-						<Loader2 size={14} class="animate-spin" />
-					{:else}
-						<RefreshCw size={14} />
-					{/if}
-					Sync Now
-				</button>
-				<button
-					type="button"
+					on:click={() => dispatch('sync')}
+				/>
+				<Button
+					text="Save"
+					variant="secondary"
 					disabled={saveDisabled}
+					icon={saving ? Loader2 : Save}
+					iconColor={saving
+						? 'text-green-600 dark:text-green-400 animate-spin'
+						: 'text-green-600 dark:text-green-400'}
 					on:click={() => dispatch('save')}
-					class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-				>
-					{#if saving}
-						<Loader2 size={14} class="animate-spin" />
-					{:else}
-						<Save size={14} />
-					{/if}
-					Save
-				</button>
+				/>
 			</div>
 		</div>
 	</div>
