@@ -4,7 +4,14 @@
 
 	export let checked: boolean = false;
 	export let icon: ComponentType;
-	export let color: 'accent' | 'blue' | 'green' | 'red' | 'neutral' | `#${string}` = 'accent'; // accent, blue, green, red, neutral, or hex color like #FFC230
+	export let color:
+		| 'accent'
+		| 'blue'
+		| 'green'
+		| 'red'
+		| 'neutral'
+		| `#${string}`
+		| `var(--${string})` = 'accent'; // accent, semantic colors, hex (#FFC230), or CSS var (var(--arr-radarr-color))
 	export let shape: 'square' | 'circle' | 'rounded' = 'rounded';
 	export let disabled: boolean = false;
 	export let variant: 'filled' | 'outline' = 'filled';
@@ -22,7 +29,7 @@
 	};
 
 	$: shapeClass = shapeClasses[shape] || shapeClasses.rounded;
-	$: isCustomColor = color.startsWith('#');
+	$: isCustomColor = color.startsWith('#') || color.startsWith('var(');
 	$: isAccent = color === 'accent';
 
 	const baseClass =

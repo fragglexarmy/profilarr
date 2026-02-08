@@ -19,12 +19,14 @@
 	export let name: string = '';
 	export let hideLabel: boolean = true;
 	export let size: 'sm' | 'md' | 'lg' = 'md';
+	export let constrainMenuHeight: boolean = true;
 
 	const dispatch = createEventDispatcher<{ change: string }>();
 
 	let open = false;
 	let searchQuery = '';
 	let inputElement: HTMLInputElement | HTMLTextAreaElement | null = null;
+	let highlightedIndex = -1;
 
 	$: selectedOption = options.find((opt) => opt.value === value);
 	$: if (!open) {
@@ -34,10 +36,69 @@
 		opt.label.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 	$: hasClear = value != null && value !== '';
+	$: if (open) {
+		if (filteredOptions.length === 0) {
+			highlightedIndex = -1;
+		} else if (highlightedIndex < 0 || highlightedIndex >= filteredOptions.length) {
+			const selectedIndex = selectedOption
+				? filteredOptions.findIndex((opt) => opt.value === selectedOption.value)
+				: -1;
+			highlightedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+		}
+	} else {
+		highlightedIndex = -1;
+	}
+
+	function moveHighlight(direction: 1 | -1) {
+		if (filteredOptions.length === 0) {
+			highlightedIndex = -1;
+			return;
+		}
+		if (highlightedIndex < 0 || highlightedIndex >= filteredOptions.length) {
+			highlightedIndex = direction === 1 ? 0 : filteredOptions.length - 1;
+			return;
+		}
+		highlightedIndex =
+			(highlightedIndex + direction + filteredOptions.length) % filteredOptions.length;
+	}
+
+	function handleKeyDown(event: KeyboardEvent) {
+		if (disabled) return;
+
+		switch (event.key) {
+			case 'ArrowDown':
+				event.preventDefault();
+				if (!open) open = true;
+				moveHighlight(1);
+				break;
+			case 'ArrowUp':
+				event.preventDefault();
+				if (!open) open = true;
+				moveHighlight(-1);
+				break;
+			case 'Enter':
+				if (open && filteredOptions.length > 0) {
+					event.preventDefault();
+					const index =
+						highlightedIndex >= 0 && highlightedIndex < filteredOptions.length
+							? highlightedIndex
+							: 0;
+					selectOption(filteredOptions[index]);
+				}
+				break;
+			case 'Escape':
+				if (open) {
+					event.preventDefault();
+					close();
+				}
+				break;
+		}
+	}
 
 	function handleInput(event: CustomEvent<string>) {
 		searchQuery = event.detail;
 		open = true;
+		highlightedIndex = 0;
 	}
 
 	function handleFocus() {
@@ -60,17 +121,19 @@
 		searchQuery = option.label;
 		dispatch('change', option.value);
 		open = false;
+		highlightedIndex = -1;
 	}
 
 	function clearSelection() {
 		searchQuery = '';
 		dispatch('change', '');
-		open = false;
+		open = true;
+		highlightedIndex = 0;
 		inputElement?.focus();
 	}
 </script>
 
-<div class="relative" use:clickOutside={close} class:w-full={fullWidth}>
+<div class="relative" use:clickOutside={close} class:w-full={fullWidth} on:keydown={handleKeyDown}>
 	<FormInput
 		{label}
 		{description}
@@ -109,13 +172,22 @@
 
 	{#if open && filteredOptions.length > 0}
 		<div
-			class="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+			role="listbox"
+			class="absolute top-full z-50 mt-1 w-full overflow-y-auto rounded-xl border border-neutral-300 bg-white p-1 shadow-sm dark:border-neutral-700/60 dark:bg-neutral-800 {constrainMenuHeight
+				? 'max-h-60'
+				: ''}"
 		>
-			{#each filteredOptions as option}
+			{#each filteredOptions as option, index}
 				<button
 					type="button"
+					role="option"
+					aria-selected={highlightedIndex === index}
+					on:mouseenter={() => (highlightedIndex = index)}
 					on:mousedown={() => selectOption(option)}
-					class="w-full px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
+					class="w-full rounded-xl px-3 py-2 text-left text-sm transition-colors {highlightedIndex ===
+					index
+						? 'text-accent-700 dark:text-accent-300'
+						: 'text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800'}"
 				>
 					<slot name="item" {option}>
 						{option.label}

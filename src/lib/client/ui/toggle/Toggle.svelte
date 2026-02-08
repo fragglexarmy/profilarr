@@ -12,7 +12,15 @@
 	export let color: 'accent' | 'amber' | 'green' | 'red' | 'neutral' = 'accent';
 	// IconCheckbox passthrough props
 	export let icon: ComponentType = Check;
-	export let checkboxColor: 'accent' | 'blue' | 'green' | 'red' | 'neutral' | `#${string}` | '' = '';
+	export let checkboxColor:
+		| 'accent'
+		| 'blue'
+		| 'green'
+		| 'red'
+		| 'neutral'
+		| `#${string}`
+		| `var(--${string})`
+		| '' = '';
 	export let shape: 'square' | 'circle' | 'rounded' = 'circle';
 	export let variant: 'filled' | 'outline' = 'filled';
 	export let iconColor: string = '';

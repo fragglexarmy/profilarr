@@ -22,6 +22,8 @@
 	export let rel: string | undefined = undefined;
 	// Alignment for content (center or between for dropdowns)
 	export let justify: 'center' | 'between' = 'center';
+	export let title: string = '';
+	export let ariaLabel: string = '';
 
 	let isSmallScreen = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -74,7 +76,17 @@
 </script>
 
 {#if href}
-	<a {href} {target} {rel} class={classes} on:click on:mouseenter on:mouseleave>
+	<a
+		{href}
+		{target}
+		{rel}
+		title={title || undefined}
+		aria-label={ariaLabel || undefined}
+		class={classes}
+		on:click
+		on:mouseenter
+		on:mouseleave
+	>
 		{#if icon && iconPosition === 'left'}
 			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
 		{/if}
@@ -87,7 +99,16 @@
 		{/if}
 	</a>
 {:else}
-	<button {type} {disabled} class={classes} on:click on:mouseenter on:mouseleave>
+	<button
+		{type}
+		{disabled}
+		title={title || undefined}
+		aria-label={ariaLabel || undefined}
+		class={classes}
+		on:click
+		on:mouseenter
+		on:mouseleave
+	>
 		{#if icon && iconPosition === 'left'}
 			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
 		{/if}

@@ -21,6 +21,10 @@
 	let textareaElement: HTMLTextAreaElement;
 	let inputElement: HTMLInputElement;
 
+	$: stateClass = disabled
+		? 'bg-neutral-100 text-neutral-500 cursor-not-allowed dark:bg-neutral-800/40 dark:text-neutral-500'
+		: 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600';
+
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
 		value = target.value;
@@ -141,7 +145,7 @@
 
 <div class="space-y-2">
 	{#if label}
-		<label for={id} class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+		<label for={id} class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
 			{label}
 			{#if required}
 				<span class="text-red-500">*</span>
@@ -150,7 +154,7 @@
 	{/if}
 
 	{#if description}
-		<p class="text-xs text-neutral-500 dark:text-neutral-400">
+		<p class="text-xs text-neutral-600 dark:text-neutral-400">
 			{description}
 		</p>
 	{/if}
@@ -160,7 +164,7 @@
 		{#if markdown}
 			<!-- Toolbar -->
 			<div
-				class="flex items-center justify-between rounded-t-lg border border-neutral-300 bg-neutral-50 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800/50 {showPreview
+				class="flex items-center justify-between rounded-t-xl border border-neutral-300 bg-neutral-50/80 px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/40 {showPreview
 					? 'border-b-0'
 					: ''}"
 			>
@@ -171,7 +175,7 @@
 							onclick={btn.action}
 							title={btn.title}
 							disabled={disabled || showPreview}
-							class="rounded p-1.5 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+							class="rounded-md p-1.5 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
 						>
 							<svelte:component this={btn.icon} size={16} />
 						</button>
@@ -181,8 +185,8 @@
 					type="button"
 					onclick={() => (showPreview = !showPreview)}
 					title={showPreview ? 'Edit' : 'Preview'}
-					class="flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors {showPreview
-						? 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400'
+					class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors {showPreview
+						? 'bg-neutral-200 text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100'
 						: 'text-neutral-600 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700'}"
 				>
 					{#if showPreview}
@@ -199,7 +203,7 @@
 		{#if showPreview && markdown}
 			<!-- Preview -->
 			<div
-				class="prose prose-sm max-w-none rounded-b-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+				class="prose prose-sm max-w-none rounded-b-xl border border-neutral-300 bg-white px-3 py-2 text-neutral-900 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-100"
 			>
 				{@html renderMarkdown(value)}
 			</div>
@@ -220,8 +224,8 @@
 				oninput={handleInput}
 				onkeydown={handleKeydown}
 				class="{markdown
-					? 'rounded-t-none rounded-b-lg border-t-0'
-					: 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+					? 'rounded-t-none rounded-b-xl border-t-0'
+					: 'rounded-xl'} block w-full border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {stateClass}"
 			></textarea>
 		{:else}
 			<!-- Single-line input -->
@@ -237,8 +241,8 @@
 				oninput={handleInput}
 				onkeydown={handleKeydown}
 				class="{markdown
-					? 'rounded-t-none rounded-b-lg border-t-0'
-					: 'rounded-lg'} block w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600"
+					? 'rounded-t-none rounded-b-xl border-t-0'
+					: 'rounded-xl'} block w-full border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {stateClass}"
 			/>
 		{/if}
 	</div>
