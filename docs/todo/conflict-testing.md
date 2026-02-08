@@ -432,115 +432,86 @@ local description. Align keeps upstream name + upstream description.
 
 ## 2. Quality Profiles
 
-### 2.1 General — name rename conflict
+Comprehensive QP conflict coverage modeled after CF learnings.
 
-**Setup:** Base creates QP "HD Bluray". User renames to "HD BluRay". Upstream
-renames to "HD-Bluray".
+### Execution Order
 
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | QP named "HD BluRay". | - [ ] |
-| b | Align | QP named "HD-Bluray". | - [ ] |
+1. Foundations (no-conflict + auto-align): `2.1`-`2.8`
+2. Rename family: `2.9`-`2.14`
+3. General field conflicts: `2.15`-`2.20`
+4. Qualities (full-replace surface): `2.21`-`2.26`
+5. Scoring: `2.27`-`2.34`
+6. Lifecycle + dependencies + strategy: `2.35`-`2.40`
 
-### 2.2 General — description conflict
+### 2.1-2.8 Foundations (No-Conflict + Auto-Align)
 
-**Setup:** User changes QP description. Upstream also changes description.
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.1 | Tags-only local vs upstream description | No conflict | Tag change applies; upstream description applies | `src/tests/e2e/specs/2.1-qp-tags-only-vs-upstream-description.spec.ts` | - [ ] |
+| 2.2 | Local rename vs upstream description | No conflict | Local name persists; upstream description applies | `src/tests/e2e/specs/2.2-qp-local-rename-vs-upstream-description.spec.ts` | - [ ] |
+| 2.3 | Local description vs upstream tags | No conflict | Local description persists; upstream tags merge | `src/tests/e2e/specs/2.3-qp-local-description-vs-upstream-tags.spec.ts` | - [ ] |
+| 2.4 | Local scoring-only vs upstream general-only | No conflict | Both non-overlapping changes apply | `src/tests/e2e/specs/2.4-qp-local-scoring-vs-upstream-general.spec.ts` | - [ ] |
+| 2.5 | Local qualities-only vs upstream scoring-only | No conflict | Both non-overlapping changes apply | `src/tests/e2e/specs/2.5-qp-local-qualities-vs-upstream-scoring.spec.ts` | - [ ] |
+| 2.6 | Local description change, upstream same value | Auto-align | No conflict row; user op dropped | `src/tests/e2e/specs/2.6-qp-description-same-value-auto-align.spec.ts` | - [ ] |
+| 2.7 | Local delete, upstream already deleted | Auto-align | No conflict row; profile remains deleted | `src/tests/e2e/specs/2.7-qp-delete-upstream-deleted-auto-align.spec.ts` | - [ ] |
+| 2.8 | Local delete, upstream renamed | Auto-align | No conflict row; profile persists under upstream name | `src/tests/e2e/specs/2.8-qp-delete-upstream-renamed-auto-align.spec.ts` | - [ ] |
 
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's description wins. | - [ ] |
-| b | Align | Upstream's description wins. | - [ ] |
+### 2.9-2.14 Rename Family
 
-### 2.3 General — language change conflict
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.9 | Rename vs rename | Conflict | Override: local rename. Align: upstream rename | `src/tests/e2e/specs/2.9-qp-rename-vs-rename-conflict.spec.ts` | - [ ] |
+| 2.10 | Upstream rename + local description | Conflict | Override: upstream name + local description. Align: upstream name + upstream description | `src/tests/e2e/specs/2.10-qp-upstream-rename-local-description-conflict.spec.ts` | - [ ] |
+| 2.11 | Upstream rename + local scoring | Conflict | Override: upstream name + local scoring. Align: upstream name + upstream scoring | `src/tests/e2e/specs/2.11-qp-upstream-rename-local-scoring-conflict.spec.ts` | - [ ] |
+| 2.12 | Upstream rename + local qualities | Conflict | Override: upstream name + local qualities. Align: upstream name + upstream qualities | `src/tests/e2e/specs/2.12-qp-upstream-rename-local-qualities-conflict.spec.ts` | - [ ] |
+| 2.13 | Local rename+description vs upstream description | Conflict | Override: local name + local description. Align: upstream name + upstream description | `src/tests/e2e/specs/2.13-qp-local-rename-description-vs-upstream-description.spec.ts` | - [ ] |
+| 2.14 | Local rename+scoring vs upstream scoring | Conflict | Override: local name + local scoring. Align: upstream name + upstream scoring | `src/tests/e2e/specs/2.14-qp-local-rename-scoring-vs-upstream-scoring.spec.ts` | - [ ] |
 
-**Setup:** User changes language from "English" to "Any". Upstream changes
-language to "Original".
+### 2.15-2.20 General Field Conflicts
 
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Language is "Any". | - [ ] |
-| b | Align | Language is "Original". | - [ ] |
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.15 | Description conflict | Conflict | Override: local description. Align: upstream description | `src/tests/e2e/specs/2.15-qp-description-conflict.spec.ts` | - [ ] |
+| 2.16 | Language conflict | Conflict | Override: local language. Align: upstream language | `src/tests/e2e/specs/2.16-qp-language-conflict.spec.ts` | - [ ] |
+| 2.17 | Tag remove/add overlap merge | No conflict | Expected merged tags, no conflict row | `src/tests/e2e/specs/2.17-qp-tags-overlap-merge-no-conflict.spec.ts` | - [ ] |
+| 2.18 | General multi-field conflict | Conflict | Override: local guarded fields, upstream non-guarded. Align: upstream full state | `src/tests/e2e/specs/2.18-qp-general-multi-field-conflict.spec.ts` | - [ ] |
+| 2.19 | Create duplicate (general-only payload) | Conflict | Override: local general values. Align: upstream general values | `src/tests/e2e/specs/2.19-qp-create-duplicate-general-only.spec.ts` | - [ ] |
+| 2.20 | Local general update while upstream deletes profile | Conflict | Override: profile re-created with local general values. Align: profile stays deleted | `src/tests/e2e/specs/2.20-qp-local-general-update-upstream-deleted.spec.ts` | - [ ] |
 
-### 2.4 General — upstream rename + user description change
+### 2.21-2.26 Qualities (Full-Replace Surface)
 
-**Setup:** User changes description. Upstream renames QP.
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.21 | Reorder vs reorder | Conflict | Override: local order. Align: upstream order | `src/tests/e2e/specs/2.21-qp-qualities-reorder-vs-reorder.spec.ts` | - [ ] |
+| 2.22 | Local add group vs upstream reorder | Conflict | Override: local list with group. Align: upstream list without group | `src/tests/e2e/specs/2.22-qp-qualities-add-group-vs-reorder.spec.ts` | - [ ] |
+| 2.23 | Local remove group vs upstream reorder | Conflict | Override: local group removal. Align: upstream list | `src/tests/e2e/specs/2.23-qp-qualities-remove-group-vs-reorder.spec.ts` | - [ ] |
+| 2.24 | Local upgrade-until toggle vs upstream toggle | Conflict | Override: local toggle state. Align: upstream toggle state | `src/tests/e2e/specs/2.24-qp-qualities-upgrade-until-toggle-conflict.spec.ts` | - [ ] |
+| 2.25 | Local enabled toggles vs upstream order | Conflict | Override: local enabled states + local list. Align: upstream list + states | `src/tests/e2e/specs/2.25-qp-qualities-enabled-toggles-vs-order.spec.ts` | - [ ] |
+| 2.26 | Local qualities desired already matches upstream | Auto-align | No conflict row; user op dropped | `src/tests/e2e/specs/2.26-qp-qualities-desired-matches-upstream-auto-align.spec.ts` | - [ ] |
 
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | QP keeps upstream's name, user's description applied. Rename chain resolves the current name. | - [ ] |
-| b | Align | QP has upstream's name and description. | - [ ] |
+### 2.27-2.34 Scoring
 
-### 2.5 Qualities — ordered items conflict
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.27 | `minimum_custom_format_score` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.27-qp-scoring-minimum-score-conflict.spec.ts` | - [ ] |
+| 2.28 | `upgrade_until_score` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.28-qp-scoring-upgrade-until-score-conflict.spec.ts` | - [ ] |
+| 2.29 | `upgrade_score_increment` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.29-qp-scoring-upgrade-score-increment-conflict.spec.ts` | - [ ] |
+| 2.30 | CF score same row (`custom_format_name + arr_type`) | Conflict | Override: local score. Align: upstream score | `src/tests/e2e/specs/2.30-qp-scoring-cf-score-same-row-conflict.spec.ts` | - [ ] |
+| 2.31 | CF score different `arr_type` | No conflict | Both scores apply on separate rows | `src/tests/e2e/specs/2.31-qp-scoring-cf-score-different-arr-type-no-conflict.spec.ts` | - [ ] |
+| 2.32 | Local add CF score vs upstream add same row | Conflict | Override: local row value. Align: upstream row value | `src/tests/e2e/specs/2.32-qp-scoring-add-cf-score-vs-upstream-add-same-row.spec.ts` | - [ ] |
+| 2.33 | Local delete CF score vs upstream update same row | Conflict | Override: row removed. Align: upstream updated row remains | `src/tests/e2e/specs/2.33-qp-scoring-delete-cf-score-vs-upstream-update.spec.ts` | - [ ] |
+| 2.34 | Mixed scoring op vs upstream profile-field change | Conflict | Override: local mixed desired state. Align: upstream profile settings and scores | `src/tests/e2e/specs/2.34-qp-scoring-mixed-op-vs-upstream-profile-field.spec.ts` | - [ ] |
 
-**Setup:** User reorders qualities (moves 1080p above 720p). Upstream also
-reorders (moves 4K to top).
+### 2.35-2.40 Lifecycle + Dependencies + Strategy
 
-**Conflict:** Qualities are a full-replace operation. Guard mismatch on the
-delete step (deletes with value guards on old positions).
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Quality order matches user's desired order. | - [ ] |
-| b | Align | Quality order matches upstream's order. | - [ ] |
-
-### 2.6 Qualities — user adds quality group, upstream changes order
-
-**Setup:** User creates a quality group. Upstream reorders qualities.
-
-**Conflict:** Both touch the qualities ordered list.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's full quality list (including the group) is written. | - [ ] |
-| b | Align | Upstream's quality list (no user group). | - [ ] |
-
-### 2.7 Scoring — profile-level setting conflict
-
-**Setup:** User changes `minimum_custom_format_score` from 0 to 10. Upstream
-changes it to 5.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Minimum score is 10. | - [ ] |
-| b | Align | Minimum score is 5. | - [ ] |
-
-### 2.8 Scoring — CF score conflict
-
-**Setup:** User sets score for CF "HDR10+" to 100 (arr_type: all). Upstream sets
-same CF score to 50.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | CF "HDR10+" score is 100. Other scores unchanged. | - [ ] |
-| b | Align | CF "HDR10+" score is 50. | - [ ] |
-
-### 2.9 Scoring — user adds score, upstream changes profile setting
-
-**Setup:** User adds a new CF score. Upstream changes `upgrade_until_score`. If
-both are in the same op, conflict on the profile-level guard.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's CF score applied, plus user's desired profile settings (or current if user didn't change them). | - [ ] |
-| b | Align | Upstream's profile settings. User's CF score gone. | - [ ] |
-
-### 2.10 Create conflict — duplicate key
-
-**Setup:** User creates QP "My Profile". Upstream also creates QP "My Profile".
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | QP "My Profile" has user's desired general + qualities + scoring. | - [ ] |
-| b | Align | QP "My Profile" has upstream's values. | - [ ] |
-
-### 2.11 Delete conflict
-
-**Setup:** User deletes QP "Old Profile". Upstream renames it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. QP persists with upstream's name. | - [ ] |
-| b | Align | Delete op dropped. QP persists. | - [ ] |
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.35 | Create duplicate (full payload: general+qualities+scoring) | Conflict | Override: local full desired state. Align: upstream full state | `src/tests/e2e/specs/2.35-qp-create-duplicate-full-payload.spec.ts` | - [ ] |
+| 2.36 | Local delete vs upstream general update | No conflict | Delete remains effective; profile absent locally | `src/tests/e2e/specs/2.36-qp-delete-vs-upstream-general-update.spec.ts` | - [ ] |
+| 2.37 | Local delete vs upstream rename | Auto-align | No conflict row; profile persists with upstream rename | `src/tests/e2e/specs/2.37-qp-delete-vs-upstream-rename-auto-align.spec.ts` | - [ ] |
+| 2.38 | Scoring dependsOn CF renamed upstream | Dependency conflict | Override/align behavior is deterministic and documented for renamed dependency | `src/tests/e2e/specs/2.38-qp-scoring-depends-on-cf-renamed.spec.ts` | - [ ] |
+| 2.39 | Scoring dependsOn CF deleted upstream | Dependency conflict | Override/align behavior is deterministic and documented for deleted dependency | `src/tests/e2e/specs/2.39-qp-scoring-depends-on-cf-deleted.spec.ts` | - [ ] |
+| 2.40 | DB strategy `conflict_strategy=align` auto-drop | Strategy behavior | Conflicts are auto-dropped during compile and do not surface in UI | `src/tests/e2e/specs/2.40-qp-conflict-strategy-align-auto-drop.spec.ts` | - [ ] |
 
 ---
 

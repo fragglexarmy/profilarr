@@ -13,9 +13,9 @@ Status legend: `- [ ]` pending, `- [x]` done.
 - [ ] Regex general: split tags vs guarded fields (name/description/pattern).
 
 **3. Quality Profiles**
-- [ ] QP general: split tags vs guarded fields (name/description/upgradeAllowed/cutoff).
-- [ ] QP qualities: split per quality row change.
-- [ ] QP scoring: split per custom format score row change.
+- [x] QP general: split tags vs guarded fields (name/description/upgradeAllowed/cutoff).
+- [x] QP qualities: split per quality row change.
+- [x] QP scoring: split per custom format score row change.
 
 **4. Delay Profiles**
 - [ ] Delay profile general: split tags vs guarded fields (name/description/order).
