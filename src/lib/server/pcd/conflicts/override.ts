@@ -4,12 +4,12 @@ import { compile } from '$pcd/index.ts';
 import type { WriteResult } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
 import {
+	dropOp,
 	parseJson,
 	parseOpIdFromFilepath,
-	supersedeOp,
-	dropOp,
+	type StoredDesiredState,
 	type StoredOpMetadata,
-	type StoredDesiredState
+	supersedeOp
 } from './overrideUtils.ts';
 import {
 	overrideCreate as cfOverrideCreate,
@@ -86,7 +86,10 @@ async function overrideEntity(
 				? qdOverrideCreate(databaseId, metadata, desiredState)
 				: qdOverrideUpdate(databaseId, metadata, desiredState);
 		default:
-			return { success: false, error: `Override not yet implemented for entity: ${entity}` };
+			return {
+				success: false,
+				error: `Override not yet implemented for entity: ${entity}`
+			};
 	}
 }
 
@@ -102,46 +105,62 @@ export async function overrideConflict(input: {
 	}
 
 	if (op.origin !== 'user' || op.state !== 'published') {
-		return { success: false, error: 'Only published user operations can be overridden' };
+		return {
+			success: false,
+			error: 'Only published user operations can be overridden'
+		};
 	}
 
 	const metadata = parseJson<StoredOpMetadata>(op.metadata);
 	const desiredState = parseJson<StoredDesiredState>(op.desired_state);
 	const operation = metadata?.operation ?? 'update';
 
-	let result: WriteResult;
+	const instance = databaseInstancesQueries.getById(databaseId);
 
 	if (operation === 'delete') {
 		const dropped = await dropOp(databaseId, opId);
 		if (!dropped) {
-			return { success: false, error: 'Failed to drop conflicting delete operation' };
+			return {
+				success: false,
+				error: 'Failed to drop conflicting delete operation'
+			};
 		}
-		const instance = databaseInstancesQueries.getById(databaseId);
 		if (instance?.enabled) {
 			await compile(instance.local_path, databaseId);
 		}
-		result = { success: true };
-	} else {
-		result = await overrideEntity(databaseId, metadata, desiredState, operation);
+
+		await logger.info('Overrode conflict', {
+			source: 'PCDConflicts',
+			meta: { databaseId, opId }
+		});
+
+		return { success: true };
 	}
 
+	const result: WriteResult = await overrideEntity(databaseId, metadata, desiredState, operation);
 	if (!result.success) {
-		return { success: false, error: result.error || 'Failed to override conflict' };
+		return {
+			success: false,
+			error: result.error || 'Failed to override conflict'
+		};
 	}
 
 	const newOpId = parseOpIdFromFilepath(result.filepath ?? null);
-	let resolved = false;
-	if (newOpId) {
-		resolved = await supersedeOp(databaseId, opId, newOpId);
-	} else {
-		resolved = await dropOp(databaseId, opId);
+	const resolved = newOpId
+		? await supersedeOp(databaseId, opId, newOpId)
+		: await dropOp(databaseId, opId);
+
+	if (!resolved) {
+		return {
+			success: false,
+			error: newOpId
+				? 'Failed to supersede conflicting operation'
+				: 'Failed to drop conflicting operation'
+		};
 	}
 
-	if (resolved) {
-		const instance = databaseInstancesQueries.getById(databaseId);
-		if (instance?.enabled) {
-			await compile(instance.local_path, databaseId);
-		}
+	if (instance?.enabled) {
+		await compile(instance.local_path, databaseId);
 	}
 
 	await logger.info('Overrode conflict', {

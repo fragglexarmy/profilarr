@@ -10,6 +10,7 @@
 import type { PCDCache } from '$pcd/index.ts';
 import { writeOperation, type OperationLayer, type WriteResult } from '$pcd/index.ts';
 import type { ConditionData } from '$shared/pcd/display.ts';
+import { uuid } from '$shared/utils/uuid.ts';
 import { logger } from '$logger/logger.ts';
 
 interface UpdateConditionsOptions {
@@ -193,23 +194,51 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		summary: string;
 		title: string;
 		changedFields: string[];
+		groupId?: string;
 		dependsOn?: Array<{ entity: string; key: string; value: string }>;
 	}> = [];
 
 	// 1. Delete removed conditions (cascade will handle type-specific tables)
 	const conditionsToDelete = originalConditions.filter((c) => !newConditionNames.has(c.name));
+	const newConditions = conditions.filter((c) => !originalConditionNames.has(c.name));
+
+	// Renames are emitted as delete+add. Group matching pairs so align drops both together.
+	const groupedDeleteByName = new Map<string, string>();
+	const groupedAddByName = new Map<string, string>();
+	const newConditionsByFingerprint = new Map<string, ConditionData[]>();
+
+	for (const condition of newConditions) {
+		const fingerprint = getConditionFingerprint(condition);
+		const existing = newConditionsByFingerprint.get(fingerprint) ?? [];
+		existing.push(condition);
+		newConditionsByFingerprint.set(fingerprint, existing);
+	}
+
+	for (const condition of conditionsToDelete) {
+		const fingerprint = getConditionFingerprint(condition);
+		const candidates = newConditionsByFingerprint.get(fingerprint);
+		if (!candidates || candidates.length === 0) continue;
+
+		const match = candidates.shift();
+		if (!match) continue;
+
+		const groupId = uuid();
+		groupedDeleteByName.set(condition.name, groupId);
+		groupedAddByName.set(match.name, groupId);
+	}
+
 	for (const condition of conditionsToDelete) {
 		const deleteQueries = [
 			{
-			sql: `DELETE FROM custom_format_conditions
-WHERE custom_format_name = '${esc(formatName)}'
-  AND name = '${esc(condition.name)}'
-  AND type = '${esc(condition.type)}'
-  AND arr_type = '${esc(condition.arrType ?? 'all')}'
-  AND negate = ${condition.negate ? 1 : 0}
-  AND required = ${condition.required ? 1 : 0}`,
-			parameters: [],
-			query: {} as never
+				sql: `DELETE FROM custom_format_conditions
+	WHERE custom_format_name = '${esc(formatName)}'
+	  AND name = '${esc(condition.name)}'
+	  AND type = '${esc(condition.type)}'
+	  AND arr_type = '${esc(condition.arrType ?? 'all')}'
+	  AND negate = ${condition.negate ? 1 : 0}
+	  AND required = ${condition.required ? 1 : 0}`,
+				parameters: [],
+				query: {} as never
 			}
 		];
 
@@ -229,12 +258,12 @@ WHERE custom_format_name = '${esc(formatName)}'
 			},
 			summary: 'Remove custom format condition',
 			title: `Remove condition "${condition.name}" from "${formatName}"`,
-			changedFields: ['conditions', `condition:${condition.name}`]
+			changedFields: ['conditions', `condition:${condition.name}`],
+			groupId: groupedDeleteByName.get(condition.name)
 		});
 	}
 
 	// 2. Handle new conditions (names not in original)
-	const newConditions = conditions.filter((c) => !originalConditionNames.has(c.name));
 	for (const condition of newConditions) {
 		const insertQueries: Array<{ sql: string; parameters: unknown[]; query: never }> = [];
 
@@ -275,6 +304,7 @@ VALUES ('${esc(formatName)}', '${esc(condition.name)}', '${esc(condition.type)}'
 			summary: 'Add custom format condition',
 			title: `Add condition "${condition.name}" to "${formatName}"`,
 			changedFields: ['conditions', `condition:${condition.name}`],
+			groupId: groupedAddByName.get(condition.name),
 			dependsOn: regexDependencies.map((name) => ({
 				entity: 'regular_expression',
 				key: 'regular_expression_name',
@@ -432,6 +462,7 @@ WHERE custom_format_name = '${esc(formatName)}'
 				changedFields: op.changedFields,
 				summary: op.summary,
 				title: op.title,
+				...(op.groupId ? { groupId: op.groupId } : {}),
 				...(op.dependsOn && op.dependsOn.length > 0 ? { dependsOn: op.dependsOn } : {})
 			}
 		});
@@ -650,6 +681,13 @@ function getRegexDependencies(condition: ConditionData): string[] {
 	return (condition.patterns ?? [])
 		.map((pattern) => pattern.name.trim())
 		.filter(Boolean);
+}
+
+function getConditionFingerprint(condition: ConditionData): string {
+	return JSON.stringify({
+		base: baseSnapshot(condition),
+		values: getConditionValues(condition)
+	});
 }
 
 /**
