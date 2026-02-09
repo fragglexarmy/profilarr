@@ -19,14 +19,14 @@
 				? 'scale-100 rotate-0 opacity-100'
 				: 'scale-75 rotate-180 opacity-0'}"
 		>
-			<span class="text-lg">🌙</span>
+			<span class="text-lg">✨</span>
 		</div>
 		<div
 			class="absolute transition-all duration-300 {isDark
 				? 'scale-75 -rotate-180 opacity-0'
 				: 'scale-100 rotate-0 opacity-100'}"
 		>
-			<span class="text-lg">☀️</span>
+			<span class="text-lg">💡</span>
 		</div>
 	{:else}
 		<!-- Lucide icon mode -->
