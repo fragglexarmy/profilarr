@@ -4,9 +4,6 @@ import type {
 	RadarrMovieFile,
 	RadarrQualityProfile,
 	RadarrLibraryItem,
-	ScoreBreakdownItem,
-	CustomFormatRef,
-	QualityProfileFormatItem,
 	RadarrTag,
 	ArrCommand,
 	RadarrRelease,
@@ -45,22 +42,6 @@ export class RadarrClient extends BaseArrClient {
 		// Build query string with repeated movieId params
 		const queryString = movieIds.map((id) => `movieId=${id}`).join('&');
 		return this.get<RadarrMovieFile[]>(`/api/${this.apiVersion}/moviefile?${queryString}`);
-	}
-
-	/**
-	 * Compute score breakdown for a movie's custom formats against a profile's format items
-	 */
-	private computeScoreBreakdown(
-		movieCustomFormats: CustomFormatRef[],
-		profileFormatItems: QualityProfileFormatItem[]
-	): ScoreBreakdownItem[] {
-		return movieCustomFormats.map((cf) => {
-			const profileItem = profileFormatItems.find((fi) => fi.format === cf.id);
-			return {
-				name: cf.name,
-				score: profileItem?.score ?? 0
-			};
-		});
 	}
 
 	/**

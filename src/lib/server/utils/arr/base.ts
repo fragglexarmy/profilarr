@@ -12,7 +12,10 @@ import type {
 	ArrCommand,
 	ArrLogResponse,
 	ArrLogFile,
-	ArrLogParams
+	ArrLogParams,
+	CustomFormatRef,
+	QualityProfileFormatItem,
+	ScoreBreakdownItem
 } from './types.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -38,6 +41,22 @@ export class BaseArrClient extends BaseHttpClient {
 			retries: options?.retries
 		});
 		this.apiKey = apiKey;
+	}
+
+	/**
+	 * Compute score breakdown for custom formats against a profile's format items
+	 */
+	protected computeScoreBreakdown(
+		customFormats: CustomFormatRef[],
+		profileFormatItems: QualityProfileFormatItem[]
+	): ScoreBreakdownItem[] {
+		return customFormats.map((cf) => {
+			const profileItem = profileFormatItems.find((fi) => fi.format === cf.id);
+			return {
+				name: cf.name,
+				score: profileItem?.score ?? 0
+			};
+		});
 	}
 
 	/**

@@ -40,49 +40,59 @@
 	) => void;
 	export let onRefresh: () => void;
 	export let onOpen: () => void;
+	export let instanceType: string = 'radarr';
+
+	$: isRadarr = instanceType === 'radarr';
+	$: searchPlaceholder = isRadarr ? 'Search movies...' : 'Search series...';
+	$: openLabel = isRadarr ? 'Open in Radarr' : 'Open in Sonarr';
+	$: filterDescription = isRadarr
+		? 'Filter movies by quality or profile'
+		: 'Filter series by profile';
 </script>
 
 <ActionsBar>
-	<SearchAction {searchStore} placeholder="Search movies..." responsive />
+	<SearchAction {searchStore} placeholder={searchPlaceholder} responsive />
 	<ActionButton icon={SlidersHorizontal} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
 			<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="16rem">
 				<div class="border-b border-neutral-100 px-4 py-3 dark:border-neutral-700">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">
-						Filter movies by quality or profile
+						{filterDescription}
 					</p>
 				</div>
 				<div class="max-h-96 overflow-y-auto">
-					<!-- Quality Filter -->
-					<div class="border-b border-neutral-100 dark:border-neutral-700">
-						<div class="bg-neutral-50 px-3 py-2 dark:bg-neutral-800">
-							<span
-								class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-400"
-								>Quality</span
-							>
-						</div>
-						{#each uniqueQualities as quality}
-							<button
-								type="button"
-								on:click={() => onToggleFilter('qualityName', 'eq', quality, quality)}
-								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {activeFilters.find(
-									(f) => f.field === 'qualityName' && f.value === quality
-								)
-									? 'bg-neutral-50 dark:bg-neutral-700'
-									: ''}"
-							>
-								<span class="text-neutral-700 dark:text-neutral-300">{quality}</span>
-								<IconCheckbox
-									checked={!!activeFilters.find(
+					<!-- Quality Filter (Radarr only) -->
+					{#if isRadarr && uniqueQualities.length > 0}
+						<div class="border-b border-neutral-100 dark:border-neutral-700">
+							<div class="bg-neutral-50 px-3 py-2 dark:bg-neutral-800">
+								<span
+									class="text-xs font-medium tracking-wider text-neutral-500 uppercase dark:text-neutral-400"
+									>Quality</span
+								>
+							</div>
+							{#each uniqueQualities as quality}
+								<button
+									type="button"
+									on:click={() => onToggleFilter('qualityName', 'eq', quality, quality)}
+									class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {activeFilters.find(
 										(f) => f.field === 'qualityName' && f.value === quality
-									)}
-									icon={Check}
-									color="blue"
-									shape="circle"
-								/>
-							</button>
-						{/each}
-					</div>
+									)
+										? 'bg-neutral-50 dark:bg-neutral-700'
+										: ''}"
+								>
+									<span class="text-neutral-700 dark:text-neutral-300">{quality}</span>
+									<IconCheckbox
+										checked={!!activeFilters.find(
+											(f) => f.field === 'qualityName' && f.value === quality
+										)}
+										icon={Check}
+										color="blue"
+										shape="circle"
+									/>
+								</button>
+							{/each}
+						</div>
+					{/if}
 
 					<!-- Profile Filter -->
 					<div>
@@ -169,7 +179,7 @@
 					on:click={onOpen}
 					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
 				>
-					Open in Radarr
+					{openLabel}
 				</button>
 			</Dropdown>
 		</svelte:fragment>

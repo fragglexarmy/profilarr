@@ -365,6 +365,44 @@ export interface SonarrRelease {
 }
 
 // =============================================================================
+// Sonarr Episode/File Types
+// =============================================================================
+
+/**
+ * Episode from /api/v3/episode
+ */
+export interface SonarrEpisode {
+	id: number;
+	seriesId: number;
+	seasonNumber: number;
+	episodeNumber: number;
+	title: string;
+	hasFile: boolean;
+	monitored: boolean;
+	episodeFileId: number;
+	airDateUtc?: string;
+}
+
+/**
+ * Episode file from /api/v3/episodefile
+ */
+export interface SonarrEpisodeFile {
+	id: number;
+	seriesId: number;
+	seasonNumber: number;
+	relativePath?: string;
+	size: number;
+	dateAdded?: string;
+	quality: {
+		quality: { id: number; name: string; source?: string; resolution?: number };
+		revision?: { version: number; real: number; isRepack?: boolean };
+	};
+	customFormats: CustomFormatRef[];
+	customFormatScore: number;
+	qualityCutoffNotMet: boolean;
+}
+
+// =============================================================================
 // Library View Types (computed/joined data)
 // =============================================================================
 
@@ -404,6 +442,63 @@ export interface RadarrLibraryItem {
 	progress: number; // customFormatScore / cutoffFormatScore (0-1, can exceed 1)
 	cutoffMet: boolean;
 	isProfilarrProfile: boolean; // true if profile name matches a Profilarr database profile
+}
+
+/**
+ * Computed episode item for Sonarr library view
+ */
+export interface SonarrEpisodeItem {
+	id: number;
+	episodeNumber: number;
+	seasonNumber: number;
+	title: string;
+	hasFile: boolean;
+	monitored: boolean;
+	qualityName?: string;
+	fileName?: string;
+	size?: number;
+	customFormats: CustomFormatRef[];
+	customFormatScore: number;
+	scoreBreakdown: ScoreBreakdownItem[];
+	cutoffScore: number;
+	progress: number;
+	cutoffMet: boolean;
+}
+
+/**
+ * Season summary for Sonarr library view
+ */
+export interface SonarrSeasonItem {
+	seasonNumber: number;
+	monitored: boolean;
+	episodeCount: number;
+	episodeFileCount: number;
+	totalEpisodeCount: number;
+	sizeOnDisk: number;
+	percentOfEpisodes: number;
+}
+
+/**
+ * Sonarr library item (series-level) with all computed fields for the UI
+ */
+export interface SonarrLibraryItem {
+	id: number;
+	tvdbId?: number;
+	title: string;
+	year?: number;
+	qualityProfileId: number;
+	qualityProfileName: string;
+	status?: string;
+	monitored: boolean;
+	seasonCount: number;
+	episodeCount: number;
+	episodeFileCount: number;
+	totalEpisodeCount: number;
+	sizeOnDisk: number;
+	percentOfEpisodes: number;
+	dateAdded?: string;
+	seasons: SonarrSeasonItem[];
+	isProfilarrProfile: boolean;
 }
 
 // =============================================================================
