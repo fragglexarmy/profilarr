@@ -77,7 +77,7 @@
 			<button
 				type="button"
 				on:click={() => (dropdownOpen = !dropdownOpen)}
-				class="flex w-full items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+				class="flex w-full items-center justify-between gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-100 dark:hover:bg-neutral-700"
 			>
 				<span class="flex items-center gap-2">
 					{#if activeTab?.icon}
