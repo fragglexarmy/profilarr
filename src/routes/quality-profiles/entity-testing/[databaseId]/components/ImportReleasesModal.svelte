@@ -136,7 +136,16 @@
 			if (data.error) {
 				alertStore.add('error', data.error);
 			} else {
-				libraryItems = data.items || [];
+				libraryItems = (data.items || []).map((item: any) => ({
+					id: item.id,
+					title: item.title,
+					year: item.year,
+					tmdbId: item.tmdbId,
+					tvdbId: item.tvdbId,
+					seasons: item.seasons?.map((s: any) =>
+						typeof s === 'number' ? s : s.seasonNumber
+					)
+				}));
 			}
 		} catch (err) {
 			alertStore.add('error', 'Failed to load library');

@@ -88,13 +88,47 @@ export interface paths {
         };
         /**
          * Get Arr instance library
-         * @description Fetches the movie or series library from an Arr instance.
+         * @description Fetches the full movie or series library from an Arr instance with quality profile,
+         *     score, and progress information.
          *
-         *     Returns a simplified list suitable for selection/matching.
-         *     - For Radarr: Returns movies with id, title, year, and tmdbId
-         *     - For Sonarr: Returns series with id, title, year, tvdbId, and available seasons
+         *     - For Radarr: Returns movies with file quality, custom format scores, and cutoff progress
+         *     - For Sonarr: Returns series with season summaries and episode statistics
+         *
+         *     Results include Profilarr profile matching to indicate which items use managed profiles.
+         *     Responses are cached server-side for 5 minutes.
          */
         get: operations["getLibrary"];
+        put?: never;
+        post?: never;
+        /**
+         * Invalidate library cache
+         * @description Clears the server-side cache for an Arr instance's library data.
+         *     The next GET request will fetch fresh data from the Arr instance.
+         */
+        delete: operations["invalidateLibraryCache"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/arr/library/episodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get episode details for a Sonarr series
+         * @description Lazy-loads episode-level data for a specific series in a Sonarr instance.
+         *     Returns episodes with quality, custom format scores, and cutoff progress.
+         *
+         *     This endpoint is designed for on-demand loading when a series row is expanded
+         *     in the library view. Sonarr instances only.
+         *
+         *     Results are cached server-side for 5 minutes per series.
+         */
+        get: operations["getLibraryEpisodes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -247,30 +281,170 @@ export interface components {
          * @enum {string}
          */
         ArrType: "radarr" | "sonarr";
-        LibraryMovieItem: {
+        CustomFormatRef: {
+            /** @description Custom format ID */
+            id: number;
+            /** @description Custom format name */
+            name: string;
+        };
+        ScoreBreakdownItem: {
+            /** @description Custom format name */
+            name: string;
+            /** @description Score assigned by the quality profile */
+            score: number;
+        };
+        ProfileByDatabase: {
+            /** @description Profilarr database ID */
+            databaseId: number;
+            /** @description Profilarr database name */
+            databaseName: string;
+            /** @description Quality profile names in this database */
+            profiles: string[];
+        };
+        ErrorResponse: {
+            /** @description Error message */
+            error: string;
+        };
+        RadarrLibraryItem: {
             /** @description Radarr movie ID */
             id: number;
+            /** @description TMDB ID */
+            tmdbId?: number;
             /** @description Movie title */
             title: string;
             /** @description Release year */
-            year: number;
-            /** @description TMDB ID */
-            tmdbId: number;
+            year?: number;
+            /** @description Assigned quality profile ID */
+            qualityProfileId: number;
+            /** @description Assigned quality profile name */
+            qualityProfileName: string;
+            /** @description Whether the movie has a downloaded file */
+            hasFile: boolean;
+            /**
+             * Format: date-time
+             * @description When the movie was added
+             */
+            dateAdded?: string;
+            /** @description TMDB popularity score */
+            popularity?: number;
+            /** @description Quality of the downloaded file (null if no file) */
+            qualityName?: string | null;
+            /** @description File name of the downloaded file (null if no file) */
+            fileName?: string | null;
+            /** @description Custom formats matched on the file */
+            customFormats: components["schemas"]["CustomFormatRef"][];
+            /** @description Total custom format score */
+            customFormatScore: number;
+            /** @description Per-custom-format score breakdown */
+            scoreBreakdown: components["schemas"]["ScoreBreakdownItem"][];
+            /** @description Profile cutoff score threshold */
+            cutoffScore: number;
+            /** @description Profile minimum score threshold */
+            minScore: number;
+            /** @description Score progress toward cutoff (0-1+) */
+            progress: number;
+            /** @description Whether the cutoff score has been met */
+            cutoffMet: boolean;
+            /** @description Whether the profile is managed by Profilarr */
+            isProfilarrProfile: boolean;
         };
-        LibrarySeriesItem: {
+        SonarrSeasonItem: {
+            /** @description Season number (0 = specials) */
+            seasonNumber: number;
+            /** @description Whether this season is monitored */
+            monitored: boolean;
+            /** @description Number of aired episodes */
+            episodeCount: number;
+            /** @description Number of episodes with files */
+            episodeFileCount: number;
+            /** @description Total episodes including unaired */
+            totalEpisodeCount: number;
+            /** @description Total size of episode files in bytes */
+            sizeOnDisk: number;
+            /** @description Percentage of episodes with files (0-100) */
+            percentOfEpisodes: number;
+        };
+        SonarrLibraryItem: {
             /** @description Sonarr series ID */
             id: number;
+            /** @description TVDB ID */
+            tvdbId?: number;
             /** @description Series title */
             title: string;
             /** @description First air year */
-            year: number;
-            /** @description TVDB ID */
-            tvdbId: number;
-            /** @description Available season numbers (excludes specials) */
-            seasons: number[];
+            year?: number;
+            /** @description Assigned quality profile ID */
+            qualityProfileId: number;
+            /** @description Assigned quality profile name */
+            qualityProfileName: string;
+            /** @description Series status (continuing, ended, etc.) */
+            status?: string;
+            /** @description Whether the series is monitored */
+            monitored: boolean;
+            /** @description Number of seasons */
+            seasonCount: number;
+            /** @description Number of aired episodes */
+            episodeCount: number;
+            /** @description Number of episodes with files */
+            episodeFileCount: number;
+            /** @description Total episodes including unaired */
+            totalEpisodeCount: number;
+            /** @description Total size of all episode files in bytes */
+            sizeOnDisk: number;
+            /** @description Percentage of episodes with files (0-100) */
+            percentOfEpisodes: number;
+            /**
+             * Format: date-time
+             * @description When the series was added
+             */
+            dateAdded?: string;
+            /** @description Season-level statistics */
+            seasons: components["schemas"]["SonarrSeasonItem"][];
+            /** @description Whether the profile is managed by Profilarr */
+            isProfilarrProfile: boolean;
+        };
+        SonarrEpisodeItem: {
+            /** @description Sonarr episode ID */
+            id: number;
+            /** @description Episode number within the season */
+            episodeNumber: number;
+            /** @description Season number */
+            seasonNumber: number;
+            /** @description Episode title */
+            title: string;
+            /** @description Whether the episode has a downloaded file */
+            hasFile: boolean;
+            /** @description Whether the episode is monitored */
+            monitored: boolean;
+            /** @description Quality of the downloaded file */
+            qualityName?: string;
+            /** @description File name of the downloaded file */
+            fileName?: string;
+            /** @description File size in bytes */
+            size?: number;
+            /** @description Custom formats matched on the file */
+            customFormats: components["schemas"]["CustomFormatRef"][];
+            /** @description Total custom format score */
+            customFormatScore: number;
+            /** @description Per-custom-format score breakdown */
+            scoreBreakdown: components["schemas"]["ScoreBreakdownItem"][];
+            /** @description Profile cutoff score threshold */
+            cutoffScore: number;
+            /** @description Score progress toward cutoff (0-1+) */
+            progress: number;
+            /** @description Whether the cutoff score has been met */
+            cutoffMet: boolean;
         };
         /** @description Library response varies by instance type */
         LibraryResponse: components["schemas"]["LibraryRadarrResponse"] | components["schemas"]["LibrarySonarrResponse"];
+        EpisodesResponse: {
+            /** @description Episode details with quality and score data */
+            episodes: components["schemas"]["SonarrEpisodeItem"][];
+        };
+        CacheInvalidatedResponse: {
+            /** @description Whether the cache was invalidated */
+            success: boolean;
+        };
         GroupedRelease: {
             /** @description Release title */
             title: string;
@@ -289,10 +463,6 @@ export interface components {
             rawCount: number;
             /** @description Grouped and deduplicated releases */
             releases: components["schemas"]["GroupedRelease"][];
-        };
-        ErrorResponse: {
-            /** @description Error message */
-            error: string;
         };
         StaleItem: {
             /** @description Arr entity ID */
@@ -400,12 +570,14 @@ export interface components {
         LibraryRadarrResponse: {
             /** @enum {string} */
             type: "radarr";
-            items: components["schemas"]["LibraryMovieItem"][];
+            items: components["schemas"]["RadarrLibraryItem"][];
+            profilesByDatabase: components["schemas"]["ProfileByDatabase"][];
         };
         LibrarySonarrResponse: {
             /** @enum {string} */
             type: "sonarr";
-            items: components["schemas"]["LibrarySeriesItem"][];
+            items: components["schemas"]["SonarrLibraryItem"][];
+            profilesByDatabase: components["schemas"]["ProfileByDatabase"][];
         };
         SkippedItem: {
             item: components["schemas"]["StaleItem"];
@@ -514,7 +686,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Library items */
+            /** @description Library items with quality and score data */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -542,6 +714,90 @@ export interface operations {
                 };
             };
             /** @description Failed to fetch library */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    invalidateLibraryCache: {
+        parameters: {
+            query: {
+                /** @description Arr instance ID */
+                instanceId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cache invalidated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CacheInvalidatedResponse"];
+                };
+            };
+            /** @description Invalid or missing instanceId */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getLibraryEpisodes: {
+        parameters: {
+            query: {
+                /** @description Arr instance ID (must be a Sonarr instance) */
+                instanceId: number;
+                /** @description Sonarr series ID */
+                seriesId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Episode details with quality and score data */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodesResponse"];
+                };
+            };
+            /** @description Invalid parameters or not a Sonarr instance */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Instance not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed to fetch episode details */
             500: {
                 headers: {
                     [name: string]: unknown;

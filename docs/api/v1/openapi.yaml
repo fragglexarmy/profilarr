@@ -28,6 +28,8 @@ paths:
     $ref: './paths/entity-testing.yaml#/evaluate'
   /arr/library:
     $ref: './paths/arr.yaml#/library'
+  /arr/library/episodes:
+    $ref: './paths/arr.yaml#/episodes'
   /arr/releases:
     $ref: './paths/arr.yaml#/releases'
   /arr/cleanup:
@@ -56,22 +58,38 @@ components:
       $ref: './schemas/entity-testing.yaml#/EvaluateRequest'
     EvaluateResponse:
       $ref: './schemas/entity-testing.yaml#/EvaluateResponse'
-    # Arr
+    # Arr - Shared
     ArrType:
       $ref: './schemas/arr.yaml#/ArrType'
-    LibraryMovieItem:
-      $ref: './schemas/arr.yaml#/LibraryMovieItem'
-    LibrarySeriesItem:
-      $ref: './schemas/arr.yaml#/LibrarySeriesItem'
+    CustomFormatRef:
+      $ref: './schemas/arr.yaml#/CustomFormatRef'
+    ScoreBreakdownItem:
+      $ref: './schemas/arr.yaml#/ScoreBreakdownItem'
+    ProfileByDatabase:
+      $ref: './schemas/arr.yaml#/ProfileByDatabase'
+    ErrorResponse:
+      $ref: './schemas/arr.yaml#/ErrorResponse'
+    # Arr - Library
+    RadarrLibraryItem:
+      $ref: './schemas/arr.yaml#/RadarrLibraryItem'
+    SonarrSeasonItem:
+      $ref: './schemas/arr.yaml#/SonarrSeasonItem'
+    SonarrLibraryItem:
+      $ref: './schemas/arr.yaml#/SonarrLibraryItem'
+    SonarrEpisodeItem:
+      $ref: './schemas/arr.yaml#/SonarrEpisodeItem'
     LibraryResponse:
       $ref: './schemas/arr.yaml#/LibraryResponse'
+    EpisodesResponse:
+      $ref: './schemas/arr.yaml#/EpisodesResponse'
+    CacheInvalidatedResponse:
+      $ref: './schemas/arr.yaml#/CacheInvalidatedResponse'
+    # Arr - Releases
     GroupedRelease:
       $ref: './schemas/arr.yaml#/GroupedRelease'
     ReleasesResponse:
       $ref: './schemas/arr.yaml#/ReleasesResponse'
-    ErrorResponse:
-      $ref: './schemas/arr.yaml#/ErrorResponse'
-    # Cleanup
+    # Arr - Cleanup
     StaleItem:
       $ref: './schemas/arr.yaml#/StaleItem'
     CleanupScanRequest:

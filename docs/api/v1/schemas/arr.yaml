@@ -5,60 +5,314 @@ ArrType:
     - sonarr
   description: Type of Arr instance
 
-# Library endpoint types
-LibraryMovieItem:
+# Shared types
+CustomFormatRef:
+  type: object
+  required:
+    - id
+    - name
+  properties:
+    id:
+      type: integer
+      description: Custom format ID
+    name:
+      type: string
+      description: Custom format name
+
+ScoreBreakdownItem:
+  type: object
+  required:
+    - name
+    - score
+  properties:
+    name:
+      type: string
+      description: Custom format name
+    score:
+      type: integer
+      description: Score assigned by the quality profile
+
+ProfileByDatabase:
+  type: object
+  required:
+    - databaseId
+    - databaseName
+    - profiles
+  properties:
+    databaseId:
+      type: integer
+      description: Profilarr database ID
+    databaseName:
+      type: string
+      description: Profilarr database name
+    profiles:
+      type: array
+      items:
+        type: string
+      description: Quality profile names in this database
+
+# Library endpoint types - Radarr
+RadarrLibraryItem:
   type: object
   required:
     - id
     - title
-    - year
-    - tmdbId
+    - hasFile
+    - qualityProfileId
+    - qualityProfileName
+    - isProfilarrProfile
+    - customFormatScore
+    - cutoffScore
+    - minScore
+    - progress
+    - cutoffMet
+    - customFormats
+    - scoreBreakdown
   properties:
     id:
       type: integer
       description: Radarr movie ID
+    tmdbId:
+      type: integer
+      description: TMDB ID
     title:
       type: string
       description: Movie title
     year:
       type: integer
       description: Release year
-    tmdbId:
+    qualityProfileId:
       type: integer
-      description: TMDB ID
+      description: Assigned quality profile ID
+    qualityProfileName:
+      type: string
+      description: Assigned quality profile name
+    hasFile:
+      type: boolean
+      description: Whether the movie has a downloaded file
+    dateAdded:
+      type: string
+      format: date-time
+      description: When the movie was added
+    popularity:
+      type: number
+      description: TMDB popularity score
+    qualityName:
+      type: string
+      nullable: true
+      description: Quality of the downloaded file (null if no file)
+    fileName:
+      type: string
+      nullable: true
+      description: File name of the downloaded file (null if no file)
+    customFormats:
+      type: array
+      items:
+        $ref: '#/CustomFormatRef'
+      description: Custom formats matched on the file
+    customFormatScore:
+      type: integer
+      description: Total custom format score
+    scoreBreakdown:
+      type: array
+      items:
+        $ref: '#/ScoreBreakdownItem'
+      description: Per-custom-format score breakdown
+    cutoffScore:
+      type: integer
+      description: Profile cutoff score threshold
+    minScore:
+      type: integer
+      description: Profile minimum score threshold
+    progress:
+      type: number
+      description: Score progress toward cutoff (0-1+)
+    cutoffMet:
+      type: boolean
+      description: Whether the cutoff score has been met
+    isProfilarrProfile:
+      type: boolean
+      description: Whether the profile is managed by Profilarr
 
-LibrarySeriesItem:
+# Library endpoint types - Sonarr
+SonarrSeasonItem:
+  type: object
+  required:
+    - seasonNumber
+    - monitored
+    - episodeCount
+    - episodeFileCount
+    - totalEpisodeCount
+    - sizeOnDisk
+    - percentOfEpisodes
+  properties:
+    seasonNumber:
+      type: integer
+      description: Season number (0 = specials)
+    monitored:
+      type: boolean
+      description: Whether this season is monitored
+    episodeCount:
+      type: integer
+      description: Number of aired episodes
+    episodeFileCount:
+      type: integer
+      description: Number of episodes with files
+    totalEpisodeCount:
+      type: integer
+      description: Total episodes including unaired
+    sizeOnDisk:
+      type: integer
+      description: Total size of episode files in bytes
+    percentOfEpisodes:
+      type: number
+      description: Percentage of episodes with files (0-100)
+
+SonarrLibraryItem:
   type: object
   required:
     - id
     - title
-    - year
-    - tvdbId
+    - qualityProfileId
+    - qualityProfileName
+    - monitored
+    - seasonCount
+    - episodeCount
+    - episodeFileCount
+    - totalEpisodeCount
+    - sizeOnDisk
+    - percentOfEpisodes
     - seasons
+    - isProfilarrProfile
   properties:
     id:
       type: integer
       description: Sonarr series ID
+    tvdbId:
+      type: integer
+      description: TVDB ID
     title:
       type: string
       description: Series title
     year:
       type: integer
       description: First air year
-    tvdbId:
+    qualityProfileId:
       type: integer
-      description: TVDB ID
+      description: Assigned quality profile ID
+    qualityProfileName:
+      type: string
+      description: Assigned quality profile name
+    status:
+      type: string
+      description: Series status (continuing, ended, etc.)
+    monitored:
+      type: boolean
+      description: Whether the series is monitored
+    seasonCount:
+      type: integer
+      description: Number of seasons
+    episodeCount:
+      type: integer
+      description: Number of aired episodes
+    episodeFileCount:
+      type: integer
+      description: Number of episodes with files
+    totalEpisodeCount:
+      type: integer
+      description: Total episodes including unaired
+    sizeOnDisk:
+      type: integer
+      description: Total size of all episode files in bytes
+    percentOfEpisodes:
+      type: number
+      description: Percentage of episodes with files (0-100)
+    dateAdded:
+      type: string
+      format: date-time
+      description: When the series was added
     seasons:
       type: array
       items:
-        type: integer
-      description: Available season numbers (excludes specials)
+        $ref: '#/SonarrSeasonItem'
+      description: Season-level statistics
+    isProfilarrProfile:
+      type: boolean
+      description: Whether the profile is managed by Profilarr
 
+SonarrEpisodeItem:
+  type: object
+  required:
+    - id
+    - episodeNumber
+    - seasonNumber
+    - title
+    - hasFile
+    - monitored
+    - customFormatScore
+    - cutoffScore
+    - progress
+    - cutoffMet
+    - customFormats
+    - scoreBreakdown
+  properties:
+    id:
+      type: integer
+      description: Sonarr episode ID
+    episodeNumber:
+      type: integer
+      description: Episode number within the season
+    seasonNumber:
+      type: integer
+      description: Season number
+    title:
+      type: string
+      description: Episode title
+    hasFile:
+      type: boolean
+      description: Whether the episode has a downloaded file
+    monitored:
+      type: boolean
+      description: Whether the episode is monitored
+    qualityName:
+      type: string
+      description: Quality of the downloaded file
+    fileName:
+      type: string
+      description: File name of the downloaded file
+    size:
+      type: integer
+      description: File size in bytes
+    customFormats:
+      type: array
+      items:
+        $ref: '#/CustomFormatRef'
+      description: Custom formats matched on the file
+    customFormatScore:
+      type: integer
+      description: Total custom format score
+    scoreBreakdown:
+      type: array
+      items:
+        $ref: '#/ScoreBreakdownItem'
+      description: Per-custom-format score breakdown
+    cutoffScore:
+      type: integer
+      description: Profile cutoff score threshold
+    progress:
+      type: number
+      description: Score progress toward cutoff (0-1+)
+    cutoffMet:
+      type: boolean
+      description: Whether the cutoff score has been met
+
+# Library response wrappers
 LibraryRadarrResponse:
   type: object
   required:
     - type
     - items
+    - profilesByDatabase
   properties:
     type:
       type: string
@@ -67,13 +321,18 @@ LibraryRadarrResponse:
     items:
       type: array
       items:
-        $ref: '#/LibraryMovieItem'
+        $ref: '#/RadarrLibraryItem'
+    profilesByDatabase:
+      type: array
+      items:
+        $ref: '#/ProfileByDatabase'
 
 LibrarySonarrResponse:
   type: object
   required:
     - type
     - items
+    - profilesByDatabase
   properties:
     type:
       type: string
@@ -82,13 +341,37 @@ LibrarySonarrResponse:
     items:
       type: array
       items:
-        $ref: '#/LibrarySeriesItem'
+        $ref: '#/SonarrLibraryItem'
+    profilesByDatabase:
+      type: array
+      items:
+        $ref: '#/ProfileByDatabase'
 
 LibraryResponse:
   oneOf:
     - $ref: '#/LibraryRadarrResponse'
     - $ref: '#/LibrarySonarrResponse'
   description: Library response varies by instance type
+
+EpisodesResponse:
+  type: object
+  required:
+    - episodes
+  properties:
+    episodes:
+      type: array
+      items:
+        $ref: '#/SonarrEpisodeItem'
+      description: Episode details with quality and score data
+
+CacheInvalidatedResponse:
+  type: object
+  required:
+    - success
+  properties:
+    success:
+      type: boolean
+      description: Whether the cache was invalidated
 
 # Releases endpoint types
 GroupedRelease:
