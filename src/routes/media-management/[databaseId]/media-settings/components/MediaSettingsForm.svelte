@@ -4,9 +4,10 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 	import { alertStore } from '$alerts/store';
-	import { Check, Save, Trash2 } from 'lucide-svelte';
+	import { Save, Trash2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { RadarrMediaSettingsRow } from '$shared/pcd/display.ts';
 	import type { ArrType } from '$shared/pcd/types.ts';
@@ -116,27 +117,19 @@
 
 <div class="mt-6 md:px-4">
 	<div
-		class="space-y-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
+		class="space-y-6 rounded-xl border border-neutral-300 bg-white p-6 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 	>
 		<!-- Basic Info -->
 		<div class="space-y-4">
 			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Basic Info</h2>
-			<div>
-				<label
-					for="name"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
-					Name <span class="text-red-500">*</span>
-				</label>
-				<input
-					type="text"
-					id="name"
-					value={formData.name}
-					oninput={(e) => update('name', e.currentTarget.value)}
-					placeholder="e.g., default"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
+			<FormInput
+				label="Name"
+				name="name"
+				placeholder="e.g., default"
+				required
+				value={formData.name}
+				on:input={(e) => update('name', e.detail)}
+			/>
 		</div>
 
 		<hr class="border-neutral-200 dark:border-neutral-700" />
@@ -146,33 +139,16 @@
 			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Propers and Repacks</h2>
 			<div class="grid gap-2">
 				{#each PROPERS_REPACKS_OPTIONS as option}
-					<button
-						type="button"
-						onclick={() => update('propersRepacks', option.value)}
-						class="flex items-start gap-3 rounded-lg border p-3 text-left transition-colors {formData.propersRepacks ===
-						option.value
-							? 'border-accent-500 bg-accent-50 dark:border-accent-400 dark:bg-accent-950'
-							: 'border-neutral-200 bg-neutral-50 hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'}"
-					>
-						<div
-							class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 {formData.propersRepacks ===
-							option.value
-								? 'border-accent-500 bg-accent-500 dark:border-accent-400 dark:bg-accent-400'
-								: 'border-neutral-300 dark:border-neutral-600'}"
-						>
-							{#if formData.propersRepacks === option.value}
-								<Check size={12} class="text-white" />
-							{/if}
-						</div>
-						<div>
-							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								{option.label}
-							</div>
-							<div class="text-xs text-neutral-500 dark:text-neutral-400">
-								{option.description}
-							</div>
-						</div>
-					</button>
+					<div>
+						<Toggle
+							label={option.label}
+							checked={formData.propersRepacks === option.value}
+							on:change={() => update('propersRepacks', option.value)}
+						/>
+						<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
+							{option.description}
+						</p>
+					</div>
 				{/each}
 			</div>
 		</div>
@@ -182,22 +158,16 @@
 		<!-- Media Info -->
 		<div class="space-y-4">
 			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">File Analysis</h2>
-
-			<button
-				type="button"
-				onclick={() => update('enableMediaInfo', !formData.enableMediaInfo)}
-				class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
-			>
-				<IconCheckbox checked={formData.enableMediaInfo} icon={Check} on:click={() => update('enableMediaInfo', !formData.enableMediaInfo)} />
-				<div>
-					<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-						Enable Media Info
-					</div>
-					<div class="text-xs text-neutral-500 dark:text-neutral-400">
-						Scan files to extract media information (codec, resolution, audio tracks, etc.)
-					</div>
-				</div>
-			</button>
+			<div>
+				<Toggle
+					label="Enable Media Info"
+					checked={formData.enableMediaInfo}
+					on:change={() => update('enableMediaInfo', !formData.enableMediaInfo)}
+				/>
+				<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
+					Scan files to extract media information (codec, resolution, audio tracks, etc.)
+				</p>
+			</div>
 		</div>
 	</div>
 </div>

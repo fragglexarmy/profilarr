@@ -2,11 +2,13 @@
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import { alertStore } from '$alerts/store';
-	import { Check, Save, Trash2, Loader2 } from 'lucide-svelte';
+	import { Save, Trash2, Loader2 } from 'lucide-svelte';
 	import type { PreferredProtocol } from '$shared/pcd/display.ts';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 
@@ -75,8 +77,8 @@
 	$: submitButtonText = mode === 'create' ? 'Create Profile' : 'Save Changes';
 
 	// Computed states based on protocol
-	$: showUsenetDelay = formData.preferredProtocol !== 'only_torrent';
-	$: showTorrentDelay = formData.preferredProtocol !== 'only_usenet';
+	$: usenetEnabled = formData.preferredProtocol !== 'only_torrent';
+	$: torrentEnabled = formData.preferredProtocol !== 'only_usenet';
 
 	const protocolOptions: { value: PreferredProtocol; label: string; description: string }[] = [
 		{
@@ -182,25 +184,16 @@
 		<input type="hidden" name="minimumCfScore" value={formData.minimumCfScore} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 
-		<div class="space-y-6 pb-12">
+		<div class="space-y-6 rounded-xl border border-neutral-300 bg-white p-6 dark:border-neutral-700/60 dark:bg-neutral-800/50">
 			<!-- Name -->
-			<div>
-				<label
-					for="name"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
-					Name <span class="text-red-500">*</span>
-				</label>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					value={formData.name}
-					oninput={(e) => update('name', e.currentTarget.value)}
-					placeholder="e.g., Standard Delay"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
+			<FormInput
+				label="Name"
+				name="name"
+				placeholder="e.g., Standard Delay"
+				required
+				value={formData.name}
+				on:input={(e) => update('name', e.detail)}
+			/>
 
 			<!-- Protocol Preference -->
 			<div>
@@ -209,33 +202,16 @@
 				</h3>
 				<div class="mt-2 grid gap-2">
 					{#each protocolOptions as option}
-						<button
-							type="button"
-							onclick={() => update('preferredProtocol', option.value)}
-							class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {formData.preferredProtocol ===
-							option.value
-								? 'border-accent-500 bg-accent-50 dark:border-accent-400 dark:bg-accent-950'
-								: 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'}"
-						>
-							<div
-								class="flex h-5 w-5 items-center justify-center rounded-full border-2 {formData.preferredProtocol ===
-								option.value
-									? 'border-accent-500 bg-accent-500 dark:border-accent-400 dark:bg-accent-400'
-									: 'border-neutral-300 dark:border-neutral-600'}"
-							>
-								{#if formData.preferredProtocol === option.value}
-									<Check size={12} class="text-white" />
-								{/if}
-							</div>
-							<div>
-								<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-									{option.label}
-								</div>
-								<div class="text-xs text-neutral-500 dark:text-neutral-400">
-									{option.description}
-								</div>
-							</div>
-						</button>
+						<div>
+							<Toggle
+								label={option.label}
+								checked={formData.preferredProtocol === option.value}
+								on:change={() => update('preferredProtocol', option.value)}
+							/>
+							<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
+								{option.description}
+							</p>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -247,47 +223,45 @@
 					Time to wait before downloading from each source. Set to 0 for no delay.
 				</p>
 				<div class="mt-3 grid gap-4 sm:grid-cols-2">
-					{#if showUsenetDelay}
-						<div>
-							<label
-								for="usenet-delay"
-								class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-							>
-								Usenet Delay (minutes)
-							</label>
-							<div class="mt-1">
-								<NumberInput
-									name="usenet-delay"
-									id="usenet-delay"
-									value={formData.usenetDelay}
-									onchange={(v) => update('usenetDelay', v)}
-									min={0}
-									font="mono"
-								/>
-							</div>
+					<div>
+						<label
+							for="usenet-delay"
+							class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
+							Usenet Delay (minutes)
+						</label>
+						<div class="mt-1">
+							<NumberInput
+								name="usenet-delay"
+								id="usenet-delay"
+								value={formData.usenetDelay}
+								onchange={(v) => update('usenetDelay', v)}
+								min={0}
+								font="mono"
+								disabled={!usenetEnabled}
+							/>
 						</div>
-					{/if}
+					</div>
 
-					{#if showTorrentDelay}
-						<div>
-							<label
-								for="torrent-delay"
-								class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-							>
-								Torrent Delay (minutes)
-							</label>
-							<div class="mt-1">
-								<NumberInput
-									name="torrent-delay"
-									id="torrent-delay"
-									value={formData.torrentDelay}
-									onchange={(v) => update('torrentDelay', v)}
-									min={0}
-									font="mono"
-								/>
-							</div>
+					<div>
+						<label
+							for="torrent-delay"
+							class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+						>
+							Torrent Delay (minutes)
+						</label>
+						<div class="mt-1">
+							<NumberInput
+								name="torrent-delay"
+								id="torrent-delay"
+								value={formData.torrentDelay}
+								onchange={(v) => update('torrentDelay', v)}
+								min={0}
+								font="mono"
+								disabled={!torrentEnabled}
+							/>
 						</div>
-					{/if}
+					</div>
 				</div>
 			</div>
 
@@ -300,64 +274,40 @@
 					Skip the delay when these conditions are met.
 				</p>
 				<div class="mt-3 space-y-3">
-					<label
-						class="flex cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
-					>
-						<input
-							type="checkbox"
+					<div>
+						<Toggle
+							label="Bypass if Highest Quality"
 							checked={formData.bypassIfHighestQuality}
-							onchange={(e) => update('bypassIfHighestQuality', e.currentTarget.checked)}
-							class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-600 dark:bg-neutral-700"
+							on:change={() => update('bypassIfHighestQuality', !formData.bypassIfHighestQuality)}
 						/>
-						<div>
-							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								Bypass if Highest Quality
+						<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
+							Skip delay when release is already the highest quality in profile
+						</p>
+					</div>
+
+					<div>
+						<div class="flex items-center gap-3">
+							<div class="flex-1">
+								<Toggle
+									label="Bypass if Above Custom Format Score"
+									checked={formData.bypassIfAboveCfScore}
+									on:change={() => update('bypassIfAboveCfScore', !formData.bypassIfAboveCfScore)}
+								/>
 							</div>
-							<div class="text-xs text-neutral-500 dark:text-neutral-400">
-								Skip delay when release is already the highest quality in profile
+							<div class="w-24">
+								<NumberInput
+									name="min-cf-score"
+									id="min-cf-score"
+									value={formData.minimumCfScore}
+									onchange={(v) => update('minimumCfScore', v)}
+									disabled={!formData.bypassIfAboveCfScore}
+									font="mono"
+								/>
 							</div>
 						</div>
-					</label>
-
-					<div
-						class="rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
-					>
-						<label class="flex cursor-pointer items-center gap-3">
-							<input
-								type="checkbox"
-								checked={formData.bypassIfAboveCfScore}
-								onchange={(e) => update('bypassIfAboveCfScore', e.currentTarget.checked)}
-								class="h-4 w-4 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 dark:border-neutral-600 dark:bg-neutral-700"
-							/>
-							<div>
-								<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-									Bypass if Above Custom Format Score
-								</div>
-								<div class="text-xs text-neutral-500 dark:text-neutral-400">
-									Skip delay when release exceeds minimum score
-								</div>
-							</div>
-						</label>
-
-						{#if formData.bypassIfAboveCfScore}
-							<div class="mt-3 pl-7">
-								<label
-									for="min-cf-score"
-									class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-								>
-									Minimum Score
-								</label>
-								<div class="mt-1 w-32">
-									<NumberInput
-										name="min-cf-score"
-										id="min-cf-score"
-										value={formData.minimumCfScore}
-										onchange={(v) => update('minimumCfScore', v)}
-										font="mono"
-									/>
-								</div>
-							</div>
-						{/if}
+						<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
+							Skip delay when release exceeds minimum score
+						</p>
 					</div>
 				</div>
 			</div>
