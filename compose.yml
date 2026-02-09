@@ -1,10 +1,10 @@
 services:
   profilarr:
-    image: ghcr.io/dictionarry-hub/profilarr:latest
+    image: ghcr.io/dictionarry-hub/profilarr:develop
     container_name: profilarr
     restart: unless-stopped
     ports:
-      - "6868:6868"
+      - "6869:6868"
     volumes:
       - ./config:/config
     environment:
@@ -22,7 +22,7 @@ services:
 
   # Optional - only needed for CF/QP testing features
   parser:
-    image: ghcr.io/dictionarry-hub/profilarr-parser:latest
+    image: ghcr.io/dictionarry-hub/profilarr-parser:develop
     container_name: profilarr-parser
     restart: unless-stopped
     expose:
