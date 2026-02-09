@@ -77,6 +77,7 @@ export async function list(cache: PCDCache): Promise<QualityProfileTableRow[]> {
 			'qg.name as group_name'
 		])
 		.where('qpq.quality_profile_name', 'in', profileNames)
+		.where('qpq.enabled', '=', 1)
 		.orderBy('qpq.quality_profile_name')
 		.orderBy('qpq.position')
 		.execute();
