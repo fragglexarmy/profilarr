@@ -6,6 +6,7 @@ import type { OperationLayer } from '$pcd/index.ts';
 import { getSonarrByName, updateSonarrNaming, removeSonarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import type { SonarrNamingRow } from '$shared/pcd/display.ts';
+import { validateNamingFormat } from '$shared/pcd/namingTokens.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;
@@ -85,6 +86,20 @@ export const actions: Actions = {
 		const colonReplacementFormat = formData.get('colonReplacementFormat') as SonarrNamingRow['colon_replacement_format'];
 		const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
 		const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
+
+		const formatFields = [
+			{ name: 'Standard episode format', value: standardEpisodeFormat },
+			{ name: 'Daily episode format', value: dailyEpisodeFormat },
+			{ name: 'Anime episode format', value: animeEpisodeFormat },
+			{ name: 'Series folder format', value: seriesFolderFormat },
+			{ name: 'Season folder format', value: seasonFolderFormat }
+		];
+		for (const field of formatFields) {
+			const validation = validateNamingFormat(field.value || '', 'sonarr');
+			if (!validation.valid) {
+				return fail(400, { error: `${field.name}: ${validation.errors.join(', ')}` });
+			}
+		}
 
 		let result;
 		try {

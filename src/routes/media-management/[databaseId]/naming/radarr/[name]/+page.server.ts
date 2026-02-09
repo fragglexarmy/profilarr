@@ -6,6 +6,7 @@ import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, updateRadarrNaming, removeRadarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import type { RadarrNamingRow } from '$shared/pcd/display.ts';
+import { validateNamingFormat } from '$shared/pcd/namingTokens.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;
@@ -82,6 +83,15 @@ export const actions: Actions = {
 		const colonReplacementFormat = formData.get(
 			'colonReplacementFormat'
 		) as RadarrNamingRow['colon_replacement_format'];
+
+		const movieFormatValidation = validateNamingFormat(movieFormat || '', 'radarr');
+		if (!movieFormatValidation.valid) {
+			return fail(400, { error: `Movie format: ${movieFormatValidation.errors.join(', ')}` });
+		}
+		const folderFormatValidation = validateNamingFormat(movieFolderFormat || '', 'radarr');
+		if (!folderFormatValidation.valid) {
+			return fail(400, { error: `Folder format: ${folderFormatValidation.errors.join(', ')}` });
+		}
 
 		let result;
 		try {

@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
 import { createRadarrNaming, createSonarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
+import { validateNamingFormat } from '$shared/pcd/namingTokens.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const parentData = await parent();
@@ -57,6 +58,15 @@ export const actions: Actions = {
 				'colonReplacementFormat'
 			) as RadarrNamingRow['colon_replacement_format'];
 
+			const movieFormatValidation = validateNamingFormat(movieFormat || '', 'radarr');
+			if (!movieFormatValidation.valid) {
+				return fail(400, { error: `Movie format: ${movieFormatValidation.errors.join(', ')}` });
+			}
+			const folderFormatValidation = validateNamingFormat(movieFolderFormat || '', 'radarr');
+			if (!folderFormatValidation.valid) {
+				return fail(400, { error: `Folder format: ${folderFormatValidation.errors.join(', ')}` });
+			}
+
 			let result;
 			try {
 				result = await createRadarrNaming({
@@ -96,6 +106,20 @@ export const actions: Actions = {
 			) as SonarrNamingRow['colon_replacement_format'];
 			const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
 			const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
+
+			const formatFields = [
+				{ name: 'Standard episode format', value: standardEpisodeFormat },
+				{ name: 'Daily episode format', value: dailyEpisodeFormat },
+				{ name: 'Anime episode format', value: animeEpisodeFormat },
+				{ name: 'Series folder format', value: seriesFolderFormat },
+				{ name: 'Season folder format', value: seasonFolderFormat }
+			];
+			for (const field of formatFields) {
+				const validation = validateNamingFormat(field.value || '', 'sonarr');
+				if (!validation.valid) {
+					return fail(400, { error: `${field.name}: ${validation.errors.join(', ')}` });
+				}
+			}
 
 			let result;
 			try {
