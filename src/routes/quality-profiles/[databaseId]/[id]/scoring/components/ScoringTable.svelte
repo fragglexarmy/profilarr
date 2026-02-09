@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+
 	export let formats: any[];
 	export let arrTypes: string[];
 	export let customFormatScores: Record<string, Record<string, number | null>>;
@@ -16,6 +18,27 @@
 
 	import ScoringTableDesktop from './ScoringTableDesktop.svelte';
 	import ScoringTableMobile from './ScoringTableMobile.svelte';
+
+	let isDesktop = true;
+	let mediaQuery: MediaQueryList | null = null;
+
+	function handleMediaChange(e: MediaQueryListEvent) {
+		isDesktop = e.matches;
+	}
+
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			mediaQuery = window.matchMedia('(min-width: 768px)');
+			isDesktop = mediaQuery.matches;
+			mediaQuery.addEventListener('change', handleMediaChange);
+		}
+	});
+
+	onDestroy(() => {
+		if (mediaQuery) {
+			mediaQuery.removeEventListener('change', handleMediaChange);
+		}
+	});
 </script>
 
 {#if title}
@@ -24,8 +47,7 @@
 	</div>
 {/if}
 
-<!-- Desktop -->
-<div class="hidden md:block">
+{#if isDesktop}
 	<ScoringTableDesktop
 		{formats}
 		{arrTypes}
@@ -35,10 +57,7 @@
 		on:scoreChange
 		on:enabledChange
 	/>
-</div>
-
-<!-- Mobile -->
-<div class="md:hidden">
+{:else}
 	<ScoringTableMobile
 		{formats}
 		{arrTypes}
@@ -48,4 +67,4 @@
 		on:scoreChange
 		on:enabledChange
 	/>
-</div>
+{/if}

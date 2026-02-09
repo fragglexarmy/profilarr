@@ -3,6 +3,7 @@
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import { Check } from 'lucide-svelte';
+	import { createVirtualList } from '$lib/client/utils/virtualList';
 
 	export let formats: any[];
 	export let arrTypes: string[];
@@ -23,6 +24,16 @@
 		enabledChange: { formatName: string; arrType: string; enabled: boolean };
 	}>();
 
+	const { state, action, setItemCount } = createVirtualList({
+		itemHeight: 57,
+		buffer: 2,
+		headerOffset: 45
+	});
+
+	$: setItemCount(formats.length);
+	$: ({ start, end, topHeight, bottomHeight } = $state);
+	$: visibleFormats = formats.slice(start, end);
+
 	function handleScoreChange(formatName: string, arrType: string, score: number | null) {
 		dispatch('scoreChange', { formatName, arrType, score });
 	}
@@ -40,7 +51,10 @@
 	}
 </script>
 
-<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+<div
+	use:action
+	class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800"
+>
 	<table class="w-full">
 		<thead
 			class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
@@ -72,7 +86,10 @@
 					</td>
 				</tr>
 			{:else}
-				{#each formats as format}
+				{#if topHeight > 0}
+					<tr><td colspan={arrTypes.length + 1} style="height: {topHeight}px; padding: 0; border: none;"></td></tr>
+				{/if}
+				{#each visibleFormats as format (format.name)}
 					{@const rowDisabled = arrTypes.every(
 						(arrType) => !customFormatEnabled[format.name]?.[arrType]
 					)}
@@ -115,6 +132,9 @@
 						{/each}
 					</tr>
 				{/each}
+				{#if bottomHeight > 0}
+					<tr><td colspan={arrTypes.length + 1} style="height: {bottomHeight}px; padding: 0; border: none;"></td></tr>
+				{/if}
 			{/if}
 		</tbody>
 	</table>
