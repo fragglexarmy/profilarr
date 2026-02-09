@@ -1,4 +1,5 @@
 {
+	"workspace": ["packages/profilarr-api"],
 	"imports": {
 		"$lib/": "./src/lib/",
 		"$api/": "./src/lib/api/",
@@ -59,7 +60,9 @@
 		"test:e2e:headed": "deno run -A scripts/e2e.ts --headed",
 		"test:e2e:debug": "deno run -A scripts/e2e.ts --debug",
 		"test:e2e:reset": "deno run -A scripts/e2e-reset.ts",
-		"stats": "bash scripts/stats.sh"
+		"stats": "bash scripts/stats.sh",
+		"bundle:api": "deno run -A scripts/bundle-api.ts",
+		"publish:api": "deno task bundle:api && cd packages/profilarr-api && deno publish"
 	},
 	"compilerOptions": {
 		"lib": ["deno.window", "dom"],

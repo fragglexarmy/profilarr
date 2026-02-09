@@ -1,0 +1,32 @@
+name: Publish API Spec
+
+on:
+  push:
+    branches:
+      - v2
+    paths:
+      - 'docs/api/v1/**'
+      - 'packages/profilarr-api/deno.json'
+
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: '2.5.6'
+
+      - name: Bundle API spec
+        run: deno task bundle:api
+
+      - name: Publish to JSR
+        working-directory: packages/profilarr-api
+        run: deno publish
