@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { ChevronDown, ChevronUp, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-svelte';
 	import type { Column, SortState } from './types';
-	import TableActionButton from './TableActionButton.svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	export let columns: Column<T>[];
 	export let data: T[];
@@ -13,7 +13,7 @@
 	export let flushExpanded: boolean = false;
 	export let flushBottom: boolean = false;
 	export let expandedRows: Set<string | number> = new Set();
-	export let chevronPosition: 'left' | 'right' = 'left';
+	export let chevronPosition: 'left' | 'right' = 'right';
 	export let expandOnRowClick: boolean = true;
 	export let onRowClick: ((row: T) => void) | null = null;
 	export let primaryColumnKey: string | null = null;
@@ -202,23 +202,15 @@
 									</div>
 								{/if}
 								{#if !shouldDisableExpand(row)}
-									<span
-										role="button"
-										tabindex="0"
-										class="inline-flex h-6 w-6 items-center justify-center border text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 {expandOnRowClick
-											? 'border-transparent'
-											: 'border-neutral-300 bg-neutral-50 shadow-sm dark:border-neutral-600 dark:bg-neutral-700/60'}"
-										on:click|stopPropagation={() => toggleRow(rowId)}
-										on:keydown|stopPropagation={(event) => {
-											if (event.key === 'Enter' || event.key === ' ') toggleRow(rowId);
+									<Button
+										icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+										size="xs"
+										title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
+										on:click={(e) => {
+											e.stopPropagation();
+											toggleRow(rowId);
 										}}
-									>
-										{#if expandedRows.has(rowId)}
-											<ChevronUp size={18} />
-										{:else}
-											<ChevronDown size={18} />
-										{/if}
-									</span>
+									/>
 								{/if}
 							</div>
 						</div>
@@ -341,13 +333,14 @@
 							{#if chevronPosition === 'left'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-neutral-400">
 									{#if !shouldDisableExpand(row)}
-										<TableActionButton
+										<Button
 											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+											size="xs"
 											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
-											size="sm"
-											variant={expandOnRowClick ? 'neutral' : 'accent'}
-											stopPropagation
-											on:click={() => toggleRow(rowId)}
+											on:click={(e) => {
+												e.stopPropagation();
+												toggleRow(rowId);
+											}}
 										/>
 									{/if}
 								</td>
@@ -379,13 +372,14 @@
 							{#if chevronPosition === 'right'}
 								<td class="{compact ? 'px-2 py-2' : 'px-3 py-3'} text-right text-neutral-400">
 									{#if !shouldDisableExpand(row)}
-										<TableActionButton
+										<Button
 											icon={expandedRows.has(rowId) ? ChevronUp : ChevronDown}
+											size="xs"
 											title={expandedRows.has(rowId) ? 'Collapse' : 'Expand'}
-											size="sm"
-											variant={expandOnRowClick ? 'neutral' : 'accent'}
-											stopPropagation
-											on:click={() => toggleRow(rowId)}
+											on:click={(e) => {
+												e.stopPropagation();
+												toggleRow(rowId);
+											}}
 										/>
 									{/if}
 								</td>
