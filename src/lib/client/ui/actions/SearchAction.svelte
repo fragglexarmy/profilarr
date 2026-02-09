@@ -10,6 +10,7 @@
 	export let placeholder: string = 'Search...';
 	export let activeQuery: string = '';
 	export let responsive: boolean = false;
+	export let hideIcon: boolean = false;
 
 	const dispatch = createEventDispatcher<{ submit: string; clearQuery: void }>();
 
@@ -109,7 +110,9 @@
 				title="Search"
 			>
 			<span class="flex items-center gap-2">
-				<Search size={20} class="text-neutral-700 dark:text-neutral-300" />
+				{#if !hideIcon}
+					<Search size={20} class="text-neutral-700 dark:text-neutral-300" />
+				{/if}
 				<span class="max-w-[14rem] truncate text-sm text-neutral-600 dark:text-neutral-300">
 					{query || activeQuery || 'Search'}
 				</span>
@@ -134,13 +137,15 @@
 				>
 				<div class="relative flex items-center p-3">
 					<!-- Search icon -->
-					<div class="pointer-events-none absolute left-6 flex items-center">
-						<Search size={18} class="text-neutral-500 dark:text-neutral-400" />
-					</div>
+					{#if !hideIcon}
+						<div class="pointer-events-none absolute left-6 flex items-center">
+							<Search size={18} class="text-neutral-500 dark:text-neutral-400" />
+						</div>
+					{/if}
 
 					<!-- Active query badge -->
 					{#if activeQuery}
-						<div class="ml-10 flex flex-shrink-0 items-center pr-2">
+						<div class="{hideIcon ? 'ml-3' : 'ml-10'} flex flex-shrink-0 items-center pr-2">
 							<Badge variant="accent" size="sm">{activeQuery}</Badge>
 						</div>
 					{/if}
@@ -155,7 +160,7 @@
 						{placeholder}
 						class="h-10 w-full rounded-lg bg-transparent pr-10 text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
 							? 'pl-2'
-							: 'pl-10'}"
+							: hideIcon ? 'pl-3' : 'pl-10'}"
 					/>
 
 					<!-- Clear/Close button -->
@@ -192,13 +197,15 @@
 				class="relative flex h-10 w-full items-center rounded-xl border border-neutral-300 bg-white transition-colors dark:border-neutral-700/60 dark:bg-neutral-800/50"
 			>
 			<!-- Search icon -->
-			<div class="pointer-events-none absolute left-3 flex items-center">
-				<Search size={18} class="text-neutral-500 dark:text-neutral-400" />
-			</div>
+			{#if !hideIcon}
+				<div class="pointer-events-none absolute left-3 flex items-center">
+					<Search size={18} class="text-neutral-500 dark:text-neutral-400" />
+				</div>
+			{/if}
 
 			<!-- Active query badge -->
 			{#if activeQuery}
-				<div class="ml-10 flex h-full flex-shrink-0 items-center">
+				<div class="{hideIcon ? 'ml-3' : 'ml-10'} flex h-full flex-shrink-0 items-center">
 					<Badge variant="accent" size="sm">{activeQuery}</Badge>
 				</div>
 			{/if}
@@ -215,7 +222,7 @@
 				placeholder={activeQuery ? '' : placeholder}
 					class="h-full w-full bg-transparent pr-10 text-base sm:text-sm text-neutral-900 placeholder-neutral-500 outline-none dark:text-neutral-100 dark:placeholder-neutral-400 {activeQuery
 						? 'pl-2'
-						: 'pl-10'}"
+						: hideIcon ? 'pl-3' : 'pl-10'}"
 				/>
 
 			<!-- Clear button -->

@@ -17,6 +17,7 @@
 	export let readonly: boolean = false;
 	export let mono: boolean = false;
 	export let disabled: boolean = false;
+	export let wrap: boolean = false;
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let inputClass: string = '';
 	export let inputElement: HTMLInputElement | HTMLTextAreaElement | null = null;
@@ -52,6 +53,19 @@
 
 	function handleBlur() {
 		dispatch('blur');
+	}
+
+	function autoResize(node: HTMLTextAreaElement, _value: string) {
+		function resize() {
+			node.style.height = 'auto';
+			node.style.height = node.scrollHeight + 'px';
+		}
+		resize();
+		return {
+			update() {
+				resize();
+			}
+		};
 	}
 </script>
 
@@ -130,6 +144,32 @@
 					<Eye size={18} />
 				{/if}
 			</button>
+		</div>
+	{:else if wrap}
+		<div class={hasSuffix ? 'relative' : ''}>
+			<textarea
+				id={name}
+				{name}
+				{value}
+				{placeholder}
+				{required}
+				{disabled}
+				readonly={readonly}
+				rows={1}
+				bind:this={inputElement}
+				oninput={handleInput}
+				onfocus={handleFocus}
+				onblur={handleBlur}
+				class="block w-full resize-none overflow-hidden border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {stateClass} {inputClass} {hasSuffix
+					? 'pr-10'
+					: ''}"
+				use:autoResize={value}
+			></textarea>
+			{#if hasSuffix}
+				<div class="absolute right-3 top-3">
+					<slot name="suffix" />
+				</div>
+			{/if}
 		</div>
 	{:else}
 		<div class={hasSuffix ? 'relative' : ''}>
