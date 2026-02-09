@@ -98,7 +98,7 @@
 	let willAddToGroup: boolean = false;
 	let editingGroupIndex: number | null = null;
 	let groupingMode: boolean = false;
-	let transparentDragImage: HTMLImageElement | null = null;
+	let lastPointerEvent: PointerEvent | null = null;
 
 	// Group creation modal state
 	let showGroupModal = false;
@@ -135,18 +135,12 @@
 		if (mediaQuery) {
 			mediaQuery.removeEventListener('change', handleMediaChange);
 		}
+		document.removeEventListener('pointermove', handlePointerMove);
+		document.removeEventListener('pointerup', handlePointerUp);
 	});
 
 	function handleMediaChange(e: MediaQueryListEvent) {
 		isMobile = e.matches;
-	}
-
-	function getTransparentDragImage(): HTMLImageElement | null {
-		if (transparentDragImage || typeof window === 'undefined') return transparentDragImage;
-		const img = new Image();
-		img.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-		transparentDragImage = img;
-		return transparentDragImage;
 	}
 
 	// Helper to update mainBucket in the store
@@ -154,27 +148,36 @@
 		update('orderedItems', newBucket);
 	}
 
-	function handleQualityDragStart(event: DragEvent, item: OrderedItem, index: number) {
-		if (event.dataTransfer) {
-			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.dropEffect = 'move';
-			event.dataTransfer.setData('text/plain', item.name);
-			const dragImage = getTransparentDragImage();
-			if (dragImage) {
-				event.dataTransfer.setDragImage(dragImage, 0, 0);
-			}
-		}
-		document.body.classList.add('dragging');
-		draggedQualityFromMain = { item, index };
+	function getTargetFromPoint(x: number, y: number): { item: OrderedItem; index: number } | null {
+		const el = document.elementFromPoint(x, y);
+		const card = el?.closest('[data-quality-index]') as HTMLElement | null;
+		if (!card) return null;
+		const idx = parseInt(card.dataset.qualityIndex!, 10);
+		if (isNaN(idx) || idx < 0 || idx >= mainBucket.length) return null;
+		return { item: mainBucket[idx], index: idx };
 	}
 
-	function handleQualityDragOver(e: DragEvent, targetItem: OrderedItem, targetIndex: number) {
-		e.preventDefault();
-		if (e.dataTransfer) {
-			e.dataTransfer.dropEffect = 'move';
-		}
+	function handlePointerDown(e: PointerEvent, item: OrderedItem, index: number) {
+		if (isMobile) return;
+		// Ignore clicks on interactive children (buttons, checkboxes, inputs)
+		const target = e.target as HTMLElement;
+		if (target.closest('button, [role="checkbox"], input, a')) return;
 
-		if (!draggedQualityFromMain || draggedQualityFromMain.index === targetIndex) {
+		e.preventDefault();
+		document.body.classList.add('dragging');
+		draggedQualityFromMain = { item, index };
+		lastPointerEvent = e;
+
+		document.addEventListener('pointermove', handlePointerMove);
+		document.addEventListener('pointerup', handlePointerUp);
+	}
+
+	function handlePointerMove(e: PointerEvent) {
+		if (!draggedQualityFromMain) return;
+		lastPointerEvent = e;
+
+		const target = getTargetFromPoint(e.clientX, e.clientY);
+		if (!target || target.index === draggedQualityFromMain.index) {
 			hoverTargetIndex = null;
 			willCreateGroup = false;
 			willAddToGroup = false;
@@ -184,13 +187,13 @@
 		const draggedItem = draggedQualityFromMain.item;
 		const isGroupingMode = e.ctrlKey || e.metaKey || groupingMode;
 
-		hoverTargetIndex = targetIndex;
+		hoverTargetIndex = target.index;
 
 		if (isGroupingMode && draggedItem.type === 'quality') {
-			if (targetItem.type === 'quality') {
+			if (target.item.type === 'quality') {
 				willCreateGroup = true;
 				willAddToGroup = false;
-			} else if (targetItem.type === 'group') {
+			} else if (target.item.type === 'group') {
 				willCreateGroup = false;
 				willAddToGroup = true;
 			} else {
@@ -201,82 +204,76 @@
 			willCreateGroup = false;
 			willAddToGroup = false;
 
-			if (lastTargetIndex === targetIndex) return;
-			lastTargetIndex = targetIndex;
+			if (lastTargetIndex === target.index) return;
+			lastTargetIndex = target.index;
 
 			const newBucket = [...mainBucket];
 			const sourceIndex = draggedQualityFromMain.index;
 			const [movedItem] = newBucket.splice(sourceIndex, 1);
-			newBucket.splice(targetIndex, 0, movedItem);
+			newBucket.splice(target.index, 0, movedItem);
 
 			newBucket.forEach((item, index) => {
 				item.position = index;
 			});
 
 			updateMainBucket(newBucket);
-			draggedQualityFromMain.index = targetIndex;
+			draggedQualityFromMain.index = target.index;
 		}
 	}
 
-	function handleQualityDragLeave() {
-		hoverTargetIndex = null;
-		willCreateGroup = false;
-		willAddToGroup = false;
-	}
-
-	function handleQualityDrop(e: DragEvent, targetItem: OrderedItem, targetIndex: number) {
-		e.preventDefault();
-		e.stopPropagation();
-
-		if (!draggedQualityFromMain || draggedQualityFromMain.index === targetIndex) {
+	function handlePointerUp(e: PointerEvent) {
+		if (!draggedQualityFromMain) {
 			resetDragState();
 			return;
 		}
 
-		const draggedItem = draggedQualityFromMain.item;
-		const sourceIndex = draggedQualityFromMain.index;
-		const isGroupingMode = e.ctrlKey || e.metaKey || groupingMode;
+		const target = getTargetFromPoint(e.clientX, e.clientY);
+		if (target && target.index !== draggedQualityFromMain.index) {
+			const draggedItem = draggedQualityFromMain.item;
+			const sourceIndex = draggedQualityFromMain.index;
+			const isGroupingMode = e.ctrlKey || e.metaKey || groupingMode;
 
-		if (isGroupingMode && draggedItem.type === 'quality') {
-			if (targetItem.type === 'quality') {
-				const newGroup: OrderedItem = {
-					type: 'group',
-					name: `${draggedItem.name} + ${targetItem.name}`,
-					position: targetIndex,
-					enabled: true,
-					upgradeUntil: draggedItem.upgradeUntil || targetItem.upgradeUntil,
-					members: [{ name: draggedItem.name }, { name: targetItem.name }]
-				};
+			if (isGroupingMode && draggedItem.type === 'quality') {
+				if (target.item.type === 'quality') {
+					const newGroup: OrderedItem = {
+						type: 'group',
+						name: `${draggedItem.name} + ${target.item.name}`,
+						position: target.index,
+						enabled: true,
+						upgradeUntil: draggedItem.upgradeUntil || target.item.upgradeUntil,
+						members: [{ name: draggedItem.name }, { name: target.item.name }]
+					};
 
-				const newBucket = [...mainBucket];
-				const indicesToRemove = [sourceIndex, targetIndex].sort((a, b) => b - a);
-				indicesToRemove.forEach((idx) => newBucket.splice(idx, 1));
-				const insertPos = Math.min(sourceIndex, targetIndex);
-				newBucket.splice(insertPos, 0, newGroup);
+					const newBucket = [...mainBucket];
+					const indicesToRemove = [sourceIndex, target.index].sort((a, b) => b - a);
+					indicesToRemove.forEach((idx) => newBucket.splice(idx, 1));
+					const insertPos = Math.min(sourceIndex, target.index);
+					newBucket.splice(insertPos, 0, newGroup);
 
-				newBucket.forEach((item, index) => {
-					item.position = index;
-				});
-				updateMainBucket(newBucket);
-			} else if (targetItem.type === 'group') {
-				const newBucket = [...mainBucket];
-				const targetGroup = { ...newBucket[targetIndex] };
+					newBucket.forEach((item, index) => {
+						item.position = index;
+					});
+					updateMainBucket(newBucket);
+				} else if (target.item.type === 'group') {
+					const newBucket = [...mainBucket];
+					const targetGroup = { ...newBucket[target.index] };
 
-				if (!targetGroup.members) targetGroup.members = [];
-				targetGroup.members = [
-					...targetGroup.members,
-					{
-						name: draggedItem.name
-					}
-				];
+					if (!targetGroup.members) targetGroup.members = [];
+					targetGroup.members = [
+						...targetGroup.members,
+						{
+							name: draggedItem.name
+						}
+					];
 
-				newBucket[targetIndex] = targetGroup;
-				newBucket.splice(sourceIndex, 1);
+					newBucket[target.index] = targetGroup;
+					newBucket.splice(sourceIndex, 1);
 
-				newBucket.forEach((item, index) => {
-					item.position = index;
-				});
-				updateMainBucket(newBucket);
+					newBucket.forEach((item, index) => {
+						item.position = index;
+					});
+					updateMainBucket(newBucket);
+				}
 			}
 		}
 
@@ -289,6 +286,9 @@
 		hoverTargetIndex = null;
 		willCreateGroup = false;
 		willAddToGroup = false;
+		lastPointerEvent = null;
+		document.removeEventListener('pointermove', handlePointerMove);
+		document.removeEventListener('pointerup', handlePointerUp);
 		document.body.classList.remove('dragging');
 	}
 
@@ -604,12 +604,8 @@
 	<div class="space-y-4">
 		{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.name}-${index}` : `group-${item.name}-${index}`)}
 			<div
-				draggable={!isMobile}
-				on:dragstart={(e) => handleQualityDragStart(e, item, index)}
-				on:dragover={(e) => handleQualityDragOver(e, item, index)}
-				on:dragleave={handleQualityDragLeave}
-				on:drop={(e) => handleQualityDrop(e, item, index)}
-				on:dragend={resetDragState}
+				data-quality-index={index}
+				on:pointerdown={(e) => handlePointerDown(e, item, index)}
 				on:click={() => toggleEnabled(index)}
 				on:keydown={(e) => {
 					if (e.key === 'Enter' || e.key === ' ') {
@@ -617,11 +613,7 @@
 						toggleEnabled(index);
 					}
 				}}
-				class="relative rounded-lg border border-neutral-200 bg-neutral-100 p-3 hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 {isMobile
-					? 'cursor-pointer'
-					: draggedQualityFromMain?.index === index
-						? 'cursor-grabbing'
-						: 'cursor-grab'} {draggedQualityFromMain?.index === index
+				class="relative select-none rounded-xl border border-neutral-300 bg-white p-3 dark:border-neutral-700/60 dark:bg-neutral-800/50 {isMobile ? '' : 'cursor-grab'} {draggedQualityFromMain?.index === index
 					? 'scale-95 opacity-50'
 					: ''}"
 				style="transition: opacity 100ms, transform 100ms;"
@@ -670,40 +662,43 @@
 						<div class="flex items-center gap-3">
 							<div class="flex items-center gap-1 md:hidden">
 								{#if item.type === 'group'}
-									<button
+									<Button
+										icon={X}
+										size="xs"
+										title="Collapse group into individual qualities"
 										on:click={(e) => {
 											e.stopPropagation();
 											collapseGroup(item);
 										}}
-										class="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-										title="Collapse group into individual qualities"
-									>
-										<X size={16} />
-									</button>
-									<button
-										on:click|stopPropagation={() => openEditGroupModal(item, index)}
-										class="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+									/>
+									<Button
+										icon={Pencil}
+										size="xs"
 										title="Edit group"
-									>
-										<Pencil size={16} />
-									</button>
+										on:click={(e) => {
+											e.stopPropagation();
+											openEditGroupModal(item, index);
+										}}
+									/>
 								{/if}
-								<button
-									type="button"
+								<Button
+									icon={ChevronUp}
+									size="xs"
 									disabled={index === 0}
-									on:click|stopPropagation={() => moveItem(index, 'up')}
-									class="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-								>
-									<ChevronUp size={16} />
-								</button>
-								<button
-									type="button"
+									on:click={(e) => {
+										e.stopPropagation();
+										moveItem(index, 'up');
+									}}
+								/>
+								<Button
+									icon={ChevronDown}
+									size="xs"
 									disabled={index === mainBucket.length - 1}
-									on:click|stopPropagation={() => moveItem(index, 'down')}
-									class="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-								>
-									<ChevronDown size={16} />
-								</button>
+									on:click={(e) => {
+										e.stopPropagation();
+										moveItem(index, 'down');
+									}}
+								/>
 						</div>
 						{#if hoverTargetIndex === index && willCreateGroup}
 							<div class="text-xs font-medium text-green-600 dark:text-green-400">
@@ -715,23 +710,28 @@
 							</div>
 						{/if}
 							{#if item.type === 'group'}
-								<button
-									on:click={(e) => {
-										e.stopPropagation();
-										collapseGroup(item);
-									}}
-									class="hidden h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 md:inline-flex"
-									title="Collapse group into individual qualities"
-								>
-									<X size={16} />
-								</button>
-								<button
-									on:click|stopPropagation={() => openEditGroupModal(item, index)}
-									class="hidden h-7 w-7 items-center justify-center rounded border border-neutral-200 bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 md:inline-flex"
-									title="Edit group"
-								>
-									<Pencil size={16} />
-								</button>
+								<span class="hidden md:inline-flex">
+									<Button
+										icon={X}
+										size="xs"
+										title="Collapse group into individual qualities"
+										on:click={(e) => {
+											e.stopPropagation();
+											collapseGroup(item);
+										}}
+									/>
+								</span>
+								<span class="hidden md:inline-flex">
+									<Button
+										icon={Pencil}
+										size="xs"
+										title="Edit group"
+										on:click={(e) => {
+											e.stopPropagation();
+											openEditGroupModal(item, index);
+										}}
+									/>
+								</span>
 							{/if}
 						<IconCheckbox
 							checked={item.upgradeUntil}
@@ -854,3 +854,4 @@
 		cursor: grabbing !important;
 	}
 </style>
+
