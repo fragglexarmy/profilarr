@@ -37,6 +37,7 @@
 		aria-modal="true"
 		tabindex="-1"
 	>
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div
 			class="flex min-h-full w-full items-start justify-center sm:items-center"
 			on:click|self={handleClose}

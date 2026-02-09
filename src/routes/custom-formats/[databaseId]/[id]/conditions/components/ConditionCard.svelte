@@ -29,7 +29,6 @@
 	// Mode: 'normal' for existing conditions, 'draft' for new unsaved conditions
 	export let mode: 'normal' | 'draft' = 'normal';
 	export let condition: ConditionData;
-	export let invalid = false;
 	export let nameConflict = false;
 
 	// Available patterns and languages from database (passed in)

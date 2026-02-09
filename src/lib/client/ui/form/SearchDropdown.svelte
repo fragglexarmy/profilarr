@@ -133,6 +133,7 @@
 	}
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="relative" use:clickOutside={close} class:w-full={fullWidth} on:keydown={handleKeyDown}>
 	<FormInput
 		{label}
