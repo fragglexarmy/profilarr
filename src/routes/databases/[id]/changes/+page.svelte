@@ -792,16 +792,16 @@
 							<button
 								type="button"
 								on:click={toggleAll}
-								class="flex h-10 items-center gap-2 border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+								class="flex h-10 items-center gap-2 border border-neutral-300 bg-white px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-300 dark:hover:bg-neutral-800"
 							>
-								<IconCheckbox checked={allSelected} icon={Check} color="blue" />
+								<IconCheckbox checked={allSelected} icon={Check} color="blue" shape="circle" />
 								Select all ({selectableKeys.length})
 							</button>
 						</div>
 
 						<div class="flex-1">
 							<div
-								class="relative flex h-10 w-full items-center border border-neutral-200 bg-white px-3 text-sm text-neutral-600 transition-colors dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+								class="relative flex h-10 w-full items-center border border-neutral-300 bg-white px-3 text-sm text-neutral-600 transition-colors dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-400"
 							>
 								<input
 									type="text"
@@ -924,6 +924,7 @@
 									icon={Check}
 									color={autoSelectedKeys.has(row.key) ? '#f59e0b' : 'blue'}
 									variant={autoSelectedKeys.has(row.key) ? 'filled' : 'filled'}
+									shape="circle"
 									stopPropagation
 									on:click={() => toggleRow(row.key)}
 									title={autoSelectedKeys.has(row.key)
