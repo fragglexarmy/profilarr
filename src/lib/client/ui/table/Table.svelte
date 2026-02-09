@@ -142,7 +142,7 @@
 	<div class="space-y-3">
 		{#if sortedData.length === 0}
 			<div
-				class="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
+				class="rounded-xl border border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-400"
 			>
 				{emptyMessage}
 			</div>
@@ -150,7 +150,7 @@
 			{#each sortedData as row, rowIndex}
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 				<div
-					class="group/row relative overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 {onRowClick || rowHref ? 'cursor-pointer' : ''}"
+					class="group/row relative overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700/60 dark:bg-neutral-800/50 {onRowClick || rowHref ? 'cursor-pointer' : ''}"
 					on:click={() => onRowClick && onRowClick(row)}
 				>
 					{#if rowHref}
@@ -183,7 +183,7 @@
 
 					<!-- Secondary columns as label-value pairs -->
 					{#if columns.length > 1}
-						<div class="space-y-2 border-t border-neutral-100 px-4 py-3 dark:border-neutral-800">
+						<div class="space-y-2 border-t border-neutral-200 px-4 py-3 dark:border-neutral-700/60">
 							{#each columns.slice(1) as column, colIndex}
 								<div class="flex items-center justify-between gap-4 text-sm">
 									<span class="shrink-0 text-neutral-500 dark:text-neutral-400">{column.header}</span>
@@ -213,21 +213,21 @@
 	</div>
 {:else}
 	<!-- Desktop Table Layout -->
-	<div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+	<div class="overflow-x-auto rounded-xl border border-neutral-300 dark:border-neutral-700/60">
 		<table class="w-full">
 			<!-- Header -->
 			<thead
-				class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
+				class="border-b border-neutral-300 bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 			>
 				<tr>
 					{#each columns as column}
 						<th
-							class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300 ${getAlignClass(column.align)} ${column.width || ''}`}
+							class={`${compact ? 'px-4 py-2.5' : 'px-6 py-3'} text-xs font-semibold text-neutral-500 dark:text-neutral-400 ${getAlignClass(column.align)} ${column.width || ''}`}
 						>
 							{#if column.sortable}
 								<button
 									type="button"
-									class={`group flex w-full items-center gap-1.5 text-xs font-medium tracking-wider uppercase ${
+									class={`group flex w-full items-center gap-1.5 text-xs font-semibold ${
 										column.align === 'center'
 											? 'justify-center'
 											: column.align === 'right'
@@ -271,7 +271,7 @@
 					<!-- Actions column slot -->
 					{#if $$slots.actions}
 						<th
-							class={`${compact ? 'px-4 py-2' : 'px-6 py-3'} text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300`}
+							class={`${compact ? 'px-4 py-2.5' : 'px-6 py-3'} text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400`}
 						>
 							{actionsHeader}
 						</th>
@@ -280,7 +280,7 @@
 			</thead>
 
 			<!-- Body -->
-			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
+			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700/40 dark:bg-neutral-900/50">
 				{#if sortedData.length === 0}
 					<tr>
 						<td
@@ -294,7 +294,7 @@
 					{#each sortedData as row, rowIndex}
 						<tr
 							class="group/row {hoverable
-								? 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900'
+								? 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800'
 								: ''} {onRowClick || rowHref ? 'cursor-pointer' : ''}"
 							on:click={() => onRowClick && onRowClick(row)}
 						>

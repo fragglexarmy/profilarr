@@ -157,7 +157,7 @@
 	<div class="space-y-3">
 		{#if sortedData.length === 0}
 			<div
-				class="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
+				class="rounded-xl border border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-400"
 			>
 				{emptyMessage}
 			</div>
@@ -165,7 +165,7 @@
 			{#each sortedData as row, index}
 				{@const rowId = getRowId(row)}
 				<div
-					class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+					class="overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700/60 dark:bg-neutral-800/50"
 				>
 					<!-- Card Header - clickable to expand -->
 					<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
@@ -217,7 +217,7 @@
 
 						<!-- Secondary columns as label-value pairs -->
 						{#if mobileSecondaryColumns.length > 0}
-							<div class="space-y-2 border-t border-neutral-100 px-4 py-3 dark:border-neutral-800">
+							<div class="space-y-2 border-t border-neutral-200 px-4 py-3 dark:border-neutral-700/60">
 								{#each mobileSecondaryColumns as column, colIndex}
 									<div class="flex items-center justify-between gap-4 text-sm">
 										<span class="shrink-0 text-neutral-500 dark:text-neutral-400">{column.header}</span>
@@ -234,7 +234,7 @@
 
 					<!-- Expanded Content -->
 					{#if !shouldDisableExpand(row) && expandedRows.has(rowId)}
-						<div class="border-t border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/30">
+						<div class="border-t border-neutral-200 bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-900/30">
 							<slot name="expanded" {row}>
 								<div class="p-4 text-sm text-neutral-500 dark:text-neutral-400">
 									No additional details
@@ -249,24 +249,24 @@
 {:else}
 	<!-- Desktop Table Layout -->
 	<div
-		class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 {flushBottom
+		class="overflow-x-auto rounded-xl border border-neutral-300 dark:border-neutral-700/60 {flushBottom
 			? 'rounded-b-none border-b-0'
 			: ''}"
 	>
 		<table class="w-full">
 			<thead
-				class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800"
+				class="border-b border-neutral-300 bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 			>
 				<tr>
 					<!-- Expand column (left) -->
 					{#if chevronPosition === 'left'}
-						<th class="{compact ? 'px-2 py-2' : 'px-3 py-3'} w-8"></th>
+						<th class="{compact ? 'px-2 py-2.5' : 'px-3 py-3'} w-8"></th>
 					{/if}
 					{#each columns as column}
 						<th
 							class="{compact
-								? 'px-4 py-2'
-								: 'px-6 py-3'} text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300 {getAlignClass(
+								? 'px-4 py-2.5'
+								: 'px-6 py-3'} text-xs font-semibold text-neutral-500 dark:text-neutral-400 {getAlignClass(
 								column.align
 							)} {column.width || ''}"
 						>
@@ -298,19 +298,19 @@
 					{#if $$slots.actions}
 						<th
 							class="{compact
-								? 'px-4 py-2'
-								: 'px-6 py-3'} w-20 text-right text-xs font-medium tracking-wider text-neutral-700 uppercase dark:text-neutral-300"
+								? 'px-4 py-2.5'
+								: 'px-6 py-3'} w-20 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400"
 						>
 							Actions
 						</th>
 					{/if}
 					<!-- Expand column (right) -->
 					{#if chevronPosition === 'right'}
-						<th class="{compact ? 'px-2 py-2' : 'px-3 py-3'} w-8"></th>
+						<th class="{compact ? 'px-2 py-2.5' : 'px-3 py-3'} w-8"></th>
 					{/if}
 				</tr>
 			</thead>
-			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
+			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700/40 dark:bg-neutral-900/50">
 				{#if sortedData.length === 0}
 					<tr>
 						<td
@@ -326,7 +326,7 @@
 
 						<!-- Main Row -->
 						<tr
-							class="cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+							class="cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
 							on:click={() => handleRowClick(rowId, row)}
 						>
 							<!-- Expand Icon (left) -->
@@ -388,7 +388,7 @@
 
 						<!-- Expanded Row -->
 						{#if !shouldDisableExpand(row) && expandedRows.has(rowId)}
-							<tr class="bg-neutral-50 dark:bg-neutral-800/30">
+							<tr class="bg-neutral-50 dark:bg-neutral-900/30">
 								<td
 									colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)}
 									class={flushExpanded ? '' : compact ? 'px-4 py-3' : 'px-6 py-4'}
