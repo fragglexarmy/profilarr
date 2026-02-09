@@ -109,7 +109,7 @@
 	{disabled}
 	{title}
 	on:click={handleClick}
-	style={buttonStyle}
+	style="{buttonStyle}{shape === 'circle' ? ' border-radius: 9999px !important;' : ''}"
 	class="{baseClass} {shapeClass} {stateClass} {disabled ? disabledClass : enabledClass}"
 >
 	{#if checked}
