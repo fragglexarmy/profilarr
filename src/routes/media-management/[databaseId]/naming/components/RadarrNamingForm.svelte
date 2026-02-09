@@ -4,12 +4,18 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
-	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
 	import { alertStore } from '$alerts/store';
-	import { Check, Save, Trash2 } from 'lucide-svelte';
+	import { Save, Trash2, Info } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { RadarrNamingRow } from '$shared/pcd/display.ts';
 	import { RADARR_COLON_REPLACEMENT_OPTIONS, type RadarrColonReplacementFormat } from '$shared/pcd/mediaManagement.ts';
+	import { resolveRadarrFormat, getRadarrTokenCategories } from '$shared/pcd/namingTokens.ts';
+	import NamingPreview from './NamingPreview.svelte';
+
+	import TokenAutocomplete from './TokenAutocomplete.svelte';
 
 	interface RadarrNamingFormData {
 		name: string;
@@ -59,9 +65,14 @@
 	let saving = false;
 	let deleting = false;
 	let showDeleteModal = false;
+	let showInfoModal = false;
 	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+	let movieFormatInput: HTMLInputElement | HTMLTextAreaElement | null = null;
+	let movieFolderFormatInput: HTMLInputElement | HTMLTextAreaElement | null = null;
+
+	const radarrTokenCategories = getRadarrTokenCategories();
 
 	$: title = mode === 'create' ? 'New Radarr Naming Config' : 'Edit Radarr Naming Config';
 	$: description =
@@ -101,6 +112,12 @@
 		<p class="text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
 	</div>
 	<div slot="right" class="flex items-center gap-2">
+		<Button
+			text="Info"
+			icon={Info}
+			iconColor="text-blue-600 dark:text-blue-400"
+			on:click={() => (showInfoModal = true)}
+		/>
 		{#if mode === 'edit'}
 			<Button
 				text={deleting ? 'Deleting...' : 'Delete'}
@@ -127,136 +144,103 @@
 		<!-- Basic Info -->
 		<div class="space-y-4">
 			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Basic Info</h2>
-			<div>
-				<label
-					for="name"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
-					Name <span class="text-red-500">*</span>
-				</label>
-				<input
-					type="text"
-					id="name"
-					value={formData.name}
-					oninput={(e) => update('name', e.currentTarget.value)}
-					placeholder="e.g., default"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
+			<FormInput
+				label="Name"
+				name="name"
+				required
+				value={formData.name}
+				placeholder="e.g., default"
+				on:input={(e) => update('name', e.detail)}
+			/>
 
-			<button
-				type="button"
-				onclick={() => update('rename', !formData.rename)}
-				class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
-			>
-				<IconCheckbox checked={formData.rename} icon={Check} on:click={() => update('rename', !formData.rename)} />
+			<div class="space-y-2">
+				<Toggle
+					checked={formData.rename}
+					label="Rename Movies"
+					ariaLabel="Rename Movies"
+					color={formData.rename ? 'green' : 'neutral'}
+					on:change={(e) => update('rename', e.detail)}
+				/>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					Rename movie files to match the naming format
+				</p>
+			</div>
+		</div>
+
+		{#if formData.rename}
+			<hr class="border-neutral-200 dark:border-neutral-700" />
+
+			<!-- Naming Formats -->
+			<div class="space-y-4">
+				<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Naming Formats</h2>
 				<div>
-					<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-						Rename Movies
-					</div>
-					<div class="text-xs text-neutral-500 dark:text-neutral-400">
-						Rename movie files to match the naming format
-					</div>
+					<TokenAutocomplete
+						label="Movie Format"
+						name="movieFormat"
+						value={formData.movieFormat}
+						placeholder="e.g., Movie Title (Year) Quality"
+						categories={radarrTokenCategories}
+						bind:inputElement={movieFormatInput}
+						on:input={(e) => update('movieFormat', e.detail)}
+					/>
+					<NamingPreview format={formData.movieFormat} resolver={resolveRadarrFormat} />
 				</div>
-			</button>
-		</div>
 
-		<hr class="border-neutral-200 dark:border-neutral-700" />
-
-		<!-- Naming Formats -->
-		<div class="space-y-4">
-			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Naming Formats</h2>
-			<div>
-				<label
-					for="movieFormat"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
-					Movie Format
-				</label>
-				<input
-					type="text"
-					id="movieFormat"
-					value={formData.movieFormat}
-					oninput={(e) => update('movieFormat', e.currentTarget.value)}
-					placeholder="e.g., Movie Title (Year) Quality"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
-
-			<div>
-				<label
-					for="movieFolderFormat"
-					class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-				>
-					Movie Folder Format
-				</label>
-				<input
-					type="text"
-					id="movieFolderFormat"
-					value={formData.movieFolderFormat}
-					oninput={(e) => update('movieFolderFormat', e.currentTarget.value)}
-					placeholder="e.g., Movie Title (Year)"
-					class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-				/>
-			</div>
-		</div>
-
-		<hr class="border-neutral-200 dark:border-neutral-700" />
-
-		<!-- Character Replacement -->
-		<div class="space-y-4">
-			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Character Replacement</h2>
-
-			<button
-				type="button"
-				onclick={() => update('replaceIllegalCharacters', !formData.replaceIllegalCharacters)}
-				class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
-			>
-				<IconCheckbox checked={formData.replaceIllegalCharacters} icon={Check} on:click={() => update('replaceIllegalCharacters', !formData.replaceIllegalCharacters)} />
 				<div>
-					<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-						Replace Illegal Characters
-					</div>
-					<div class="text-xs text-neutral-500 dark:text-neutral-400">
+					<TokenAutocomplete
+						label="Movie Folder Format"
+						name="movieFolderFormat"
+						value={formData.movieFolderFormat}
+						placeholder="e.g., Movie Title (Year)"
+						categories={radarrTokenCategories}
+						bind:inputElement={movieFolderFormatInput}
+						on:input={(e) => update('movieFolderFormat', e.detail)}
+					/>
+					<NamingPreview format={formData.movieFolderFormat} resolver={resolveRadarrFormat} />
+				</div>
+			</div>
+
+			<hr class="border-neutral-200 dark:border-neutral-700" />
+
+			<!-- Character Replacement -->
+			<div class="space-y-4">
+				<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Character Replacement</h2>
+
+				<div class="space-y-2">
+					<Toggle
+						checked={formData.replaceIllegalCharacters}
+						label="Replace Illegal Characters"
+						ariaLabel="Replace Illegal Characters"
+						color={formData.replaceIllegalCharacters ? 'green' : 'neutral'}
+						on:change={(e) => update('replaceIllegalCharacters', e.detail)}
+					/>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
 						Replace characters that are not allowed in file names
-					</div>
+					</p>
 				</div>
-			</button>
 
-			{#if formData.replaceIllegalCharacters}
-				<div>
-					<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-						Colon Replacement
-					</span>
-					<div class="mt-2 grid gap-2">
-						{#each RADARR_COLON_REPLACEMENT_OPTIONS as option}
-							<button
-								type="button"
-								onclick={() => update('colonReplacementFormat', option.value)}
-								class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {formData.colonReplacementFormat ===
-								option.value
-									? 'border-accent-500 bg-accent-50 dark:border-accent-400 dark:bg-accent-950'
-									: 'border-neutral-200 bg-neutral-50 hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'}"
-							>
-								<div
-									class="flex h-5 w-5 items-center justify-center rounded-full border-2 {formData.colonReplacementFormat ===
-									option.value
-										? 'border-accent-500 bg-accent-500 dark:border-accent-400 dark:bg-accent-400'
-										: 'border-neutral-300 dark:border-neutral-600'}"
-								>
-									{#if formData.colonReplacementFormat === option.value}
-										<Check size={12} class="text-white" />
-									{/if}
-								</div>
-								<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-									{option.label}
-								</div>
-							</button>
-						{/each}
+				{#if formData.replaceIllegalCharacters}
+					<div>
+						<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+							Colon Replacement
+						</span>
+						<div class="mt-2 grid gap-2">
+							{#each RADARR_COLON_REPLACEMENT_OPTIONS as option}
+								<Toggle
+									checked={formData.colonReplacementFormat === option.value}
+									label={option.label}
+									ariaLabel={`Set colon replacement to ${option.label}`}
+									on:change={(e) => {
+										if (e.detail) update('colonReplacementFormat', option.value);
+									}}
+								/>
+							{/each}
+						</div>
 					</div>
-				</div>
-			{/if}
-		</div>
+				{/if}
+			</div>
+		{/if}
+
 	</div>
 </div>
 
@@ -332,3 +316,37 @@
 	on:confirm={handleDeleteConfirm}
 	on:cancel={handleDeleteCancel}
 />
+
+<InfoModal bind:open={showInfoModal} header="Radarr Naming Configuration">
+	<div class="space-y-4 text-sm text-neutral-600 dark:text-neutral-400">
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Format Strings</div>
+			<p class="mt-1">
+				Format strings control how Radarr names movie files and folders. Use tokens like
+				<code class="rounded bg-neutral-100 px-1 py-0.5 font-mono text-xs dark:bg-neutral-800">{'{Movie Title}'}</code>
+				and
+				<code class="rounded bg-neutral-100 px-1 py-0.5 font-mono text-xs dark:bg-neutral-800">{'{Release Year}'}</code>
+				to build your naming pattern.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Token Autocomplete</div>
+			<p class="mt-1">
+				Type <code class="rounded bg-neutral-100 px-1 py-0.5 font-mono text-xs dark:bg-neutral-800">{'{'}</code> in
+				any format field to open the token picker. Filter by typing, then use arrow keys and Enter or click to insert.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Live Preview</div>
+			<p class="mt-1">
+				A preview line below each format field shows how your pattern resolves with sample data, so you can see the result as you type.
+			</p>
+		</div>
+		<div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Character Replacement</div>
+			<p class="mt-1">
+				When enabled, illegal filesystem characters are replaced automatically. The colon replacement option controls how colons specifically are handled (deleted, replaced with a dash, space, etc.).
+			</p>
+		</div>
+	</div>
+</InfoModal>
