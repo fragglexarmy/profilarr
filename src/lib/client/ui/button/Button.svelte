@@ -56,14 +56,20 @@
 		md: 'gap-2 rounded-xl px-4 py-2.5'
 	};
 
+	const iconOnlySizeClasses = {
+		xs: 'rounded-lg p-1.5 text-xs',
+		sm: 'rounded-xl p-2 text-sm',
+		md: 'rounded-xl p-2.5'
+	};
+
 	const variantClasses = {
 		primary:
 			'bg-accent-600 text-white hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600',
 		secondary:
-			'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-200 dark:hover:bg-neutral-800',
+			'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-200 dark:hover:bg-neutral-700',
 		danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
 		ghost:
-			'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-200 dark:hover:bg-neutral-800'
+			'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-200 dark:hover:bg-neutral-700'
 	};
 
 	$: effectiveSize = responsive && isSmallScreen ? 'xs' : size;
@@ -72,7 +78,9 @@
 		textColor || (variant === 'ghost' ? 'text-neutral-700 dark:text-neutral-300' : '');
 	$: baseIconColor =
 		iconColor || (variant === 'ghost' ? 'text-neutral-500 dark:text-neutral-400' : '');
-	$: classes = `${baseClasses} ${sizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
+	$: isIconOnly = icon && !text;
+	$: activeSizeClasses = isIconOnly ? iconOnlySizeClasses : sizeClasses;
+	$: classes = `${baseClasses} ${activeSizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
 </script>
 
 {#if href}
