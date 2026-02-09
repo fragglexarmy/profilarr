@@ -42,12 +42,7 @@
 	$: conditionNameId = `condition-name-${(condition.name || 'untitled')
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')}`;
-	$: nameError =
-		nameConflict
-			? 'Duplicate condition name'
-			: invalid && !isDraft
-				? 'Invalid condition name'
-				: '';
+	$: nameError = '';
 
 	// Helper to emit changes - creates new object to maintain immutability
 	function emitChange(updates: Partial<ConditionData>) {

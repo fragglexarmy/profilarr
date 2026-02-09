@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import { Plus, Save, Loader2, AlertTriangle } from 'lucide-svelte';
+	import { Plus, Save, Loader2 } from 'lucide-svelte';
 	import ConditionCard from './components/ConditionCard.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import Button from '$ui/button/Button.svelte';
@@ -181,9 +181,27 @@
 		);
 	}
 
+	$: hasEmptyNames = conditions.some((c) => !c.name.trim());
+
 	async function handleSaveClick() {
+		if (hasDrafts) {
+			alertStore.add('warning', 'Confirm or discard draft conditions before saving.');
+			return;
+		}
+		if (hasEmptyNames) {
+			alertStore.add('warning', 'All conditions must have a name.');
+			return;
+		}
+		if (hasDuplicateNames) {
+			alertStore.add('warning', 'Condition names must be unique.');
+			return;
+		}
+		if (hasInvalidConditions) {
+			alertStore.add('warning', 'Some conditions are missing required values.');
+			return;
+		}
 		if (hasMissingArrType) {
-			alertStore.add('warning', 'A condition must have at least one Arr type selected.');
+			alertStore.add('warning', 'Each condition must have at least one Arr type selected.');
 			return;
 		}
 		selectedLayer = data.canWriteToBase ? 'base' : 'user';
@@ -230,51 +248,22 @@
 			</div>
 		</svelte:fragment>
 		<svelte:fragment slot="right">
-			<div class="flex flex-col gap-2">
-				{#if hasDuplicateNames}
-					<span class="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
-						<AlertTriangle size={14} class="shrink-0" />
-						Condition names must be unique
-					</span>
-				{:else if hasDrafts}
-					<span class="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 md:hidden">
-						<AlertTriangle size={14} class="shrink-0" />
-						Confirm or discard drafts
-					</span>
-				{:else if hasInvalidConditions}
-					<span class="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
-						<AlertTriangle size={14} class="shrink-0" />
-						Missing required values
-					</span>
-				{:else if hasMissingArrType}
-					<span class="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
-						<AlertTriangle size={14} class="shrink-0" />
-						Select at least one Arr type per condition
-					</span>
-				{/if}
-				<div class="flex items-center gap-2">
-					{#if hasDrafts}
-						<span class="hidden items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 md:flex">
-							<AlertTriangle size={14} class="shrink-0" />
-							Confirm or discard drafts
-						</span>
-					{/if}
-					<Button
-						text="Add Condition"
-						icon={Plus}
-						iconColor="text-blue-600 dark:text-blue-400"
-						variant="secondary"
-						on:click={addDraftCondition}
-					/>
-					<Button
-						text={saving ? 'Saving...' : 'Save Changes'}
-						icon={saving ? Loader2 : Save}
-						iconColor="text-green-600 dark:text-green-400"
-						variant="secondary"
-						disabled={saving || !$isDirty || hasDrafts || hasInvalidConditions || hasDuplicateNames}
-						on:click={handleSaveClick}
-					/>
-				</div>
+			<div class="flex items-center gap-2">
+				<Button
+					text="Add Condition"
+					icon={Plus}
+					iconColor="text-blue-600 dark:text-blue-400"
+					variant="secondary"
+					on:click={addDraftCondition}
+				/>
+				<Button
+					text={saving ? 'Saving...' : 'Save'}
+					icon={saving ? Loader2 : Save}
+					iconColor="text-green-600 dark:text-green-400"
+					variant="secondary"
+					disabled={saving || !$isDirty}
+					on:click={handleSaveClick}
+				/>
 			</div>
 		</svelte:fragment>
 	</StickyCard>
