@@ -1,3 +1,6 @@
+// Auto-spawn parser binary for standalone builds (must run before config import)
+await import('$lib/server/utils/parser/spawn.ts');
+
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { config } from '$config';

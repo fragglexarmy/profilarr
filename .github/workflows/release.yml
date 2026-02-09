@@ -1,0 +1,144 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  DENO_VERSION: '2.5.6'
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    strategy:
+      matrix:
+        include:
+          - platform: linux-x64
+            deno_target: x86_64-unknown-linux-gnu
+            dotnet_rid: linux-x64
+            vite_platform: linux-amd64
+            archive_ext: tar.gz
+            binary_ext: ''
+          - platform: linux-arm64
+            deno_target: aarch64-unknown-linux-gnu
+            dotnet_rid: linux-arm64
+            vite_platform: linux-arm64
+            archive_ext: tar.gz
+            binary_ext: ''
+          - platform: macos-x64
+            deno_target: x86_64-apple-darwin
+            dotnet_rid: osx-x64
+            vite_platform: macos-amd64
+            archive_ext: tar.gz
+            binary_ext: ''
+          - platform: macos-arm64
+            deno_target: aarch64-apple-darwin
+            dotnet_rid: osx-arm64
+            vite_platform: macos-arm64
+            archive_ext: tar.gz
+            binary_ext: ''
+          - platform: windows-x64
+            deno_target: x86_64-pc-windows-msvc
+            dotnet_rid: win-x64
+            vite_platform: windows-amd64
+            archive_ext: zip
+            binary_ext: '.exe'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Extract version
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: deno install --node-modules-dir
+
+      - name: Build SvelteKit
+        run: deno run -A npm:vite build
+        env:
+          APP_BASE_PATH: ./dist/build
+          VITE_PLATFORM: ${{ matrix.vite_platform }}
+          VITE_CHANNEL: stable
+
+      - name: Compile Deno binary
+        run: |
+          mkdir -p dist/staging
+          deno compile \
+            --no-check \
+            --allow-net --allow-read --allow-write \
+            --allow-env --allow-ffi --allow-run --allow-sys \
+            --target ${{ matrix.deno_target }} \
+            --output dist/staging/profilarr${{ matrix.binary_ext }} \
+            dist/build/mod.ts
+          cp dist/build/server.js dist/staging/server.js
+          cp -r dist/build/static dist/staging/static
+
+      - name: Build parser
+        run: |
+          rm -f src/services/parser/Directory.Build.props
+          dotnet publish src/services/parser/Parser.csproj \
+            -c Release \
+            -r ${{ matrix.dotnet_rid }} \
+            --self-contained \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o dist/parser-out
+
+      - name: Stage parser binary
+        run: |
+          cp dist/parser-out/Parser${{ matrix.binary_ext }} \
+             dist/staging/profilarr-parser${{ matrix.binary_ext }}
+
+      - name: Create archive
+        run: |
+          cd dist/staging
+          ARCHIVE_NAME="profilarr-${{ steps.version.outputs.value }}-${{ matrix.platform }}"
+          if [ "${{ matrix.archive_ext }}" = "tar.gz" ]; then
+            tar -czf "../${ARCHIVE_NAME}.tar.gz" *
+          else
+            zip "../${ARCHIVE_NAME}.zip" *
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: profilarr-${{ matrix.platform }}
+          path: dist/profilarr-*.${{ matrix.archive_ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
