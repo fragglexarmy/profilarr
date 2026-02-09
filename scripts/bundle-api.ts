@@ -147,8 +147,27 @@ const specPath = join(OUT_DIR, "openapi.json");
 Deno.writeTextFileSync(specPath, JSON.stringify(bundled, null, 2) + "\n");
 console.log(`Wrote bundled spec to ${specPath}`);
 
-// 6. Copy generated types
+// 6. Copy generated types and inject JSDoc on exported symbols
 const typesSource = "src/lib/api/v1.d.ts";
 const typesDest = join(OUT_DIR, "types.ts");
-Deno.copyFileSync(typesSource, typesDest);
+let typesContent = Deno.readTextFileSync(typesSource);
+
+const symbolDocs: Record<string, string> = {
+	"export interface paths":
+		"/** API endpoint path definitions mapping URL patterns to their HTTP methods and operations. */",
+	"export type webhooks":
+		"/** Webhook event definitions. Currently unused. */",
+	"export interface components":
+		"/** API component schemas including all request bodies, response types, and shared models. */",
+	"export type $defs":
+		"/** JSON Schema definitions. Currently unused. */",
+	"export interface operations":
+		"/** API operation definitions with typed parameters, request bodies, and responses. */",
+};
+
+for (const [symbol, doc] of Object.entries(symbolDocs)) {
+	typesContent = typesContent.replace(symbol, `${doc}\n${symbol}`);
+}
+
+Deno.writeTextFileSync(typesDest, typesContent);
 console.log(`Copied types to ${typesDest}`);

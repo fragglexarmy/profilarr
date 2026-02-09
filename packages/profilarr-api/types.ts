@@ -3,6 +3,7 @@
  * Do not make direct changes to the file.
  */
 
+/** API endpoint path definitions mapping URL patterns to their HTTP methods and operations. */
 export interface paths {
     "/health": {
         parameters: {
@@ -190,7 +191,9 @@ export interface paths {
         trace?: never;
     };
 }
+/** Webhook event definitions. Currently unused. */
 export type webhooks = Record<string, never>;
+/** API component schemas including all request bodies, response types, and shared models. */
 export interface components {
     schemas: {
         /**
@@ -591,7 +594,9 @@ export interface components {
     headers: never;
     pathItems: never;
 }
+/** JSON Schema definitions. Currently unused. */
 export type $defs = Record<string, never>;
+/** API operation definitions with typed parameters, request bodies, and responses. */
 export interface operations {
     getHealth: {
         parameters: {
