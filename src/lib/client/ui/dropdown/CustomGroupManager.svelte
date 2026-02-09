@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { X } from 'lucide-svelte';
+	import { X, Plus } from 'lucide-svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import { Check } from 'lucide-svelte';
 
 	export let customGroups: Array<{ name: string; key: string; tags: string[]; custom: boolean }> =
@@ -34,25 +36,31 @@
 		Add Custom Group
 	</div>
 	<form on:submit|preventDefault={handleSubmit} class="space-y-2">
-		<input
-			type="text"
-			bind:value={newGroupName}
+		<FormInput
+			label="Group name"
+			name="groupName"
 			placeholder="Group name"
-			class="block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+			bind:value={newGroupName}
+			hideLabel
+			size="sm"
 		/>
-		<input
-			type="text"
-			bind:value={newGroupTags}
+		<FormInput
+			label="Tags"
+			name="groupTags"
 			placeholder="Tags (comma-separated)"
-			class="block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+			bind:value={newGroupTags}
+			hideLabel
+			size="sm"
 		/>
-		<button
+		<Button
 			type="submit"
-			class="w-full rounded bg-accent-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+			text="Add Group"
+			icon={Plus}
+			variant="primary"
+			size="xs"
+			fullWidth
 			disabled={!newGroupName || !newGroupTags}
-		>
-			Add Group
-		</button>
+		/>
 	</form>
 </div>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
 	import {
@@ -13,6 +14,7 @@
 		User,
 		X,
 		Save,
+		Plus,
 		Loader2
 	} from 'lucide-svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
@@ -414,7 +416,6 @@
 	}
 
 	$: scoring = data.scoring;
-
 	// Compute filtered and sorted formats
 	$: searchQuery = ($searchStore.query ?? '').trim().toLowerCase();
 	$: filteredCustomFormats =
@@ -869,19 +870,23 @@
 								Save Current Settings
 							</div>
 							<form on:submit|preventDefault={handleSaveProfile} class="space-y-2">
-								<input
-									type="text"
-									bind:value={newProfileName}
+								<FormInput
+									label="Profile name"
+									name="profileName"
 									placeholder="Profile name"
-									class="block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:placeholder-neutral-500"
+									bind:value={newProfileName}
+									hideLabel
+									size="sm"
 								/>
-								<button
+								<Button
 									type="submit"
-									class="w-full rounded bg-accent-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-500 dark:hover:bg-accent-600"
+									text="Save Profile"
+									icon={Plus}
+									variant="primary"
+									size="xs"
+									fullWidth
 									disabled={!newProfileName.trim()}
-								>
-									Save Profile
-								</button>
+								/>
 							</form>
 						</div>
 
