@@ -71,7 +71,7 @@ type GroupModalItem = {
 					<button
 						type="button"
 						on:click={() => handleToggle(item.name)}
-						class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-2 text-left transition-colors hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+						class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-100 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:hover:bg-neutral-700"
 					>
 						<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
 							{item.name}
