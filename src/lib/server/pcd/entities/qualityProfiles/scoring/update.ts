@@ -84,6 +84,92 @@ export async function updateScoring(options: UpdateScoringOptions) {
 
 	const ops: ScoringOp[] = [];
 
+	// Expand 'all' rows into per-arr-type rows for any CFs being modified.
+	// This prevents ghost fallbacks when a specific arr_type score is deleted
+	// but an old 'all' row still exists in the database.
+	const modifiedCfNames = new Set(input.customFormatScores.map((s) => s.customFormatName));
+	const arrTypes = ['radarr', 'sonarr'];
+
+	for (const cfName of modifiedCfNames) {
+		const allKey = `${cfName}::all`;
+		const allScore = currentScoreMap.get(allKey);
+		if (allScore === undefined) continue;
+
+		for (const arrType of arrTypes) {
+			const key = `${cfName}::${arrType}`;
+			if (!currentScoreMap.has(key)) {
+				const insertQuery = {
+					sql: `INSERT INTO quality_profile_custom_formats (quality_profile_name, custom_format_name, arr_type, score)
+SELECT '${esc(profileName)}', '${esc(cfName)}', '${esc(arrType)}', ${allScore}
+WHERE NOT EXISTS (
+  SELECT 1 FROM quality_profile_custom_formats
+  WHERE quality_profile_name = '${esc(profileName)}'
+    AND custom_format_name = '${esc(cfName)}'
+    AND arr_type = '${esc(arrType)}'
+)`,
+					parameters: [],
+					query: {} as never
+				};
+
+				ops.push({
+					description: `expand-all-score-${profileName}-${arrType}-${cfName}`,
+					queries: [insertQuery],
+					desiredState: {
+						custom_format_scores: [
+							{
+								custom_format_name: cfName,
+								arr_type: arrType,
+								from: null,
+								to: allScore
+							}
+						]
+					},
+					changedFields: [`custom_format_score:${cfName}:${arrType}`],
+					summary: `Expand shared score to ${arrType}`,
+					title: `Expand shared score for "${cfName}" to ${arrType} on "${profileName}"`,
+					dependsOn: [
+						{ entity: 'custom_format', key: 'custom_format_name', value: cfName }
+					]
+				});
+
+				currentScoreMap.set(key, allScore);
+			}
+		}
+
+		const deleteAllQuery = {
+			sql: `DELETE FROM quality_profile_custom_formats
+WHERE quality_profile_name = '${esc(profileName)}'
+  AND custom_format_name = '${esc(cfName)}'
+  AND arr_type = 'all'
+  AND score = ${allScore}`,
+			parameters: [],
+			query: {} as never
+		};
+
+		ops.push({
+			description: `remove-all-score-${profileName}-${cfName}`,
+			queries: [deleteAllQuery],
+			desiredState: {
+				custom_format_scores: [
+					{
+						custom_format_name: cfName,
+						arr_type: 'all',
+						from: allScore,
+						to: null
+					}
+				]
+			},
+			changedFields: [`custom_format_score:${cfName}:all`],
+			summary: `Remove shared score after expansion`,
+			title: `Remove shared score for "${cfName}" on "${profileName}"`,
+			dependsOn: [
+				{ entity: 'custom_format', key: 'custom_format_name', value: cfName }
+			]
+		});
+
+		currentScoreMap.delete(allKey);
+	}
+
 	if (currentProfile.minimum_custom_format_score !== input.minimumScore) {
 		const query = db
 			.updateTable('quality_profiles')
