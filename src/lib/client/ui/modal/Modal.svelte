@@ -3,6 +3,7 @@
 	import { cubicIn, cubicOut } from 'svelte/easing';
 	import { fade, scale } from 'svelte/transition';
 	import { X, Check, Loader2 } from 'lucide-svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	// Props
 	export let open = false;
@@ -97,35 +98,19 @@
 				<div
 					class="flex flex-shrink-0 justify-between border-t border-neutral-200 px-6 py-4 dark:border-neutral-800"
 				>
-					<button
-						type="button"
-						on:click={handleCancel}
+					<Button
+						text={cancelText}
+						icon={X}
 						disabled={loading}
-						class="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 {loading
-							? 'cursor-not-allowed opacity-50'
-							: ''}"
-					>
-						<X size={16} />
-						{cancelText}
-					</button>
-					<button
-						type="button"
-						on:click={handleConfirm}
+						on:click={handleCancel}
+					/>
+					<Button
+						text={confirmText}
+						icon={loading ? Loader2 : Check}
+						variant={confirmDanger ? 'danger' : 'primary'}
 						disabled={confirmDisabled || loading}
-						class="{confirmDanger
-							? 'border border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
-							: 'bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600'} flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors {confirmDisabled ||
-						loading
-							? 'cursor-not-allowed opacity-50'
-							: ''}"
-					>
-						{#if loading}
-							<Loader2 size={16} class="animate-spin" />
-						{:else}
-							<Check size={16} />
-						{/if}
-						{confirmText}
-					</button>
+						on:click={handleConfirm}
+					/>
 				</div>
 			</div>
 		</div>
