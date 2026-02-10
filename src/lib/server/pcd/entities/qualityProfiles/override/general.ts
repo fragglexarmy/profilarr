@@ -2,6 +2,7 @@ import { getCache } from '$pcd/index.ts';
 import type { WriteResult } from '$pcd/index.ts';
 import { general as readProfileGeneral } from '../general/read.ts';
 import { updateGeneral } from '../general/update.ts';
+import { create as createQualityProfile } from '../create.ts';
 import type { StoredOpMetadata, StoredDesiredState } from '$pcd/conflicts/overrideUtils.ts';
 import {
 	getDesiredTo,
@@ -56,17 +57,55 @@ export async function overrideGeneral(
 	}
 
 	const profileName = await resolveProfileName(cache, databaseId, metadata, desiredState);
-	if (!profileName) {
+	const fallbackName =
+		metadata?.stable_key?.value ??
+		metadata?.name ??
+		getDesiredTo<string>(desiredState?.name) ??
+		(typeof desiredState?.name === 'string' ? (desiredState.name as string) : null);
+
+	if (!profileName && !fallbackName) {
 		return { success: false, error: 'Quality profile not found for override' };
 	}
 
-	const profileRow = await cache.kb
-		.selectFrom('quality_profiles')
-		.select(['id', 'name'])
-		.where('name', '=', profileName)
-		.executeTakeFirst();
+	const profileRow = profileName
+		? await cache.kb
+				.selectFrom('quality_profiles')
+				.select(['id', 'name'])
+				.where('name', '=', profileName)
+				.executeTakeFirst()
+		: undefined;
+
+	const desiredNameRaw =
+		getDesiredTo<string>(desiredState.name) ??
+		(typeof desiredState.name === 'string'
+			? desiredState.name
+			: profileName ?? fallbackName ?? '');
+	const desiredDescriptionRaw =
+		getDesiredTo<string | null>(desiredState.description) ??
+		(typeof desiredState.description === 'string' || desiredState.description === null
+			? (desiredState.description as string | null)
+			: undefined);
+	const desiredTags = resolveTags([], desiredState);
+	const desiredLanguage = resolveLanguage(null, desiredState);
+
+	// Entity was deleted upstream — re-create it with desired state
 	if (!profileRow) {
-		return { success: false, error: 'Quality profile not found for override' };
+		const createName = desiredNameRaw || fallbackName || profileName || '';
+		if (!createName) {
+			return { success: false, error: 'Quality profile not found for override' };
+		}
+
+		return createQualityProfile({
+			databaseId,
+			cache,
+			layer: 'user',
+			input: {
+				name: createName,
+				description: normalizeText((desiredDescriptionRaw ?? '') as string),
+				tags: desiredTags,
+				language: desiredLanguage
+			}
+		});
 	}
 
 	const current = await readProfileGeneral(cache, profileRow.id);
@@ -74,23 +113,20 @@ export async function overrideGeneral(
 		return { success: false, error: 'Quality profile not found for override' };
 	}
 
-	const desiredName =
-		getDesiredTo<string>(desiredState.name) ??
-		(typeof desiredState.name === 'string' ? desiredState.name : current.name);
+	const desiredName = desiredNameRaw || current.name;
 	const desiredDescription =
-		getDesiredTo<string | null>(desiredState.description) ??
-		(typeof desiredState.description === 'string' || desiredState.description === null
-			? (desiredState.description as string | null)
-			: current.description);
+		desiredDescriptionRaw !== undefined
+			? (desiredDescriptionRaw as string | null)
+			: current.description;
 	const currentTags = current.tags.map((tag) => tag.name);
-	const desiredTags = resolveTags(currentTags, desiredState);
-	const desiredLanguage = resolveLanguage(current.language, desiredState);
+	const resolvedTags = resolveTags(currentTags, desiredState);
+	const resolvedLanguage = resolveLanguage(current.language, desiredState);
 
 	const matches =
 		normalizeText(current.name) === normalizeText(desiredName) &&
 		normalizeText(current.description) === normalizeText(desiredDescription ?? '') &&
-		tagsEqual(currentTags, desiredTags) &&
-		current.language === desiredLanguage;
+		tagsEqual(currentTags, resolvedTags) &&
+		current.language === resolvedLanguage;
 
 	if (matches) {
 		return { success: true };
@@ -104,8 +140,8 @@ export async function overrideGeneral(
 		input: {
 			name: desiredName,
 			description: normalizeText(desiredDescription ?? ''),
-			tags: desiredTags,
-			language: desiredLanguage
+			tags: resolvedTags,
+			language: resolvedLanguage
 		}
 	});
 }
