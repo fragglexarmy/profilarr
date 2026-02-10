@@ -24,6 +24,7 @@ import {
 	parseDesiredState,
 	parseOpMetadata
 } from '$pcd/conflicts/autoAlign/index.ts';
+import { checkFullListConflict } from '$pcd/conflicts/fullListCheck.ts';
 
 /**
  * PCDCache - Manages an in-memory compiled database for a single PCD
@@ -163,6 +164,32 @@ export class PCDCache {
 									const priorReason = priorConflicts.get(opId);
 									if (priorReason !== conflictReason) {
 										await logger.info('Recorded op conflict', {
+											source: 'PCDCache',
+											meta: {
+												opId,
+												databaseInstanceId: this.databaseInstanceId,
+												conflictStrategy,
+												conflictReason
+											}
+										});
+									}
+								}
+							}
+
+							// Multi-statement ops can have rowcount > 0 even when
+							// some guards failed (e.g. DELETEs fail but INSERTs
+							// succeed). Detect this by checking whether the DB
+							// state matches the desired "to" state.
+							if (status === 'applied' && isUserOp) {
+								const metadata = parseOpMetadata(userOp?.metadata ?? null);
+								const desiredState = parseDesiredState(userOp?.desired_state ?? null);
+								const conflict = checkFullListConflict(this.db!, metadata, desiredState);
+								if (conflict) {
+									status = conflictStrategy === 'ask' ? 'conflicted_pending' : 'conflicted';
+									conflictReason = 'guard_mismatch';
+									const priorReason = priorConflicts.get(opId);
+									if (priorReason !== conflictReason) {
+										await logger.info('Recorded op conflict (full-list mismatch)', {
 											source: 'PCDCache',
 											meta: {
 												opId,

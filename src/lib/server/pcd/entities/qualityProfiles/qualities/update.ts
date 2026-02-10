@@ -3,7 +3,7 @@
  */
 
 import type { PCDCache } from '$pcd/index.ts';
-import { writeOperation, type OperationLayer, type WriteResult } from '$pcd/index.ts';
+import { writeOperation, type OperationLayer } from '$pcd/index.ts';
 import type { OrderedItem } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 import { qualities as readQualities } from './read.ts';
@@ -394,31 +394,31 @@ export async function updateQualities(options: UpdateQualitiesOptions) {
 		return { success: true };
 	}
 
-	let lastResult: WriteResult | null = null;
-
-	for (const op of rowOps) {
-		const result = await writeOperation({
-			databaseId,
-			layer,
-			description: op.description,
-			queries: op.queries,
-			desiredState: op.desiredState,
-			metadata: {
-				operation: 'update',
-				entity: 'quality_profile',
-				name: profileName,
-				stableKey: { key: 'quality_profile_name', value: profileName },
-				changedFields: op.changedFields,
-				summary: op.summary,
-				title: op.title
-			}
-		});
-
-		if (!result.success) {
-			return result;
+	// Batch all row changes into a single atomic operation so the entire
+	// qualities update conflicts (or doesn't) as one unit.
+	const allQueries = rowOps.flatMap((op) => op.queries);
+	const allChangedFields = rowOps.flatMap((op) => op.changedFields);
+	const desiredState = {
+		ordered_items: {
+			from: currentData.orderedItems.map(cloneItem),
+			to: input.orderedItems.map(cloneItem)
 		}
-		lastResult = result;
-	}
+	};
 
-	return lastResult ?? { success: true };
+	return writeOperation({
+		databaseId,
+		layer,
+		description: `update-quality-profile-qualities-${profileName}`,
+		queries: allQueries,
+		desiredState,
+		metadata: {
+			operation: 'update',
+			entity: 'quality_profile',
+			name: profileName,
+			stableKey: { key: 'quality_profile_name', value: profileName },
+			changedFields: allChangedFields,
+			summary: 'Update quality profile qualities',
+			title: `Update qualities on quality profile "${profileName}"`
+		}
+	});
 }

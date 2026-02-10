@@ -1,5 +1,7 @@
 import type { Database } from '@jsr/db__sqlite';
 import type { ParsedOpMetadata, UpdateRule } from '../types.ts';
+import { readCurrentOrderedItems } from '../../fullListCheck.ts';
+import { orderedItemsEqual } from '../../overrideUtils.ts';
 
 type NormalizedQualityRow = {
 	type: 'quality' | 'group';
@@ -168,6 +170,13 @@ function shouldAutoAlignQualityProfileQualitiesRow(
 		from?: unknown;
 		to?: unknown;
 	};
+
+	// Full-list format (atomic op): auto-align if current state matches "to"
+	if (!rowPayload.mode && Array.isArray(rowPayload.from) && Array.isArray(rowPayload.to)) {
+		const currentItems = readCurrentOrderedItems(db, profileName);
+		return orderedItemsEqual(currentItems, rowPayload.to);
+	}
+
 	if (rowPayload.mode !== 'add' && rowPayload.mode !== 'remove' && rowPayload.mode !== 'update') {
 		return false;
 	}
