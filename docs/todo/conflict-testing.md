@@ -475,31 +475,31 @@ Comprehensive QP conflict coverage modeled after CF learnings.
 
 | ID | Scenario | Type | Expected | E2E spec | Pass |
 |---|---|---|---|---|---|
-| 2.17 | Rename vs rename | Conflict | Override: local rename. Align: upstream rename | `src/tests/e2e/specs/2.17-qp-rename-vs-rename-conflict.spec.ts` | - [ ] |
-| 2.18 | Upstream rename + local description | Conflict | Override: upstream name + local description. Align: upstream name + upstream description | `src/tests/e2e/specs/2.18-qp-upstream-rename-local-description-conflict.spec.ts` | - [ ] |
-| 2.19 | Upstream rename + local scoring | Conflict | Override: upstream name + local scoring. Align: upstream name + upstream scoring | `src/tests/e2e/specs/2.19-qp-upstream-rename-local-scoring-conflict.spec.ts` | - [ ] |
-| 2.20 | Upstream rename + local qualities | Conflict | Override: upstream name + local qualities. Align: upstream name + upstream qualities | `src/tests/e2e/specs/2.20-qp-upstream-rename-local-qualities-conflict.spec.ts` | - [ ] |
-| 2.21 | Local rename+description vs upstream description | Conflict | Override: local name + local description. Align: upstream name + upstream description | `src/tests/e2e/specs/2.21-qp-local-rename-description-vs-upstream-description.spec.ts` | - [ ] |
-| 2.22 | Local rename+scoring vs upstream scoring | Conflict | Override: local name + local scoring. Align: upstream name + upstream scoring | `src/tests/e2e/specs/2.22-qp-local-rename-scoring-vs-upstream-scoring.spec.ts` | - [ ] |
+| 2.17 | Rename vs rename | Conflict | Override: local rename. Align: upstream rename | `src/tests/e2e/specs/2.17-qp-rename-vs-rename-conflict.spec.ts` | - [x] |
+| 2.18 | Upstream rename + local description | Conflict | Override: upstream name + local description. Align: upstream name + upstream description | `src/tests/e2e/specs/2.18-qp-upstream-rename-local-description-conflict.spec.ts` | - [x] |
+| 2.19 | Upstream rename + local scoring | Conflict | Override: upstream name + local scoring. Align: upstream name + upstream scoring | `src/tests/e2e/specs/2.19-qp-upstream-rename-local-scoring-conflict.spec.ts` | - [x] |
+| 2.20 | Upstream rename + local qualities | Conflict | Override: upstream name + local qualities. Align: upstream name + upstream qualities | `src/tests/e2e/specs/2.20-qp-upstream-rename-local-qualities-conflict.spec.ts` | - [x] |
+| 2.21 | Local rename+description vs upstream description | Conflict | Override: local name + local description. Align: upstream name + upstream description | `src/tests/e2e/specs/2.21-qp-local-rename-description-vs-upstream-description.spec.ts` | - [x] |
+| 2.22 | Local rename+scoring vs upstream scoring | Conflict | Override: local name + local scoring. Align: upstream name + upstream scoring | `src/tests/e2e/specs/2.22-qp-local-rename-scoring-vs-upstream-scoring.spec.ts` | - [x] |
 
 ### 2.23-2.26 General Field Conflicts
 
 | ID | Scenario | Type | Expected | E2E spec | Pass |
 |---|---|---|---|---|---|
-| 2.23 | Description conflict | Conflict | Override: local description. Align: upstream description | `src/tests/e2e/specs/2.23-qp-description-conflict.spec.ts` | - [ ] |
-| 2.24 | Language conflict | Conflict | Override: local language. Align: upstream language | `src/tests/e2e/specs/2.24-qp-language-conflict.spec.ts` | - [ ] |
-| 2.25 | Tag remove/add overlap merge | No conflict | Expected merged tags, no conflict row | `src/tests/e2e/specs/2.25-qp-tags-overlap-merge-no-conflict.spec.ts` | - [ ] |
-| 2.26 | General multi-field conflict | Conflict | Override: local guarded fields, upstream non-guarded. Align: upstream full state | `src/tests/e2e/specs/2.26-qp-general-multi-field-conflict.spec.ts` | - [ ] |
+| 2.23 | Description conflict | Conflict | Override: local description. Align: upstream description | `src/tests/e2e/specs/2.23-qp-description-conflict.spec.ts` | - [x] |
+| 2.24 | Language conflict | Conflict | Override: local language. Align: upstream language | `src/tests/e2e/specs/2.24-qp-language-conflict.spec.ts` | - [x] |
+| 2.25 | Tag remove/add overlap merge | No conflict | Expected merged tags, no conflict row | `src/tests/e2e/specs/2.25-qp-tags-overlap-merge-no-conflict.spec.ts` | - [x] |
+| 2.26 | General multi-field conflict | Conflict | Override: local guarded fields, upstream non-guarded. Align: upstream full state | `src/tests/e2e/specs/2.26-qp-general-multi-field-conflict.spec.ts` | - [x] |
 
 ### 2.27-2.31 Qualities (Full-Replace Surface)
 
 | ID | Scenario | Type | Expected | E2E spec | Pass |
 |---|---|---|---|---|---|
-| 2.27 | Reorder vs reorder | Conflict | Override: local order. Align: upstream order | `src/tests/e2e/specs/2.27-qp-qualities-reorder-vs-reorder.spec.ts` | - [ ] |
-| 2.28 | Local add group vs upstream reorder | Conflict | Override: local list with group. Align: upstream list without group | `src/tests/e2e/specs/2.28-qp-qualities-add-group-vs-reorder.spec.ts` | - [ ] |
-| 2.29 | Local remove group vs upstream reorder | Conflict | Override: local group removal. Align: upstream list | `src/tests/e2e/specs/2.29-qp-qualities-remove-group-vs-reorder.spec.ts` | - [ ] |
-| 2.30 | Local upgrade-until toggle vs upstream toggle | Conflict | Override: local toggle state. Align: upstream toggle state | `src/tests/e2e/specs/2.30-qp-qualities-upgrade-until-toggle-conflict.spec.ts` | - [ ] |
-| 2.31 | Local enabled toggles vs upstream order | Conflict | Override: local enabled states + local list. Align: upstream list + states | `src/tests/e2e/specs/2.31-qp-qualities-enabled-toggles-vs-order.spec.ts` | - [ ] |
+| 2.27 | Reorder vs reorder | Conflict | Override: local order. Align: upstream order | `src/tests/e2e/specs/2.27-qp-qualities-reorder-vs-reorder.spec.ts` | - [x] |
+| 2.28 | Local add group vs upstream reorder | Conflict | Override: local list with group. Align: upstream list without group | `src/tests/e2e/specs/2.28-qp-qualities-add-group-vs-reorder.spec.ts` | - [x] |
+| 2.29 | Local remove group vs upstream reorder | Conflict | Override: local group removal. Align: upstream list | `src/tests/e2e/specs/2.29-qp-qualities-remove-group-vs-reorder.spec.ts` | - [x] |
+| 2.30 | Local upgrade-until toggle vs upstream toggle | Conflict | Override: local toggle state. Align: upstream toggle state | `src/tests/e2e/specs/2.30-qp-qualities-upgrade-until-toggle-conflict.spec.ts` | - [x] |
+| 2.31 | Local enabled toggles vs upstream order | Conflict | Override: local enabled states + local list. Align: upstream list + states | `src/tests/e2e/specs/2.31-qp-qualities-enabled-toggles-vs-order.spec.ts` | - [x] |
 
 ### 2.32-2.39 Scoring
 
