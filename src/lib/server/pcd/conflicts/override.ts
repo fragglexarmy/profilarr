@@ -137,6 +137,22 @@ export async function overrideConflict(input: {
 		return { success: true };
 	}
 
+	// Drop old op and recompile to get a clean cache before generating
+	// the replacement.  Without this the override handler reads dirty
+	// partial-execution state (e.g. guard-failed DELETEs but successful
+	// INSERTs) and produces an op whose guards won't match the clean
+	// upstream state after recompilation.
+	const dropped = await dropOp(databaseId, opId);
+	if (!dropped) {
+		return {
+			success: false,
+			error: 'Failed to drop conflicting operation for override'
+		};
+	}
+	if (instance?.enabled) {
+		await compile(instance.local_path, databaseId);
+	}
+
 	const result: WriteResult = await overrideEntity(databaseId, metadata, desiredState, operation);
 	if (!result.success) {
 		return {
@@ -145,22 +161,10 @@ export async function overrideConflict(input: {
 		};
 	}
 
+	// Link old → new for audit trail; writeOperation already recompiled
 	const newOpId = parseOpIdFromFilepath(result.filepath ?? null);
-	const resolved = newOpId
-		? await supersedeOp(databaseId, opId, newOpId)
-		: await dropOp(databaseId, opId);
-
-	if (!resolved) {
-		return {
-			success: false,
-			error: newOpId
-				? 'Failed to supersede conflicting operation'
-				: 'Failed to drop conflicting operation'
-		};
-	}
-
-	if (instance?.enabled) {
-		await compile(instance.local_path, databaseId);
+	if (newOpId) {
+		await supersedeOp(databaseId, opId, newOpId);
 	}
 
 	await logger.info('Overrode conflict', {
