@@ -135,8 +135,10 @@
 		if (mediaQuery) {
 			mediaQuery.removeEventListener('change', handleMediaChange);
 		}
-		document.removeEventListener('pointermove', handlePointerMove);
-		document.removeEventListener('pointerup', handlePointerUp);
+		if (typeof document !== 'undefined') {
+			document.removeEventListener('pointermove', handlePointerMove);
+			document.removeEventListener('pointerup', handlePointerUp);
+		}
 	});
 
 	function handleMediaChange(e: MediaQueryListEvent) {
