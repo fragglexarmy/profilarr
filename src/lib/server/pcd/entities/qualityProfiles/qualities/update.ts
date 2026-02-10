@@ -376,7 +376,15 @@ export async function updateQualities(options: UpdateQualitiesOptions) {
 		});
 	}
 
-	for (const change of updatedItems) {
+	// Sort updates so rows clearing upgrade_until (→false) come before rows
+	// setting it (→true). The partial UNIQUE index idx_one_upgrade_until_per_profile
+	// only allows one upgrade_until=1 per profile, so the clear must run first.
+	const sortedUpdates = [...updatedItems].sort((a, b) => {
+		if (a.next.upgradeUntil === b.next.upgradeUntil) return 0;
+		return a.next.upgradeUntil ? 1 : -1;
+	});
+
+	for (const change of sortedUpdates) {
 		const queries = buildUpdateQueries(profileName, change.current, change.next);
 		if (queries.length === 0) continue;
 
