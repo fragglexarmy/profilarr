@@ -428,6 +428,37 @@ local description. Align keeps upstream name + upstream description.
 | a | Override | User name + user description | - [x] |
 | b | Align | Upstream name + upstream description | - [x] |
 
+### 1.28 Conditions — dependsOn regex renamed upstream
+
+**Setup:** A condition references a regex by name. User modifies the condition
+(e.g. toggles negate). Upstream renames the referenced regex.
+
+**Expected:** Conflict (guard_mismatch — condition op references old regex name).
+Override should resolve the rename chain and preserve the local condition change.
+Align drops local change, upstream rename preserved.
+
+**E2E spec:** `src/tests/e2e/specs/1.28-cf-condition-depends-on-regex-renamed.spec.ts`
+
+| # | Strategy | Expected result | Pass |
+|---|----------|-----------------|------|
+| a | Override | Condition change preserved, regex rename applied | - [ ] |
+| b | Align | Upstream rename preserved, local condition change dropped | - [ ] |
+
+### 1.29 Conditions — dependsOn regex deleted upstream
+
+**Setup:** A condition references a regex by name. User modifies the condition.
+Upstream deletes the referenced regex.
+
+**Expected:** Conflict. Override resolves but condition referencing deleted regex
+is necessarily lost (dependency gone). Align drops local change, regex absent.
+
+**E2E spec:** `src/tests/e2e/specs/1.29-cf-condition-depends-on-regex-deleted.spec.ts`
+
+| # | Strategy | Expected result | Pass |
+|---|----------|-----------------|------|
+| a | Override | Conflict resolves, condition referencing deleted regex lost | - [ ] |
+| b | Align | Upstream delete preserved, condition absent | - [ ] |
+
 ---
 
 ## 2. Quality Profiles
@@ -443,7 +474,7 @@ Comprehensive QP conflict coverage modeled after CF learnings.
 5. Qualities conflicts: `2.27`-`2.31`
 6. Scoring conflicts: `2.32`-`2.39`
 7. Lifecycle (create/delete): `2.40`-`2.43`
-8. Dependencies + strategy: `2.44`-`2.46`
+8. Dependencies: `2.44`-`2.45`
 
 ### 2.1-2.5 Non-Overlapping No-Conflict
 
@@ -518,18 +549,18 @@ Comprehensive QP conflict coverage modeled after CF learnings.
 
 | ID | Scenario | Type | Expected | E2E spec | Pass |
 |---|---|---|---|---|---|
-| 2.40 | Create duplicate (general-only payload) | Conflict | Override: local general values. Align: upstream general values | `src/tests/e2e/specs/2.40-qp-create-duplicate-general-only.spec.ts` | - [ ] |
-| 2.41 | Local general update while upstream deletes profile | Conflict | Override: profile re-created with local general values. Align: profile stays deleted | `src/tests/e2e/specs/2.41-qp-local-general-update-upstream-deleted.spec.ts` | - [ ] |
-| 2.42 | Create duplicate (full payload: general+qualities+scoring) | Conflict | Override: local full desired state. Align: upstream full state | `src/tests/e2e/specs/2.42-qp-create-duplicate-full-payload.spec.ts` | - [ ] |
-| 2.43 | Local delete vs upstream general update | No conflict | Delete remains effective; profile absent locally | `src/tests/e2e/specs/2.43-qp-delete-vs-upstream-general-update.spec.ts` | - [ ] |
+| 2.40 | Create duplicate (general-only payload) | Conflict | Override: local general values. Align: upstream general values | `src/tests/e2e/specs/2.40-qp-create-duplicate-general-only.spec.ts` | - [x] |
+| 2.41 | Local general update while upstream deletes profile | Conflict | Override: profile re-created with local general values. Align: profile stays deleted | `src/tests/e2e/specs/2.41-qp-local-general-update-upstream-deleted.spec.ts` | - [x] |
+| 2.42 | Create duplicate (full payload: general+qualities+scoring) | Conflict | Override: local full desired state. Align: upstream full state | `src/tests/e2e/specs/2.42-qp-create-duplicate-full-payload.spec.ts` | - [x] |
+| 2.43 | Local delete vs upstream general update | No conflict | Delete remains effective; profile absent locally | `src/tests/e2e/specs/2.43-qp-delete-vs-upstream-general-update.spec.ts` | - [x] |
 
-### 2.44-2.46 Dependencies + Strategy
+### 2.44-2.45 Dependencies
 
 | ID | Scenario | Type | Expected | E2E spec | Pass |
 |---|---|---|---|---|---|
-| 2.44 | Scoring dependsOn CF renamed upstream | Dependency conflict | Override/align behavior is deterministic and documented for renamed dependency | `src/tests/e2e/specs/2.44-qp-scoring-depends-on-cf-renamed.spec.ts` | - [ ] |
-| 2.45 | Scoring dependsOn CF deleted upstream | Dependency conflict | Override/align behavior is deterministic and documented for deleted dependency | `src/tests/e2e/specs/2.45-qp-scoring-depends-on-cf-deleted.spec.ts` | - [ ] |
-| 2.46 | DB strategy `conflict_strategy=align` auto-drop | Strategy behavior | Conflicts are auto-dropped during compile and do not surface in UI | `src/tests/e2e/specs/2.46-qp-conflict-strategy-align-auto-drop.spec.ts` | - [ ] |
+| 2.44 | Scoring dependsOn CF renamed upstream | Dependency conflict | Override: rename chain resolves, local score preserved. Align: upstream rename, original score | `src/tests/e2e/specs/2.44-qp-scoring-depends-on-cf-renamed.spec.ts` | - [x] |
+| 2.45 | Scoring dependsOn CF deleted upstream | Dependency conflict | Override/align: conflict resolves, score lost (CF gone) | `src/tests/e2e/specs/2.45-qp-scoring-depends-on-cf-deleted.spec.ts` | - [x] |
+| ~~2.46~~ | ~~DB strategy `conflict_strategy=align` auto-drop~~ | ~~Strategy behavior~~ | Redundant — auto-align is implicitly covered by every align test | N/A | N/A |
 
 ---
 
@@ -603,421 +634,27 @@ change description).
 
 ---
 
-## 4. Delay Profiles
-
-### 4.1 Preferred protocol conflict
-
-**Setup:** User changes `preferred_protocol` from `prefer_usenet` to
-`prefer_torrent`. Upstream changes it to `only_usenet`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Protocol is `prefer_torrent`. Delay values adjusted per protocol constraints. | - [ ] |
-| b | Align | Protocol is `only_usenet`. | - [ ] |
-
-### 4.2 Delay value conflict
-
-**Setup:** User changes `usenet_delay` from 60 to 120. Upstream changes it to
-30.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | `usenet_delay` is 120. | - [ ] |
-| b | Align | `usenet_delay` is 30. | - [ ] |
-
-### 4.3 Bypass flag conflict
-
-**Setup:** User enables `bypass_if_above_custom_format_score` and sets
-`minimum_custom_format_score` to 50. Upstream changes
-`bypass_if_highest_quality`.
-
-**Conflict:** If both changes are in the same op, guard mismatch on whichever
-field upstream changed.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's bypass + minimum score settings. | - [ ] |
-| b | Align | Upstream's values. | - [ ] |
-
-### 4.4 Protocol change nullifies delay
-
-**Setup:** User changes `usenet_delay` to 120. Upstream changes
-`preferred_protocol` to `only_torrent` (which NULLs `usenet_delay`).
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Protocol stays as upstream's `only_torrent`, but user's desired `usenet_delay` is written. The update function will NULL it because of protocol constraints. Verify the final state makes sense. | - [ ] |
-| b | Align | `usenet_delay` is NULL, protocol is `only_torrent`. | - [ ] |
-
-### 4.5 Name rename conflict
-
-**Setup:** User renames delay profile. Upstream also renames it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name. | - [ ] |
-| b | Align | Upstream's name. | - [ ] |
-
-### 4.6 Create conflict — duplicate key
-
-**Setup:** User creates delay profile "Fast". Upstream also creates "Fast".
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | "Fast" has user's desired protocol/delay/bypass values. | - [ ] |
-| b | Align | "Fast" has upstream's values. | - [ ] |
-
-### 4.7 Delete conflict
-
-**Setup:** User deletes delay profile. Upstream changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Profile persists. | - [ ] |
-| b | Align | Delete op dropped. Profile persists. | - [ ] |
-
----
-
-## 5. Naming (Radarr)
-
-### 5.1 Movie format conflict
-
-**Setup:** User changes `movie_format` string. Upstream also changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's format string. | - [ ] |
-| b | Align | Upstream's format string. | - [ ] |
-
-### 5.2 Rename toggle conflict
-
-**Setup:** User enables `rename`. Upstream disables it (or both change it).
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | `rename` matches user's desired value. | - [ ] |
-| b | Align | `rename` matches upstream. | - [ ] |
-
-### 5.3 Colon replacement conflict
-
-**Setup:** User changes `colon_replacement_format` from `dash` to `smart`.
-Upstream changes it to `spaceDash`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | `colon_replacement_format` is `smart`. | - [ ] |
-| b | Align | `colon_replacement_format` is `spaceDash`. | - [ ] |
-
-### 5.4 Multiple field conflict
-
-**Setup:** User changes `movie_format` and `movie_folder_format`. Upstream
-changes `movie_format` to something else.
-
-**Conflict:** Guard mismatch on `movie_format`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Both fields have user's desired values. | - [ ] |
-| b | Align | Both fields have upstream's values. | - [ ] |
-
-### 5.5 Name rename conflict
-
-**Setup:** User renames naming config. Upstream also renames it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name. | - [ ] |
-| b | Align | Upstream's name. | - [ ] |
-
-### 5.6 Create conflict — duplicate key
-
-**Setup:** User creates naming config "Default". Upstream also creates "Default".
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | "Default" has user's desired format strings and settings. | - [ ] |
-| b | Align | "Default" has upstream's values. | - [ ] |
-
-### 5.7 Delete conflict
-
-**Setup:** User deletes naming config. Upstream changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Config persists. | - [ ] |
-| b | Align | Delete op dropped. Config persists. | - [ ] |
-
----
-
-## 6. Naming (Sonarr)
-
-### 6.1 Episode format conflict
-
-**Setup:** User changes `standard_episode_format`. Upstream also changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's format string. | - [ ] |
-| b | Align | Upstream's format string. | - [ ] |
-
-### 6.2 Multi-episode style conflict
-
-**Setup:** User changes `multi_episode_style` from `extend` to `range`.
-Upstream changes it to `scene`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | `multi_episode_style` is `range`. | - [ ] |
-| b | Align | `multi_episode_style` is `scene`. | - [ ] |
-
-### 6.3 Custom colon replacement conflict
-
-**Setup:** User sets `colon_replacement_format` to `custom` with a
-`custom_colon_replacement_format` value. Upstream changes colon replacement
-to `dash`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's custom colon replacement. | - [ ] |
-| b | Align | Upstream's `dash` replacement, custom value NULL. | - [ ] |
-
-### 6.4 Multiple format fields conflict
-
-**Setup:** User changes `daily_episode_format` and `anime_episode_format`.
-Upstream changes `daily_episode_format`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Both have user's desired values. | - [ ] |
-| b | Align | Both have upstream's values. | - [ ] |
-
-### 6.5 Folder format conflict
-
-**Setup:** User changes `series_folder_format`. Upstream changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's folder format. | - [ ] |
-| b | Align | Upstream's folder format. | - [ ] |
-
-### 6.6 Create conflict — duplicate key
-
-**Setup:** User creates sonarr naming config "Default". Upstream also creates
-"Default".
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | "Default" has user's desired format strings and settings. | - [ ] |
-| b | Align | "Default" has upstream's values. | - [ ] |
-
-### 6.7 Delete conflict
-
-**Setup:** User deletes sonarr naming config. Upstream changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Config persists. | - [ ] |
-| b | Align | Delete op dropped. Config persists. | - [ ] |
-
-### 6.8 Name rename conflict
-
-**Setup:** User renames sonarr naming config. Upstream also renames it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name. | - [ ] |
-| b | Align | Upstream's name. | - [ ] |
-
----
-
-## 7. Media Settings (Radarr)
-
-### 7.1 Propers/repacks conflict
-
-**Setup:** User changes `propers_repacks` from `doNotPrefer` to
-`preferAndUpgrade`. Upstream changes it to `doNotUpgradeAutomatically`.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | `propers_repacks` is `preferAndUpgrade`. | - [ ] |
-| b | Align | `propers_repacks` is `doNotUpgradeAutomatically`. | - [ ] |
-
-### 7.2 Enable media info conflict
-
-**Setup:** User toggles `enable_media_info`. Upstream also toggles it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired value. | - [ ] |
-| b | Align | Upstream's value. | - [ ] |
-
-### 7.3 Name rename conflict
-
-**Setup:** User renames media settings config. Upstream also renames it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name. | - [ ] |
-| b | Align | Upstream's name. | - [ ] |
-
-### 7.4 Create conflict — duplicate key
-
-**Setup:** User creates config "Standard". Upstream also creates "Standard".
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | "Standard" has user's propers_repacks and enable_media_info. | - [ ] |
-| b | Align | "Standard" has upstream's values. | - [ ] |
-
-### 7.5 Delete conflict
-
-**Setup:** User deletes media settings config. Upstream changes it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Config persists. | - [ ] |
-| b | Align | Delete op dropped. Config persists. | - [ ] |
-
----
-
-## 8. Media Settings (Sonarr)
-
-### 8.1 Propers/repacks conflict
-
-**Setup:** Same as 7.1 but for sonarr_media_settings.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | `propers_repacks` is user's desired value. | - [ ] |
-| b | Align | `propers_repacks` is upstream's value. | - [ ] |
-
-### 8.2 Enable media info conflict
-
-**Setup:** Same as 7.2 but for sonarr_media_settings.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired value. | - [ ] |
-| b | Align | Upstream's value. | - [ ] |
-
-### 8.3 Name rename conflict
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name. | - [ ] |
-| b | Align | Upstream's name. | - [ ] |
-
-### 8.4 Create conflict — duplicate key
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired values. | - [ ] |
-| b | Align | Upstream's values. | - [ ] |
-
-### 8.5 Delete conflict
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Config persists. | - [ ] |
-| b | Align | Delete op dropped. Config persists. | - [ ] |
-
----
-
-## 9. Quality Definitions (Radarr)
-
-### 9.1 Entry size change conflict
-
-**Setup:** User changes `preferred_size` for quality "Bluray-1080p" from 35 to
-40. Upstream changes it to 30.
-
-**Conflict:** Quality definitions update is a full-replace (delete all with
-value guards, then re-insert). Guard mismatch on the delete step because
-upstream changed the guarded size values.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | "Bluray-1080p" has `preferred_size` 40. All other entries match user's desired list. | - [ ] |
-| b | Align | All entries match upstream's values. | - [ ] |
-
-### 9.2 Entry added by upstream, user changes sizes
-
-**Setup:** Upstream adds a new quality entry (e.g., "WEBDL-2160p"). User's op
-changes sizes for existing entries. Since QD updates delete-all + re-insert,
-the delete guards won't match the upstream's new entry.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's full entry list replaces everything. If user's list doesn't include the new entry, it's gone. | - [ ] |
-| b | Align | Upstream's full list including the new entry. | - [ ] |
-
-### 9.3 Name rename conflict
-
-**Setup:** User renames QD config. Upstream also renames it.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name, user's desired entries. | - [ ] |
-| b | Align | Upstream's name and entries. | - [ ] |
-
-### 9.4 Create conflict — duplicate key
-
-**Setup:** User creates QD config "Custom Sizes". Upstream creates "Custom
-Sizes".
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | "Custom Sizes" has user's entry list. | - [ ] |
-| b | Align | "Custom Sizes" has upstream's entry list. | - [ ] |
-
-### 9.5 Delete conflict
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Config persists. | - [ ] |
-| b | Align | Delete op dropped. Config persists. | - [ ] |
-
----
-
-## 10. Quality Definitions (Sonarr)
-
-### 10.1 Entry size change conflict
-
-**Setup:** Same as 9.1 but for sonarr_quality_definitions.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired sizes. | - [ ] |
-| b | Align | Upstream's sizes. | - [ ] |
-
-### 10.2 Entry added by upstream, user changes sizes
-
-**Setup:** Same as 9.2 but for sonarr.
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's full entry list. | - [ ] |
-| b | Align | Upstream's full list. | - [ ] |
-
-### 10.3 Name rename conflict
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's desired name and entries. | - [ ] |
-| b | Align | Upstream's name and entries. | - [ ] |
-
-### 10.4 Create conflict — duplicate key
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | User's entry list. | - [ ] |
-| b | Align | Upstream's entry list. | - [ ] |
-
-### 10.5 Delete conflict
-
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Config persists. | - [ ] |
-| b | Align | Delete op dropped. Config persists. | - [ ] |
+## 4–10. Removed — Local Ops Disabled
+
+**Decision:** Local ops (user-layer edits) will be disabled for the following
+entity types. These entities are small enough to be atomic units — if you're
+changing one, you're essentially creating a new one. The conflict resolution
+overhead isn't justified.
+
+- **Delay Profiles** (sections 4)
+- **Naming — Radarr** (section 5)
+- **Naming — Sonarr** (section 6)
+- **Media Settings — Radarr** (section 7)
+- **Media Settings — Sonarr** (section 8)
+- **Quality Definitions — Radarr** (section 9)
+- **Quality Definitions — Sonarr** (section 10)
+
+**Exception:** Regular Expressions (section 3) keep local ops because CF
+conditions reference regexes by name. Without local edit, overriding a pattern
+would require creating a new regex and updating every dependent CF condition.
+
+**TODO:** Implement UI/server guards to block local edits on these entities,
+similar to how CF tests and entity testing already enforce read-only mode.
 
 ---
 
