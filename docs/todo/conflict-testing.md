@@ -505,14 +505,14 @@ Comprehensive QP conflict coverage modeled after CF learnings.
 
 | ID | Scenario | Type | Expected | E2E spec | Pass |
 |---|---|---|---|---|---|
-| 2.32 | `minimum_custom_format_score` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.32-qp-scoring-minimum-score-conflict.spec.ts` | - [ ] |
-| 2.33 | `upgrade_until_score` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.33-qp-scoring-upgrade-until-score-conflict.spec.ts` | - [ ] |
-| 2.34 | `upgrade_score_increment` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.34-qp-scoring-upgrade-score-increment-conflict.spec.ts` | - [ ] |
-| 2.35 | CF score same row (`custom_format_name + arr_type`) | Conflict | Override: local score. Align: upstream score | `src/tests/e2e/specs/2.35-qp-scoring-cf-score-same-row-conflict.spec.ts` | - [ ] |
-| 2.36 | CF score different `arr_type` | No conflict | Both scores apply on separate rows | `src/tests/e2e/specs/2.36-qp-scoring-cf-score-different-arr-type-no-conflict.spec.ts` | - [ ] |
-| 2.37 | Local add CF score vs upstream add same row | Conflict | Override: local row value. Align: upstream row value | `src/tests/e2e/specs/2.37-qp-scoring-add-cf-score-vs-upstream-add-same-row.spec.ts` | - [ ] |
-| 2.38 | Local delete CF score vs upstream update same row | Conflict | Override: row removed. Align: upstream updated row remains | `src/tests/e2e/specs/2.38-qp-scoring-delete-cf-score-vs-upstream-update.spec.ts` | - [ ] |
-| 2.39 | Mixed scoring op vs upstream profile-field change | Conflict | Override: local mixed desired state. Align: upstream profile settings and scores | `src/tests/e2e/specs/2.39-qp-scoring-mixed-op-vs-upstream-profile-field.spec.ts` | - [ ] |
+| 2.32 | `minimum_custom_format_score` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.32-qp-scoring-minimum-score-conflict.spec.ts` | - [x] |
+| 2.33 | `upgrade_until_score` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.33-qp-scoring-upgrade-until-score-conflict.spec.ts` | - [x] |
+| 2.34 | `upgrade_score_increment` conflict | Conflict | Override: local value. Align: upstream value | `src/tests/e2e/specs/2.34-qp-scoring-upgrade-score-increment-conflict.spec.ts` | - [x] |
+| 2.35 | CF score same row (`custom_format_name + arr_type`) | Conflict | Override: local score. Align: upstream score | `src/tests/e2e/specs/2.35-qp-scoring-cf-score-same-row-conflict.spec.ts` | - [x] |
+| 2.36 | CF score different `arr_type` | No conflict | Both scores apply on separate rows | `src/tests/e2e/specs/2.36-qp-scoring-cf-score-different-arr-type-no-conflict.spec.ts` | - [x] |
+| 2.37 | Local add CF score vs upstream add same row | Conflict | Override: local row value. Align: upstream row value | `src/tests/e2e/specs/2.37-qp-scoring-add-cf-score-vs-upstream-add-same-row.spec.ts` | - [x] |
+| 2.38 | Local delete CF score vs upstream update same row | Conflict | Override: row removed. Align: upstream updated row remains | `src/tests/e2e/specs/2.38-qp-scoring-delete-cf-score-vs-upstream-update.spec.ts` | - [x] |
+| 2.39 | Mixed scoring op vs upstream profile-field change | Conflict | Override: local mixed desired state. Align: upstream profile settings and scores | `src/tests/e2e/specs/2.39-qp-scoring-mixed-op-vs-upstream-profile-field.spec.ts` | - [x] |
 
 ### 2.40-2.43 Lifecycle (Create/Delete)
 
