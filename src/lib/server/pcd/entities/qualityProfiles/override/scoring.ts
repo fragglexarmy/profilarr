@@ -3,7 +3,7 @@ import type { WriteResult } from '$pcd/index.ts';
 import { scoring as readScoring } from '../scoring/read.ts';
 import { updateScoring } from '../scoring/update.ts';
 import type { StoredOpMetadata, StoredDesiredState } from '$pcd/conflicts/overrideUtils.ts';
-import { getDesiredTo, valuesEqual } from '$pcd/conflicts/overrideUtils.ts';
+import { getDesiredTo, valuesEqual, followRenameChain } from '$pcd/conflicts/overrideUtils.ts';
 import { resolveProfileName } from './resolve.ts';
 
 /**
@@ -73,10 +73,11 @@ export async function overrideScoring(
 		}
 	}
 
-	// Apply desired score changes on top
+	// Apply desired score changes on top, resolving CF renames
 	const scoreChanges = resolveScoreChanges(desiredState);
 	for (const change of scoreChanges) {
-		currentScoreMap.set(`${change.customFormatName}::${change.arrType}`, change.score);
+		const resolvedName = followRenameChain(databaseId, 'custom_format', change.customFormatName);
+		currentScoreMap.set(`${resolvedName}::${change.arrType}`, change.score);
 	}
 
 	// Check if anything actually changed
@@ -86,7 +87,8 @@ export async function overrideScoring(
 		valuesEqual(desiredIncrement, currentScoring.upgrade_score_increment);
 
 	const scoresMatch = scoreChanges.every((change) => {
-		const cf = currentScoring.customFormats.find((c) => c.name === change.customFormatName);
+		const resolvedName = followRenameChain(databaseId, 'custom_format', change.customFormatName);
+		const cf = currentScoring.customFormats.find((c) => c.name === resolvedName);
 		if (!cf) return change.score === null;
 		const currentScore = cf.scores[change.arrType] ?? null;
 		return valuesEqual(change.score, currentScore);
