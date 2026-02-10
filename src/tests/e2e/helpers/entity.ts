@@ -784,7 +784,7 @@ export async function openFirstQualityProfileGeneral(
  */
 export async function updateQpDescription(page: Page, description: string): Promise<void> {
 	await fillMarkdownInput(page, 'description', description);
-	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.getByRole('button', { name: 'Save' }).click();
 	await page.waitForLoadState('networkidle');
 }
 
@@ -793,7 +793,7 @@ export async function updateQpDescription(page: Page, description: string): Prom
  */
 export async function updateQpName(page: Page, name: string): Promise<void> {
 	await page.locator('#name').fill(name);
-	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.getByRole('button', { name: 'Save' }).click();
 	await page.waitForLoadState('networkidle');
 }
 
