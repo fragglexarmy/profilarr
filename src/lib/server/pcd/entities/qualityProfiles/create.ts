@@ -295,8 +295,7 @@ export async function create(options: CreateQualityProfileOptions) {
 			name: input.name,
 			description: input.description ?? null,
 			tags: uniqueTags,
-			language: input.language ?? null,
-			ordered_items: orderedItems
+			language: input.language ?? null
 		},
 		metadata: {
 			operation: 'create',
