@@ -33,7 +33,7 @@ async function submitConflictAction(
 		throw new Error(`${actionLabel} conflict action failed with status ${actionResponse.status()}`);
 	}
 
-	// A successful action should reduce the number of matching rows.
+	// Wait for the UI to reflect the resolved conflict
 	await expect
 		.poll(async () => await findConflictRows(page, entityName).count(), { timeout: 20_000 })
 		.toBeLessThan(beforeCount);
