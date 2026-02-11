@@ -6,7 +6,9 @@ import {
 	validateManifest,
 	readReadme,
 	writeReadme,
-	type Manifest
+	type Manifest,
+	syncDependencies,
+	compile
 } from '$pcd/index.ts';
 import { parseMarkdown } from '$utils/markdown/markdown.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
@@ -62,6 +64,25 @@ export const actions: Actions = {
 			validateManifest(manifest);
 			await writeManifest(database.local_path, manifest);
 			await writeReadme(database.local_path, readme);
+
+			try {
+				await syncDependencies(
+					database.local_path,
+					database.personal_access_token ?? undefined
+				);
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				return fail(500, { error: `Failed to sync dependencies: ${message}` });
+			}
+
+			if (database.enabled) {
+				try {
+					await compile(database.local_path, id);
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					return fail(500, { error: `Failed to rebuild cache: ${message}` });
+				}
+			}
 
 			return { success: true };
 		} catch (err) {
