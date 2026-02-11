@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { Save, Wifi, Trash2, Eraser } from 'lucide-svelte';
+	import { Save, Wifi, Trash2, Eraser, Loader2 } from 'lucide-svelte';
 	import CleanupModal from './CleanupModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { isDirty, initEdit, initCreate, update, current, clear } from '$lib/client/stores/dirty';
@@ -65,6 +65,7 @@
 
 	// UI state
 	let saving = false;
+	let testing = false;
 	let deleting = false;
 	let showDeleteModal = false;
 	let showCleanupModal = false;
@@ -87,6 +88,7 @@
 			return;
 		}
 
+		testing = true;
 		try {
 			const response = await fetch('/arr/test', {
 				method: 'POST',
@@ -104,6 +106,8 @@
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
 			alertStore.add('error', errorMessage);
+		} finally {
+			testing = false;
 		}
 	}
 
@@ -278,9 +282,9 @@
 				/>
 			</div>
 			<Button
-				text="Test Connection"
-				icon={Wifi}
-				disabled={!apiKey || !url || (mode === 'create' && !type)}
+				text={testing ? 'Testing...' : 'Test Connection'}
+				icon={testing ? Loader2 : Wifi}
+				disabled={testing || !apiKey || !url || (mode === 'create' && !type)}
 				on:click={testConnection}
 			/>
 		</div>
