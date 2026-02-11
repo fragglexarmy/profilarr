@@ -5,6 +5,7 @@
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Card from '$ui/card/Card.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import { alertStore } from '$alerts/store';
@@ -184,7 +185,8 @@
 		<input type="hidden" name="minimumCfScore" value={formData.minimumCfScore} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 
-		<div class="space-y-6 rounded-xl border border-neutral-300 bg-white p-6 dark:border-neutral-700/60 dark:bg-neutral-800/50">
+		<Card flush padding="lg">
+			<div class="space-y-6">
 			<!-- Name -->
 			<FormInput
 				label="Name"
@@ -312,6 +314,7 @@
 				</div>
 			</div>
 		</div>
+		</Card>
 	</form>
 
 	<!-- Hidden delete form -->
