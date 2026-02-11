@@ -475,6 +475,7 @@ Comprehensive QP conflict coverage modeled after CF learnings.
 6. Scoring conflicts: `2.32`-`2.39`
 7. Lifecycle (create/delete): `2.40`-`2.43`
 8. Dependencies: `2.44`-`2.45`
+9. Real world use case: `2.46`
 
 ### 2.1-2.5 Non-Overlapping No-Conflict
 
@@ -560,7 +561,44 @@ Comprehensive QP conflict coverage modeled after CF learnings.
 |---|---|---|---|---|---|
 | 2.44 | Scoring dependsOn CF renamed upstream | Dependency conflict | Override: rename chain resolves, local score preserved. Align: upstream rename, original score | `src/tests/e2e/specs/2.44-qp-scoring-depends-on-cf-renamed.spec.ts` | - [x] |
 | 2.45 | Scoring dependsOn CF deleted upstream | Dependency conflict | Override/align: conflict resolves, score lost (CF gone) | `src/tests/e2e/specs/2.45-qp-scoring-depends-on-cf-deleted.spec.ts` | - [x] |
-| ~~2.46~~ | ~~DB strategy `conflict_strategy=align` auto-drop~~ | ~~Strategy behavior~~ | Redundant — auto-align is implicitly covered by every align test | N/A | N/A |
+
+### 2.46 Real World Use Case
+
+Use one realistic mixed edit across general, scoring, and qualities.
+
+**Local changes (`1080p Balanced`):**
+
+- Language: `Any` -> `Chinese`
+- Add tag: `Streaming Optimised`
+- Description: add `Chinese` before `1080p **WEB-DLs**`
+- Scoring: set `minimum_custom_format_score = 0`
+- Scoring: set `upgrade_score_increment = 10000`
+- Scoring: set Sonarr/Radarr scores for `MUBI`, `SHO`, `DRPO` to the same value as `AMZN`
+- Scoring: set Sonarr/Radarr scores for `h265` and `x265` to `0`
+- Qualities (`1080p Balanced` group): add `HDTV-1080p` to existing members
+- Add group `Prereleases` with members `CAM`, `DVDSCR`, `REGIONAL`, `TELECINE`, `TELESYNC`, `WORKPRINT`
+- Move `Prereleases` to position `3` (`1080p Balanced` > `720p Quality` > `480p Quality` > `Prereleases`)
+
+**Dev changes (overlapping + non-overlapping):**
+
+Conflicting (overlaps with local):
+- Description: change `- Average Movie Sizes ~ 4 to 8gb per Movie` to `- Average Movie Sizes ~ 4 to 10gb per Movie`
+- Scoring: set `minimum_custom_format_score = 10000`
+- Scoring: set `SHO` scores (`radarr`, `sonarr`) to `-250`
+- Scoring: set `DRPO` score (`radarr`) to `150`
+- Add group `Prereleases` with the same members, placed at position `3` (same as local)
+
+Non-conflicting (local didn't touch these):
+- Add tag: `Recommended`
+- Scoring: set `upgrade_until_score = 50000`
+- Scoring: set `NF` score (`radarr`) to `500`
+- Scoring: set `ATVP` score (`sonarr`) to `750`
+
+| ID | Scenario | Type | Expected | E2E spec | Pass |
+|---|---|---|---|---|---|
+| 2.46a | Ask strategy | Real-world conflict | 6 conflict rows appear on pull; non-conflicting dev changes (tag, upgradeUntilScore, NF, ATVP) apply cleanly. | `src/tests/e2e/specs/2.46-qp-real-world-use-case.spec.ts` | - [ ] |
+| 2.46b | Override strategy | Real-world conflict | Conflicts auto-resolve by strategy; no conflict rows remain; local desired values win on conflicting fields. | `src/tests/e2e/specs/2.46-qp-real-world-use-case.spec.ts` | - [ ] |
+| 2.46c | Align strategy | Real-world conflict | Conflicts auto-drop by strategy; no conflict rows remain; upstream values win on conflicting fields. | `src/tests/e2e/specs/2.46-qp-real-world-use-case.spec.ts` | - [ ] |
 
 ---
 
