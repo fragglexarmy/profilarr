@@ -13,6 +13,7 @@ import {
 	getReleaseType,
 	getLanguage
 } from '../mappings.ts';
+import { sortConditions } from '$shared/pcd/conditions.ts';
 
 // =============================================================================
 // Arr API Types
@@ -215,7 +216,7 @@ export function transformCustomFormat(
 ): ArrCustomFormat {
 	const specifications: ArrCustomFormatSpecification[] = [];
 
-	for (const condition of format.conditions) {
+	for (const condition of sortConditions(format.conditions)) {
 		const spec = transformCondition(condition, arrType);
 		if (spec) {
 			specifications.push(spec);
