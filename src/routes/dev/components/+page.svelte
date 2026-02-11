@@ -9,6 +9,8 @@
 	import Badge from '$ui/badge/Badge.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
+	import Card from '$ui/card/Card.svelte';
+	import CardGrid from '$ui/card/CardGrid.svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
@@ -119,6 +121,7 @@
 		{ id: 'badge', name: 'Badge', category: 'badge' },
 		{ id: 'button', name: 'Button', category: 'button' },
 		{ id: 'card', name: 'Card', category: 'card' },
+		{ id: 'card-grid', name: 'CardGrid', category: 'card' },
 		{ id: 'dropdown', name: 'Dropdown', category: 'dropdown' },
 		{ id: 'form-input', name: 'FormInput', category: 'form' },
 		{ id: 'number-input', name: 'NumberInput', category: 'form' },
@@ -349,12 +352,69 @@
 	<!-- Card -->
 	{#if isVisible('card')}
 		<ComponentCard
-			name="StickyCard"
-			paths={['card/StickyCard']}
-			description="Sticky header/footer bar with left/right slots. Sticks to top or bottom on scroll. Three variants: default (solid bg + border), blur (frosted glass), and transparent (no bg). Uses IntersectionObserver to detect stuck state."
+			name="Card"
+			paths={['card/Card', 'card/StickyCard']}
+			description="Card is a structural container with optional header/body/footer slots separated by dividers. Supports padding sizes, hoverable state, click handler, and link mode (renders as anchor). StickyCard is a separate sticky header/footer bar with left/right slots."
 		>
 			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Default (top)</p>
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Header + body + footer</p>
+				<div class="max-w-sm">
+					<Card>
+						<svelte:fragment slot="header">
+							<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">HD-1080p</h3>
+						</svelte:fragment>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">A quality profile for 1080p content with remux preferences and HDR scoring.</p>
+						<svelte:fragment slot="footer">
+							<div class="flex items-center justify-between">
+								<Badge variant="success" size="sm">Active</Badge>
+								<Button text="Edit" variant="ghost" size="xs" icon={Settings} />
+							</div>
+						</svelte:fragment>
+					</Card>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Body only (minimal)</p>
+				<div class="max-w-sm">
+					<Card>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">A simple body-only card with no header or footer.</p>
+					</Card>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Hoverable + clickable</p>
+				<div class="max-w-sm">
+					<Card hoverable onclick={() => {}}>
+						<svelte:fragment slot="header">
+							<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Clickable Card</h3>
+						</svelte:fragment>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">Hover and click this card. Shows cursor and bg transition.</p>
+					</Card>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Padding variants</p>
+				<div class="grid gap-3 md:grid-cols-4">
+					<Card padding="none">
+						<div class="p-2 text-xs text-neutral-500 dark:text-neutral-400">none</div>
+					</Card>
+					<Card padding="sm">
+						<p class="text-xs text-neutral-500 dark:text-neutral-400">sm</p>
+					</Card>
+					<Card padding="md">
+						<p class="text-xs text-neutral-500 dark:text-neutral-400">md</p>
+					</Card>
+					<Card padding="lg">
+						<p class="text-xs text-neutral-500 dark:text-neutral-400">lg</p>
+					</Card>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">StickyCard (scroll to see)</p>
 				<div class="relative h-48 overflow-y-auto overflow-x-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
 					<StickyCard position="top" variant="default">
 						<svelte:fragment slot="left">
@@ -373,24 +433,81 @@
 					</div>
 				</div>
 			</div>
+		</ComponentCard>
+	{/if}
+
+	<!-- CardGrid -->
+	{#if isVisible('card-grid')}
+		<ComponentCard
+			name="CardGrid"
+			paths={['card/CardGrid']}
+			description="Responsive grid container for Card components. Automatically adjusts columns by breakpoint: 1 on mobile, scaling up to the configured max. Supports 1–4 columns and three gap sizes. Uses CSS Grid so cards in the same row share equal height."
+		>
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">3 columns (resize browser to see responsive)</p>
+				<CardGrid columns={3}>
+					<Card>
+						<svelte:fragment slot="header">
+							<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Remux</h3>
+						</svelte:fragment>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">Full disc remux with lossless audio. This card has more text to demonstrate equal row heights across the grid.</p>
+						<svelte:fragment slot="footer">
+							<Badge variant="success" size="sm">+150</Badge>
+						</svelte:fragment>
+					</Card>
+					<Card>
+						<svelte:fragment slot="header">
+							<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">BR-DISK</h3>
+						</svelte:fragment>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">Raw disc image. Blocked.</p>
+						<svelte:fragment slot="footer">
+							<Badge variant="danger" size="sm">-10000</Badge>
+						</svelte:fragment>
+					</Card>
+					<Card>
+						<svelte:fragment slot="header">
+							<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">x264</h3>
+						</svelte:fragment>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">H.264 encode.</p>
+						<svelte:fragment slot="footer">
+							<Badge variant="neutral" size="sm">0</Badge>
+						</svelte:fragment>
+					</Card>
+				</CardGrid>
+			</div>
 
 			<div class="space-y-3">
-				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Blur variant</p>
-				<div class="relative h-48 overflow-y-auto overflow-x-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
-					<StickyCard position="top" variant="blur">
-						<svelte:fragment slot="left">
-							<h1 class="text-neutral-900 dark:text-neutral-100">Blur Header</h1>
-						</svelte:fragment>
-						<svelte:fragment slot="right">
-							<Button text="Action" variant="primary" size="xs" />
-						</svelte:fragment>
-					</StickyCard>
-					<div class="p-4 pt-20">
-						<div class="space-y-2">
-							{#each Array(15) as _}<p class="text-sm text-neutral-400">Scroll content...</p>{/each}
-						</div>
-					</div>
-				</div>
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">2 columns, small gap</p>
+				<CardGrid columns={2} gap="sm">
+					<Card padding="sm">
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">Left card</p>
+					</Card>
+					<Card padding="sm">
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">Right card</p>
+					</Card>
+				</CardGrid>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">4 columns, large gap</p>
+				<CardGrid columns={4} gap="lg">
+					{#each ['A', 'B', 'C', 'D'] as label}
+						<Card hoverable onclick={() => {}}>
+							<p class="text-center text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</p>
+						</Card>
+					{/each}
+				</CardGrid>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Flush (cards match page background)</p>
+				<CardGrid columns={3} flush>
+					{#each ['Flush A', 'Flush B', 'Flush C'] as label}
+						<Card>
+							<p class="text-center text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</p>
+						</Card>
+					{/each}
+				</CardGrid>
 			</div>
 		</ComponentCard>
 	{/if}
