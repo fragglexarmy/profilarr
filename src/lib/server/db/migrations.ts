@@ -50,6 +50,7 @@ import { migration as migration045 } from './migrations/045_delay_profile_sync_u
 import { migration as migration046 } from './migrations/046_quality_profile_sync_use_name.ts';
 import { migration as migration047 } from './migrations/047_create_arr_database_namespaces.ts';
 import { migration as migration048 } from './migrations/048_fix_sync_database_foreign_keys.ts';
+import { migration as migration049 } from './migrations/049_create_job_queue.ts';
 
 export interface Migration {
 	version: number;
@@ -318,7 +319,8 @@ export function loadMigrations(): Migration[] {
 		migration045,
 		migration046,
 		migration047,
-		migration048
+		migration048,
+		migration049
 	];
 
 	// Sort by version number

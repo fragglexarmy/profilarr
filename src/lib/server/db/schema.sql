@@ -120,6 +120,48 @@ CREATE TABLE job_runs (
 );
 
 -- ==============================================================================
+-- TABLE: job_queue
+-- Purpose: Store scheduled and manual job instances
+-- Migration: 049_create_job_queue.ts
+-- ==============================================================================
+
+CREATE TABLE job_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_type TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued',
+    run_at TEXT NOT NULL,
+    payload TEXT NOT NULL DEFAULT '{}',
+    source TEXT NOT NULL DEFAULT 'system',
+    dedupe_key TEXT,
+    cooldown_until TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    started_at TEXT,
+    finished_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================================================================
+-- TABLE: job_run_history
+-- Purpose: Store execution history for job instances
+-- Migration: 049_create_job_queue.ts
+-- ==============================================================================
+
+CREATE TABLE job_run_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    queue_id INTEGER,
+    job_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    error TEXT,
+    output TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (queue_id) REFERENCES job_queue(id) ON DELETE SET NULL
+);
+
+-- ==============================================================================
 -- TABLE: backup_settings
 -- Purpose: Store configurable backup settings (singleton pattern with id=1)
 -- Migration: 005_create_backup_settings.ts
@@ -465,6 +507,16 @@ CREATE INDEX idx_jobs_next_run ON jobs(next_run_at);
 CREATE INDEX idx_job_runs_job_id ON job_runs(job_id);
 CREATE INDEX idx_job_runs_started_at ON job_runs(started_at);
 CREATE INDEX idx_job_runs_status ON job_runs(status);
+
+-- Job queue indexes (Migration: 049_create_job_queue.ts)
+CREATE UNIQUE INDEX idx_job_queue_dedupe_key ON job_queue(dedupe_key) WHERE dedupe_key IS NOT NULL;
+CREATE INDEX idx_job_queue_status_run_at ON job_queue(status, run_at);
+CREATE INDEX idx_job_queue_run_at ON job_queue(run_at);
+
+-- Job run history indexes (Migration: 049_create_job_queue.ts)
+CREATE INDEX idx_job_run_history_queue_id ON job_run_history(queue_id);
+CREATE INDEX idx_job_run_history_started_at ON job_run_history(started_at);
+CREATE INDEX idx_job_run_history_status ON job_run_history(status);
 
 -- Notification services indexes (Migration: 007_create_notification_tables.ts)
 CREATE INDEX idx_notification_services_enabled ON notification_services(enabled);

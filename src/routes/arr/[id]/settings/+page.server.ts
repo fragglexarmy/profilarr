@@ -1,6 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { cleanupJobsForArrInstance } from '$lib/server/jobs/cleanup.ts';
 import { logger } from '$logger/logger.ts';
 
 export const actions: Actions = {
@@ -106,6 +107,8 @@ export const actions: Actions = {
 			});
 			return fail(404, { error: 'Instance not found' });
 		}
+
+		cleanupJobsForArrInstance(id);
 
 		// Delete the instance
 		const deleted = arrInstancesQueries.delete(id);

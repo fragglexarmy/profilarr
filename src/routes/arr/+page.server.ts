@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, ServerLoad } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { cleanupJobsForArrInstance } from '$lib/server/jobs/cleanup.ts';
 import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = () => {
@@ -27,6 +28,7 @@ export const actions = {
 		}
 
 		try {
+			cleanupJobsForArrInstance(id);
 			const deleted = arrInstancesQueries.delete(id);
 
 			if (!deleted) {

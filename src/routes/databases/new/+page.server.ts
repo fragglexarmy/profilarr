@@ -3,6 +3,7 @@ import type { Actions, ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { logger } from '$logger/logger.ts';
+import { schedulePcdSyncForDatabase } from '$lib/server/jobs/init.ts';
 
 function getFirstNonEmptyFormValue(formData: FormData, key: string): string | undefined {
 	const values = formData
@@ -146,6 +147,8 @@ export const actions = {
 				source: 'databases/new',
 				meta: { id: instance.id, name, repositoryUrl }
 			});
+
+			schedulePcdSyncForDatabase(instance.id);
 
 			// Redirect to databases list
 			redirect(303, '/databases');

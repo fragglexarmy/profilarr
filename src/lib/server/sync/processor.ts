@@ -14,6 +14,7 @@ import { calculateNextRun } from './utils.ts';
 import { createArrClient } from '$arr/factory.ts';
 import type { ArrType } from '$arr/types.ts';
 import { logger } from '$logger/logger.ts';
+import { upsertScheduledJob } from '$lib/server/jobs/queueService.ts';
 import type {
 	SyncResult,
 	SectionType,
@@ -309,9 +310,41 @@ export async function triggerSyncs(context: TriggerContext): Promise<void> {
 		meta: { databaseId: context.databaseId }
 	});
 
-	// Mark configs for sync based on trigger type
-	arrSyncQueries.markForSync(context.event);
+	const triggers = context.event === 'on_change' ? ['on_pull', 'on_change'] : [context.event];
+	const instanceIds = arrSyncQueries.getInstanceIdsForTrigger(context.event);
 
-	// Process immediately instead of waiting for polling
-	await processPendingSyncs();
+	for (const instanceId of instanceIds) {
+		const status = arrSyncQueries.getSyncConfigStatus(instanceId);
+
+		if (triggers.includes(status.qualityProfiles.trigger)) {
+			arrSyncQueries.setQualityProfilesStatusPending(instanceId);
+			upsertScheduledJob({
+				jobType: 'arr.sync.qualityProfiles',
+				runAt: new Date().toISOString(),
+				payload: { instanceId },
+				source: 'system',
+				dedupeKey: `arr.sync.qualityProfiles:event:${instanceId}`
+			});
+		}
+		if (triggers.includes(status.delayProfiles.trigger)) {
+			arrSyncQueries.setDelayProfilesStatusPending(instanceId);
+			upsertScheduledJob({
+				jobType: 'arr.sync.delayProfiles',
+				runAt: new Date().toISOString(),
+				payload: { instanceId },
+				source: 'system',
+				dedupeKey: `arr.sync.delayProfiles:event:${instanceId}`
+			});
+		}
+		if (triggers.includes(status.mediaManagement.trigger)) {
+			arrSyncQueries.setMediaManagementStatusPending(instanceId);
+			upsertScheduledJob({
+				jobType: 'arr.sync.mediaManagement',
+				runAt: new Date().toISOString(),
+				payload: { instanceId },
+				source: 'system',
+				dedupeKey: `arr.sync.mediaManagement:event:${instanceId}`
+			});
+		}
+	}
 }

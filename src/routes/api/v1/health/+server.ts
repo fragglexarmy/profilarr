@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$db/db.ts';
 import { migrationRunner } from '$db/migrations.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
-import { jobsQueries } from '$db/queries/jobs.ts';
+import { jobQueueQueries } from '$db/queries/jobQueue.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { appInfoQueries } from '$db/queries/appInfo.ts';
 import { getCache } from '$pcd/index.ts';
@@ -169,20 +169,17 @@ function checkRepos(verbose: boolean) {
 
 function checkJobs(verbose: boolean) {
 	try {
-		const jobs = jobsQueries.getAll();
-
-		// Check if sync_arr job is stale (hasn't run in 5+ minutes when it should run every minute)
-		const syncArrJob = jobs.find((j) => j.name === 'sync_arr');
+		const oldestQueued = jobQueueQueries.getOldestQueuedRunAt();
 		let status: ComponentStatus = 'healthy';
 		let message: string | undefined;
 
-		if (syncArrJob?.enabled && syncArrJob.last_run_at) {
-			const lastRunTime = new Date(syncArrJob.last_run_at).getTime();
-			const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+		if (oldestQueued) {
+			const queuedAt = new Date(oldestQueued).getTime();
+			const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
 
-			if (lastRunTime < fiveMinutesAgo) {
+			if (queuedAt < tenMinutesAgo) {
 				status = 'degraded';
-				message = 'sync_arr job is stale';
+				message = 'Job queue has stale entries';
 			}
 		}
 
@@ -190,13 +187,9 @@ function checkJobs(verbose: boolean) {
 		const result: Record<string, unknown> = { status };
 		if (message) result.message = message;
 
-		// Verbose adds lastRun for all jobs
+		// Verbose adds oldest queued run time
 		if (verbose) {
-			const lastRun: Record<string, string | null> = {};
-			for (const job of jobs) {
-				lastRun[job.name] = job.last_run_at ?? null;
-			}
-			result.lastRun = lastRun;
+			result.oldestQueued = oldestQueued;
 		}
 
 		return result as { status: ComponentStatus; message?: string };

@@ -22,6 +22,7 @@ import { logger } from '$logger/logger.ts';
 import { triggerSyncs } from '$sync/processor.ts';
 import type { LinkOptions, SyncResult } from './types.ts';
 import { importBaseOps } from '../ops/importBaseOps.ts';
+import { cleanupJobsForDatabase } from '$lib/server/jobs/cleanup.ts';
 
 /**
  * PCD Manager - Manages the lifecycle of Profilarr Compliant Databases
@@ -137,6 +138,9 @@ class PCDManager {
 
 		// Invalidate cache first
 		invalidate(id);
+
+		// Remove queued/scheduled jobs for this database
+		cleanupJobsForDatabase(id);
 
 		// Delete from database
 		databaseInstancesQueries.delete(id);

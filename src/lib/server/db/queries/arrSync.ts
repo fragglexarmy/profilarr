@@ -39,6 +39,13 @@ export interface MediaManagementSyncData {
 	nextRunAt?: string | null;
 }
 
+export interface SyncConfigStatus {
+	trigger: SyncTrigger;
+	cron: string | null;
+	nextRunAt: string | null;
+	syncStatus: string;
+}
+
 // Row types
 interface ProfileSelectionRow {
 	instance_id: number;
@@ -50,6 +57,13 @@ interface ConfigRow {
 	instance_id: number;
 	trigger: string;
 	cron: string | null;
+}
+
+interface ConfigStatusRow {
+	trigger: string;
+	cron: string | null;
+	next_run_at: string | null;
+	sync_status: string;
 }
 
 interface DelayProfileConfigRow {
@@ -629,7 +643,7 @@ export const arrSyncQueries = {
 
 	/**
 	 * Check if any sync configs have a scheduled (cron) trigger
-	 * Used to determine if the sync_arr job should be enabled
+	 * Used to determine if any arr.sync scheduled jobs should be enabled
 	 */
 	hasAnyScheduledConfigs(): boolean {
 		const result = db.queryFirst<{ count: number }>(`
@@ -642,5 +656,86 @@ export const arrSyncQueries = {
 			)
 		`);
 		return (result?.count ?? 0) > 0;
+	},
+
+	getSyncConfigStatus(instanceId: number): {
+		qualityProfiles: SyncConfigStatus;
+		delayProfiles: SyncConfigStatus;
+		mediaManagement: SyncConfigStatus;
+	} {
+		const qp = db.queryFirst<ConfigStatusRow>(
+			'SELECT trigger, cron, next_run_at, sync_status FROM arr_sync_quality_profiles_config WHERE instance_id = ?',
+			instanceId
+		);
+		const dp = db.queryFirst<ConfigStatusRow>(
+			'SELECT trigger, cron, next_run_at, sync_status FROM arr_sync_delay_profiles_config WHERE instance_id = ?',
+			instanceId
+		);
+		const mm = db.queryFirst<ConfigStatusRow>(
+			'SELECT trigger, cron, next_run_at, sync_status FROM arr_sync_media_management WHERE instance_id = ?',
+			instanceId
+		);
+
+		return {
+			qualityProfiles: {
+				trigger: (qp?.trigger as SyncTrigger) ?? 'manual',
+				cron: qp?.cron ?? null,
+				nextRunAt: qp?.next_run_at ?? null,
+				syncStatus: qp?.sync_status ?? 'idle'
+			},
+			delayProfiles: {
+				trigger: (dp?.trigger as SyncTrigger) ?? 'manual',
+				cron: dp?.cron ?? null,
+				nextRunAt: dp?.next_run_at ?? null,
+				syncStatus: dp?.sync_status ?? 'idle'
+			},
+			mediaManagement: {
+				trigger: (mm?.trigger as SyncTrigger) ?? 'manual',
+				cron: mm?.cron ?? null,
+				nextRunAt: mm?.next_run_at ?? null,
+				syncStatus: mm?.sync_status ?? 'idle'
+			}
+		};
+	},
+
+	getNextScheduledRunAt(instanceId: number): string | null {
+		const rows = db.query<{ next_run_at: string | null }>(
+			`SELECT next_run_at FROM arr_sync_quality_profiles_config WHERE instance_id = ? AND trigger = 'schedule'
+			 UNION ALL
+			 SELECT next_run_at FROM arr_sync_delay_profiles_config WHERE instance_id = ? AND trigger = 'schedule'
+			 UNION ALL
+			 SELECT next_run_at FROM arr_sync_media_management WHERE instance_id = ? AND trigger = 'schedule'`,
+			instanceId,
+			instanceId,
+			instanceId
+		);
+
+		const candidates = rows
+			.map((row) => row.next_run_at)
+			.filter((value): value is string => !!value);
+
+		if (candidates.length === 0) return null;
+
+		return candidates.reduce((earliest, current) =>
+			new Date(current) < new Date(earliest) ? current : earliest
+		);
+	},
+
+	getInstanceIdsForTrigger(trigger: SyncTrigger): number[] {
+		const triggers = trigger === 'on_change' ? ['on_pull', 'on_change'] : [trigger];
+		const placeholders = triggers.map(() => '?').join(', ');
+
+		const rows = db.query<{ instance_id: number }>(
+			`SELECT instance_id FROM arr_sync_quality_profiles_config WHERE trigger IN (${placeholders})
+			 UNION
+			 SELECT instance_id FROM arr_sync_delay_profiles_config WHERE trigger IN (${placeholders})
+			 UNION
+			 SELECT instance_id FROM arr_sync_media_management WHERE trigger IN (${placeholders})`,
+			...triggers,
+			...triggers,
+			...triggers
+		);
+
+		return rows.map((row) => row.instance_id);
 	}
 };

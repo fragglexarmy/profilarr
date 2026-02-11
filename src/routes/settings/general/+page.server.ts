@@ -7,6 +7,7 @@ import { tmdbSettingsQueries } from '$db/queries/tmdbSettings.ts';
 import { generalSettingsQueries } from '$db/queries/generalSettings.ts';
 import { logSettings } from '$logger/settings.ts';
 import { logger } from '$logger/logger.ts';
+import { scheduleBackupJobs, scheduleLogCleanup } from '$lib/server/jobs/init.ts';
 
 export const load = () => {
 	const logSetting = logSettingsQueries.get();
@@ -103,6 +104,7 @@ export const actions: Actions = {
 
 		// Reload settings into cache
 		logSettings.reload();
+		scheduleLogCleanup();
 
 		await logger.info('Log settings updated', {
 			source: 'settings/general',
@@ -130,6 +132,7 @@ export const actions: Actions = {
 
 		// Reload settings into cache
 		logSettings.reload();
+		scheduleLogCleanup();
 
 		await logger.info('Log settings reset to defaults', {
 			source: 'settings/general'
@@ -180,6 +183,8 @@ export const actions: Actions = {
 				compressionEnabled
 			}
 		});
+
+		scheduleBackupJobs();
 
 		return { success: true };
 	},
