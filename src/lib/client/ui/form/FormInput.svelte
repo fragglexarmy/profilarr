@@ -8,7 +8,7 @@
 	export let value: string = '';
 	export let textarea: boolean = false;
 	export let rows: number = 6;
-	export let type: 'text' | 'number' | 'email' | 'password' | 'url' = 'text';
+	export let type: 'text' | 'number' | 'email' | 'password' | 'url' | 'time' | 'date' = 'text';
 	export let required: boolean = false;
 	export let hideLabel: boolean = false;
 	export let name: string = '';
@@ -25,6 +25,7 @@
 	const dispatch = createEventDispatcher<{ input: string; focus: void; blur: void }>();
 
 	$: fontClass = mono ? 'font-mono' : '';
+	$: pickerClass = type === 'time' || type === 'date' ? 'dark:[color-scheme:dark]' : '';
 	$: stateClass = readonly || disabled
 		? 'bg-neutral-100 text-neutral-500 cursor-not-allowed dark:bg-neutral-800/40 dark:text-neutral-500'
 		: 'bg-white focus:border-neutral-400 dark:bg-neutral-800/50 dark:focus:border-neutral-600';
@@ -100,7 +101,7 @@
 				oninput={handleInput}
 				onfocus={handleFocus}
 				onblur={handleBlur}
-				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-300 focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-600 {sizeClasses} {fontClass} {stateClass} {inputClass} {hasSuffix
+				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:border-neutral-300 focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 dark:focus:border-neutral-600 {sizeClasses} {fontClass} {pickerClass} {stateClass} {inputClass} {hasSuffix
 					? 'pr-10'
 					: ''}"
 			></textarea>
@@ -126,7 +127,7 @@
 				onfocus={handleFocus}
 				onblur={handleBlur}
 				autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {stateClass} {inputClass} {privatePaddingClass}"
+				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {pickerClass} {stateClass} {inputClass} {privatePaddingClass}"
 			/>
 			{#if hasSuffix}
 				<div class="absolute right-10 top-1/2 -translate-y-1/2">
@@ -160,7 +161,7 @@
 				oninput={handleInput}
 				onfocus={handleFocus}
 				onblur={handleBlur}
-				class="block w-full resize-none overflow-hidden border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {stateClass} {inputClass} {hasSuffix
+				class="block w-full resize-none overflow-hidden border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {pickerClass} {stateClass} {inputClass} {hasSuffix
 					? 'pr-10'
 					: ''}"
 				use:autoResize={value}
@@ -187,7 +188,7 @@
 				onfocus={handleFocus}
 				onblur={handleBlur}
 				autocomplete={autocomplete ? (autocomplete as typeof HTMLInputElement.prototype.autocomplete) : undefined}
-				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {stateClass} {inputClass} {hasSuffix
+				class="block w-full border border-neutral-300 text-neutral-900 placeholder-neutral-400 transition-colors focus:outline-none dark:border-neutral-700/60 dark:text-neutral-50 dark:placeholder-neutral-500 {sizeClasses} {fontClass} {pickerClass} {stateClass} {inputClass} {hasSuffix
 					? 'pr-10'
 					: ''}"
 			/>

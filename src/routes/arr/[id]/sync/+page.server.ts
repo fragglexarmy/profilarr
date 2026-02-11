@@ -10,7 +10,9 @@ import * as namingQueries from '$pcd/entities/mediaManagement/naming/index.ts';
 import * as qualityDefinitionsQueries from '$pcd/entities/mediaManagement/quality-definitions/index.ts';
 import * as mediaSettingsQueries from '$pcd/entities/mediaManagement/media-settings/index.ts';
 import { calculateNextRun } from '$lib/server/sync/utils.ts';
-import { updateSyncArrJobEnabled } from '$lib/server/jobs/init.ts';
+import { scheduleArrSyncForInstance } from '$lib/server/jobs/init.ts';
+import { enqueueJob } from '$lib/server/jobs/queueService.ts';
+import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -114,8 +116,7 @@ export const actions: Actions = {
 				meta: { instanceId: id, profileCount: selections.length, trigger }
 			});
 
-			// Update sync_arr job enabled state based on whether any scheduled configs exist
-			await updateSyncArrJobEnabled();
+			scheduleArrSyncForInstance(id);
 
 			return { success: true };
 		} catch (e) {
@@ -156,8 +157,7 @@ export const actions: Actions = {
 				meta: { instanceId: id, databaseId, profileName, trigger }
 			});
 
-			// Update sync_arr job enabled state based on whether any scheduled configs exist
-			await updateSyncArrJobEnabled();
+			scheduleArrSyncForInstance(id);
 
 			return { success: true };
 		} catch (e) {
@@ -212,8 +212,7 @@ export const actions: Actions = {
 				meta: { instanceId: id, trigger }
 			});
 
-			// Update sync_arr job enabled state based on whether any scheduled configs exist
-			await updateSyncArrJobEnabled();
+			scheduleArrSyncForInstance(id);
 
 			return { success: true };
 		} catch (e) {
@@ -237,25 +236,28 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { createArrClient } = await import('$arr/factory.ts');
-			const { DelayProfileSyncer } = await import('$lib/server/sync');
-			const client = createArrClient(
-				instance.type as 'radarr' | 'sonarr',
-				instance.url,
-				instance.api_key
-			);
-			const syncer = new DelayProfileSyncer(client, id, instance.name);
-			const result = await syncer.sync();
-
-			await logger.info(`Manual delay profiles sync completed for "${instance.name}"`, {
-				source: 'sync',
-				meta: { instanceId: id, result }
+			arrSyncQueries.setDelayProfilesStatusPending(id);
+			const queued = enqueueJob({
+				jobType: 'arr.sync.delayProfiles',
+				runAt: new Date().toISOString(),
+				payload: { instanceId: id },
+				source: 'manual'
 			});
 
-			return { success: true, result };
+			await logger.info(`Queued delay profiles sync for "${instance.name}"`, {
+				source: 'sync',
+				meta: {
+					jobId: queued.id,
+					instanceId: id,
+					instanceName: instance.name,
+					displayName: buildJobDisplayName('arr.sync.delayProfiles', { instanceId: id })
+				}
+			});
+
+			return { success: true, message: 'Delay profiles sync queued' };
 		} catch (e) {
 			const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-			await logger.error(`Manual delay profiles sync failed for "${instance.name}"`, {
+			await logger.error(`Delay profiles sync enqueue failed for "${instance.name}"`, {
 				source: 'sync',
 				meta: { instanceId: id, error: errorMsg }
 			});
@@ -275,30 +277,28 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { createArrClient } = await import('$arr/factory.ts');
-			const { QualityProfileSyncer } = await import('$lib/server/sync');
-			const client = createArrClient(
-				instance.type as 'radarr' | 'sonarr',
-				instance.url,
-				instance.api_key
-			);
-			const syncer = new QualityProfileSyncer(
-				client,
-				id,
-				instance.name,
-				instance.type as 'radarr' | 'sonarr'
-			);
-			const result = await syncer.sync();
-
-			await logger.info(`Manual quality profiles sync completed for "${instance.name}"`, {
-				source: 'sync',
-				meta: { instanceId: id, result }
+			arrSyncQueries.setQualityProfilesStatusPending(id);
+			const queued = enqueueJob({
+				jobType: 'arr.sync.qualityProfiles',
+				runAt: new Date().toISOString(),
+				payload: { instanceId: id },
+				source: 'manual'
 			});
 
-			return { success: true, result };
+			await logger.info(`Queued quality profiles sync for "${instance.name}"`, {
+				source: 'sync',
+				meta: {
+					jobId: queued.id,
+					instanceId: id,
+					instanceName: instance.name,
+					displayName: buildJobDisplayName('arr.sync.qualityProfiles', { instanceId: id })
+				}
+			});
+
+			return { success: true, message: 'Quality profiles sync queued' };
 		} catch (e) {
 			const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-			await logger.error(`Manual quality profiles sync failed for "${instance.name}"`, {
+			await logger.error(`Quality profiles sync enqueue failed for "${instance.name}"`, {
 				source: 'sync',
 				meta: { instanceId: id, error: errorMsg }
 			});
@@ -318,30 +318,28 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { createArrClient } = await import('$arr/factory.ts');
-			const { MediaManagementSyncer } = await import('$lib/server/sync');
-			const client = createArrClient(
-				instance.type as 'radarr' | 'sonarr',
-				instance.url,
-				instance.api_key
-			);
-			const syncer = new MediaManagementSyncer(
-				client,
-				id,
-				instance.name,
-				instance.type as 'radarr' | 'sonarr'
-			);
-			const result = await syncer.sync();
-
-			await logger.info(`Manual media management sync completed for "${instance.name}"`, {
-				source: 'sync',
-				meta: { instanceId: id, result }
+			arrSyncQueries.setMediaManagementStatusPending(id);
+			const queued = enqueueJob({
+				jobType: 'arr.sync.mediaManagement',
+				runAt: new Date().toISOString(),
+				payload: { instanceId: id },
+				source: 'manual'
 			});
 
-			return { success: true, result };
+			await logger.info(`Queued media management sync for "${instance.name}"`, {
+				source: 'sync',
+				meta: {
+					jobId: queued.id,
+					instanceId: id,
+					instanceName: instance.name,
+					displayName: buildJobDisplayName('arr.sync.mediaManagement', { instanceId: id })
+				}
+			});
+
+			return { success: true, message: 'Media management sync queued' };
 		} catch (e) {
 			const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-			await logger.error(`Manual media management sync failed for "${instance.name}"`, {
+			await logger.error(`Media management sync enqueue failed for "${instance.name}"`, {
 				source: 'sync',
 				meta: { instanceId: id, error: errorMsg }
 			});

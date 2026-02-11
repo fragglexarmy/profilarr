@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Download, RefreshCw, FileText, Filter, Layers, Check } from 'lucide-svelte';
+	import { Download, RefreshCw, FileText, Filter, Layers, Check, BrushCleaning } from 'lucide-svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -27,6 +27,7 @@
 	export let onToggleSource: (source: string) => void;
 	export let onRefresh: () => void;
 	export let onDownload: () => void;
+	export let onCleanup: (() => void) | undefined = undefined;
 
 	const logLevels = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR'] as const;
 
@@ -147,6 +148,19 @@
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
+
+	<!-- Cleanup -->
+	{#if onCleanup}
+		<ActionButton icon={BrushCleaning} hasDropdown={true} dropdownPosition="right" on:click={onCleanup}>
+			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
+				<Dropdown position={dropdownPosition} minWidth="9rem">
+					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
+						Run log cleanup now
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+	{/if}
 
 	<!-- Download -->
 	<ActionButton icon={Download} hasDropdown={true} dropdownPosition="right" on:click={onDownload}>

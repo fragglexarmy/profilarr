@@ -4,7 +4,10 @@ import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrRenameSettingsQueries } from '$db/queries/arrRenameSettings.ts';
 import { renameRunsQueries } from '$db/queries/renameRuns.ts';
 import { logger } from '$logger/logger.ts';
-import { processRenameConfig } from '$lib/server/rename/processor.ts';
+import { scheduleRenameForInstance } from '$lib/server/jobs/init.ts';
+import { enqueueJob } from '$lib/server/jobs/queueService.ts';
+import { jobQueueQueries } from '$db/queries/jobQueue.ts';
+import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
 
 export const load: ServerLoad = ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -62,6 +65,7 @@ export const actions: Actions = {
 			};
 
 			arrRenameSettingsQueries.upsert(id, settingsData);
+			scheduleRenameForInstance(id);
 
 			await logger.info(`Rename settings saved for instance "${instance.name}"`, {
 				source: 'rename',
@@ -123,6 +127,7 @@ export const actions: Actions = {
 			};
 
 			arrRenameSettingsQueries.update(id, settingsData);
+			scheduleRenameForInstance(id);
 
 			await logger.info(`Rename settings updated for instance "${instance.name}"`, {
 				source: 'rename',
@@ -170,22 +175,31 @@ export const actions: Actions = {
 		}
 
 		try {
-			const result = await processRenameConfig(settings, instance, true);
+			const scheduled = jobQueueQueries.getByDedupeKey(`arr.rename:${id}`);
+			const warning =
+				scheduled && (scheduled.status === 'queued' || scheduled.status === 'running')
+					? 'A rename job is already queued. This run was queued anyway.'
+					: undefined;
 
-			// Update last run timestamp
-			arrRenameSettingsQueries.updateLastRun(id);
+			const queued = enqueueJob({
+				jobType: 'arr.rename',
+				runAt: new Date().toISOString(),
+				payload: { instanceId: id },
+				source: 'manual'
+			});
 
-			return {
-				success: true,
-				runResult: {
-					status: result.status,
-					dryRun: result.config.dryRun,
-					filesNeedingRename: result.results.filesNeedingRename,
-					filesRenamed: result.results.filesRenamed,
-					foldersRenamed: result.results.foldersRenamed,
-					items: result.renamedItems
+			await logger.info('Manual rename run queued', {
+				source: 'rename',
+				meta: {
+					jobId: queued.id,
+					instanceId: id,
+					instanceName: instance.name,
+					displayName: buildJobDisplayName('arr.rename', { instanceId: id }),
+					warning
 				}
-			};
+			});
+
+			return { success: true, queued: true, warning };
 		} catch (err) {
 			await logger.error('Manual rename run failed', {
 				source: 'rename',

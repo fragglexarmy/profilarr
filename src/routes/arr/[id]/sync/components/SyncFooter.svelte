@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$ui/button/Button.svelte';
+	import CronInput from '$ui/cron/CronInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
 	import { RefreshCw, Save, Loader2, AlertTriangle } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
@@ -48,12 +49,9 @@
 			{/each}
 
 			{#if syncTrigger === 'schedule'}
-				<input
-					type="text"
-					bind:value={cronExpression}
-					placeholder="0 * * * *"
-					class="w-32 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-mono text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-				/>
+				<div class="min-w-[18rem] flex-1">
+					<CronInput bind:value={cronExpression} disabled={saving} />
+				</div>
 			{/if}
 		</div>
 

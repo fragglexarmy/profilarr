@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
-	import { Download, Trash2, RotateCcw, Upload, FolderArchive } from 'lucide-svelte';
+	import { Download, Trash2, RotateCcw, Upload, FolderArchive, BrushCleaning } from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import type { PageData } from './$types';
 	import type { Column } from '$lib/client/ui/table/types';
@@ -41,6 +41,7 @@
 	let fileInput: HTMLInputElement;
 	let uploadFormRef: HTMLFormElement;
 	let createFormRef: HTMLFormElement;
+	let cleanupFormRef: HTMLFormElement;
 
 	function downloadBackup(filename: string) {
 		window.location.href = `/api/backups/download/${filename}`;
@@ -52,6 +53,10 @@
 
 	function triggerCreateBackup() {
 		createFormRef?.requestSubmit();
+	}
+
+	function triggerCleanupBackups() {
+		cleanupFormRef?.requestSubmit();
 	}
 
 	function formatDateTime(date: Date): string {
@@ -158,7 +163,27 @@
 						(result.data as { error?: string }).error || 'Failed to create backup'
 					);
 				} else if (result.type === 'success') {
-					alertStore.add('success', 'Backup created successfully');
+					alertStore.add('success', 'Backup queued');
+				}
+				await update();
+			};
+		}}
+	></form>
+
+	<form
+		bind:this={cleanupFormRef}
+		method="POST"
+		action="?/cleanupBackups"
+		class="hidden"
+		use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'failure' && result.data) {
+					alertStore.add(
+						'error',
+						(result.data as { error?: string }).error || 'Failed to run backup cleanup'
+					);
+				} else if (result.type === 'success') {
+					alertStore.add('success', 'Backup cleanup queued');
 				}
 				await update();
 			};
@@ -169,49 +194,55 @@
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search backups..." />
-			<ActionButton icon={Upload} hasDropdown dropdownPosition="right">
+			<ActionButton icon={Upload} hasDropdown dropdownPosition="right" on:click={triggerFileUpload}>
 				<svelte:fragment slot="dropdown">
 					<Dropdown position="right" minWidth="16rem">
-						<button
-							type="button"
-							on:click={triggerFileUpload}
-							class="w-full cursor-pointer px-4 py-3 text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700/70"
-						>
-							<div class="flex items-center gap-3">
-								<Upload size={18} class="text-neutral-500" />
-								<div>
-									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-										Upload Backup
-									</div>
-									<div class="text-xs text-neutral-500 dark:text-neutral-400">
-										Restore from a .tar.gz backup file
-									</div>
-								</div>
+						<div class="px-4 py-3 text-left">
+							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+								Upload Backup
 							</div>
-						</button>
+							<div class="text-xs text-neutral-500 dark:text-neutral-400">
+								Restore from a .tar.gz backup file
+							</div>
+						</div>
 					</Dropdown>
 				</svelte:fragment>
 			</ActionButton>
-			<ActionButton icon={FolderArchive} hasDropdown dropdownPosition="right">
+			<ActionButton
+				icon={FolderArchive}
+				hasDropdown
+				dropdownPosition="right"
+				on:click={triggerCreateBackup}
+			>
 				<svelte:fragment slot="dropdown">
 					<Dropdown position="right" minWidth="16rem">
-						<button
-							type="button"
-							on:click={triggerCreateBackup}
-							class="w-full cursor-pointer px-4 py-3 text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700/70"
-						>
-							<div class="flex items-center gap-3">
-								<FolderArchive size={18} class="text-neutral-500" />
-								<div>
-									<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-										Create Backup
-									</div>
-									<div class="text-xs text-neutral-500 dark:text-neutral-400">
-										Create a new backup of database and configs
-									</div>
-								</div>
+						<div class="px-4 py-3 text-left">
+							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+								Create Backup
 							</div>
-						</button>
+							<div class="text-xs text-neutral-500 dark:text-neutral-400">
+								Create a new backup of database and configs
+							</div>
+						</div>
+					</Dropdown>
+				</svelte:fragment>
+			</ActionButton>
+			<ActionButton
+				icon={BrushCleaning}
+				hasDropdown
+				dropdownPosition="right"
+				on:click={triggerCleanupBackups}
+			>
+				<svelte:fragment slot="dropdown">
+					<Dropdown position="right" minWidth="16rem">
+						<div class="px-4 py-3 text-left">
+							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+								Run Backup Cleanup
+							</div>
+							<div class="text-xs text-neutral-500 dark:text-neutral-400">
+								Delete old backups using retention settings
+							</div>
+						</div>
 					</Dropdown>
 				</svelte:fragment>
 			</ActionButton>

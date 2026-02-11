@@ -4,15 +4,16 @@
 	import Badge from '$lib/client/ui/badge/Badge.svelte';
 	import Toggle from '$lib/client/ui/toggle/Toggle.svelte';
 	import { CheckCircle, XCircle, Clock, MinusCircle } from 'lucide-svelte';
+	import { parseUTC } from '$shared/utils/dates';
 
 	type JobRun = {
 		id: number;
-		job_id: number;
-		job_name: string;
-		status: 'success' | 'failure' | 'skipped';
-		started_at: string;
-		finished_at: string;
-		duration_ms: number;
+		jobName: string;
+		displayName?: string;
+		status: 'success' | 'failure' | 'skipped' | 'cancelled';
+		startedAt: string;
+		finishedAt: string;
+		durationMs: number;
 		error: string | null;
 		output: string | null;
 	};
@@ -29,10 +30,10 @@
 	$: skippedCount = jobRuns.filter((run) => run.status === 'skipped').length;
 
 	const columns: Column<JobRun>[] = [
-		{ key: 'job_name', header: 'Job', sortable: true },
+		{ key: 'jobName', header: 'Job', sortable: true },
 		{ key: 'status', header: 'Status', sortable: true, width: 'w-28' },
-		{ key: 'started_at', header: 'Started', sortable: true },
-		{ key: 'duration_ms', header: 'Duration', sortable: true, width: 'w-28' },
+		{ key: 'startedAt', header: 'Started', sortable: true },
+		{ key: 'durationMs', header: 'Duration', sortable: true, width: 'w-28' },
 		{ key: 'output', header: 'Output' }
 	];
 
@@ -43,9 +44,10 @@
 		return `${(ms / 60000).toFixed(1)}m`;
 	}
 
-	// Format job name: sync_databases -> Sync Databases
+	// Format job name: arr.sync -> Arr Sync
 	function formatJobName(name: string): string {
 		return name
+			.replace(/\./g, ' ')
 			.split('_')
 			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 			.join(' ');
@@ -53,7 +55,9 @@
 
 	// Get relative time (e.g., "5m ago", "2h ago")
 	function getRelativeTime(dateStr: string): string {
-		const date = new Date(dateStr);
+		const date = parseUTC(dateStr);
+		if (!date) return '-';
+
 		const now = new Date();
 		const diff = now.getTime() - date.getTime();
 
@@ -88,20 +92,22 @@
 
 	<Table {columns} data={filteredRuns} emptyMessage="No job runs yet" compact responsive>
 		<svelte:fragment slot="cell" let:row let:column>
-			{#if column.key === 'job_name'}
-				<span class="text-xs font-medium">{formatJobName(row.job_name)}</span>
+			{#if column.key === 'jobName'}
+				<span class="text-xs font-medium">{row.displayName ?? formatJobName(row.jobName)}</span>
 			{:else if column.key === 'status'}
 				{#if row.status === 'success'}
 					<Badge variant="success" icon={CheckCircle}>Success</Badge>
 				{:else if row.status === 'skipped'}
 					<Badge variant="neutral" icon={MinusCircle}>Skipped</Badge>
+				{:else if row.status === 'cancelled'}
+					<Badge variant="neutral" icon={MinusCircle}>Cancelled</Badge>
 				{:else}
 					<Badge variant="danger" icon={XCircle}>Failed</Badge>
 				{/if}
-			{:else if column.key === 'started_at'}
-				<Badge variant="neutral" mono>{getRelativeTime(row.started_at)}</Badge>
-			{:else if column.key === 'duration_ms'}
-				<Badge variant="neutral" mono>{formatDuration(row.duration_ms)}</Badge>
+			{:else if column.key === 'startedAt'}
+				<Badge variant="neutral" mono>{getRelativeTime(row.startedAt)}</Badge>
+			{:else if column.key === 'durationMs'}
+				<Badge variant="neutral" mono>{formatDuration(row.durationMs)}</Badge>
 			{:else if column.key === 'output'}
 				{#if row.error}
 					<span class="line-clamp-1 font-mono text-xs text-red-600 dark:text-red-400"

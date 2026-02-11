@@ -46,19 +46,15 @@
 	let lastFormId: unknown = null;
 	$: if (form && form !== lastFormId) {
 		lastFormId = form;
-		if (form.success && !form.runResult) {
+		if (form.success && !form.queued) {
 			alertStore.add('success', 'Configuration saved successfully');
 			initEdit({ enabled, dryRun, renameFolders, ignoreTag, schedule, summaryNotifications });
 		}
-		if (form.success && form.runResult) {
-			const r = form.runResult;
-			const msg = r.dryRun
-				? `${r.filesNeedingRename} files would be renamed`
-				: `${r.filesRenamed}/${r.filesNeedingRename} files renamed`;
-			alertStore.add(
-				r.status === 'success' ? 'success' : r.status === 'partial' ? 'warning' : 'error',
-				msg
-			);
+		if (form.success && form.queued) {
+			alertStore.add('success', 'Rename run queued');
+			if (form.warning) {
+				alertStore.add('warning', form.warning);
+			}
 		}
 		if (form.error) {
 			alertStore.add('error', form.error);

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Eye, Copy, ChevronLeft, ChevronRight } from 'lucide-svelte';
+	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
 	import Modal from '$ui/modal/Modal.svelte';
 	import JsonView from '$ui/meta/JsonView.svelte';
@@ -29,6 +30,7 @@
 	let selectedLevel: 'ALL' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' = 'ALL';
 	let selectedSources: Set<string> = new Set();
 	let isRefreshing = false;
+	let cleanupFormRef: HTMLFormElement | null = null;
 
 	// Pagination state
 	let currentPage = 1;
@@ -111,6 +113,21 @@
 		link.download = `profilarr-logs-${new Date().toISOString()}.json`;
 		link.click();
 		URL.revokeObjectURL(url);
+	}
+
+	function handleCleanupResult(result: { type: string; data?: unknown }) {
+		if (result.type === 'failure' && result.data) {
+			alertStore.add(
+				'error',
+				(result.data as { error?: string }).error || 'Failed to run logs cleanup'
+			);
+		} else if (result.type === 'success') {
+			alertStore.add('success', 'Logs cleanup queued');
+		}
+	}
+
+	function triggerCleanupLogs() {
+		cleanupFormRef?.requestSubmit();
 	}
 
 	// Refresh logs by refetching data
@@ -300,7 +317,21 @@
 		onToggleSource={toggleSource}
 		onRefresh={refreshLogs}
 		onDownload={downloadLogs}
+		onCleanup={triggerCleanupLogs}
 	/>
+
+	<form
+		bind:this={cleanupFormRef}
+		method="POST"
+		action="?/cleanupLogs"
+		class="hidden"
+		use:enhance={() => {
+			return async ({ result, update }) => {
+				handleCleanupResult(result);
+				await update();
+			};
+		}}
+	></form>
 
 	<!-- Stats -->
 	<div

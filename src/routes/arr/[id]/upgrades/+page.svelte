@@ -51,17 +51,12 @@
 	let lastFormId: unknown = null;
 	$: if (form && form !== lastFormId) {
 		lastFormId = form;
-		if (form.success && !form.runResult && !form.cacheCleared) {
+		if (form.success && !form.queued && !form.cacheCleared) {
 			alertStore.add('success', 'Configuration saved successfully');
 			initEdit({ enabled, dryRun, schedule, filterMode, filters: JSON.stringify(filters) });
 		}
-		if (form.success && form.runResult) {
-			const r = form.runResult;
-			const dryLabel = r.dryRun ? '[DRY RUN] ' : '';
-			alertStore.add(
-				r.status === 'success' ? 'success' : r.status === 'partial' ? 'warning' : 'error',
-				`${dryLabel}${r.filterName}: ${r.searched}/${r.matched} items searched (${r.afterCooldown} after cooldown)`
-			);
+		if (form.success && form.queued) {
+			alertStore.add('success', 'Upgrade run queued');
 		}
 		if (form.success && form.cacheCleared) {
 			alertStore.add('success', 'Dry run cache cleared');

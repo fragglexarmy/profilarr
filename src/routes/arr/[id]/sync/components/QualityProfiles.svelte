@@ -106,7 +106,8 @@
 			});
 
 			if (response.ok) {
-				alertStore.add('success', 'Sync completed successfully');
+				const data = await response.json();
+				alertStore.add('success', data?.message ?? 'Sync queued');
 			} else {
 				alertStore.add('error', 'Sync failed');
 			}

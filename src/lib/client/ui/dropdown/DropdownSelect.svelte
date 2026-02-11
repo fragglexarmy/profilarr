@@ -26,6 +26,8 @@
 	export let fixed: boolean = false;
 	// Custom width class (overrides fullWidth if set)
 	export let width: string | undefined = undefined;
+	// Override button content justification
+	export let justify: 'center' | 'between' | null = null;
 	// Disable the dropdown
 	export let disabled: boolean = false;
 	// Optional button size override
@@ -67,6 +69,7 @@
 				? true
 				: compact;
 	$: resolvedButtonSize = buttonSize ?? ((isCompactButton ? 'xs' : 'sm') as 'xs' | 'sm');
+	$: resolvedJustify = justify ?? (fullWidth || width ? 'between' : 'center');
 	$: labelClasses = isCompactButton
 		? 'text-xs text-neutral-500 dark:text-neutral-400'
 		: 'text-sm text-neutral-500 dark:text-neutral-400';
@@ -94,7 +97,7 @@
 			size={resolvedButtonSize}
 			{fullWidth}
 			{disabled}
-			justify={fullWidth || width ? 'between' : 'center'}
+			justify={resolvedJustify}
 			textColor={isPlaceholder ? 'text-neutral-400 dark:text-neutral-500' : ''}
 			on:click={() => !disabled && (open = !open)}
 		/>

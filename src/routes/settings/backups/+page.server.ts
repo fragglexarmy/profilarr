@@ -2,7 +2,8 @@ import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
 import { config } from '$config';
 import { logger } from '$logger/logger.ts';
-import { jobScheduler } from '$jobs/scheduler.ts';
+import { enqueueJob } from '$lib/server/jobs/queueService.ts';
+import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
 
 interface BackupFile {
 	filename: string;
@@ -57,24 +58,56 @@ export const load = async () => {
 
 export const actions: Actions = {
 	createBackup: async () => {
-		await logger.info('Manually triggering backup creation', {
-			source: 'settings/backups'
-		});
-
 		try {
-			const success = await jobScheduler.triggerJob('create_backup');
+			const queued = enqueueJob({
+				jobType: 'backup.create',
+				runAt: new Date().toISOString(),
+				payload: {},
+				source: 'manual'
+			});
 
-			if (!success) {
-				return fail(400, { error: 'Failed to trigger backup job' });
-			}
+			await logger.info('Manual backup creation queued', {
+				source: 'settings/backups',
+				meta: {
+					jobId: queued.id,
+					displayName: buildJobDisplayName('backup.create', {})
+				}
+			});
 
-			return { success: true };
+			return { success: true, message: 'Backup queued' };
 		} catch (err) {
 			await logger.error('Failed to trigger backup', {
 				source: 'settings/backups',
 				meta: { error: err }
 			});
 			return fail(500, { error: 'Failed to trigger backup' });
+		}
+	},
+
+	cleanupBackups: async () => {
+		try {
+			const queued = enqueueJob({
+				jobType: 'backup.cleanup',
+				runAt: new Date().toISOString(),
+				payload: {},
+				source: 'manual'
+			});
+
+			await logger.info('Manual backup cleanup queued', {
+				source: 'settings/backups',
+				meta: {
+					jobId: queued.id,
+					displayName: buildJobDisplayName('backup.cleanup', {})
+				}
+			});
+
+			return { success: true, message: 'Backup cleanup queued' };
+		} catch (err) {
+			await logger.error('Failed to trigger backup cleanup', {
+				source: 'settings/backups',
+				meta: { error: err }
+			});
+			return fail(500, { error: 'Failed to trigger backup cleanup' });
 		}
 	},
 

@@ -1,63 +1,59 @@
-import type { Actions, RequestEvent } from '@sveltejs/kit';
-import { fail } from '@sveltejs/kit';
-import { jobsQueries, jobRunsQueries } from '$db/queries/jobs.ts';
-import { jobScheduler } from '$jobs/scheduler.ts';
-import { logger } from '$logger/logger.ts';
-
-// Helper to format schedule for display
-function formatSchedule(schedule: string): string {
-	const scheduleMap: Record<string, string> = {
-		daily: 'Daily',
-		hourly: 'Hourly',
-		weekly: 'Weekly',
-		monthly: 'Monthly'
-	};
-
-	// Check for cron-like patterns
-	if (schedule.startsWith('*/')) {
-		const match = schedule.match(/\*\/(\d+)\s*(\w+)/);
-		if (match) {
-			const [, interval, unit] = match;
-			return `Every ${interval} ${unit}`;
-		}
-	}
-
-	return scheduleMap[schedule.toLowerCase()] || schedule;
-}
+import type { Actions } from '@sveltejs/kit';
+import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+import { jobQueueQueries } from '$db/queries/jobQueue.ts';
+import { jobRunHistoryQueries } from '$db/queries/jobRunHistory.ts';
+import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
+import type { JobQueueRecord } from '$jobs/queueTypes.ts';
 
 export const load = () => {
-	const jobs = jobsQueries.getAll();
+	const arrInstances = arrInstancesQueries.getAll();
+	const databases = databaseInstancesQueries.getAll();
+	const lookups = {
+		arrNameById: new Map(arrInstances.map((instance) => [instance.id, instance.name])),
+		databaseNameById: new Map(databases.map((db) => [db.id, db.name]))
+	};
 
-	// Get the last run for each job
+	const jobs = jobQueueQueries.listScheduled();
+
 	const jobsWithRuns = jobs.map((job) => {
-		const lastRun = jobRunsQueries.getByJobId(job.id, 1)[0] || null;
+		const lastRun = jobRunHistoryQueries.getByQueueId(job.id, 1)[0] || null;
+		const displayName = buildJobDisplayName(job.jobType, job.payload, lookups);
 
 		return {
 			id: job.id,
-			name: job.name,
-			description: job.description || 'No description provided',
-			schedule: job.schedule,
-			scheduleDisplay: formatSchedule(job.schedule),
-			enabled: job.enabled === 1,
-			last_run_at: job.last_run_at,
-			next_run_at: job.next_run_at,
-			last_run_status: lastRun?.status || null,
-			last_run_duration: lastRun?.duration_ms || null,
-			last_run_error: lastRun?.error || null
+			name: job.jobType,
+			displayName,
+			description: job.dedupeKey || 'Scheduled job',
+			enabled: job.status !== 'cancelled',
+			status: job.status,
+			last_run_at: lastRun?.startedAt ?? null,
+			next_run_at: job.runAt,
+			last_run_status: lastRun?.status ?? null,
+			last_run_duration: lastRun?.durationMs ?? null,
+			last_run_error: lastRun?.error ?? null
 		};
 	});
 
-	// Get recent job runs across all jobs
-	const recentRuns = jobRunsQueries.getRecent(50);
+	const recentRuns = jobRunHistoryQueries.getRecent(50);
+	const queueIds = Array.from(
+		new Set(recentRuns.map((run) => run.queueId).filter((id): id is number => typeof id === 'number'))
+	);
+	const queueById = new Map<number, JobQueueRecord>();
+	for (const queueId of queueIds) {
+		const queue = jobQueueQueries.getById(queueId);
+		if (queue) queueById.set(queueId, queue);
+	}
 
-	// Join with job names
-	const jobRunsWithNames = recentRuns.map((run) => {
-		const job = jobs.find((j) => j.id === run.job_id);
-		return {
-			...run,
-			job_name: job?.name || 'Unknown Job'
-		};
-	});
+	const jobRunsWithNames = recentRuns.map((run) => ({
+		...run,
+		jobName: run.jobType,
+		displayName: buildJobDisplayName(
+			run.jobType,
+			queueById.get(run.queueId ?? -1)?.payload ?? {},
+			lookups
+		)
+	}));
 
 	return {
 		jobs: jobsWithRuns,
@@ -65,61 +61,4 @@ export const load = () => {
 	};
 };
 
-export const actions: Actions = {
-	toggleEnabled: async ({ request }: RequestEvent) => {
-		const formData = await request.formData();
-		const jobId = parseInt(formData.get('job_id') as string);
-		const enabled = formData.get('enabled') === 'true';
-
-		if (isNaN(jobId)) {
-			return fail(400, { error: 'Invalid job ID' });
-		}
-
-		const job = jobsQueries.getById(jobId);
-		if (!job) {
-			return fail(404, { error: 'Job not found' });
-		}
-
-		const updated = jobsQueries.update(jobId, { enabled });
-
-		if (!updated) {
-			await logger.error(`Failed to toggle job: ${job.name}`, {
-				source: 'settings/jobs',
-				meta: { jobId, enabled }
-			});
-			return fail(500, { error: 'Failed to update job' });
-		}
-
-		await logger.info(`Job ${enabled ? 'enabled' : 'disabled'}: ${job.name}`, {
-			source: 'settings/jobs',
-			meta: { jobId, enabled }
-		});
-
-		return { success: true };
-	},
-
-	trigger: async ({ request }: RequestEvent) => {
-		const formData = await request.formData();
-		const jobName = formData.get('job_name') as string;
-
-		if (!jobName) {
-			return fail(400, { error: 'Job name is required' });
-		}
-
-		try {
-			const success = await jobScheduler.triggerJob(jobName);
-
-			if (!success) {
-				return fail(400, { error: 'Job not found or disabled' });
-			}
-
-			return { success: true };
-		} catch (error) {
-			await logger.error(`Failed to trigger job: ${jobName}`, {
-				source: 'settings/jobs',
-				meta: { jobName, error }
-			});
-			return fail(500, { error: 'Failed to trigger job' });
-		}
-	}
-};
+export const actions: Actions = {};

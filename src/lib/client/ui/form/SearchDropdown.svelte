@@ -179,16 +179,19 @@
 				: ''}"
 		>
 			{#each filteredOptions as option, index}
+				{@const isHighlighted = highlightedIndex === index}
+				{@const isSelected = option.value === value}
 				<button
 					type="button"
 					role="option"
-					aria-selected={highlightedIndex === index}
+					aria-selected={isSelected}
 					on:mouseenter={() => (highlightedIndex = index)}
 					on:mousedown={() => selectOption(option)}
-					class="w-full rounded-xl px-3 py-2 text-left text-sm transition-colors {highlightedIndex ===
-					index
-						? 'text-accent-700 dark:text-accent-300'
-						: 'text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800'}"
+					class="w-full rounded-xl px-3 py-2 text-left text-sm transition-colors {isHighlighted
+					? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-700/40 dark:text-neutral-100'
+					: 'text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800'} {isSelected
+						? 'font-medium'
+						: ''}"
 				>
 					<slot name="item" {option}>
 						{option.label}

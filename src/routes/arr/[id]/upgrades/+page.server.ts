@@ -5,8 +5,12 @@ import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { upgradeRunsQueries } from '$db/queries/upgradeRuns.ts';
 import { logger } from '$logger/logger.ts';
 import type { FilterConfig, FilterMode } from '$shared/upgrades/filters.ts';
-import { processUpgradeConfig, clearDryRunExclusions } from '$lib/server/upgrades/processor.ts';
+import { clearDryRunExclusions } from '$lib/server/upgrades/processor.ts';
 import { logDryRunCacheCleared } from '$lib/server/upgrades/logger.ts';
+import { scheduleUpgradeForInstance } from '$lib/server/jobs/init.ts';
+import { upsertScheduledJob } from '$lib/server/jobs/queueService.ts';
+import { calculateCooldownUntil } from '$lib/server/jobs/scheduleUtils.ts';
+import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
 
 export const load: ServerLoad = ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -102,6 +106,8 @@ export const actions: Actions = {
 				}
 			});
 
+			scheduleUpgradeForInstance(id);
+
 			return { success: true };
 		} catch (err) {
 			await logger.error('Failed to save upgrade config', {
@@ -154,33 +160,34 @@ export const actions: Actions = {
 		}
 
 		try {
-			await logger.debug(`Manual upgrade run triggered for "${instance.name}"`, {
-				source: 'upgrades',
-				meta: { instanceId: id, dryRun: config.dryRun, isDev }
-			});
-
-			const result = await processUpgradeConfig(config, instance, true);
-
-			// Update last run timestamp
-			upgradeConfigsQueries.updateLastRun(id);
-
-			// Update filter index for round-robin mode
-			if (result.status !== 'failed' && config.filterMode === 'round_robin') {
-				upgradeConfigsQueries.incrementFilterIndex(id);
+			const cooldownUntil = calculateCooldownUntil(config.lastRunAt, config.schedule);
+			if (cooldownUntil && Date.now() < new Date(cooldownUntil).getTime()) {
+				return fail(400, {
+					error: `Upgrade cooldown active until ${cooldownUntil}`
+				});
 			}
 
-			return {
-				success: true,
-				runResult: {
-					status: result.status,
-					filterName: result.config.selectedFilter,
-					dryRun: result.config.dryRun,
-					matched: result.filter.matchedCount,
-					afterCooldown: result.filter.afterCooldown,
-					searched: result.selection.actualCount,
-					items: result.selection.items
+			const queued = upsertScheduledJob({
+				jobType: 'arr.upgrade',
+				runAt: new Date().toISOString(),
+				payload: { instanceId: id },
+				source: 'manual',
+				dedupeKey: `arr.upgrade.manual:${id}`
+			});
+
+			await logger.info(`Manual upgrade run queued for "${instance.name}"`, {
+				source: 'upgrades',
+				meta: {
+					jobId: queued.id,
+					instanceId: id,
+					instanceName: instance.name,
+					displayName: buildJobDisplayName('arr.upgrade', { instanceId: id }),
+					dryRun: config.dryRun,
+					isDev
 				}
-			};
+			});
+
+			return { success: true, queued: true };
 		} catch (err) {
 			await logger.error('Manual upgrade run failed', {
 				source: 'upgrades',

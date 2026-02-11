@@ -1,32 +1,34 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
+	import { parseUTC } from '$shared/utils/dates';
 	import type { Column } from '$lib/client/ui/table/types';
 	import ExpandableTable from '$lib/client/ui/table/ExpandableTable.svelte';
-	import TableActionButton from '$lib/client/ui/table/TableActionButton.svelte';
 	import Badge from '$lib/client/ui/badge/Badge.svelte';
 	import JobHistory from './components/JobHistory.svelte';
-	import { Play, Edit2, Power, CheckCircle, XCircle, AlertCircle, MinusCircle } from 'lucide-svelte';
+import { CheckCircle, XCircle, AlertCircle, MinusCircle } from 'lucide-svelte';
 
 	export let data: PageData;
 
 	type Job = (typeof data.jobs)[0];
 
 	const columns: Column<Job>[] = [
-		{ key: 'name', header: 'Name', sortable: true },
-		{ key: 'enabled', header: 'Status', sortable: true, width: 'w-24' },
-		{ key: 'scheduleDisplay', header: 'Schedule', sortable: true },
+		{ key: 'name', header: 'Job', sortable: true },
+		{ key: 'status', header: 'Status', sortable: true, width: 'w-28' },
 		{ key: 'last_run_at', header: 'Last Run', sortable: true },
 		{ key: 'next_run_at', header: 'Next Run', sortable: true }
 	];
 
-	// Format job name: sync_databases -> Sync Databases
+	// Format job name: arr.sync -> Arr Sync
 	function formatJobName(name: string): string {
 		return name
+			.replace(/\./g, ' ')
 			.split('_')
 			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 			.join(' ');
+	}
+
+	function getJobLabel(job: Job): string {
+		return job.displayName ?? formatJobName(job.name);
 	}
 
 	// Format duration in ms to human readable
@@ -39,15 +41,16 @@
 
 	// Format date/time
 	function formatDateTime(dateStr: string | null): string {
-		if (!dateStr) return 'Never';
-		return new Date(dateStr).toLocaleString();
+		const parsed = parseUTC(dateStr);
+		if (!parsed) return 'Never';
+		return parsed.toLocaleString();
 	}
 
 	// Get relative time (e.g., "in 5 minutes", "2 hours ago")
 	function getRelativeTime(dateStr: string | null): string {
-		if (!dateStr) return '-';
+		const date = parseUTC(dateStr);
+		if (!date) return '-';
 
-		const date = new Date(dateStr);
 		const now = new Date();
 		const diff = date.getTime() - now.getTime();
 		const absDiff = Math.abs(diff);
@@ -94,13 +97,17 @@
 		>
 			<svelte:fragment slot="cell" let:row let:column>
 				{#if column.key === 'name'}
-					<span class="font-medium">{formatJobName(row.name)}</span>
-				{:else if column.key === 'enabled'}
-					<Badge variant={row.enabled ? 'accent' : 'neutral'}>
-						{row.enabled ? 'Enabled' : 'Disabled'}
-					</Badge>
-				{:else if column.key === 'scheduleDisplay'}
-					<Badge variant="neutral" mono>{row.scheduleDisplay}</Badge>
+					<span class="font-medium">{getJobLabel(row)}</span>
+				{:else if column.key === 'status'}
+					{#if row.status === 'running'}
+						<Badge variant="accent">Running</Badge>
+					{:else if row.status === 'queued'}
+						<Badge variant="neutral">Queued</Badge>
+					{:else if row.status === 'cancelled'}
+						<Badge variant="danger">Cancelled</Badge>
+					{:else}
+						<Badge variant="neutral">{row.status}</Badge>
+					{/if}
 				{:else if column.key === 'last_run_at'}
 					<div class="flex items-center gap-2">
 						<Badge variant="neutral" mono>{getRelativeTime(row.last_run_at)}</Badge>
@@ -119,76 +126,6 @@
 						<span class="text-neutral-400 dark:text-neutral-600">-</span>
 					{/if}
 				{/if}
-			</svelte:fragment>
-
-			<svelte:fragment slot="actions" let:row>
-				<div class="flex items-center justify-end gap-1">
-					<!-- Edit Button -->
-					<a href="/settings/jobs/{row.id}/edit">
-						<TableActionButton icon={Edit2} title="Edit job" variant="neutral" size="sm" />
-					</a>
-
-					<!-- Run Now Button -->
-					<form
-						method="POST"
-						action="?/trigger"
-						use:enhance={() => {
-							return async ({ result, update }) => {
-								if (result.type === 'failure' && result.data) {
-									alertStore.add(
-										'error',
-										(result.data as { error?: string }).error || 'Failed to trigger job'
-									);
-								} else if (result.type === 'success') {
-									alertStore.add('success', `Job "${formatJobName(row.name)}" triggered`);
-								}
-								await update();
-							};
-						}}
-					>
-						<input type="hidden" name="job_name" value={row.name} />
-						<TableActionButton
-							icon={Play}
-							title="Run now"
-							variant="accent"
-							size="sm"
-							type="submit"
-							disabled={!row.enabled}
-						/>
-					</form>
-
-					<!-- Enable/Disable Button -->
-					<form
-						method="POST"
-						action="?/toggleEnabled"
-						use:enhance={() => {
-							return async ({ result, update }) => {
-								if (result.type === 'failure' && result.data) {
-									alertStore.add(
-										'error',
-										(result.data as { error?: string }).error || 'Failed to update job'
-									);
-								} else if (result.type === 'success') {
-									alertStore.add('success', `Job ${row.enabled ? 'disabled' : 'enabled'}`);
-								}
-								await update();
-							};
-						}}
-					>
-						<input type="hidden" name="job_id" value={row.id} />
-						<input type="hidden" name="enabled" value={!row.enabled} />
-						<button
-							type="submit"
-							class="inline-flex h-6 w-6 items-center justify-center rounded border transition-colors
-								{row.enabled
-								? 'border-emerald-300 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40'
-								: 'border-neutral-300 bg-white text-neutral-400 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400'}"
-							title={row.enabled ? 'Disable job' : 'Enable job'}
-						>
-							<Power size={12} />
-						</button>
-					</form>
-				</div>
 			</svelte:fragment>
 
 			<svelte:fragment slot="expanded" let:row>
