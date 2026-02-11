@@ -13,21 +13,19 @@
 		'bottom-right': 'bottom-4 right-4'
 	};
 
-	const baseClasses =
-		'pointer-events-none absolute flex w-[calc(100%-2rem)] max-w-md flex-col gap-3';
-
-	$: positionClass =
-		positionClasses[$alertSettingsStore.position] ?? positionClasses['top-right'];
+	$: position = positionClasses[$alertSettingsStore.position] ?? positionClasses['top-center'];
 	$: isAuthPage = $page.url.pathname.startsWith('/auth/');
-	$: layoutPaddingClass = isAuthPage
-		? ''
-		: 'pt-16 pb-16 md:pt-0 md:pb-0 md:pl-80';
-	$: mobileVisibilityClass = isAuthPage ? '' : 'hidden md:block';
 </script>
 
-<div class="pointer-events-none fixed inset-0 z-50 {layoutPaddingClass} {mobileVisibilityClass}">
+<div
+	class="pointer-events-none fixed inset-0 z-50 {isAuthPage
+		? ''
+		: 'hidden pt-16 pb-16 md:block md:pt-0 md:pb-0 md:pl-80'}"
+>
 	<div class="relative h-full w-full">
-		<div class="{baseClasses} {positionClass}">
+		<div
+			class="pointer-events-none absolute flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2 {position}"
+		>
 			{#each $alertStore as alert (alert.id)}
 				<div class="pointer-events-auto">
 					<Alert id={alert.id} type={alert.type} message={alert.message} />
