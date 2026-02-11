@@ -87,6 +87,9 @@ export async function updateScoring(options: UpdateScoringOptions) {
 	// Expand 'all' rows into per-arr-type rows for any CFs being modified.
 	// This prevents ghost fallbacks when a specific arr_type score is deleted
 	// but an old 'all' row still exists in the database.
+	// Only expand when at least one arr_type score actually differs from the
+	// 'all' value — otherwise the user didn't change anything and expanding
+	// would create spurious user ops that can later conflict.
 	const modifiedCfNames = new Set(input.customFormatScores.map((s) => s.customFormatName));
 	const arrTypes = ['radarr', 'sonarr'];
 
@@ -94,6 +97,25 @@ export async function updateScoring(options: UpdateScoringOptions) {
 		const allKey = `${cfName}::all`;
 		const allScore = currentScoreMap.get(allKey);
 		if (allScore === undefined) continue;
+
+		// Check whether the input actually changes any score away from the
+		// 'all' value.  If every per-arr-type input score matches the shared
+		// score, the user didn't edit this CF and we should leave the 'all'
+		// row intact.
+		const cfInputs = input.customFormatScores.filter(
+			(s) => s.customFormatName === cfName && s.arrType !== 'all'
+		);
+		if (cfInputs.length > 0 && cfInputs.every((s) => s.score === allScore)) {
+			// Populate per-arr-type entries so the CF score loop below doesn't
+			// see undefined and generate spurious INSERT ops for unchanged CFs.
+			for (const arrType of arrTypes) {
+				const key = `${cfName}::${arrType}`;
+				if (!currentScoreMap.has(key)) {
+					currentScoreMap.set(key, allScore);
+				}
+			}
+			continue;
+		}
 
 		for (const arrType of arrTypes) {
 			const key = `${cfName}::${arrType}`;
