@@ -76,6 +76,7 @@ export interface CacheBuildStats {
 	tweaks: number;
 	user: number;
 	timing: number;
+	needsRebuild?: boolean;
 }
 
 /**

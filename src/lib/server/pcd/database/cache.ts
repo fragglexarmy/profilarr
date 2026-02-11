@@ -185,19 +185,38 @@ export class PCDCache {
 								const desiredState = parseDesiredState(userOp?.desired_state ?? null);
 								const conflict = checkFullListConflict(this.db!, metadata, desiredState);
 								if (conflict) {
-									status = conflictStrategy === 'ask' ? 'conflicted_pending' : 'conflicted';
-									conflictReason = 'guard_mismatch';
-									const priorReason = priorConflicts.get(opId);
-									if (priorReason !== conflictReason) {
-										await logger.info('Recorded op conflict (full-list mismatch)', {
-											source: 'PCDCache',
-											meta: {
-												opId,
-												databaseInstanceId: this.databaseInstanceId,
-												conflictStrategy,
-												conflictReason
-											}
-										});
+									if (conflictStrategy === 'align') {
+										const updated = pcdOpsQueries.update(opId, { state: 'dropped' });
+										if (updated) {
+											status = 'dropped';
+											conflictReason = 'aligned';
+											stats.needsRebuild = true;
+											await logger.info('Forced align conflict (full-list mismatch)', {
+												source: 'PCDCache',
+												meta: {
+													opId,
+													databaseInstanceId: this.databaseInstanceId,
+													conflictStrategy,
+													conflictReason
+												}
+											});
+										}
+									}
+									if (status !== 'dropped') {
+										status = conflictStrategy === 'ask' ? 'conflicted_pending' : 'conflicted';
+										conflictReason = 'guard_mismatch';
+										const priorReason = priorConflicts.get(opId);
+										if (priorReason !== conflictReason) {
+											await logger.info('Recorded op conflict (full-list mismatch)', {
+												source: 'PCDCache',
+												meta: {
+													opId,
+													databaseInstanceId: this.databaseInstanceId,
+													conflictStrategy,
+													conflictReason
+												}
+											});
+										}
 									}
 								}
 							}
