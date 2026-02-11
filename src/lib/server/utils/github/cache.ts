@@ -76,10 +76,6 @@ export async function getCachedRepoInfo(
 	// Check cache
 	const cached = githubCacheQueries.get(cacheKey);
 	if (cached) {
-		await logger.debug('GitHub repo info cache hit', {
-			source: 'GitHubCache',
-			meta: { cacheKey }
-		});
 		return JSON.parse(cached.data) as RepoInfo;
 	}
 
@@ -181,11 +177,6 @@ export async function getCachedAvatar(owner: string): Promise<string | null> {
 			fetchAndCacheAvatar(owner, cacheKey).catch(() => {
 				// Silently ignore background refresh errors
 			});
-		} else {
-			await logger.debug('GitHub avatar cache hit', {
-				source: 'GitHubCache',
-				meta: { owner }
-			});
 		}
 
 		return cached.data;
@@ -212,10 +203,6 @@ export async function getCachedReleases(
 	// Check cache
 	const cached = githubCacheQueries.get(cacheKey);
 	if (cached) {
-		await logger.debug('GitHub releases cache hit', {
-			source: 'GitHubCache',
-			meta: { owner, repo }
-		});
 		return JSON.parse(cached.data) as GitHubRelease[];
 	}
 

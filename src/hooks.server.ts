@@ -10,7 +10,6 @@ import { logger } from '$logger/logger.ts';
 import { db } from '$db/db.ts';
 import { runMigrations } from '$db/migrations.ts';
 import { initializeJobs } from '$jobs/init.ts';
-import { jobScheduler } from '$jobs/scheduler.ts';
 import { pcdManager } from '$pcd/index.ts';
 import {
 	getAuthState,
@@ -68,9 +67,8 @@ if (!setupStateQueries.isDefaultDatabaseLinked()) {
 	}
 }
 
-// Initialize and start job system
+// Initialize and start job queue
 await initializeJobs();
-await jobScheduler.start();
 
 // Clean expired sessions on startup
 const expiredCount = cleanupExpiredSessions();

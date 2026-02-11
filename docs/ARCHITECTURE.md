@@ -57,9 +57,9 @@ Top‑level layout and where each subsystem lives.
 **Server**
 
 - `src/lib/server/pcd/` — PCD operations, compiler, cache, writer
-- `src/lib/server/db/` — App DB (instances, settings, jobs, ops tables)
+- `src/lib/server/db/` — App DB (instances, settings, job queue, ops tables)
 - `src/lib/server/sync/` — Sync logic to Arr instances
-- `src/lib/server/jobs/` — Job scheduler and runners
+- `src/lib/server/jobs/` — Job queue, dispatcher, and handlers
 - `src/lib/server/upgrades/` — Upgrade engine
 - `src/lib/server/rename/` — Rename logic
 - `src/lib/server/notifications/` — Notification delivery
@@ -152,7 +152,7 @@ source. New schema changes should be introduced via a new migration and added to
 ### Queries
 
 Query helpers live in `src/lib/server/db/queries/`. They wrap raw SQL access for
-app state, PCD ops, and supporting data (settings, jobs, caches, etc.).
+app state, PCD ops, and supporting data (settings, job queue, caches, etc.).
 
 ### PCD Ops in the App DB
 
@@ -672,61 +672,58 @@ driven by the per‑instance settings.
 
 ## 16) Jobs
 
-Profilarr has a lightweight **job scheduler** for background tasks (syncing,
-renames, upgrades, log cleanup, backups).
+Profilarr uses an event‑driven **job queue** for background tasks (syncing,
+renames, upgrades, log cleanup, backups). Jobs are queued when configuration
+changes or events occur. Scheduled jobs are represented by a single queue row
+that reschedules itself after each run.
 
 ### 16.1 Core Components
 
-- **Registry:** `src/lib/server/jobs/registry.ts` — in‑memory job definitions.
-- **Initializer:** `src/lib/server/jobs/init.ts` — registers jobs and syncs them
-  into the app DB.
-- **Scheduler:** `src/lib/server/jobs/scheduler.ts` — polls for due jobs every
-  minute and runs them sequentially.
-- **Runner:** `src/lib/server/jobs/runner.ts` — executes handlers, records runs,
-  and computes `next_run_at` using cron (via `croner`).
+- **Dispatcher:** `src/lib/server/jobs/dispatcher.ts` — wakes on the earliest
+  due job, claims it, and executes the handler.
+- **Registry:** `src/lib/server/jobs/queueRegistry.ts` +
+  `src/lib/server/jobs/handlers/**` — maps job types to handlers.
+- **Scheduler:** `src/lib/server/jobs/schedule.ts` — creates/updates scheduled
+  queue rows from config.
+- **Queue helpers:** `src/lib/server/db/queries/jobQueue.ts`,
+  `src/lib/server/db/queries/jobRunHistory.ts`,
+  `src/lib/server/jobs/queueService.ts`.
+- **Initializer:** `src/lib/server/jobs/init.ts` — recovers running jobs,
+  schedules all jobs, and starts the dispatcher.
 
 ### 16.2 Storage
 
 Jobs are persisted in SQLite:
 
-- `jobs` — schedule, enabled state, next/last run timestamps
-- `job_runs` — per‑run history (status, duration, error/output)
+- `job_queue` — scheduled and manual job instances (`run_at`, `payload`,
+  `status`, `dedupe_key`, `cooldown_until`).
+- `job_run_history` — per‑run history (status, duration, error/output).
 
-Queries: `src/lib/server/db/queries/jobs.ts`.
+`jobs` and `job_runs` are deprecated and kept for one release before removal.
 
-### 16.3 Built‑in Jobs
+Queries: `src/lib/server/db/queries/jobQueue.ts`,
+`src/lib/server/db/queries/jobRunHistory.ts`.
 
-Definitions live in `src/lib/server/jobs/definitions/`:
+### 16.3 Job Types
 
-- `sync_databases` — auto‑pull PCD repos
-- `sync_arr` — push compiled config to Arr instances
-- `rename_manager` — scheduled rename runs
-- `upgrade_manager` — scheduled upgrade runs
-- `cleanup_logs` — log retention cleanup
-- `create_backup` — data backup job
-- `cleanup_backups` — backup retention cleanup
+- `arr.sync` — per Arr instance; runs all configured sections in order.
+- `arr.rename` — per Arr instance.
+- `arr.upgrade` — per Arr instance; hard cooldown enforced.
+- `pcd.sync` — per database instance; respects `sync_strategy` and `auto_pull`.
+- `backup.create`, `backup.cleanup`, `logs.cleanup`.
 
-### 16.4 UI & Manual Triggers
+### 16.4 Lifecycle
 
-Jobs can be viewed and triggered from **Settings → Jobs**:
-`src/routes/settings/jobs/**`. Manual runs call the scheduler’s `triggerJob()`
-API.
+1. Scheduled configs call `schedule*` to upsert a deduped queue row.
+2. Manual runs enqueue one‑off rows (or “Run now” sets `run_at` to now).
+3. Dispatcher claims the next due job, executes the handler, records history.
+4. Scheduled jobs reschedule via `rescheduleAt`; manual jobs finish.
 
-### 16.5 Future Consideration: Per‑Config Jobs (Event‑Driven)
+### 16.5 UI & Manual Triggers
 
-Today’s system is **polling‑based**: periodic jobs wake up and check for work
-(syncs due, databases due, etc.). This is simple but can be wasteful and
-confusing (“job ran but did nothing”).
-
-An alternative is **per‑config scheduled jobs**:
-
-- When a sync/DB/rename config is created, insert a dedicated job row for it.
-- The scheduler only runs jobs that represent real work.
-
-Tradeoffs:
-
-- **Pros:** less wasted work, clearer job history, more precise scheduling.
-- **Cons:** more complexity (job lifecycle, deletion, reschedule, backfill).
+Jobs are managed in **Settings → Jobs** (`src/routes/settings/jobs/**`). “Run
+now” sets the queue row’s `run_at` to the current time and wakes the dispatcher.
+Manual upgrades remain dry‑run only and respect cooldowns.
 
 ## 17) Notifications
 

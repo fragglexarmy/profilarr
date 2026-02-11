@@ -87,10 +87,6 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 	// Check cache first
 	const cached = regex101CacheQueries.get(id);
 	if (cached) {
-		await logger.debug('regex101 cache hit', {
-			source: 'Regex101API',
-			meta: { id }
-		});
 		return json(JSON.parse(cached.response));
 	}
 
