@@ -55,14 +55,21 @@ export async function getStatus(
 		ahead = parts[1] || 0;
 	}
 
-	// Get file status
-	const statusOutput = await execGit(['status', '--porcelain'], repoPath);
+	// Get file status — use raw output to preserve leading spaces in porcelain format
+	const statusCmd = new Deno.Command('git', {
+		args: ['status', '--porcelain'],
+		cwd: repoPath,
+		stdout: 'piped',
+		stderr: 'piped'
+	});
+	const statusResult = await statusCmd.output();
+	const statusOutput = new TextDecoder().decode(statusResult.stdout);
 	const untracked: string[] = [];
 	const modified: string[] = [];
 	const staged: string[] = [];
 
 	for (const line of statusOutput.split('\n')) {
-		if (!line.trim()) continue;
+		if (!line || line.length < 4) continue;
 
 		const status = line.substring(0, 2);
 		const file = line.substring(3);

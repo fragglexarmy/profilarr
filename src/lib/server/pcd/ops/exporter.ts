@@ -6,6 +6,7 @@ import { stage, commit, configureIdentity } from '$utils/git/write.ts';
 import { execGit } from '$utils/git/exec.ts';
 import { getBranch, getStatus } from '$utils/git/read.ts';
 import { compile } from '../database/compiler.ts';
+import { syncDependencies } from '../git/dependencies.ts';
 import { canWriteToBase } from './writer.ts';
 import { listDraftEntityChanges } from './draftChanges.ts';
 import { uuid } from '$shared/utils/uuid.ts';
@@ -13,7 +14,7 @@ import { getMaxOpNumber } from '$pcd/utils/git.ts';
 import { loadManifest } from '$pcd/manifest/manifest.ts';
 
 type ExportResult =
-	| { success: true; filename: string; opId: number; dropped: number }
+	| { success: true; filename: string | null; opId: number | null; dropped: number; fileCount: number }
 	| { success: false; error: string };
 
 type ExportPreflightChecks = {
@@ -62,6 +63,7 @@ type ExportPreview = {
 	contentHash?: string;
 	opIds?: number[];
 	opCount?: number;
+	filePaths?: string[];
 	exportedAt?: string;
 	commitMessage?: string;
 	gitIdentity?: { name: string; email: string };
@@ -76,18 +78,13 @@ type ParsedMetadata = {
 	group_id?: string;
 };
 
-const ALLOWED_UNTRACKED_PREFIXES = ['deps/'];
-
 function isCleanEnough(status: ExportPreflightStatus): boolean {
-	const onlyAllowedUntracked =
-		status.untracked.length > 0 &&
-		status.modified.length === 0 &&
-		status.staged.length === 0 &&
-		status.untracked.every((entry) =>
-			ALLOWED_UNTRACKED_PREFIXES.some((prefix) => entry.startsWith(prefix))
-		);
-
-	return !status.isDirty || onlyAllowedUntracked;
+	if (!status.isDirty) return true;
+	// Staged files indicate a manual git operation in progress — block export
+	if (status.staged.length > 0) return false;
+	// Modified and untracked files are OK — the clone only has committed state,
+	// and selected file changes get explicitly copied into the clone
+	return true;
 }
 
 function slugify(value: string): string {
@@ -429,14 +426,15 @@ async function pushHeadToBranch(repoPath: string, branch: string): Promise<void>
 export async function previewDraftOps(
 	databaseId: number,
 	opIds: number[],
-	message: string
+	message: string,
+	filePaths: string[] = []
 ): Promise<PreviewResult> {
 	const database = databaseInstancesQueries.getById(databaseId);
 	if (!database) {
 		return { success: false, error: 'Database not found' };
 	}
 
-	if (opIds.length === 0) {
+	if (opIds.length === 0 && filePaths.length === 0) {
 		return { success: false, error: 'No changes selected' };
 	}
 
@@ -465,12 +463,15 @@ export async function previewDraftOps(
 		};
 	}
 
-	const planResult = await buildExportPlan(databaseId, opIds, trimmedMessage, database.local_path);
-	if (!planResult.success) {
-		return { success: false, error: planResult.error };
+	// Build ops plan if there are ops
+	let plan: ExportPlan | null = null;
+	if (opIds.length > 0) {
+		const planResult = await buildExportPlan(databaseId, opIds, trimmedMessage, database.local_path);
+		if (!planResult.success) {
+			return { success: false, error: planResult.error };
+		}
+		plan = planResult.plan;
 	}
-
-	const { plan } = planResult;
 
 	return {
 		success: true,
@@ -479,13 +480,14 @@ export async function previewDraftOps(
 			errors: [],
 			checks: preflight.checks,
 			status: preflight.status,
-			filename: plan.filename,
-			filepath: plan.filepath,
-			content: plan.fileContent,
-			contentHash: plan.contentHash,
-			opIds: plan.opIds,
-			opCount: plan.opIds.length,
-			exportedAt: plan.exportedAt,
+			filename: plan?.filename,
+			filepath: plan?.filepath,
+			content: plan?.fileContent,
+			contentHash: plan?.contentHash,
+			opIds: plan?.opIds,
+			opCount: plan?.opIds.length ?? 0,
+			filePaths: filePaths.length > 0 ? filePaths : undefined,
+			exportedAt: plan?.exportedAt,
 			commitMessage: trimmedMessage,
 			gitIdentity
 		}
@@ -496,7 +498,8 @@ export async function exportDraftOps(
 	databaseId: number,
 	opIds: number[],
 	message: string,
-	exportedAtOverride?: string | null
+	exportedAtOverride?: string | null,
+	filePaths: string[] = []
 ): Promise<ExportResult> {
 	const database = databaseInstancesQueries.getById(databaseId);
 	if (!database) {
@@ -508,7 +511,7 @@ export async function exportDraftOps(
 		return { success: false, error: 'Commit message is required' };
 	}
 
-	if (opIds.length === 0) {
+	if (opIds.length === 0 && filePaths.length === 0) {
 		return { success: false, error: 'No changes selected' };
 	}
 
@@ -520,18 +523,22 @@ export async function exportDraftOps(
 		};
 	}
 
-	const planResult = await buildExportPlan(
-		databaseId,
-		opIds,
-		trimmedMessage,
-		database.local_path,
-		exportedAtOverride
-	);
-	if (!planResult.success) {
-		return { success: false, error: planResult.error };
+	// Build ops plan if there are ops
+	let plan: ExportPlan | null = null;
+	if (opIds.length > 0) {
+		const planResult = await buildExportPlan(
+			databaseId,
+			opIds,
+			trimmedMessage,
+			database.local_path,
+			exportedAtOverride
+		);
+		if (!planResult.success) {
+			return { success: false, error: planResult.error };
+		}
+		plan = planResult.plan;
 	}
 
-	const { plan } = planResult;
 	const gitUserName = database.git_user_name?.trim() ?? '';
 	const gitUserEmail = database.git_user_email?.trim() ?? '';
 	const branch = preflight.checks.branch ?? '';
@@ -543,7 +550,6 @@ export async function exportDraftOps(
 		const tempDir = await Deno.makeTempDir({ prefix: 'profilarr-export-' });
 		const repoDir = `${tempDir}/repo`;
 		const authUrl = buildRemoteUrl(database.repository_url, database.personal_access_token);
-		const filepath = `${repoDir}/ops/${plan.filename}`;
 		let sourcePath = database.local_path;
 		try {
 			sourcePath = await Deno.realPath(database.local_path);
@@ -554,10 +560,32 @@ export async function exportDraftOps(
 		try {
 			await cloneForExport(sourcePath, repoDir, tempDir);
 			await execGit(['remote', 'set-url', 'origin', authUrl], repoDir);
-			await Deno.mkdir(`${repoDir}/ops`, { recursive: true });
-			await Deno.writeTextFile(filepath, plan.fileContent);
 
-			await stage(repoDir, [filepath]);
+			const toStage: string[] = [];
+
+			// Write SQL file if there are ops
+			if (plan) {
+				const filepath = `${repoDir}/ops/${plan.filename}`;
+				await Deno.mkdir(`${repoDir}/ops`, { recursive: true });
+				await Deno.writeTextFile(filepath, plan.fileContent);
+				toStage.push(filepath);
+			}
+
+			// Copy file changes from source working tree to clone
+			if (filePaths.length > 0) {
+				for (const fp of filePaths) {
+					const src = `${sourcePath}/${fp}`;
+					const dest = `${repoDir}/${fp}`;
+					const destDir = dest.substring(0, dest.lastIndexOf('/'));
+					if (destDir !== repoDir) {
+						await Deno.mkdir(destDir, { recursive: true });
+					}
+					await Deno.copyFile(src, dest);
+					toStage.push(dest);
+				}
+			}
+
+			await stage(repoDir, toStage);
 			await configureIdentity(repoDir, gitUserName, gitUserEmail);
 			await commit(repoDir, trimmedMessage);
 			await pushHeadToBranch(repoDir, branch);
@@ -570,10 +598,32 @@ export async function exportDraftOps(
 		}
 
 		try {
-			const status = await getStatus(database.local_path);
-			if (isCleanEnough(status)) {
-				await execGit(['pull', '--ff-only'], database.local_path);
+			// Restore exported files to committed state so pull can fast-forward.
+			// The pull will bring in the commit we just pushed with the new content.
+			if (filePaths.length > 0) {
+				const trackedFiles: string[] = [];
+				const untrackedFiles: string[] = [];
+				const localStatus = await getStatus(database.local_path);
+				const untrackedSet = new Set(localStatus.untracked);
+				for (const fp of filePaths) {
+					if (untrackedSet.has(fp)) {
+						untrackedFiles.push(fp);
+					} else {
+						trackedFiles.push(fp);
+					}
+				}
+				if (trackedFiles.length > 0) {
+					await execGit(['checkout', '--', ...trackedFiles], database.local_path);
+				}
+				for (const fp of untrackedFiles) {
+					try {
+						await Deno.remove(`${database.local_path}/${fp}`);
+					} catch {
+						// ignore if already gone
+					}
+				}
 			}
+			await execGit(['pull', '--ff-only'], database.local_path);
 		} catch (error) {
 			await logger.warn('Failed to update local repo after export', {
 				source: 'PCDExporter',
@@ -581,49 +631,60 @@ export async function exportDraftOps(
 			});
 		}
 
-		const newOpId = pcdOpsQueries.create({
-			databaseId,
-			origin: 'base',
-			state: 'published',
-			source: 'repo',
-			filename: plan.filename,
-			opNumber: plan.opNumber,
-			sequence: plan.opNumber,
-			sql: plan.dbSql,
-			metadata: plan.metadataJson,
-			contentHash: plan.contentHash,
-			lastSeenInRepoAt: plan.exportedAt
-		});
-
-		const batchId = uuid();
-		for (const op of plan.ops) {
-			pcdOpsQueries.update(op.id, { state: 'superseded', supersededByOpId: newOpId });
-			pcdOpHistoryQueries.create({
-				opId: op.id,
+		// Ops bookkeeping (only if there were ops)
+		let newOpId: number | null = null;
+		if (plan) {
+			newOpId = pcdOpsQueries.create({
 				databaseId,
-				batchId,
-				status: 'superseded'
+				origin: 'base',
+				state: 'published',
+				source: 'repo',
+				filename: plan.filename,
+				opNumber: plan.opNumber,
+				sequence: plan.opNumber,
+				sql: plan.dbSql,
+				metadata: plan.metadataJson,
+				contentHash: plan.contentHash,
+				lastSeenInRepoAt: plan.exportedAt
 			});
+
+			const batchId = uuid();
+			for (const op of plan.ops) {
+				pcdOpsQueries.update(op.id, { state: 'superseded', supersededByOpId: newOpId });
+				pcdOpHistoryQueries.create({
+					opId: op.id,
+					databaseId,
+					batchId,
+					status: 'superseded'
+				});
+			}
 		}
 
 		if (database.enabled) {
 			await compile(database.local_path, databaseId);
 		}
 
-		await logger.info('Exported draft ops to repository', {
+		await logger.info('Exported changes to repository', {
 			source: 'PCDExporter',
 			meta: {
 				databaseId,
 				databaseName: database.name,
-				filename: plan.filename,
+				filename: plan?.filename ?? null,
 				opId: newOpId,
-				opsExported: plan.opIds.length
+				opsExported: plan?.opIds.length ?? 0,
+				fileCount: filePaths.length
 			}
 		});
 
-		return { success: true, filename: plan.filename, opId: newOpId, dropped: plan.opIds.length };
+		return {
+			success: true,
+			filename: plan?.filename ?? null,
+			opId: newOpId,
+			dropped: plan?.opIds.length ?? 0,
+			fileCount: filePaths.length
+		};
 	} catch (error) {
-		await logger.error('Failed to export draft ops', {
+		await logger.error('Failed to export changes', {
 			source: 'PCDExporter',
 			meta: { databaseId, error: String(error) }
 		});

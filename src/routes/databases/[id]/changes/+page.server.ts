@@ -157,17 +157,18 @@ export const actions: Actions = {
 		const opIds = (formData.getAll('opIds') as string[])
 			.map((value) => Number(value))
 			.filter((value) => Number.isFinite(value));
+		const filePaths = (formData.getAll('filePaths') as string[]).filter(Boolean);
 		const message = (formData.get('message') as string) ?? '';
 		const exportedAt = formData.get('exportedAt')?.toString().trim() || null;
 
-		if (opIds.length === 0) {
+		if (opIds.length === 0 && filePaths.length === 0) {
 			return { success: false, error: 'No changes selected' };
 		}
 		if (!message.trim()) {
 			return fail(400, { error: 'Commit message is required' });
 		}
 
-		const result = await exportDraftOps(id, opIds, message, exportedAt);
+		const result = await exportDraftOps(id, opIds, message, exportedAt, filePaths);
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to export changes' });
 		}
@@ -176,7 +177,8 @@ export const actions: Actions = {
 			success: true,
 			filename: result.filename,
 			opId: result.opId,
-			dropped: result.dropped
+			dropped: result.dropped,
+			fileCount: result.fileCount
 		};
 	},
 	preview: async ({ request, params }) => {
@@ -191,16 +193,17 @@ export const actions: Actions = {
 		const opIds = (formData.getAll('opIds') as string[])
 			.map((value) => Number(value))
 			.filter((value) => Number.isFinite(value));
+		const filePaths = (formData.getAll('filePaths') as string[]).filter(Boolean);
 		const message = (formData.get('message') as string) ?? '';
 
-		if (opIds.length === 0) {
+		if (opIds.length === 0 && filePaths.length === 0) {
 			return { success: false, error: 'No changes selected' };
 		}
 		if (!message.trim()) {
 			return fail(400, { error: 'Commit message is required' });
 		}
 
-		const result = await previewDraftOps(id, opIds, message);
+		const result = await previewDraftOps(id, opIds, message, filePaths);
 		if (!result.success) {
 			return fail(500, { error: result.error || 'Failed to preview export' });
 		}

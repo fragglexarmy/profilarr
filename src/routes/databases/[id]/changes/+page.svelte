@@ -45,6 +45,7 @@
 		contentHash?: string;
 		opIds?: number[];
 		opCount?: number;
+		filePaths?: string[];
 		exportedAt?: string;
 		commitMessage?: string;
 		gitIdentity?: { name: string; email: string };
@@ -84,7 +85,7 @@
 	$: primaryKeys = Array.from(primarySelected);
 	$: selectedKeys = Array.from(selected);
 	$: selectedChanges = draftChanges.filter((change) => selected.has(change.key));
-	$: selectionKey = buildSelectionKey(collectOpIds());
+	$: selectionKey = buildSelectionKey(collectOpIds()) + '|' + collectFilePaths().sort().join(',');
 	$: previewSelectionMismatch =
 		!!previewData?.ok && !!previewSelectionKey && selectionKey !== previewSelectionKey;
 	$: previewMessageMismatch =
@@ -193,6 +194,12 @@
 			}
 		}
 		return Array.from(opIds).sort((a, b) => a - b);
+	}
+
+	function collectFilePaths(): string[] {
+		return selectedChanges
+			.filter((change) => change.entity === 'file')
+			.map((change) => change.name);
 	}
 
 	function buildSelectionKey(opIds: number[]): string {
@@ -314,10 +321,14 @@
 		showPreviewModal = true;
 		try {
 			const opIds = collectOpIds();
+			const filePaths = collectFilePaths();
 
 			const formData = new FormData();
 			for (const opId of opIds) {
 				formData.append('opIds', String(opId));
+			}
+			for (const fp of filePaths) {
+				formData.append('filePaths', fp);
 			}
 			formData.append('message', commitMessage.trim());
 
@@ -369,10 +380,14 @@
 		committing = true;
 		try {
 			const opIds = collectOpIds();
+			const filePaths = collectFilePaths();
 
 			const formData = new FormData();
 			for (const opId of opIds) {
 				formData.append('opIds', String(opId));
+			}
+			for (const fp of filePaths) {
+				formData.append('filePaths', fp);
 			}
 			formData.append('message', commitMessage.trim());
 			if (previewData?.exportedAt) {
@@ -396,10 +411,20 @@
 
 			if (isSuccess) {
 				const droppedCount = result?.data?.dropped ?? opIds.length;
+				const fileCount = result?.data?.fileCount ?? filePaths.length;
 				const filename = result?.data?.filename;
-				const noun = droppedCount === 1 ? 'change' : 'changes';
+				const parts: string[] = [];
+				if (droppedCount > 0) {
+					const noun = droppedCount === 1 ? 'op' : 'ops';
+					parts.push(`${droppedCount} ${noun}`);
+				}
+				if (fileCount > 0) {
+					const noun = fileCount === 1 ? 'file' : 'files';
+					parts.push(`${fileCount} ${noun}`);
+				}
+				const summary = parts.length > 0 ? parts.join(' + ') : 'changes';
 				const label = filename ? ` (${filename})` : '';
-				alertStore.add('success', `Exported and pushed ${droppedCount} ${noun}${label}`);
+				alertStore.add('success', `Exported and pushed ${summary}${label}`);
 				await fetchChanges();
 				commitMessage = '';
 				primarySelected = new Set();
@@ -1026,12 +1051,19 @@
 				</div>
 
 				<div class="flex flex-wrap gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-					<Badge variant="neutral" size="md" mono>
-						File: {previewData.ok ? previewData.filepath ?? 'ops/unknown.sql' : '-'}
-					</Badge>
+					{#if previewOpCount > 0 || selectedOpCount > 0}
+						<Badge variant="neutral" size="md" mono>
+							SQL: {previewData.ok ? previewData.filepath ?? 'ops/unknown.sql' : '-'}
+						</Badge>
+					{/if}
 					<Badge variant="neutral" size="md" mono>
 						Ops: {previewData.ok ? previewOpCount : selectedOpCount}
 					</Badge>
+					{#if (previewData.filePaths?.length ?? 0) > 0}
+						<Badge variant="neutral" size="md" mono>
+							Files: {previewData.filePaths?.length}
+						</Badge>
+					{/if}
 					<Badge variant="neutral" size="md">
 						Exported: {formatExportedAt(previewData.exportedAt)}
 					</Badge>
@@ -1106,13 +1138,20 @@
 					{/if}
 				</div>
 
-				{#if previewData.ok}
-					<CodeBlock code={previewData.content ?? ''} language="sql" label="Exported SQL">
+				{#if previewData.ok && previewData.content}
+					<CodeBlock code={previewData.content} language="sql" label="Exported SQL">
 						<svelte:fragment slot="icon">
 							<FileText size={14} />
 						</svelte:fragment>
 					</CodeBlock>
-				{:else}
+				{:else if previewData.ok && (previewData.filePaths?.length ?? 0) > 0}
+					<div class="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
+						<div class="mb-1 font-semibold">Files to commit:</div>
+						{#each previewData.filePaths ?? [] as fp}
+							<code class="block font-mono">{fp}</code>
+						{/each}
+					</div>
+				{:else if !previewData.ok}
 					<p class="text-xs text-neutral-500 dark:text-neutral-400">
 						Resolve the preflight errors, then preview again to see the export output.
 					</p>

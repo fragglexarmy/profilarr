@@ -24,6 +24,37 @@ export const GET: RequestHandler = async ({ params }) => {
 	let draftChanges = null;
 	if (database.personal_access_token) {
 		draftChanges = listDraftEntityChanges(id);
+
+		// Append working-tree file changes (modified + untracked, excluding deps/ and ops/)
+		const FILE_CHANGE_EXCLUDED_PREFIXES = ['deps/', 'ops/'];
+		for (const filepath of status.modified) {
+			if (FILE_CHANGE_EXCLUDED_PREFIXES.some((prefix) => filepath.startsWith(prefix))) continue;
+			draftChanges.push({
+				key: `file:${filepath}`,
+				entity: 'file',
+				name: filepath,
+				operation: 'update',
+				summary: 'Modified on disk',
+				changedFields: [],
+				updatedAt: new Date().toISOString(),
+				ops: [],
+				sections: []
+			});
+		}
+		for (const filepath of status.untracked) {
+			if (FILE_CHANGE_EXCLUDED_PREFIXES.some((prefix) => filepath.startsWith(prefix))) continue;
+			draftChanges.push({
+				key: `file:${filepath}`,
+				entity: 'file',
+				name: filepath,
+				operation: 'create',
+				summary: 'New file',
+				changedFields: [],
+				updatedAt: new Date().toISOString(),
+				ops: [],
+				sections: []
+			});
+		}
 	}
 
 	return json({
