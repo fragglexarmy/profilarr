@@ -604,71 +604,105 @@ Non-conflicting (local didn't touch these):
 
 ## 3. Regular Expressions
 
+Regex entity: name, pattern, description, regex101_id, tags. All fields on one
+edit page (no sub-tabs like QPs). Base data regexes used: `126811`, `3D`, `3L`.
+
 ### 3.1 Pattern change conflict
 
-**Setup:** User changes regex pattern from `HDR10\+` to `HDR10\+?`. Upstream
-changes pattern to `(?:HDR10\+)`.
+**Setup:** Local changes regex "126811" pattern to `\bLOCAL_3_1\b`. Dev changes
+same pattern to `\bDEV_3_1\b`. Dev pushes, local pulls.
+
+**Conflict:** Guard mismatch on pattern column.
+
+**E2E spec:** `src/tests/e2e/specs/3.1-regex-pattern-conflict.spec.ts`
 
 | # | Strategy | Expected result | Pass |
 |---|----------|-----------------|------|
-| a | Override | Pattern is `HDR10\+?`. | - [ ] |
-| b | Align | Pattern is `(?:HDR10\+)`. | - [ ] |
+| a | Override | Pattern is `\bLOCAL_3_1\b` (local wins) | - [x] |
+| b | Align | Pattern is `\bDEV_3_1\b` (dev wins) | - [x] |
 
 ### 3.2 Name rename conflict
 
-**Setup:** User renames regex "HDR10Plus" to "HDR10+". Upstream renames it to
-"HDR10-Plus".
+**Setup:** Local renames regex "126811" to "126811 Local Rename". Dev renames it
+to "126811 Dev Rename". Dev pushes, local pulls.
+
+**Conflict:** Guard mismatch on name column.
+
+**E2E spec:** `src/tests/e2e/specs/3.2-regex-name-rename-conflict.spec.ts`
 
 | # | Strategy | Expected result | Pass |
 |---|----------|-----------------|------|
-| a | Override | Regex named "HDR10+". | - [ ] |
-| b | Align | Regex named "HDR10-Plus". | - [ ] |
+| a | Override | Regex named "126811 Local Rename" (local wins) | - [x] |
+| b | Align | Regex named "126811 Dev Rename" (dev wins) | - [x] |
 
 ### 3.3 Upstream rename + user pattern change
 
-**Setup:** User changes pattern. Upstream renames the regex.
+**Setup:** Local changes pattern on regex "3D". Dev renames "3D" to "3D Dev
+Rename". Dev pushes, local pulls.
+
+**Conflict:** Guard mismatch — name changed upstream so local pattern op fails.
+
+**E2E spec:** `src/tests/e2e/specs/3.3-regex-upstream-rename-user-pattern.spec.ts`
 
 | # | Strategy | Expected result | Pass |
 |---|----------|-----------------|------|
-| a | Override | Regex has upstream's name, user's pattern. Rename chain resolves current name. | - [ ] |
-| b | Align | Regex has upstream's name and pattern. | - [ ] |
+| a | Override | Regex has dev's name, local's pattern. Rename chain resolves. | - [x] |
+| b | Align | Regex has dev's name and dev's pattern. Local op dropped. | - [x] |
 
-### 3.4 Description/regex101_id conflict
+### 3.4 Description conflict
 
-**Setup:** User changes description. Upstream changes regex101_id (or both
-change description).
+**Setup:** Local changes description on regex "3D". Dev changes description to
+something different. Dev pushes, local pulls.
+
+**Conflict:** Guard mismatch on description.
+
+**E2E spec:** `src/tests/e2e/specs/3.4-regex-description-conflict.spec.ts`
 
 | # | Strategy | Expected result | Pass |
 |---|----------|-----------------|------|
-| a | Override | User's description and/or regex101_id. | - [ ] |
-| b | Align | Upstream's values. | - [ ] |
+| a | Override | Local description wins | - [x] |
+| b | Align | Dev description wins | - [x] |
 
 ### 3.5 Create conflict — duplicate key
 
-**Setup:** User creates regex "MyRegex". Upstream also creates "MyRegex".
+**Setup:** Local creates regex "E2E Duplicate". Dev also creates regex
+"E2E Duplicate" (different pattern/description). Dev pushes, local pulls.
+
+**Conflict:** UNIQUE constraint on name.
+
+**E2E spec:** `src/tests/e2e/specs/3.5-regex-create-duplicate.spec.ts`
 
 | # | Strategy | Expected result | Pass |
 |---|----------|-----------------|------|
-| a | Override | "MyRegex" has user's pattern/description/tags. | - [ ] |
-| b | Align | "MyRegex" has upstream's values. | - [ ] |
+| a | Override | "E2E Duplicate" has local's pattern/description | - [x] |
+| b | Align | "E2E Duplicate" has dev's values. Local op dropped. | - [x] |
 
-### 3.6 Delete conflict
+### 3.6 Delete vs upstream rename (auto-align)
 
-**Setup:** User deletes regex "OldRegex". Upstream renames it.
+**Setup:** Local deletes regex "3L". Dev renames "3L" to "3L Dev Rename". Dev
+pushes, local pulls.
 
-| # | Strategy | Expected result | Pass |
-|---|----------|-----------------|------|
-| a | Override | Delete op dropped. Regex persists with upstream's name. | - [ ] |
-| b | Align | Delete op dropped. Regex persists. | - [ ] |
+**Expected:** Auto-align (no conflict). Local DELETE has a name guard on "3L"
+but the row is now renamed → rowcount 0 → auto-dropped.
 
-### 3.7 Tags only — no conflict expected
-
-**Setup:** User adds a tag to a regex. Upstream changes a guarded field
-(pattern, name).
+**E2E spec:** `src/tests/e2e/specs/3.6-regex-delete-vs-upstream-rename.spec.ts`
 
 | # | Check | Pass |
 |---|-------|------|
-| a | Pure tag-only op does NOT conflict | - [ ] |
+| a | No conflict appears; regex persists with dev's name | - [x] |
+
+### 3.7 Tags only — no conflict expected
+
+**Setup:** Local adds a tag to regex "3L". Dev changes pattern on the same
+regex. Dev pushes, local pulls.
+
+**Expected:** Tags don't have value guards. Pure tag op should not conflict.
+
+**E2E spec:** `src/tests/e2e/specs/3.7-regex-tags-no-conflict.spec.ts`
+
+| # | Check | Pass |
+|---|-------|------|
+| a | No conflict appears; tag applied and dev pattern applied | - [x] |
 
 ---
 
