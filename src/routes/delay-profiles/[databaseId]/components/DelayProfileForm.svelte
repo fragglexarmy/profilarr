@@ -288,24 +288,20 @@
 					</div>
 
 					<div>
-						<div class="flex items-center gap-3">
-							<div class="flex-1">
-								<Toggle
-									label="Bypass if Above Custom Format Score"
-									checked={formData.bypassIfAboveCfScore}
-									on:change={() => update('bypassIfAboveCfScore', !formData.bypassIfAboveCfScore)}
-								/>
-							</div>
-							<div class="w-24">
-								<NumberInput
-									name="min-cf-score"
-									id="min-cf-score"
-									value={formData.minimumCfScore}
-									onchange={(v) => update('minimumCfScore', v)}
-									disabled={!formData.bypassIfAboveCfScore}
-									font="mono"
-								/>
-							</div>
+						<div class="grid grid-cols-1 items-center gap-3 sm:grid-cols-2">
+							<Toggle
+								label="Bypass if Above Custom Format Score"
+								checked={formData.bypassIfAboveCfScore}
+								on:change={() => update('bypassIfAboveCfScore', !formData.bypassIfAboveCfScore)}
+							/>
+							<NumberInput
+								name="min-cf-score"
+								id="min-cf-score"
+								value={formData.minimumCfScore}
+								onchange={(v) => update('minimumCfScore', v)}
+								disabled={!formData.bypassIfAboveCfScore}
+								font="mono"
+							/>
 						</div>
 						<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
 							Skip delay when release exceeds minimum score
