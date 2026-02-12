@@ -1,0 +1,18 @@
+meta {
+  name: Search Series (SeriesSearch)
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{sonarrUrl}}/api/v3/command
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "SeriesSearch",
+    "seriesId": 1
+  }
+}

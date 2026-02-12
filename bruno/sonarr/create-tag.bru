@@ -1,0 +1,17 @@
+meta {
+  name: Create Tag
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{sonarrUrl}}/api/v3/tag
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "label": "profilarr-test"
+  }
+}
