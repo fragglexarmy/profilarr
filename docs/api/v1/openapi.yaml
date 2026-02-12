@@ -18,6 +18,8 @@ tags:
     description: Release parsing and custom format evaluation
   - name: Arr
     description: Arr instance library and release endpoints
+  - name: PCD
+    description: PCD entity export and portable format endpoints
 
 paths:
   /health:
@@ -34,6 +36,10 @@ paths:
     $ref: './paths/arr.yaml#/releases'
   /arr/cleanup:
     $ref: './paths/arr.yaml#/cleanup'
+  /pcd/export:
+    $ref: './paths/pcd.yaml#/export'
+  /pcd/import:
+    $ref: './paths/pcd.yaml#/import'
 
 components:
   schemas:
@@ -100,3 +106,14 @@ components:
       $ref: './schemas/arr.yaml#/CleanupScanResult'
     CleanupDeleteResult:
       $ref: './schemas/arr.yaml#/CleanupDeleteResult'
+    # PCD
+    EntityType:
+      $ref: './schemas/pcd.yaml#/EntityType'
+    ExportResponse:
+      $ref: './schemas/pcd.yaml#/ExportResponse'
+    PcdErrorResponse:
+      $ref: './schemas/pcd.yaml#/PcdErrorResponse'
+    ImportRequest:
+      $ref: './schemas/pcd.yaml#/ImportRequest'
+    ImportResponse:
+      $ref: './schemas/pcd.yaml#/ImportResponse'
