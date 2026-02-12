@@ -71,6 +71,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gosu \
     ca-certificates \
+    libsqlite3-0 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -94,6 +95,7 @@ ENV PORT=6868
 ENV HOST=0.0.0.0
 ENV APP_BASE_PATH=/config
 ENV TZ=UTC
+ENV DENO_SQLITE_PATH=/usr/lib/x86_64-linux-gnu/libsqlite3.so.0
 
 # Expose port
 EXPOSE 6868
