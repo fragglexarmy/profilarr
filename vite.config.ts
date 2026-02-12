@@ -17,8 +17,7 @@ export default defineConfig({
 		watch: {
 			usePolling: true,
 			interval: 1000,
-			// Ignore temporary files created by editors
-			ignored: ['**/*.tmp.*', '**/*~', '**/.#*']
+			ignored: ['**/data/**', '**/logs/**', '**/backups/**', '**/dist/**', '**/*.db*']
 		}
 	},
 	define: {

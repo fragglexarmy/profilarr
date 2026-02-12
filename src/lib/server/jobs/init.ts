@@ -14,6 +14,7 @@ export async function initializeJobs(): Promise<void> {
 	}
 
 	scheduleAllJobs();
+	jobDispatcher.stop();
 	jobDispatcher.start();
 
 	await logger.info('Job queue ready', { source: 'JobQueue' });

@@ -1,5 +1,11 @@
-// Auto-spawn parser binary for standalone builds (must run before config import)
-await import('$lib/server/utils/parser/spawn.ts');
+// HMR guard: skip heavy initialization on Vite hot reloads
+const isReload = (globalThis as Record<string, unknown>).__profilarr_initialized__ === true;
+(globalThis as Record<string, unknown>).__profilarr_initialized__ = true;
+
+if (!isReload) {
+	// Auto-spawn parser binary for standalone builds (must run before config import)
+	await import('$lib/server/utils/parser/spawn.ts');
+}
 
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
@@ -20,73 +26,78 @@ import {
 import { getClientIp } from '$auth/network.ts';
 import { setupStateQueries } from '$db/queries/setupState.ts';
 
-// Initialize configuration on server startup
-await config.init();
+if (!isReload) {
+	// Initialize configuration on server startup
+	await config.init();
 
-// Initialize database
-await db.initialize();
+	// Initialize database
+	await db.initialize();
 
-// Run database migrations
-await runMigrations();
+	// Run database migrations
+	await runMigrations();
 
-// Load log settings from database (must be after migrations)
-logSettings.load();
+	// Load log settings from database (must be after migrations)
+	logSettings.load();
 
-// Log container config (if running in Docker)
-await logContainerConfig();
+	// Log container config (if running in Docker)
+	await logContainerConfig();
 
-// Initialize PCD caches (must be after migrations and log settings)
-await pcdManager.initialize();
+	// Initialize PCD caches (must be after migrations and log settings)
+	await pcdManager.initialize();
 
-// Auto-link default database on first startup (only once)
-if (!setupStateQueries.isDefaultDatabaseLinked()) {
-	try {
-		await pcdManager.link({
-			name: 'Dictionarry',
-			repositoryUrl: 'https://github.com/Dictionarry-Hub/database',
-			branch: 'v2',
-			syncStrategy: 60,
-			autoPull: true,
-			personalAccessToken: undefined
-		});
+	// Auto-link default database on first startup (only once)
+	if (!setupStateQueries.isDefaultDatabaseLinked()) {
+		try {
+			await pcdManager.link({
+				name: 'Dictionarry',
+				repositoryUrl: 'https://github.com/Dictionarry-Hub/database',
+				branch: 'v2',
+				syncStrategy: 60,
+				autoPull: true,
+				personalAccessToken: undefined
+			});
 
-		setupStateQueries.markDefaultDatabaseLinked();
+			setupStateQueries.markDefaultDatabaseLinked();
 
-		await logger.info('Default database auto-linked', {
-			source: 'Setup',
-			meta: { database: 'Dictionarry' }
-		});
-	} catch (error) {
-		// Don't fail startup, but mark as attempted so we don't retry every startup
-		setupStateQueries.markDefaultDatabaseLinked();
+			await logger.info('Default database auto-linked', {
+				source: 'Setup',
+				meta: { database: 'Dictionarry' }
+			});
+		} catch (error) {
+			// Don't fail startup, but mark as attempted so we don't retry every startup
+			setupStateQueries.markDefaultDatabaseLinked();
 
-		await logger.warn('Failed to auto-link default database', {
-			source: 'Setup',
-			meta: { error: String(error) }
-		});
+			await logger.warn('Failed to auto-link default database', {
+				source: 'Setup',
+				meta: { error: String(error) }
+			});
+		}
 	}
-}
 
-// Initialize and start job queue
-await initializeJobs();
+	// Initialize and start job queue
+	await initializeJobs();
 
-// Clean expired sessions on startup
-const expiredCount = cleanupExpiredSessions();
-if (expiredCount > 0) {
-	await logger.info(`Cleaned up ${expiredCount} expired session${expiredCount === 1 ? '' : 's'}`, {
-		source: 'Auth:Session',
-		meta: { count: expiredCount }
+	// Clean expired sessions on startup
+	const expiredCount = cleanupExpiredSessions();
+	if (expiredCount > 0) {
+		await logger.info(
+			`Cleaned up ${expiredCount} expired session${expiredCount === 1 ? '' : 's'}`,
+			{
+				source: 'Auth:Session',
+				meta: { count: expiredCount }
+			}
+		);
+	}
+
+	// Log server ready
+	await logger.info('Server ready', {
+		source: 'Startup',
+		meta: getServerInfo()
 	});
+
+	// Print startup banner with URL
+	printBanner();
 }
-
-// Log server ready
-await logger.info('Server ready', {
-	source: 'Startup',
-	meta: getServerInfo()
-});
-
-// Print startup banner with URL
-printBanner();
 
 /**
  * Auth middleware
