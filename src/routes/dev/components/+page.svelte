@@ -7,6 +7,7 @@
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Card from '$ui/card/Card.svelte';
@@ -131,6 +132,7 @@
 		{ id: 'markdown-input', name: 'MarkdownInput', category: 'form' },
 		{ id: 'range-scale', name: 'RangeScale', category: 'form' },
 		{ id: 'key-value-list', name: 'KeyValueList', category: 'form' },
+		{ id: 'label', name: 'Label', category: 'label' },
 		{ id: 'meta', name: 'Meta', category: 'meta' },
 		{ id: 'modal', name: 'Modal', category: 'modal' },
 		{ id: 'navigation', name: 'Navigation', category: 'navigation' },
@@ -138,20 +140,16 @@
 		{ id: 'toggle', name: 'Toggle', category: 'toggle' }
 	];
 
-	$: filtered = filterSections(sections, $debouncedQuery);
+	$: visibleIds = getVisibleIds(sections, $debouncedQuery);
 
-	function filterSections(items: Section[], query: string): Section[] {
-		if (!query) return items;
+	function getVisibleIds(items: Section[], query: string): Set<string> {
+		if (!query) return new Set(items.map((s) => s.id));
 		const q = query.toLowerCase();
-		return items.filter(
-			(s) =>
-				s.name.toLowerCase().includes(q) ||
-				s.category.toLowerCase().includes(q)
+		return new Set(
+			items
+				.filter((s) => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q))
+				.map((s) => s.id)
 		);
-	}
-
-	function isVisible(id: string): boolean {
-		return filtered.some((s) => s.id === id);
 	}
 </script>
 
@@ -166,14 +164,14 @@
 		<SearchAction searchStore={search} placeholder="Search components..." responsive />
 	</ActionsBar>
 
-	{#if filtered.length === 0}
+	{#if visibleIds.size === 0}
 		<div class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900">
 			<p class="text-neutral-500 dark:text-neutral-400">No components match your search.</p>
 		</div>
 	{/if}
 
 	<!-- Actions -->
-	{#if isVisible('actions')}
+	{#if visibleIds.has('actions')}
 		<ComponentCard
 			name="Actions"
 			paths={['actions/ActionsBar', 'actions/ActionButton', 'actions/SearchAction', 'actions/ViewToggle']}
@@ -216,7 +214,7 @@
 	{/if}
 
 	<!-- Arr -->
-	{#if isVisible('arr')}
+	{#if visibleIds.has('arr')}
 		<ComponentCard
 			name="Arr"
 			paths={['arr/Score', 'arr/CustomFormatBadge']}
@@ -265,7 +263,7 @@
 	{/if}
 
 	<!-- Badge -->
-	{#if isVisible('badge')}
+	{#if visibleIds.has('badge')}
 		<ComponentCard
 			name="Badge"
 			paths={['badge/Badge']}
@@ -302,7 +300,7 @@
 	{/if}
 
 	<!-- Button -->
-	{#if isVisible('button')}
+	{#if visibleIds.has('button')}
 		<ComponentCard
 			name="Button"
 			paths={['button/Button']}
@@ -350,7 +348,7 @@
 	{/if}
 
 	<!-- Card -->
-	{#if isVisible('card')}
+	{#if visibleIds.has('card')}
 		<ComponentCard
 			name="Card"
 			paths={['card/Card', 'card/StickyCard']}
@@ -437,7 +435,7 @@
 	{/if}
 
 	<!-- CardGrid -->
-	{#if isVisible('card-grid')}
+	{#if visibleIds.has('card-grid')}
 		<ComponentCard
 			name="CardGrid"
 			paths={['card/CardGrid']}
@@ -513,7 +511,7 @@
 	{/if}
 
 	<!-- Dropdown -->
-	{#if isVisible('dropdown')}
+	{#if visibleIds.has('dropdown')}
 		<ComponentCard
 			name="Dropdown"
 			paths={['dropdown/Dropdown', 'dropdown/DropdownItem', 'dropdown/DropdownSelect', 'dropdown/CustomGroupManager']}
@@ -562,7 +560,7 @@
 	{/if}
 
 	<!-- FormInput -->
-	{#if isVisible('form-input')}
+	{#if visibleIds.has('form-input')}
 		<ComponentCard
 			name="FormInput"
 			paths={['form/FormInput']}
@@ -604,7 +602,7 @@
 	{/if}
 
 	<!-- NumberInput -->
-	{#if isVisible('number-input')}
+	{#if visibleIds.has('number-input')}
 		<ComponentCard
 			name="NumberInput"
 			paths={['form/NumberInput']}
@@ -637,7 +635,7 @@
 	{/if}
 
 	<!-- IconCheckbox -->
-	{#if isVisible('icon-checkbox')}
+	{#if visibleIds.has('icon-checkbox')}
 		<ComponentCard
 			name="IconCheckbox"
 			paths={['form/IconCheckbox']}
@@ -713,7 +711,7 @@
 	{/if}
 
 	<!-- TagInput -->
-	{#if isVisible('tag-input')}
+	{#if visibleIds.has('tag-input')}
 		<ComponentCard
 			name="TagInput"
 			paths={['form/TagInput']}
@@ -729,7 +727,7 @@
 	{/if}
 
 	<!-- SearchDropdown -->
-	{#if isVisible('search-dropdown')}
+	{#if visibleIds.has('search-dropdown')}
 		<ComponentCard
 			name="SearchDropdown"
 			paths={['form/SearchDropdown']}
@@ -759,7 +757,7 @@
 	{/if}
 
 	<!-- MarkdownInput -->
-	{#if isVisible('markdown-input')}
+	{#if visibleIds.has('markdown-input')}
 		<ComponentCard
 			name="MarkdownInput"
 			paths={['form/MarkdownInput']}
@@ -799,7 +797,7 @@
 	{/if}
 
 	<!-- RangeScale -->
-	{#if isVisible('range-scale')}
+	{#if visibleIds.has('range-scale')}
 		<ComponentCard
 			name="RangeScale"
 			paths={['form/RangeScale']}
@@ -822,7 +820,7 @@
 	{/if}
 
 	<!-- KeyValueList -->
-	{#if isVisible('key-value-list')}
+	{#if visibleIds.has('key-value-list')}
 		<ComponentCard
 			name="KeyValueList"
 			paths={['form/KeyValueList']}
@@ -851,8 +849,58 @@
 		</ComponentCard>
 	{/if}
 
+	<!-- Label -->
+	{#if visibleIds.has('label')}
+		<ComponentCard
+			name="Label"
+			paths={['label/Label']}
+			description="Inline label/tag pill with eight color variants (default, secondary, destructive, outline, ghost, success, warning, info), three sizes, three border-radius options, optional mono font, and optional href (renders as anchor)."
+		>
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Variants</p>
+				<div class="flex flex-wrap items-center gap-2">
+					<Label variant="default">Default</Label>
+					<Label variant="secondary">Secondary</Label>
+					<Label variant="destructive">Destructive</Label>
+					<Label variant="outline">Outline</Label>
+					<Label variant="ghost">Ghost</Label>
+					<Label variant="success">Success</Label>
+					<Label variant="warning">Warning</Label>
+					<Label variant="info">Info</Label>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Sizes</p>
+				<div class="flex flex-wrap items-center gap-2">
+					<Label size="sm">Small</Label>
+					<Label size="md">Medium</Label>
+					<Label size="lg">Large</Label>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Rounded</p>
+				<div class="flex flex-wrap items-center gap-2">
+					<Label rounded="sm">Rounded SM</Label>
+					<Label rounded="md">Rounded MD</Label>
+					<Label rounded="full">Rounded Full</Label>
+				</div>
+			</div>
+
+			<div class="space-y-3">
+				<p class="text-xs font-medium text-neutral-500 uppercase dark:text-neutral-400">Mono + link</p>
+				<div class="flex flex-wrap items-center gap-2">
+					<Label variant="ghost" mono>v2.0.0</Label>
+					<Label variant="secondary" mono>1080p</Label>
+					<Label variant="info" href="#label">Link label</Label>
+				</div>
+			</div>
+		</ComponentCard>
+	{/if}
+
 	<!-- Meta -->
-	{#if isVisible('meta')}
+	{#if visibleIds.has('meta')}
 		<ComponentCard
 			name="Meta"
 			paths={['meta/CodeBlock', 'meta/JsonView']}
@@ -878,7 +926,7 @@
 	{/if}
 
 	<!-- Modal -->
-	{#if isVisible('modal')}
+	{#if visibleIds.has('modal')}
 		<ComponentCard
 			name="Modal"
 			paths={['modal/Modal', 'modal/InfoModal', 'modal/DirtyModal']}
@@ -915,7 +963,7 @@
 	{/if}
 
 	<!-- Navigation -->
-	{#if isVisible('navigation')}
+	{#if visibleIds.has('navigation')}
 		<ComponentCard
 			name="Tabs"
 			paths={['navigation/tabs/Tabs']}
@@ -942,7 +990,7 @@
 	{/if}
 
 	<!-- Table -->
-	{#if isVisible('table')}
+	{#if visibleIds.has('table')}
 		<ComponentCard
 			name="Table"
 			paths={['table/Table', 'table/ExpandableTable', 'table/ReorderableList', 'table/TableActionButton']}
@@ -1005,7 +1053,7 @@
 	{/if}
 
 	<!-- Toggle -->
-	{#if isVisible('toggle')}
+	{#if visibleIds.has('toggle')}
 		<ComponentCard
 			name="Toggle"
 			paths={['toggle/Toggle']}
