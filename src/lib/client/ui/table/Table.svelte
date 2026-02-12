@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends Record<string, any>">
 	import { onMount, onDestroy } from 'svelte';
 	import type { Column, SortDirection, SortState } from './types';
+	import { createProgressiveList } from '$lib/client/utils/progressiveList';
 
 	/**
 	 * Props
@@ -17,6 +18,8 @@
 	export let actionsHeader: string = 'Actions';
 	// Mobile responsive mode - switches to card layout on small screens
 	export let responsive: boolean = false;
+	// Progressive loading - render items in batches as user scrolls
+	export let pageSize: number | undefined = undefined;
 
 	let isMobile = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -135,19 +138,26 @@
 
 	$: sortedData = sortKey ? sortData(data) : data;
 	$: (sortKey, sortDirection, (sortedData = sortData(data)));
+
+	// Progressive loading
+	const progressive = pageSize ? createProgressiveList({ pageSize }) : null;
+	const progressiveCount = progressive?.visibleCount;
+	$: if (progressive) progressive.setTotalCount(sortedData.length);
+	$: if (progressive) sortedData, progressive.reset();
+	$: displayData = progressiveCount ? sortedData.slice(0, $progressiveCount) : sortedData;
 </script>
 
 {#if useMobileLayout}
 	<!-- Mobile Card Layout -->
 	<div class="space-y-3">
-		{#if sortedData.length === 0}
+		{#if displayData.length === 0}
 			<div
 				class="rounded-xl border border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-400"
 			>
 				{emptyMessage}
 			</div>
 		{:else}
-			{#each sortedData as row, rowIndex}
+			{#each displayData as row, rowIndex}
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 				<div
 					class="group/row relative overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700/60 dark:bg-neutral-800/50 {onRowClick || rowHref ? 'cursor-pointer' : ''}"
@@ -209,6 +219,9 @@
 					{/if}
 				</div>
 			{/each}
+			{#if progressive}
+				<div use:progressive.sentinel></div>
+			{/if}
 		{/if}
 	</div>
 {:else}
@@ -281,7 +294,7 @@
 
 			<!-- Body -->
 			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700/40 dark:bg-neutral-900/50">
-				{#if sortedData.length === 0}
+				{#if displayData.length === 0}
 					<tr>
 						<td
 							colspan={columns.length + ($$slots.actions ? 1 : 0)}
@@ -291,7 +304,7 @@
 						</td>
 					</tr>
 				{:else}
-					{#each sortedData as row, rowIndex}
+					{#each displayData as row, rowIndex}
 						<tr
 							class="group/row {hoverable
 								? 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800'
@@ -333,6 +346,9 @@
 				{/if}
 			</tbody>
 		</table>
+		{#if progressive}
+			<div use:progressive.sentinel></div>
+		{/if}
 	</div>
 {/if}
 

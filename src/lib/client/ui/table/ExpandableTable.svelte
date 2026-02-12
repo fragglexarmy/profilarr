@@ -3,6 +3,7 @@
 	import { ChevronDown, ChevronUp, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-svelte';
 	import type { Column, SortState } from './types';
 	import Button from '$ui/button/Button.svelte';
+	import { createProgressiveList } from '$lib/client/utils/progressiveList';
 
 	export let columns: Column<T>[];
 	export let data: T[];
@@ -20,6 +21,8 @@
 	export let disableExpandWhen: ((row: T) => boolean) | null = null;
 	// Mobile responsive mode - switches to card layout on small screens
 	export let responsive: boolean = false;
+	// Progressive loading - render items in batches as user scrolls
+	export let pageSize: number | undefined = undefined;
 
 	let isMobile = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -125,6 +128,14 @@
 	}
 
 	$: sortedData = getSortedData(data, sortState);
+
+	// Progressive loading
+	const progressive = pageSize ? createProgressiveList({ pageSize }) : null;
+	const progressiveCount = progressive?.visibleCount;
+	$: if (progressive) progressive.setTotalCount(sortedData.length);
+	$: if (progressive) sortedData, progressive.reset();
+	$: displayData = progressiveCount ? sortedData.slice(0, $progressiveCount) : sortedData;
+
 	$: visibleColumns = columns.filter((column) => !column.hideOnMobile);
 	$: mobilePrimaryColumn =
 		primaryColumnKey != null
@@ -155,14 +166,14 @@
 {#if useMobileLayout}
 	<!-- Mobile Card Layout -->
 	<div class="space-y-3">
-		{#if sortedData.length === 0}
+		{#if displayData.length === 0}
 			<div
 				class="rounded-xl border border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-400"
 			>
 				{emptyMessage}
 			</div>
 		{:else}
-			{#each sortedData as row, index}
+			{#each displayData as row, index}
 				{@const rowId = getRowId(row)}
 				<div
 					class="overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700/60 dark:bg-neutral-800/50"
@@ -244,6 +255,9 @@
 					{/if}
 				</div>
 			{/each}
+			{#if progressive}
+				<div use:progressive.sentinel></div>
+			{/if}
 		{/if}
 	</div>
 {:else}
@@ -311,7 +325,7 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700/40 dark:bg-neutral-900/50">
-				{#if sortedData.length === 0}
+				{#if displayData.length === 0}
 					<tr>
 						<td
 							colspan={columns.length + 1 + ($$slots.actions ? 1 : 0)}
@@ -321,7 +335,7 @@
 						</td>
 					</tr>
 				{:else}
-					{#each sortedData as row, index}
+					{#each displayData as row, index}
 						{@const rowId = getRowId(row)}
 
 						<!-- Main Row -->
@@ -408,5 +422,8 @@
 				{/if}
 			</tbody>
 		</table>
+		{#if progressive}
+			<div use:progressive.sentinel></div>
+		{/if}
 	</div>
 {/if}
