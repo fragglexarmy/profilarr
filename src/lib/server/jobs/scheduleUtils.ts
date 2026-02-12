@@ -1,5 +1,5 @@
 import { Cron } from 'croner';
-import { parseUTC } from '$shared/utils/dates';
+import { parseUTC } from '$shared/utils/dates.ts';
 
 export function calculateNextRunFromMinutes(lastRunAt: string | null, scheduleMinutes: number): string {
 	if (!lastRunAt) {
