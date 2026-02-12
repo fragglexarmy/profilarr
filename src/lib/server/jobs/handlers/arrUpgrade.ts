@@ -32,22 +32,31 @@ const upgradeRunHandler: JobHandler = async (job) => {
 		};
 	}
 
-	const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
-	if (cooldownUntil) {
-		const cooldownMs = new Date(cooldownUntil).getTime();
-		if (Date.now() < cooldownMs) {
-			if (job.source === 'manual') {
+	// Skip cooldown for dry runs and dev runs
+	const skipCooldown = config.dryRun || isDev;
+	if (!skipCooldown) {
+		const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
+		if (cooldownUntil) {
+			const cooldownMs = new Date(cooldownUntil).getTime();
+			if (Date.now() < cooldownMs) {
+				await logger.warn(`Upgrade cooldown active until ${cooldownUntil}`, {
+					source: 'UpgradeJob',
+					meta: { instanceId, instanceName: instance.name, cooldownUntil, jobSource: job.source }
+				});
+
+				if (job.source === 'manual') {
+					return {
+						status: 'failure',
+						error: `Upgrade cooldown active until ${cooldownUntil}`
+					};
+				}
+
 				return {
-					status: 'failure',
-					error: `Upgrade cooldown active until ${cooldownUntil}`
+					status: 'skipped',
+					output: 'Upgrade cooldown active',
+					rescheduleAt: cooldownUntil
 				};
 			}
-
-			return {
-				status: 'skipped',
-				output: 'Upgrade cooldown active',
-				rescheduleAt: cooldownUntil
-			};
 		}
 	}
 

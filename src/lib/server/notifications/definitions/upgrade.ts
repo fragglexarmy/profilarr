@@ -3,7 +3,7 @@
  */
 
 import { notify, createEmbed, Colors, type EmbedBuilder } from '../builder.ts';
-import type { UpgradeJobLog, UpgradeSelectionItem } from '$lib/server/upgrades/types.ts';
+import type { UpgradeJobLog, UpgradeSelectionItem, UpgradeOriginalEpisode, UpgradeNewRelease } from '$lib/server/upgrades/types.ts';
 
 interface UpgradeNotificationParams {
 	log: UpgradeJobLog;
@@ -50,26 +50,92 @@ function formatScoreDelta(delta: number | null): string {
 }
 
 /**
+ * Flatten series items into per-season items.
+ * Movies pass through unchanged. Series get one item per season.
+ */
+function flattenItems(items: UpgradeSelectionItem[]): UpgradeSelectionItem[] {
+	const result: UpgradeSelectionItem[] = [];
+	for (const item of items) {
+		if (item.original.type === 'movie') {
+			result.push(item);
+			continue;
+		}
+
+		const episodes = item.original.episodes ?? [];
+		const seasonEpisodes = new Map<number, UpgradeOriginalEpisode[]>();
+		for (const ep of episodes) {
+			const eps = seasonEpisodes.get(ep.seasonNumber) ?? [];
+			eps.push(ep);
+			seasonEpisodes.set(ep.seasonNumber, eps);
+		}
+
+		const seasonUpgrades = new Map<number, UpgradeNewRelease[]>();
+		for (const u of item.upgrades) {
+			if (u.seasonNumber != null) {
+				const ups = seasonUpgrades.get(u.seasonNumber) ?? [];
+				ups.push(u);
+				seasonUpgrades.set(u.seasonNumber, ups);
+			}
+		}
+
+		const allSeasons = new Set([...seasonEpisodes.keys(), ...seasonUpgrades.keys()]);
+
+		if (allSeasons.size === 0) {
+			result.push(item);
+			continue;
+		}
+
+		for (const season of [...allSeasons].sort((a, b) => a - b)) {
+			result.push({
+				id: item.id * 1000 + season,
+				title: `${item.title} - Season ${season}`,
+				original: {
+					type: 'series',
+					title: item.title,
+					episodes: seasonEpisodes.get(season) ?? []
+				},
+				upgrades: seasonUpgrades.get(season) ?? []
+			});
+		}
+	}
+	return result;
+}
+
+/**
  * Format a single item for detailed display
  */
 function formatItemDetailed(item: UpgradeSelectionItem): string {
 	const lines: string[] = [];
 
 	lines.push('[Current]');
-	lines.push(`File: ${item.original.fileName}`);
-	lines.push(`Score: ${item.original.score}`);
-	if (item.original.formats.length > 0) {
-		lines.push(`Formats: ${item.original.formats.join(', ')}`);
+	if (item.original.type === 'movie') {
+		lines.push(`File: ${item.original.fileName}`);
+		lines.push(`Score: ${item.original.score}`);
+		if (item.original.formats.length > 0) {
+			lines.push(`Formats: ${item.original.formats.join(', ')}`);
+		}
+	} else {
+		lines.push(`Series: ${item.original.title}`);
+		lines.push(`Episodes: ${item.original.episodes.length}`);
+		for (const ep of item.original.episodes.slice(0, 5)) {
+			lines.push(`  ${ep.fileName} (${ep.score})`);
+		}
+		if (item.original.episodes.length > 5) {
+			lines.push(`  ... and ${item.original.episodes.length - 5} more`);
+		}
 	}
 
 	lines.push('');
 
-	if (item.upgrade) {
-		lines.push('[Upgrade]');
-		lines.push(`Release: ${item.upgrade.release}`);
-		lines.push(`Score: ${item.upgrade.score}`);
-		if (item.upgrade.formats.length > 0) {
-			lines.push(`Formats: ${item.upgrade.formats.join(', ')}`);
+	if (item.upgrades.length > 0) {
+		for (const upgrade of item.upgrades) {
+			lines.push('[Upgrade]');
+			lines.push(`Release: ${upgrade.release}`);
+			lines.push(`Score: ${upgrade.score}`);
+			if (upgrade.formats.length > 0) {
+				lines.push(`Formats: ${upgrade.formats.join(', ')}`);
+			}
+			lines.push('');
 		}
 	} else {
 		lines.push('No upgrade available');
@@ -82,8 +148,13 @@ function formatItemDetailed(item: UpgradeSelectionItem): string {
  * Get field name for an item
  */
 function getItemFieldName(item: UpgradeSelectionItem): string {
-	if (item.upgrade && item.scoreDelta !== null) {
-		return `${item.title} (${formatScoreDelta(item.scoreDelta)})`;
+	if (item.upgrades.length > 0) {
+		const grabCount = item.upgrades.length;
+		if (item.original.type === 'movie') {
+			const delta = item.upgrades[0].score - item.original.score;
+			return `${item.title} (${formatScoreDelta(delta)})`;
+		}
+		return `${item.title} (${grabCount} grab${grabCount > 1 ? 's' : ''})`;
 	}
 	return `${item.title} (No Upgrade)`;
 }
@@ -154,7 +225,7 @@ function startNewEmbed(
 		embed.field('Mode', 'Dry Run', true);
 	}
 
-	const upgradesFound = log.selection.items.filter((i) => i.upgrade !== null).length;
+	const upgradesFound = log.selection.items.filter((i) => i.upgrades.length > 0).length;
 	embed.field('Upgrades', `${upgradesFound}/${log.selection.actualCount}`, true);
 
 	// Funnel
@@ -177,7 +248,7 @@ function startNewEmbed(
  * Build a generic message string
  */
 function buildGenericMessage(log: UpgradeJobLog): string {
-	const upgradesFound = log.selection.items.filter((i) => i.upgrade !== null).length;
+	const upgradesFound = log.selection.items.filter((i) => i.upgrades.length > 0).length;
 	const mode = log.config.dryRun ? ' (Dry Run)' : '';
 
 	if (log.status === 'failed') {
@@ -215,10 +286,11 @@ export const upgrade = ({ log, config, manual = false }: UpgradeNotificationPara
 			.discord((d) => d.embed(embed));
 	}
 
-	// Build content fields - one field per item
+	// Build content fields - one field per item (series flattened to per-season)
 	const contentFields: { name: string; value: string }[] = [];
+	const displayItems = flattenItems(log.selection.items);
 
-	for (const item of log.selection.items) {
+	for (const item of displayItems) {
 		contentFields.push({
 			name: truncateFieldName(getItemFieldName(item)),
 			value: formatItemCodeBlock(item)

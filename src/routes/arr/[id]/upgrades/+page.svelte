@@ -163,6 +163,7 @@
 		</h2>
 		<FilterSettings
 			{filters}
+			appType={data.instance.type}
 			onFiltersChange={(v) => update('filters', JSON.stringify(v))}
 		/>
 	</section>

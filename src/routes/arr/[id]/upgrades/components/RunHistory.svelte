@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { AlertTriangle, X, Search, Calendar, Filter, CircleDot, Check } from 'lucide-svelte';
-	import type { UpgradeJobLog } from '$lib/server/upgrades/types.ts';
+	import type { UpgradeJobLog, UpgradeSelectionItem, UpgradeOriginalEpisode, UpgradeNewRelease } from '$lib/server/upgrades/types.ts';
 	import { createSearchStore, getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
 	import type { Readable } from 'svelte/store';
 	import { page } from '$app/stores';
@@ -171,6 +171,63 @@
 			.split('_')
 			.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
 			.join(' ');
+	}
+
+	/**
+	 * Flatten series items into per-season rows.
+	 * Movies pass through unchanged. Series get one row per season.
+	 */
+	function flattenItems(items: UpgradeSelectionItem[]): UpgradeSelectionItem[] {
+		const result: UpgradeSelectionItem[] = [];
+		for (const item of items) {
+			if (item.original.type === 'movie') {
+				result.push(item);
+				continue;
+			}
+
+			const episodes = item.original.episodes ?? [];
+
+			// Group episodes by season
+			const seasonEpisodes = new Map<number, UpgradeOriginalEpisode[]>();
+			for (const ep of episodes) {
+				const eps = seasonEpisodes.get(ep.seasonNumber) ?? [];
+				eps.push(ep);
+				seasonEpisodes.set(ep.seasonNumber, eps);
+			}
+
+			// Group upgrades by season
+			const seasonUpgrades = new Map<number, UpgradeNewRelease[]>();
+			for (const u of item.upgrades) {
+				if (u.seasonNumber != null) {
+					const ups = seasonUpgrades.get(u.seasonNumber) ?? [];
+					ups.push(u);
+					seasonUpgrades.set(u.seasonNumber, ups);
+				}
+			}
+
+			// Collect all season numbers
+			const allSeasons = new Set([...seasonEpisodes.keys(), ...seasonUpgrades.keys()]);
+
+			if (allSeasons.size === 0) {
+				// No season data — keep as single row
+				result.push(item);
+				continue;
+			}
+
+			for (const season of [...allSeasons].sort((a, b) => a - b)) {
+				result.push({
+					id: item.id * 1000 + season,
+					title: `${item.title} - Season ${season}`,
+					original: {
+						type: 'series',
+						title: item.title,
+						episodes: seasonEpisodes.get(season) ?? []
+					},
+					upgrades: seasonUpgrades.get(season) ?? []
+				});
+			}
+		}
+		return result;
 	}
 </script>
 
@@ -380,7 +437,7 @@
 						</div>
 						<ExpandableTable
 							columns={itemsColumns}
-							data={row.selection.items}
+							data={flattenItems(row.selection.items)}
 							getRowId={(item) => item.id}
 							compact={true}
 							emptyMessage="No items"
@@ -390,28 +447,44 @@
 								{#if column.key === 'title'}
 									<span class="text-neutral-900 dark:text-neutral-100">{item.title}</span>
 								{:else if column.key === 'current'}
-									<Badge variant="neutral" mono>{item.original.score.toLocaleString()}</Badge>
+									{#if item.original.type === 'movie'}
+										<Badge variant="neutral" mono>{item.original.score.toLocaleString()}</Badge>
+									{:else}
+										<span class="text-xs text-neutral-500">{item.original.episodes?.length ?? 0} episodes</span>
+									{/if}
 								{:else if column.key === 'upgrade'}
-									{#if item.upgrade}
-										<Badge variant="neutral" mono>{item.upgrade.score.toLocaleString()}</Badge>
+									{#if item.upgrades.length > 0}
+										<div class="flex flex-wrap gap-1">
+											{#each item.upgrades as u}
+												<Badge variant="neutral" mono>{u.score.toLocaleString()}</Badge>
+											{/each}
+										</div>
 									{:else}
 										<span class="text-neutral-400">—</span>
 									{/if}
 								{:else if column.key === 'delta'}
-									{#if item.upgrade && item.scoreDelta !== null}
-										<Badge variant={item.scoreDelta >= 0 ? 'success' : 'danger'} mono>
-											{item.scoreDelta >= 0 ? '+' : ''}{item.scoreDelta.toLocaleString()}
+									{#if item.upgrades.length > 0 && item.original.type === 'movie'}
+										{@const delta = item.upgrades[0].score - item.original.score}
+										<Badge variant={delta >= 0 ? 'success' : 'danger'} mono>
+											{delta >= 0 ? '+' : ''}{delta.toLocaleString()}
 										</Badge>
+									{:else if item.upgrades.length > 0}
+										<Badge variant="success" mono>{item.upgrades.length} grab{item.upgrades.length > 1 ? 's' : ''}</Badge>
 									{:else}
 										<span class="text-neutral-400">—</span>
 									{/if}
 								{:else if column.key === 'formats'}
-									{#if item.upgrade && item.upgrade.formats.length > 0}
-										<div class="flex flex-wrap gap-1">
-											{#each item.upgrade.formats as format}
-												<Badge variant="success" size="sm">{format}</Badge>
-											{/each}
-										</div>
+									{#if item.upgrades.length > 0}
+										{@const allFormats = item.upgrades.flatMap((u) => u.formats)}
+										{#if allFormats.length > 0}
+											<div class="flex flex-wrap gap-1">
+												{#each allFormats as format}
+													<Badge variant="success" size="sm">{format}</Badge>
+												{/each}
+											</div>
+										{:else}
+											<Badge variant="neutral" size="sm">No formats</Badge>
+										{/if}
 									{:else}
 										<Badge variant="neutral" size="sm">No upgrade</Badge>
 									{/if}
@@ -420,31 +493,51 @@
 
 							<svelte:fragment slot="expanded" let:row={item}>
 								<div class="space-y-2 py-2 pl-2">
-									<div class="flex gap-2">
-										<span
-											class="w-16 shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400"
-											>Current:</span
-										>
-										<span
-											class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
-											title={item.original.fileName}
-										>
-											{item.original.fileName}
-										</span>
-									</div>
-									{#if item.upgrade}
+									{#if item.original.type === 'movie'}
 										<div class="flex gap-2">
 											<span
-												class="w-16 shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400"
-												>Upgrade:</span
+												class="w-16 shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400"
+												>Current:</span
 											>
 											<span
 												class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
-												title={item.upgrade.release}
+												title={item.original.fileName}
 											>
-												{item.upgrade.release}
+												{item.original.fileName}
 											</span>
 										</div>
+									{:else}
+										<div>
+											<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+												Episodes on disk ({item.original.episodes?.length ?? 0}):
+											</span>
+											<div class="mt-1 space-y-0.5">
+												{#each (item.original.episodes ?? []) as ep}
+													<div class="flex items-center gap-2">
+														<span class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300" title={ep.fileName}>
+															{ep.fileName}
+														</span>
+														<Badge variant="neutral" size="sm" mono>{ep.score}</Badge>
+													</div>
+												{/each}
+											</div>
+										</div>
+									{/if}
+									{#if item.upgrades.length > 0}
+										{#each item.upgrades as u}
+											<div class="flex gap-2">
+												<span
+													class="w-16 shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+													>Upgrade:</span
+												>
+												<span
+													class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300"
+													title={u.release}
+												>
+													{u.release}
+												</span>
+											</div>
+										{/each}
 									{:else}
 										<div class="text-xs text-neutral-500 italic dark:text-neutral-400">
 											No upgrade available

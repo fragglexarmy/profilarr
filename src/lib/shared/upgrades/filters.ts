@@ -5,6 +5,9 @@
 
 import { uuid } from '../utils/uuid.ts';
 
+/** App types relevant to upgrade filters */
+export type UpgradeAppType = 'radarr' | 'sonarr';
+
 export interface FilterOperator {
 	id: string;
 	label: string;
@@ -123,10 +126,10 @@ const ordinalOperators: FilterOperator[] = [
 	{ id: 'lt', label: 'is before', description: 'Is before this status (not yet reached)' }
 ];
 
-/**
- * Ordinal value mappings for ordered select fields
- * Higher number = further along in the progression
- */
+// =============================================================================
+// Ordinal mappings
+// =============================================================================
+
 export const availabilityOrder: Record<string, number> = {
 	tba: 0,
 	announced: 1,
@@ -134,10 +137,24 @@ export const availabilityOrder: Record<string, number> = {
 	released: 3
 };
 
-/**
- * All available filter fields
- */
-export const filterFields: FilterField[] = [
+export const statusOrder: Record<string, number> = {
+	upcoming: 0,
+	continuing: 1,
+	ended: 2,
+	deleted: 3
+};
+
+/** Fields that use ordinal comparison and their order maps */
+const ordinalFields: Record<string, Record<string, number>> = {
+	minimum_availability: availabilityOrder,
+	status: statusOrder
+};
+
+// =============================================================================
+// Filter field definitions (split by app type)
+// =============================================================================
+
+const sharedFilterFields: FilterField[] = [
 	// Boolean fields
 	{
 		id: 'monitored',
@@ -162,26 +179,11 @@ export const filterFields: FilterField[] = [
 		]
 	},
 
-	// Ordinal fields (ordered select values)
-	{
-		id: 'minimum_availability',
-		label: 'Minimum Availability',
-		description: 'The minimum availability status set in Radarr. Progresses: TBA → Announced → In Cinemas → Released',
-		operators: ordinalOperators,
-		valueType: 'select',
-		values: [
-			{ value: 'tba', label: 'TBA' },
-			{ value: 'announced', label: 'Announced' },
-			{ value: 'inCinemas', label: 'In Cinemas' },
-			{ value: 'released', label: 'Released' }
-		]
-	},
-
 	// Text fields
 	{
 		id: 'title',
 		label: 'Title',
-		description: 'The title of the movie',
+		description: 'The title of the item',
 		operators: textOperators,
 		valueType: 'text'
 	},
@@ -193,6 +195,85 @@ export const filterFields: FilterField[] = [
 		valueType: 'text'
 	},
 	{
+		id: 'original_language',
+		label: 'Original Language',
+		description: 'The original language (e.g., "English", "Japanese")',
+		operators: textOperators,
+		valueType: 'text'
+	},
+	{
+		id: 'genres',
+		label: 'Genres',
+		description: 'Genres (Action, Comedy, Drama, etc.)',
+		operators: textOperators,
+		valueType: 'text'
+	},
+	{
+		id: 'tags',
+		label: 'Tags',
+		description: 'Tags applied to the item',
+		operators: textOperators,
+		valueType: 'text'
+	},
+
+	// Number fields
+	{
+		id: 'rating',
+		label: 'Rating',
+		description: 'Rating score (Radarr: TMDb, Sonarr: combined rating)',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+	{
+		id: 'year',
+		label: 'Year',
+		description: 'The release year',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+	{
+		id: 'runtime',
+		label: 'Runtime',
+		description: 'Runtime in minutes',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+	{
+		id: 'size_on_disk',
+		label: 'Size on Disk',
+		description: 'Current file size in GB',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+
+	// Date fields
+	{
+		id: 'date_added',
+		label: 'Date Added',
+		description: 'When the item was added to your library',
+		operators: dateOperators,
+		valueType: 'date'
+	}
+];
+
+const radarrFilterFields: FilterField[] = [
+	// Ordinal
+	{
+		id: 'minimum_availability',
+		label: 'Minimum Availability',
+		description: 'The minimum availability status. Progresses: TBA → Announced → In Cinemas → Released',
+		operators: ordinalOperators,
+		valueType: 'select',
+		values: [
+			{ value: 'tba', label: 'TBA' },
+			{ value: 'announced', label: 'Announced' },
+			{ value: 'inCinemas', label: 'In Cinemas' },
+			{ value: 'released', label: 'Released' }
+		]
+	},
+
+	// Text
+	{
 		id: 'collection',
 		label: 'Collection',
 		description: 'The collection the movie belongs to (e.g., "Marvel Cinematic Universe")',
@@ -203,20 +284,6 @@ export const filterFields: FilterField[] = [
 		id: 'studio',
 		label: 'Studio',
 		description: 'The production studio',
-		operators: textOperators,
-		valueType: 'text'
-	},
-	{
-		id: 'original_language',
-		label: 'Original Language',
-		description: 'The original language of the movie (e.g., "en", "ja")',
-		operators: textOperators,
-		valueType: 'text'
-	},
-	{
-		id: 'genres',
-		label: 'Genres',
-		description: 'Movie genres (Action, Comedy, Drama, etc.)',
 		operators: textOperators,
 		valueType: 'text'
 	},
@@ -234,40 +301,12 @@ export const filterFields: FilterField[] = [
 		operators: textOperators,
 		valueType: 'text'
 	},
-	{
-		id: 'tags',
-		label: 'Tags',
-		description: 'Tags applied to the item',
-		operators: textOperators,
-		valueType: 'text'
-	},
 
-	// Number fields
-	{
-		id: 'year',
-		label: 'Year',
-		description: 'The release year',
-		operators: numberOperators,
-		valueType: 'number'
-	},
+	// Number
 	{
 		id: 'popularity',
 		label: 'Popularity',
 		description: 'TMDb popularity score',
-		operators: numberOperators,
-		valueType: 'number'
-	},
-	{
-		id: 'runtime',
-		label: 'Runtime',
-		description: 'Movie runtime in minutes',
-		operators: numberOperators,
-		valueType: 'number'
-	},
-	{
-		id: 'size_on_disk',
-		label: 'Size on Disk',
-		description: 'Current file size in GB',
 		operators: numberOperators,
 		valueType: 'number'
 	},
@@ -300,14 +339,7 @@ export const filterFields: FilterField[] = [
 		valueType: 'number'
 	},
 
-	// Date fields
-	{
-		id: 'date_added',
-		label: 'Date Added',
-		description: 'When the movie was added to your library',
-		operators: dateOperators,
-		valueType: 'date'
-	},
+	// Date
 	{
 		id: 'digital_release',
 		label: 'Digital Release',
@@ -324,25 +356,116 @@ export const filterFields: FilterField[] = [
 	}
 ];
 
+const sonarrFilterFields: FilterField[] = [
+	// Ordinal
+	{
+		id: 'status',
+		label: 'Status',
+		description: 'The series status. Progresses: Upcoming → Continuing → Ended → Deleted',
+		operators: ordinalOperators,
+		valueType: 'select',
+		values: [
+			{ value: 'upcoming', label: 'Upcoming' },
+			{ value: 'continuing', label: 'Continuing' },
+			{ value: 'ended', label: 'Ended' },
+			{ value: 'deleted', label: 'Deleted' }
+		]
+	},
+
+	// Text
+	{
+		id: 'network',
+		label: 'Network',
+		description: 'The TV network (e.g., "CBS", "Apple TV+")',
+		operators: textOperators,
+		valueType: 'text'
+	},
+	{
+		id: 'series_type',
+		label: 'Series Type',
+		description: 'The type of series',
+		operators: [
+			{ id: 'eq', label: 'is', description: 'Exactly matches' },
+			{ id: 'neq', label: 'is not', description: 'Does not match' }
+		],
+		valueType: 'select',
+		values: [
+			{ value: 'standard', label: 'Standard' },
+			{ value: 'daily', label: 'Daily' },
+			{ value: 'anime', label: 'Anime' }
+		]
+	},
+	{
+		id: 'certification',
+		label: 'Certification',
+		description: 'Content rating (e.g., "TV-MA", "TV-PG")',
+		operators: textOperators,
+		valueType: 'text'
+	},
+
+	// Number
+	{
+		id: 'season_count',
+		label: 'Season Count',
+		description: 'Number of seasons',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+	{
+		id: 'episode_count',
+		label: 'Episode Count',
+		description: 'Number of available episodes',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+	{
+		id: 'episode_file_count',
+		label: 'Episode File Count',
+		description: 'Number of downloaded episodes',
+		operators: numberOperators,
+		valueType: 'number'
+	},
+
+	// Date
+	{
+		id: 'first_aired',
+		label: 'First Aired',
+		description: 'When the first episode aired',
+		operators: dateOperators,
+		valueType: 'date'
+	},
+	{
+		id: 'last_aired',
+		label: 'Last Aired',
+		description: 'When the last episode aired',
+		operators: dateOperators,
+		valueType: 'date'
+	}
+];
+
+// =============================================================================
+// Public API
+// =============================================================================
+
 /**
- * Get a filter field by ID
+ * Get filter fields for a specific app type
+ */
+export function getFilterFields(appType: UpgradeAppType): FilterField[] {
+	switch (appType) {
+		case 'radarr':
+			return [...sharedFilterFields, ...radarrFilterFields];
+		case 'sonarr':
+			return [...sharedFilterFields, ...sonarrFilterFields];
+		default:
+			return sharedFilterFields;
+	}
+}
+
+/**
+ * Get a filter field by ID (checks all app types)
  */
 export function getFilterField(id: string): FilterField | undefined {
-	return filterFields.find((f) => f.id === id);
-}
-
-/**
- * Get all filter field IDs
- */
-export function getAllFilterFieldIds(): string[] {
-	return filterFields.map((f) => f.id);
-}
-
-/**
- * Validate if a filter field ID exists
- */
-export function isValidFilterField(id: string): boolean {
-	return filterFields.some((f) => f.id === id);
+	return [...sharedFilterFields, ...radarrFilterFields, ...sonarrFilterFields].find((f) => f.id === id);
 }
 
 /**
@@ -357,11 +480,44 @@ export function createEmptyGroup(): FilterGroup {
 }
 
 /**
- * Create a default filter group with upgradinatorr-style rules:
- * - monitored is true
- * - minimum_availability has reached released
+ * Create a default filter group with sensible rules per app type
+ * - Radarr: monitored is true, minimum_availability has reached released
+ * - Sonarr: monitored is true, status is continuing
  */
-export function createDefaultGroup(): FilterGroup {
+export function createDefaultGroup(appType: UpgradeAppType = 'radarr'): FilterGroup {
+	if (appType === 'sonarr') {
+		return {
+			type: 'group',
+			match: 'all',
+			children: [
+				{
+					type: 'rule',
+					field: 'monitored',
+					operator: 'is',
+					value: true
+				},
+				{
+					type: 'group',
+					match: 'any',
+					children: [
+						{
+							type: 'rule',
+							field: 'status',
+							operator: 'eq',
+							value: 'continuing'
+						},
+						{
+							type: 'rule',
+							field: 'status',
+							operator: 'eq',
+							value: 'ended'
+						}
+					]
+				}
+			]
+		};
+	}
+
 	return {
 		type: 'group',
 		match: 'all',
@@ -383,16 +539,16 @@ export function createDefaultGroup(): FilterGroup {
 }
 
 /**
- * Create a filter config with sensible defaults (upgradinatorr-style)
+ * Create a filter config with sensible defaults
  */
-export function createEmptyFilterConfig(name: string = 'New Filter'): FilterConfig {
+export function createEmptyFilterConfig(name: string = 'New Filter', appType: UpgradeAppType = 'radarr'): FilterConfig {
 	return {
 		id: uuid(),
 		name,
 		enabled: true,
-		group: createDefaultGroup(),
+		group: createDefaultGroup(appType),
 		selector: 'random',
-		count: 2,
+		count: appType === 'sonarr' ? 1 : 2,
 		cutoff: 100
 	};
 }
@@ -415,8 +571,9 @@ export function createEmptyUpgradeConfig(arrInstanceId: number): UpgradeConfig {
 /**
  * Create an empty filter rule with defaults
  */
-export function createEmptyRule(): FilterRule {
-	const firstField = filterFields[0];
+export function createEmptyRule(appType: UpgradeAppType = 'radarr'): FilterRule {
+	const fields = getFilterFields(appType);
+	const firstField = fields[0];
 	return {
 		type: 'rule',
 		field: firstField.id,
@@ -455,6 +612,9 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 		return false;
 	}
 
+	// Check if this field uses ordinal comparison
+	const ordinalMap = ordinalFields[rule.field];
+
 	switch (rule.operator) {
 		// Boolean operators
 		case 'is':
@@ -462,7 +622,7 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 		case 'is_not':
 			return fieldValue !== ruleValue;
 
-		// Number operators
+		// Number/text/ordinal operators
 		case 'eq':
 			if (typeof fieldValue === 'string' && typeof ruleValue === 'string') {
 				return fieldValue.toLowerCase() === ruleValue.toLowerCase();
@@ -473,6 +633,7 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 				return fieldValue.toLowerCase() !== ruleValue.toLowerCase();
 			}
 			return fieldValue !== ruleValue;
+
 		// Text operators (case-insensitive)
 		case 'contains': {
 			const strField = String(fieldValue).toLowerCase();
@@ -495,23 +656,21 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 			return strField.endsWith(strRule);
 		}
 
-		// Ordinal operators (for fields like minimum_availability)
+		// Ordinal / number comparison operators
 		case 'gte': {
-			// Check if this is an ordinal field
-			if (rule.field === 'minimum_availability') {
-				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
-				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+			if (ordinalMap) {
+				const fieldOrdinal = ordinalMap[fieldValue as string] ?? -1;
+				const ruleOrdinal = ordinalMap[ruleValue as string] ?? -1;
 				return fieldOrdinal >= ruleOrdinal;
 			}
-			// Fall through to number comparison
 			return (
 				typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue >= ruleValue
 			);
 		}
 		case 'lte': {
-			if (rule.field === 'minimum_availability') {
-				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
-				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+			if (ordinalMap) {
+				const fieldOrdinal = ordinalMap[fieldValue as string] ?? -1;
+				const ruleOrdinal = ordinalMap[ruleValue as string] ?? -1;
 				return fieldOrdinal <= ruleOrdinal;
 			}
 			return (
@@ -519,9 +678,9 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 			);
 		}
 		case 'gt': {
-			if (rule.field === 'minimum_availability') {
-				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
-				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+			if (ordinalMap) {
+				const fieldOrdinal = ordinalMap[fieldValue as string] ?? -1;
+				const ruleOrdinal = ordinalMap[ruleValue as string] ?? -1;
 				return fieldOrdinal > ruleOrdinal;
 			}
 			return (
@@ -529,9 +688,9 @@ export function evaluateRule(item: Record<string, unknown>, rule: FilterRule): b
 			);
 		}
 		case 'lt': {
-			if (rule.field === 'minimum_availability') {
-				const fieldOrdinal = availabilityOrder[fieldValue as string] ?? -1;
-				const ruleOrdinal = availabilityOrder[ruleValue as string] ?? -1;
+			if (ordinalMap) {
+				const fieldOrdinal = ordinalMap[fieldValue as string] ?? -1;
+				const ruleOrdinal = ordinalMap[ruleValue as string] ?? -1;
 				return fieldOrdinal < ruleOrdinal;
 			}
 			return (
@@ -601,3 +760,11 @@ export function evaluateGroup(item: Record<string, unknown>, group: FilterGroup)
 		});
 	}
 }
+
+/**
+ * Per-run count limits by app type
+ */
+export const maxCountPerRun: Record<string, number> = {
+	radarr: 5,
+	sonarr: 1
+};

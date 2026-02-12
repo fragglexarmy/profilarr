@@ -144,11 +144,6 @@ export const actions: Actions = {
 			return fail(400, { error: 'No enabled filters. Enable at least one filter.' });
 		}
 
-		// Only support Radarr for now
-		if (instance.type !== 'radarr') {
-			return fail(400, { error: `Upgrade not yet supported for ${instance.type}` });
-		}
-
 		// Check for dev mode - in dev mode, allow manual runs even without dry run
 		const isDev = import.meta.env.VITE_CHANNEL === 'dev';
 
@@ -160,11 +155,14 @@ export const actions: Actions = {
 		}
 
 		try {
-			const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
-			if (cooldownUntil && Date.now() < new Date(cooldownUntil).getTime()) {
-				return fail(400, {
-					error: `Upgrade cooldown active until ${cooldownUntil}`
-				});
+			// Skip cooldown check for dry runs and dev runs
+			if (!config.dryRun && !isDev) {
+				const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
+				if (cooldownUntil && Date.now() < new Date(cooldownUntil).getTime()) {
+					return fail(400, {
+						error: `Upgrade cooldown active until ${cooldownUntil}`
+					});
+				}
 			}
 
 			const queued = upsertScheduledJob({

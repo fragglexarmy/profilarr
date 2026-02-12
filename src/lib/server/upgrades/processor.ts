@@ -4,16 +4,19 @@
  */
 
 import { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
+import { SonarrClient } from '$lib/server/utils/arr/clients/sonarr.ts';
 import type { ArrInstance } from '$lib/server/db/queries/arrInstances.ts';
 import type { UpgradeConfig, FilterConfig } from '$shared/upgrades/filters.ts';
 import { evaluateGroup } from '$shared/upgrades/filters.ts';
 import { getSelector } from '$shared/upgrades/selectors.ts';
-import type { UpgradeItem, UpgradeJobLog, UpgradeSelectionItem } from './types.ts';
-import { normalizeRadarrItems } from './normalize.ts';
+import type { UpgradeItem, UpgradeJobLog, UpgradeSelectionItem, UpgradeOriginal, UpgradeOriginalEpisode } from './types.ts';
+import type { RadarrMovie, RadarrMovieFile, SonarrSeries, ArrTag } from '$lib/server/utils/arr/types.ts';
+import { normalizeRadarrItems, normalizeSonarrItems } from './normalize.ts';
 import {
 	filterByFilterTag,
 	getFilterTagLabel,
 	applyFilterTagToMovies,
+	applyFilterTagToSeries,
 	isFilterExhausted,
 	resetFilterCooldown
 } from './cooldown.ts';
@@ -65,6 +68,34 @@ export function clearDryRunExclusions(instanceId: number): number[] {
 	const clearedIds = entry ? Array.from(entry.items) : [];
 	dryRunExclusions.delete(instanceId);
 	return clearedIds;
+}
+
+/**
+ * Poll a queue function until results stabilize (no new items between polls)
+ * Waits intervalMs between attempts, up to maxAttempts
+ */
+async function pollQueue<T>(
+	fetch: () => Promise<T[]>,
+	maxAttempts = 5,
+	intervalMs = 3000
+): Promise<T[]> {
+	let lastCount = 0;
+	let stableResult: T[] = [];
+
+	for (let i = 0; i < maxAttempts; i++) {
+		await new Promise((r) => setTimeout(r, intervalMs));
+		const result = await fetch();
+
+		if (result.length > 0 && result.length === lastCount) {
+			// Queue stabilized — same count as last poll
+			return result;
+		}
+
+		stableResult = result;
+		lastCount = result.length;
+	}
+
+	return stableResult;
 }
 
 /**
@@ -174,6 +205,18 @@ function createSkippedLog(
 }
 
 /**
+ * Pick the best season to search for a Sonarr series (for dry-run interactive search)
+ * Picks the latest monitored season that has episode files
+ */
+function pickSeasonForSearch(series: SonarrSeries): number {
+	const monitored = series.seasons
+		.filter((s) => s.monitored && s.statistics.episodeFileCount > 0)
+		.sort((a, b) => b.seasonNumber - a.seasonNumber);
+
+	return monitored[0]?.seasonNumber ?? 1;
+}
+
+/**
  * Process a single upgrade config for an arr instance
  */
 export async function processUpgradeConfig(
@@ -193,57 +236,113 @@ export async function processUpgradeConfig(
 		return log;
 	}
 
-	// Create client
-	const client = new RadarrClient(instance.url, instance.api_key);
+	// Create client based on instance type
+	const isRadarr = instance.type === 'radarr';
+	const clientOpts = { timeout: 120000 };
+	const client = isRadarr
+		? new RadarrClient(instance.url, instance.api_key, clientOpts)
+		: new SonarrClient(instance.url, instance.api_key, clientOpts);
 
 	try {
-		// Step 1: Fetch library data
+		// =====================================================================
+		// Step 1: Fetch library data + normalize (app-specific)
+		// =====================================================================
 		const fetchStart = Date.now();
-		const [movies, profiles] = await Promise.all([client.getMovies(), client.getQualityProfiles()]);
+		let normalizedItems: UpgradeItem[];
+		let totalItems: number;
+		let tags: ArrTag[];
+		let getOriginalFile: (item: UpgradeItem) => UpgradeOriginal;
 
-		// Get movie files for movies with files
-		const movieIdsWithFiles = movies.filter((m) => m.hasFile).map((m) => m.id);
-		const movieFiles = await client.getMovieFiles(movieIdsWithFiles);
+		// Radarr-only: movie file map for original file lookup
+		let movieFileMap: Map<number, RadarrMovieFile> | undefined;
+		// Sonarr-only: episode file names cache (populated after selection)
+		const episodeFileCache = new Map<number, UpgradeOriginalEpisode[]>();
+
+		if (isRadarr) {
+			const radarr = client as RadarrClient;
+			const [movies, profiles] = await Promise.all([
+				radarr.getMovies(),
+				radarr.getQualityProfiles()
+			]);
+
+			const movieIdsWithFiles = movies.filter((m) => m.hasFile).map((m) => m.id);
+			const movieFiles = await radarr.getMovieFiles(movieIdsWithFiles);
+
+			movieFileMap = new Map(movieFiles.map((mf) => [mf.movieId, mf]));
+			const profileMap = new Map(profiles.map((p) => [p.id, p]));
+
+			tags = await radarr.getTags();
+			const tagMap = new Map(tags.map((t) => [t.id, t.label]));
+
+			normalizedItems = normalizeRadarrItems(movies, movieFileMap, profileMap, filter.cutoff, tagMap);
+			totalItems = movies.length;
+
+			const mfMap = movieFileMap;
+			getOriginalFile = (item: UpgradeItem) => {
+				const movieFile = mfMap.get(item.id);
+				return {
+					type: 'movie' as const,
+					fileName: movieFile?.relativePath?.split('/').pop() ?? 'Unknown',
+					formats: movieFile?.customFormats.map((cf) => cf.name) ?? [],
+					score: item.score
+				};
+			};
+		} else {
+			const sonarr = client as SonarrClient;
+			const [allSeries, profiles] = await Promise.all([
+				sonarr.getAllSeries(),
+				sonarr.getQualityProfiles()
+			]);
+
+			const profileMap = new Map(profiles.map((p) => [p.id, p]));
+
+			tags = await sonarr.getTags();
+			const tagMap = new Map(tags.map((t) => [t.id, t.label]));
+
+			normalizedItems = normalizeSonarrItems(allSeries, profileMap, filter.cutoff, tagMap);
+			totalItems = allSeries.length;
+
+			getOriginalFile = (item: UpgradeItem) => ({
+				type: 'series' as const,
+				title: item.title,
+				episodes: episodeFileCache.get(item.id) ?? []
+			});
+		}
+
 		const fetchDurationMs = Date.now() - fetchStart;
 
-		// Create lookup maps
-		const movieFileMap = new Map(movieFiles.map((mf) => [mf.movieId, mf]));
-		const profileMap = new Map(profiles.map((p) => [p.id, p]));
+		// =====================================================================
+		// Steps 2-5: Filter, cooldown, selection (shared — works with UpgradeItem)
+		// =====================================================================
 
-		// Fetch tags for normalization and cooldown
-		const tags = await client.getTags();
-		const tagMap = new Map(tags.map((t) => [t.id, t.label]));
-
-		// Step 2: Normalize items
-		const normalizedItems = normalizeRadarrItems(
-			movies,
-			movieFileMap,
-			profileMap,
-			filter.cutoff,
-			tagMap
-		);
-
-		// Step 3: Apply filter rules
+		// Step 2: Apply filter rules
 		const matchedItems = normalizedItems.filter((item) =>
 			evaluateGroup(item as unknown as Record<string, unknown>, filter.group)
 		);
 
-		// Step 4: Filter by filter-level tag (items already searched by this filter)
-		// First check if filter is exhausted - if so, reset the cooldown
+		// Step 3: Filter by filter-level tag (items already searched by this filter)
 		if (isFilterExhausted(matchedItems, tags, filter.name)) {
-			const resetResult = await resetFilterCooldown(client, filter.name);
+			const resetResult = await resetFilterCooldown(client as RadarrClient & SonarrClient, filter.name);
 			if (resetResult.reset > 0) {
-				// Re-fetch tags after reset
 				const updatedTags = await client.getTags();
 				tags.length = 0;
 				tags.push(...updatedTags);
+
+				// Also strip the tag from local items so filterByFilterTag sees them as available
+				const tagLabel = getFilterTagLabel(filter.name);
+				const filterTagId = updatedTags.find((t) => t.label === tagLabel)?.id;
+				if (filterTagId !== undefined) {
+					for (const item of matchedItems) {
+						item._tags = item._tags.filter((id) => id !== filterTagId);
+					}
+				}
 			}
 		}
 
 		const afterCooldownItems = filterByFilterTag(matchedItems, tags, filter.name);
 		const afterCooldownCount = afterCooldownItems.length;
 
-		// Step 4b: If dry run, also exclude items from previous dry runs
+		// Step 4: If dry run, also exclude items from previous dry runs
 		let availableItems = afterCooldownItems;
 		let dryRunExcludedCount = 0;
 		if (config.dryRun) {
@@ -260,7 +359,28 @@ export async function processUpgradeConfig(
 			? selector.select(availableItems, filter.count)
 			: availableItems.slice(0, filter.count);
 
-		// Step 6: Trigger search if we have items (skip if dry run)
+		// Fetch episode files for selected Sonarr series (only for selected items, not whole library)
+		if (!isRadarr && selectedItems.length > 0) {
+			const sonarr = client as SonarrClient;
+			for (const item of selectedItems) {
+				try {
+					const epFiles = await sonarr.getEpisodeFiles(item.id);
+					const episodes: UpgradeOriginalEpisode[] = epFiles.map((f) => ({
+						seasonNumber: f.seasonNumber,
+						fileName: f.relativePath?.split('/').pop() ?? 'Unknown',
+						formats: f.customFormats?.map((cf) => cf.name) ?? [],
+						score: f.customFormatScore ?? 0
+					}));
+					episodeFileCache.set(item.id, episodes);
+				} catch {
+					episodeFileCache.set(item.id, []);
+				}
+			}
+		}
+
+		// =====================================================================
+		// Step 6: Trigger search (app-specific)
+		// =====================================================================
 		let searchesTriggered = 0;
 		let successful = 0;
 		let failed = 0;
@@ -268,66 +388,58 @@ export async function processUpgradeConfig(
 		const isDryRun = config.dryRun;
 		const selectionItems: UpgradeSelectionItem[] = [];
 
-		// Helper to get original file info
-		const getOriginalFile = (item: UpgradeItem) => {
-			const movieFile = movieFileMap.get(item.id);
-			return {
-				fileName: movieFile?.relativePath?.split('/').pop() ?? 'Unknown',
-				formats: movieFile?.customFormats.map((cf) => cf.name) ?? [],
-				score: item.score
-			};
-		};
-
 		if (selectedItems.length > 0) {
 			if (isDryRun) {
-				// Dry run - use interactive search to preview what WOULD be grabbed
-
-				// Track selected items to exclude from future dry runs
+				// Dry run - interactive search to preview upgrades
 				addDryRunExclusions(
 					instance.id,
 					selectedItems.map((item) => item.id)
 				);
 
-				// Get score comparisons using interactive search (dry run preview)
 				for (const item of selectedItems) {
 					const original = getOriginalFile(item);
 					try {
-						const releases = await client.getReleases(item.id);
-						// Find best approved release (not rejected)
-						const bestRelease = releases.find((r) => r.approved && !r.rejected);
+						let bestRelease: { title: string; customFormats: { name: string }[]; customFormatScore: number } | undefined;
+						let searchedSeason: number | undefined;
+
+						if (isRadarr) {
+							const releases = await (client as RadarrClient).getReleases(item.id);
+							bestRelease = releases.find((r) => r.approved && !r.rejected);
+						} else {
+							const series = item._raw as SonarrSeries;
+							searchedSeason = pickSeasonForSearch(series);
+							const releases = await (client as SonarrClient).getReleases(item.id, searchedSeason);
+							bestRelease = releases.find((r) => r.approved && !r.rejected);
+						}
 
 						if (bestRelease && bestRelease.customFormatScore > item.score) {
 							selectionItems.push({
 								id: item.id,
 								title: item.title,
 								original,
-								upgrade: {
+								upgrades: [{
 									release: bestRelease.title,
 									formats: bestRelease.customFormats.map((cf) => cf.name),
-									score: bestRelease.customFormatScore
-								},
-								scoreDelta: bestRelease.customFormatScore - item.score
+									score: bestRelease.customFormatScore,
+									...(searchedSeason != null ? { seasonNumber: searchedSeason } : {})
+								}]
 							});
 							successful++;
 						} else {
-							// No upgrade available
 							selectionItems.push({
 								id: item.id,
 								title: item.title,
 								original,
-								upgrade: null,
-								scoreDelta: null
+								upgrades: []
 							});
 						}
 						searchesTriggered++;
 					} catch (error) {
-						// If getReleases fails for an item, still record it without upgrade info
 						selectionItems.push({
 							id: item.id,
 							title: item.title,
 							original,
-							upgrade: null,
-							scoreDelta: null
+							upgrades: []
 						});
 						failed++;
 						errors.push(
@@ -336,80 +448,134 @@ export async function processUpgradeConfig(
 					}
 				}
 			} else {
-				// Live mode - trigger search, wait for completion, check queue
+				// Live mode - trigger search, wait, check queue
 				try {
-					const movieIds = selectedItems.map((item) => item.id);
+					const itemIds = selectedItems.map((item) => item.id);
 
-					// Trigger search and wait for completion
-					const searchCommand = await client.searchMovies(movieIds);
-					await client.waitForCommand(searchCommand.id);
-					searchesTriggered = movieIds.length;
+					if (isRadarr) {
+						// Radarr: batch search
+						const radarr = client as RadarrClient;
+						const searchCommand = await radarr.searchMovies(itemIds);
+						await radarr.waitForCommand(searchCommand.id);
+						searchesTriggered = itemIds.length;
 
-					// Small delay for queue to populate
-					await new Promise((r) => setTimeout(r, 2000));
+						// Poll queue until results stabilize
+						let queue = await pollQueue(() => radarr.getQueue(itemIds));
+						const queueMap = new Map(queue.map((q) => [q.movieId, q]));
 
-					// Check queue for grabs
-					const queue = await client.getQueue(movieIds);
-					const queueMap = new Map(queue.map((q) => [q.movieId, q]));
-
-					// Build selection items with comparisons
-					for (const item of selectedItems) {
-						const original = getOriginalFile(item);
-						const grabbed = queueMap.get(item.id);
-						if (grabbed) {
-							selectionItems.push({
-								id: item.id,
-								title: item.title,
-								original,
-								upgrade: {
-									release: grabbed.title,
-									formats: grabbed.customFormats.map((cf) => cf.name),
-									score: grabbed.customFormatScore
-								},
-								scoreDelta: grabbed.customFormatScore - original.score
-							});
-							successful++;
-						} else {
-							selectionItems.push({
-								id: item.id,
-								title: item.title,
-								original,
-								upgrade: null,
-								scoreDelta: null
-							});
+						for (const item of selectedItems) {
+							const original = getOriginalFile(item);
+							const grabbed = queueMap.get(item.id);
+							if (grabbed) {
+								selectionItems.push({
+									id: item.id,
+									title: item.title,
+									original,
+									upgrades: [{
+										release: grabbed.title,
+										formats: grabbed.customFormats.map((cf) => cf.name),
+										score: grabbed.customFormatScore
+									}]
+								});
+								successful++;
+							} else {
+								selectionItems.push({
+									id: item.id,
+									title: item.title,
+									original,
+									upgrades: []
+								});
+							}
 						}
+
+						// Apply filter tag
+						const tagLabel = getFilterTagLabel(filter.name);
+						const filterTag = await radarr.getOrCreateTag(tagLabel);
+						const tagResult = await applyFilterTagToMovies(
+							radarr,
+							selectedItems.map((item) => item._raw as RadarrMovie),
+							filterTag.id
+						);
+						failed = tagResult.failed;
+						errors.push(...tagResult.errors);
+					} else {
+						// Sonarr: search one series at a time
+						const sonarr = client as SonarrClient;
+
+						for (const item of selectedItems) {
+							const cmd = await sonarr.searchSeries(item.id);
+							await sonarr.waitForCommand(cmd.id);
+							searchesTriggered++;
+						}
+
+						// Poll queue until results stabilize
+						const queue = await pollQueue(() => sonarr.getQueue(itemIds));
+						// Group queue items by seriesId, deduplicate by release title
+						const queueMap = new Map<number, typeof queue>();
+						for (const q of queue) {
+							const existing = queueMap.get(q.seriesId) ?? [];
+							if (!existing.some((e) => e.title === q.title)) {
+								existing.push(q);
+							}
+							queueMap.set(q.seriesId, existing);
+						}
+
+						for (const item of selectedItems) {
+							const original = getOriginalFile(item);
+							const grabbed = queueMap.get(item.id) ?? [];
+							if (grabbed.length > 0) {
+								selectionItems.push({
+									id: item.id,
+									title: item.title,
+									original,
+									upgrades: grabbed.map((g) => ({
+										release: g.title,
+										formats: g.customFormats.map((cf) => cf.name),
+										score: g.customFormatScore,
+										seasonNumber: g.seasonNumber
+									}))
+								});
+								successful++;
+							} else {
+								selectionItems.push({
+									id: item.id,
+									title: item.title,
+									original,
+									upgrades: []
+								});
+							}
+						}
+
+						// Apply filter tag using bulk editor
+						const tagLabel = getFilterTagLabel(filter.name);
+						const filterTag = await sonarr.getOrCreateTag(tagLabel);
+						const tagResult = await applyFilterTagToSeries(
+							sonarr,
+							selectedItems.map((item) => item._raw as SonarrSeries),
+							filterTag.id
+						);
+						failed = tagResult.failed;
+						errors.push(...tagResult.errors);
 					}
-
-					// Apply filter tag to mark items as searched by this filter
-					const tagLabel = getFilterTagLabel(filter.name);
-					const filterTag = await client.getOrCreateTag(tagLabel);
-					const tagResult = await applyFilterTagToMovies(
-						client,
-						selectedItems.map((item) => item._raw),
-						filterTag.id
-					);
-
-					failed = tagResult.failed;
-					errors.push(...tagResult.errors);
 				} catch (error) {
 					failed = selectedItems.length;
 					errors.push(`Search failed: ${error instanceof Error ? error.message : String(error)}`);
 
-					// Still populate selection items even on failure
 					for (const item of selectedItems) {
 						selectionItems.push({
 							id: item.id,
 							title: item.title,
 							original: getOriginalFile(item),
-							upgrade: null,
-							scoreDelta: null
+							upgrades: []
 						});
 					}
 				}
 			}
 		}
 
-		// Build the log
+		// =====================================================================
+		// Step 7: Build log (shared)
+		// =====================================================================
 		const completedAt = new Date();
 		const log: UpgradeJobLog = {
 			id: logId,
@@ -426,8 +592,8 @@ export async function processUpgradeConfig(
 				dryRun: isDryRun
 			},
 			library: {
-				totalItems: movies.length,
-				fetchedFromCache: false, // TODO: implement caching
+				totalItems,
+				fetchedFromCache: false,
 				fetchDurationMs
 			},
 			filter: {
@@ -453,8 +619,6 @@ export async function processUpgradeConfig(
 		};
 
 		await logUpgradeRun(log);
-
-		// Send notification
 		await sendUpgradeNotification(log, manual);
 
 		return log;

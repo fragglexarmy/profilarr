@@ -10,7 +10,7 @@ import {
 	getSelector,
 	isValidSelector,
 	getAllSelectorIds
-} from '../../lib/shared/selectors.ts';
+} from '../../lib/shared/upgrades/selectors.ts';
 
 interface MockItem {
 	id: number;

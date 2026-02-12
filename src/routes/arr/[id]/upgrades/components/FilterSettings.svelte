@@ -9,7 +9,7 @@
 		ClipboardPaste,
 		Trash2
 	} from 'lucide-svelte';
-	import { createEmptyFilterConfig, type FilterConfig } from '$shared/upgrades/filters';
+	import { createEmptyFilterConfig, maxCountPerRun, type FilterConfig, type UpgradeAppType } from '$shared/upgrades/filters';
 	import { uuid } from '$shared/utils/uuid';
 	import { selectors } from '$shared/upgrades/selectors';
 	import { createSearchStore, getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
@@ -23,6 +23,7 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import Card from '$ui/card/Card.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import type { Column } from '$ui/table/types';
 	import { alertStore } from '$alerts/store';
@@ -35,7 +36,11 @@
 	}
 
 	export let filters: FilterConfig[] = [];
+	export let appType: string = 'radarr';
 	export let onFiltersChange: ((filters: FilterConfig[]) => void) | undefined = undefined;
+
+	$: resolvedAppType = (appType === 'radarr' || appType === 'sonarr' ? appType : 'radarr') as UpgradeAppType;
+	$: countMax = maxCountPerRun[resolvedAppType] ?? 5;
 
 	function notifyChange() {
 		onFiltersChange?.(filters);
@@ -92,7 +97,7 @@
 			name = `${baseName} ${counter}`;
 		}
 
-		const newFilter = createEmptyFilterConfig(name);
+		const newFilter = createEmptyFilterConfig(name, resolvedAppType);
 		filters = [...filters, newFilter];
 		expandedIds.add(newFilter.id);
 		expandedIds = expandedIds;
@@ -369,12 +374,10 @@
 
 		<svelte:fragment slot="expanded" let:row>
 			<div class="space-y-4 p-6">
-				<FilterGroupComponent group={row.group} on:change={handleChange} />
+				<FilterGroupComponent group={row.group} appType={resolvedAppType} on:change={handleChange} />
 
 				<!-- Selection Settings -->
-				<div
-					class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
-				>
+				<Card padding="md">
 					<h3 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Settings</h3>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 						<div>
@@ -406,6 +409,7 @@
 							>
 								Method
 							</label>
+							<div class="mt-1">
 							<DropdownSelect
 								value={row.selector}
 								options={selectors.map((s) => ({
@@ -421,6 +425,7 @@
 									handleChange();
 								}}
 							/>
+							</div>
 						</div>
 						<div>
 							<label
@@ -434,7 +439,7 @@
 									name="count-{row.id}"
 									bind:value={row.count}
 									min={1}
-									max={5}
+									max={countMax}
 									font="mono"
 									responsive
 									on:change={handleChange}
@@ -445,7 +450,7 @@
 							</p>
 						</div>
 					</div>
-				</div>
+				</Card>
 			</div>
 		</svelte:fragment>
 	</ExpandableTable>

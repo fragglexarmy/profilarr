@@ -184,6 +184,28 @@ export interface RadarrQueueItem {
 }
 
 /**
+ * Queue item from /api/v3/queue (Sonarr)
+ * One record per episode, even for season packs (same downloadId across episodes)
+ */
+export interface SonarrQueueItem {
+	id: number;
+	seriesId: number;
+	episodeId: number;
+	seasonNumber: number;
+	title: string;
+	status: string;
+	quality: {
+		quality: { id: number; name: string; source?: string; resolution?: number };
+		revision?: { version: number; real: number; isRepack?: boolean };
+	};
+	customFormats: CustomFormatRef[];
+	customFormatScore: number;
+	downloadId: string;
+	protocol: 'torrent' | 'usenet' | 'unknown';
+	indexer: string;
+}
+
+/**
  * Rename preview item from /api/v3/rename
  * Shows what would be renamed before executing
  */
@@ -294,6 +316,14 @@ export interface SonarrSeries {
 	monitored: boolean;
 	status?: string;
 	year?: number;
+	runtime?: number;
+	network?: string;
+	seriesType?: string;
+	certification?: string;
+	firstAired?: string;
+	lastAired?: string;
+	originalLanguage?: { id: number; name: string };
+	ratings?: { value: number; votes: number };
 	seasons: SonarrSeason[];
 	images?: Array<{ coverType: string; url: string; remoteUrl?: string }>;
 	genres?: string[];

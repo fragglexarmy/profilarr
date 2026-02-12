@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { filterFields, filterModes } from '$shared/upgrades/filters';
+	import { getFilterFields, filterModes, type FilterField } from '$shared/upgrades/filters';
 	import { selectors } from '$shared/upgrades/selectors';
 	import { ArrowLeft } from 'lucide-svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
@@ -7,6 +7,9 @@
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import Table from '$ui/table/Table.svelte';
 	import type { Column } from '$ui/table/types';
+
+	const radarrFields = getFilterFields('radarr');
+	const sonarrFields = getFilterFields('sonarr');
 
 	// Filter fields with type labels
 	const typeLabels: Record<string, string> = {
@@ -21,7 +24,7 @@
 	const badgeAccent = 'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200';
 	const badgeNeutral = 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
 
-	const fieldColumns: Column<(typeof filterFields)[0]>[] = [
+	const fieldColumns: Column<FilterField>[] = [
 		{ key: 'label', header: 'Field', sortable: false },
 		{
 			key: 'valueType',
@@ -175,8 +178,17 @@
 
 		<!-- Filter Fields Reference -->
 		<section>
-			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Filter Fields</h2>
-			<Table columns={fieldColumns} data={filterFields} emptyMessage="No fields" />
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+				Radarr Filter Fields
+			</h2>
+			<Table columns={fieldColumns} data={radarrFields} emptyMessage="No fields" />
+		</section>
+
+		<section>
+			<h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+				Sonarr Filter Fields
+			</h2>
+			<Table columns={fieldColumns} data={sonarrFields} emptyMessage="No fields" />
 		</section>
 	</div>
 </div>

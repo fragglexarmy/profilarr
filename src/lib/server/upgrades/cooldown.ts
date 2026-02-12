@@ -10,8 +10,9 @@
  * Future: Advanced mode with adaptive backoff per scratchpad.md
  */
 
-import type { ArrTag, RadarrMovie } from '$lib/server/utils/arr/types.ts';
+import type { ArrTag, RadarrMovie, SonarrSeries } from '$lib/server/utils/arr/types.ts';
 import type { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
+import type { SonarrClient } from '$lib/server/utils/arr/clients/sonarr.ts';
 
 const FILTER_TAG_PREFIX = 'profilarr-';
 
@@ -74,6 +75,10 @@ export function filterByFilterTag<T extends { _tags: number[] }>(
 ): T[] {
 	return items.filter((item) => !hasFilterTag(item._tags, allTags, filterName));
 }
+
+// =========================================================================
+// Radarr-specific tag functions
+// =========================================================================
 
 /**
  * Apply a filter's tag to a movie
@@ -154,6 +159,17 @@ export async function removeFilterTag(
 export async function resetFilterCooldown(
 	client: RadarrClient,
 	filterName: string
+): Promise<{ reset: number; failed: number; errors: string[] }>;
+/**
+ * Reset filter cooldown for Sonarr — bulk removes the tag from all tagged series
+ */
+export async function resetFilterCooldown(
+	client: SonarrClient,
+	filterName: string
+): Promise<{ reset: number; failed: number; errors: string[] }>;
+export async function resetFilterCooldown(
+	client: RadarrClient | SonarrClient,
+	filterName: string
 ): Promise<{ reset: number; failed: number; errors: string[] }> {
 	const tagLabel = getFilterTagLabel(filterName);
 
@@ -162,35 +178,91 @@ export async function resetFilterCooldown(
 	const filterTag = tags.find((t) => t.label === tagLabel);
 
 	if (!filterTag) {
-		// No tag exists, nothing to reset
 		return { reset: 0, failed: 0, errors: [] };
 	}
 
-	// Get all movies that have this tag
-	const movies = await client.getMovies();
-	const taggedMovies = movies.filter((m) => m.tags?.includes(filterTag.id));
+	// Branch by client type
+	if ('getMovies' in client) {
+		// Radarr: fetch all movies, remove tag one by one
+		const radarrClient = client as RadarrClient;
+		const movies = await radarrClient.getMovies();
+		const taggedMovies = movies.filter((m) => m.tags?.includes(filterTag.id));
 
-	if (taggedMovies.length === 0) {
-		return { reset: 0, failed: 0, errors: [] };
-	}
+		if (taggedMovies.length === 0) {
+			return { reset: 0, failed: 0, errors: [] };
+		}
 
-	let reset = 0;
-	let failed = 0;
-	const errors: string[] = [];
+		let reset = 0;
+		let failed = 0;
+		const errors: string[] = [];
 
-	for (const movie of taggedMovies) {
+		for (const movie of taggedMovies) {
+			try {
+				await removeFilterTag(radarrClient, movie, filterTag.id);
+				reset++;
+			} catch (error) {
+				failed++;
+				errors.push(
+					`Failed to untag "${movie.title}": ${error instanceof Error ? error.message : String(error)}`
+				);
+			}
+		}
+
+		return { reset, failed, errors };
+	} else {
+		// Sonarr: fetch all series, bulk remove tag
+		const sonarrClient = client as SonarrClient;
+		const allSeries = await sonarrClient.getAllSeries();
+		const taggedSeries = allSeries.filter((s) => s.tags?.includes(filterTag.id));
+
+		if (taggedSeries.length === 0) {
+			return { reset: 0, failed: 0, errors: [] };
+		}
+
 		try {
-			await removeFilterTag(client, movie, filterTag.id);
-			reset++;
+			const seriesIds = taggedSeries.map((s) => s.id);
+			await sonarrClient.removeTagFromSeries(seriesIds, filterTag.id);
+			return { reset: taggedSeries.length, failed: 0, errors: [] };
 		} catch (error) {
-			failed++;
-			errors.push(
-				`Failed to untag "${movie.title}": ${error instanceof Error ? error.message : String(error)}`
-			);
+			return {
+				reset: 0,
+				failed: taggedSeries.length,
+				errors: [`Failed to bulk untag series: ${error instanceof Error ? error.message : String(error)}`]
+			};
 		}
 	}
+}
 
-	return { reset, failed, errors };
+// =========================================================================
+// Sonarr-specific tag functions
+// =========================================================================
+
+/**
+ * Apply filter tag to multiple series using bulk editor endpoint
+ */
+export async function applyFilterTagToSeries(
+	client: SonarrClient,
+	seriesList: SonarrSeries[],
+	tagId: number
+): Promise<{ success: number; failed: number; errors: string[] }> {
+	// Filter to only series that don't already have the tag
+	const untagged = seriesList.filter((s) => !(s.tags ?? []).includes(tagId));
+
+	if (untagged.length === 0) {
+		return { success: seriesList.length, failed: 0, errors: [] };
+	}
+
+	try {
+		const seriesIds = untagged.map((s) => s.id);
+		await client.applyTagToSeries(seriesIds, tagId);
+		return { success: seriesList.length, failed: 0, errors: [] };
+	} catch (error) {
+		return {
+			success: 0,
+			failed: seriesList.length,
+			errors: [`Failed to bulk tag series: ${error instanceof Error ? error.message : String(error)}`]
+		};
+	}
 }
 
 /**

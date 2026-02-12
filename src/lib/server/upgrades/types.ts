@@ -2,7 +2,7 @@
  * Types for the upgrade processing system
  */
 
-import type { RadarrMovie } from '$lib/server/utils/arr/types.ts';
+import type { RadarrMovie, SonarrSeries } from '$lib/server/utils/arr/types.ts';
 import type { FilterGroup } from '$shared/upgrades/filters.ts';
 
 /**
@@ -10,38 +10,52 @@ import type { FilterGroup } from '$shared/upgrades/filters.ts';
  * Used for evaluating filter rules against library items
  */
 export interface UpgradeItem {
-	// Core fields
+	// Shared fields
 	id: number;
 	title: string;
 	year: number;
 	monitored: boolean;
 	cutoff_met: boolean;
-	minimum_availability: string;
 	quality_profile: string;
-	collection: string;
-	studio: string;
 	original_language: string;
 	genres: string;
-	keywords: string;
-	release_group: string;
 	tags: string;
-	popularity: number;
+	rating: number;
 	runtime: number;
 	size_on_disk: number;
+	date_added: string;
+
+	// Radarr-only fields (empty/zero defaults for Sonarr)
+	minimum_availability: string;
+	collection: string;
+	studio: string;
+	keywords: string;
+	release_group: string;
+	popularity: number;
 	tmdb_rating: number;
 	imdb_rating: number;
 	tomato_rating: number;
 	trakt_rating: number;
-	date_added: string;
 	digital_release: string | null;
 	physical_release: string | null;
+
+	// Sonarr-only fields (empty/zero defaults for Radarr)
+	status: string;
+	network: string;
+	series_type: string;
+	certification: string;
+	season_count: number;
+	episode_count: number;
+	episode_file_count: number;
+	first_aired: string | null;
+	last_aired: string | null;
 
 	// For selectors (camelCase versions)
 	dateAdded: string;
 	score: number;
 
 	// Original data for API calls
-	_raw: RadarrMovie;
+	_raw: RadarrMovie | SonarrSeries;
 	_tags: number[];
 }
 
@@ -49,10 +63,26 @@ export interface UpgradeItem {
  * Original file info for upgrade comparison
  */
 export interface UpgradeOriginalFile {
+	type: 'movie';
 	fileName: string;
 	formats: string[];
 	score: number;
 }
+
+export interface UpgradeOriginalEpisode {
+	seasonNumber: number;
+	fileName: string;
+	formats: string[];
+	score: number;
+}
+
+export interface UpgradeOriginalSeries {
+	type: 'series';
+	title: string;
+	episodes: UpgradeOriginalEpisode[];
+}
+
+export type UpgradeOriginal = UpgradeOriginalFile | UpgradeOriginalSeries;
 
 /**
  * Upgrade/new release info
@@ -61,6 +91,7 @@ export interface UpgradeNewRelease {
 	release: string; // release title
 	formats: string[];
 	score: number;
+	seasonNumber?: number; // Sonarr only — which season this grab is for
 }
 
 /**
@@ -69,9 +100,8 @@ export interface UpgradeNewRelease {
 export interface UpgradeSelectionItem {
 	id: number;
 	title: string;
-	original: UpgradeOriginalFile;
-	upgrade: UpgradeNewRelease | null; // null = no upgrade found
-	scoreDelta: number | null;
+	original: UpgradeOriginal;
+	upgrades: UpgradeNewRelease[];
 }
 
 /**

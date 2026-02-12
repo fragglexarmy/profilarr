@@ -6,7 +6,9 @@ import type {
 	SonarrEpisodeFile,
 	SonarrEpisodeItem,
 	SonarrLibraryItem,
+	SonarrQueueItem,
 	ArrQualityProfile,
+	ArrTag,
 	ArrCommand,
 	RenamePreviewItem
 } from '../types.ts';
@@ -163,6 +165,102 @@ export class SonarrClient extends BaseArrClient {
 				cutoffMet: file ? !file.qualityCutoffNotMet : false
 			};
 		});
+	}
+
+	// =========================================================================
+	// Upgrade Methods
+	// =========================================================================
+
+	/**
+	 * Trigger a search for a specific series
+	 * Sonarr searches one series at a time (not batched like Radarr)
+	 */
+	searchSeries(seriesId: number): Promise<ArrCommand> {
+		return this.post<ArrCommand>(`/api/${this.apiVersion}/command`, {
+			name: 'SeriesSearch',
+			seriesId
+		});
+	}
+
+	/**
+	 * Get queue items (downloads in progress)
+	 * Returns one record per episode, even for season packs
+	 * @param seriesIds - Optional filter by series IDs
+	 */
+	async getQueue(seriesIds?: number[]): Promise<SonarrQueueItem[]> {
+		const response = await this.get<{ records: SonarrQueueItem[] }>(
+			`/api/${this.apiVersion}/queue?page=1&pageSize=200&includeSeries=true`
+		);
+
+		const records = response.records;
+
+		if (seriesIds && seriesIds.length > 0) {
+			const seriesIdSet = new Set(seriesIds);
+			return records.filter((item) => seriesIdSet.has(item.seriesId));
+		}
+
+		return records;
+	}
+
+	/**
+	 * Update a series (used for adding/removing tags)
+	 */
+	updateSeries(series: SonarrSeries): Promise<SonarrSeries> {
+		return this.put<SonarrSeries>(`/api/${this.apiVersion}/series/${series.id}`, series);
+	}
+
+	/**
+	 * Bulk add a tag to multiple series via the series editor endpoint
+	 */
+	applyTagToSeries(seriesIds: number[], tagId: number): Promise<void> {
+		return this.put<void>(`/api/${this.apiVersion}/series/editor`, {
+			seriesIds,
+			tags: [tagId],
+			applyTags: 'add'
+		});
+	}
+
+	/**
+	 * Bulk remove a tag from multiple series via the series editor endpoint
+	 */
+	removeTagFromSeries(seriesIds: number[], tagId: number): Promise<void> {
+		return this.put<void>(`/api/${this.apiVersion}/series/editor`, {
+			seriesIds,
+			tags: [tagId],
+			applyTags: 'remove'
+		});
+	}
+
+	// =========================================================================
+	// Tag Methods
+	// =========================================================================
+
+	/**
+	 * Get all tags
+	 */
+	override getTags(): Promise<ArrTag[]> {
+		return this.get<ArrTag[]>(`/api/${this.apiVersion}/tag`);
+	}
+
+	/**
+	 * Create a new tag
+	 */
+	override createTag(label: string): Promise<ArrTag> {
+		return this.post<ArrTag>(`/api/${this.apiVersion}/tag`, { label });
+	}
+
+	/**
+	 * Get a tag by label, or create it if it doesn't exist
+	 */
+	async getOrCreateTag(label: string): Promise<ArrTag> {
+		const tags = await this.getTags();
+		const existing = tags.find((t) => t.label.toLowerCase() === label.toLowerCase());
+
+		if (existing) {
+			return existing;
+		}
+
+		return this.createTag(label);
 	}
 
 	// =========================================================================

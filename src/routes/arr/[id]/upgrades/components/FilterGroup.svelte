@@ -2,23 +2,28 @@
 	import { Plus, X, FolderPlus } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import {
-		filterFields,
+		getFilterFields,
 		getFilterField,
 		createEmptyGroup,
 		createEmptyRule,
 		isRule,
 		isGroup,
 		type FilterGroup,
-		type FilterRule
+		type FilterRule,
+		type UpgradeAppType
 	} from '$shared/upgrades/filters';
+	import Card from '$ui/card/Card.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 
 	export let group: FilterGroup;
+	export let appType: UpgradeAppType = 'radarr';
 	export let onRemove: (() => void) | null = null;
 	export let depth: number = 0;
+
+	$: fields = getFilterFields(appType);
 
 	const dispatch = createEventDispatcher<{ change: void }>();
 
@@ -27,13 +32,13 @@
 	}
 
 	function addRule() {
-		group.children = [...group.children, createEmptyRule()];
+		group.children = [...group.children, createEmptyRule(appType)];
 		notifyChange();
 	}
 
 	function addNestedGroup() {
 		const newGroup = createEmptyGroup();
-		newGroup.children.push(createEmptyRule());
+		newGroup.children.push(createEmptyRule(appType));
 		group.children = [...group.children, newGroup];
 		notifyChange();
 	}
@@ -58,11 +63,7 @@
 	}
 </script>
 
-<div
-	class="rounded-lg border p-4 {depth === 0
-		? 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50'
-		: 'border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800'}"
->
+<Card padding="md" flush={depth === 0}>
 	<!-- Group Header -->
 	<div class="mb-3 flex items-center justify-between">
 		<div class="flex items-center gap-2">
@@ -109,7 +110,7 @@
 						<!-- Field -->
 						<DropdownSelect
 							value={child.field}
-							options={filterFields.map((f) => ({ value: f.id, label: f.label }))}
+							options={fields.map((f) => ({ value: f.id, label: f.label }))}
 							minWidth="10rem"
 							responsiveButton
 							compactDropdownThreshold={7}
@@ -216,6 +217,7 @@
 					<div class="ml-4">
 						<svelte:self
 							group={child}
+							{appType}
 							depth={depth + 1}
 							onRemove={() => removeChild(childIndex)}
 							on:change={handleNestedChange}
@@ -231,4 +233,4 @@
 		<Button text="Add Rule" icon={Plus} responsive on:click={addRule} />
 		<Button text="Add Group" icon={FolderPlus} responsive on:click={addNestedGroup} />
 	</div>
-</div>
+</Card>
