@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import Table from '$ui/table/Table.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 	import { Tag, Clock, Zap, Shield, Calendar, Copy, Download } from 'lucide-svelte';
@@ -151,18 +151,23 @@
 	compact={false}
 	rowHref={getRowHref}
 >
+	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 	<svelte:fragment slot="actions" let:row>
-		<TableActionButton
-			icon={Download}
-			title="Export"
-			stopPropagation
-			on:click={() => dispatch('export', { name: row.name })}
-		/>
-		<TableActionButton
-			icon={Copy}
-			title="Clone"
-			stopPropagation
-			on:click={() => dispatch('clone', { name: row.name })}
-		/>
+		<div class="flex items-center justify-end gap-0.5" on:click|stopPropagation>
+			<Button
+				icon={Download}
+				size="xs"
+				variant="ghost"
+				tooltip="Export"
+				on:click={() => dispatch('export', { name: row.name })}
+			/>
+			<Button
+				icon={Copy}
+				size="xs"
+				variant="ghost"
+				tooltip="Clone"
+				on:click={() => dispatch('clone', { name: row.name })}
+			/>
+		</div>
 	</svelte:fragment>
 </Table>
