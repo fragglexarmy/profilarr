@@ -9,6 +9,8 @@
  * This file is imported dynamically as the first thing in hooks.server.ts.
  */
 
+export {};
+
 // — Detection helpers ————————————————————————————————————————————
 
 function isDocker(): boolean {
