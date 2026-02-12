@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 	import { page } from '$app/stores';
-	import { Clock, Zap, Shield } from 'lucide-svelte';
+	import { Clock, Zap, Shield, Copy, Download } from 'lucide-svelte';
 	import CardGrid from '$ui/card/CardGrid.svelte';
 	import Card from '$ui/card/Card.svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	export let profiles: DelayProfilesRow[];
+
+	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
 
@@ -37,9 +41,30 @@
 <CardGrid columns={5} flush>
 	{#each profiles as profile}
 		<Card href="/delay-profiles/{databaseId}/{encodeURIComponent(profile.name)}" hoverable>
-			<div class="space-y-2.5">
-				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{profile.name}</h3>
+			<svelte:fragment slot="header">
+				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+				<div class="flex items-center justify-between">
+					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{profile.name}</h3>
+					<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
+						<Button
+							icon={Download}
+							size="xs"
+							variant="ghost"
+							tooltip="Export"
+							on:click={() => dispatch('export', { name: profile.name })}
+						/>
+						<Button
+							icon={Copy}
+							size="xs"
+							variant="ghost"
+							tooltip="Clone"
+							on:click={() => dispatch('clone', { name: profile.name })}
+						/>
+					</div>
+				</div>
+			</svelte:fragment>
 
+			<div class="space-y-2.5">
 				<div class="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
 					<Zap size={12} />
 					<span>{formatProtocol(profile.preferred_protocol)}</span>

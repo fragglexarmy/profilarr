@@ -1,12 +1,16 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import Table from '$ui/table/Table.svelte';
+	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
-	import { Tag, Clock, Zap, Shield, Calendar } from 'lucide-svelte';
+	import { Tag, Clock, Zap, Shield, Calendar, Copy, Download } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import { parseUTC } from '$shared/utils/dates';
 
 	export let profiles: DelayProfilesRow[];
+
+	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
 
@@ -146,4 +150,19 @@
 	hoverable={true}
 	compact={false}
 	rowHref={getRowHref}
-/>
+>
+	<svelte:fragment slot="actions" let:row>
+		<TableActionButton
+			icon={Download}
+			title="Export"
+			stopPropagation
+			on:click={() => dispatch('export', { name: row.name })}
+		/>
+		<TableActionButton
+			icon={Copy}
+			title="Clone"
+			stopPropagation
+			on:click={() => dispatch('clone', { name: row.name })}
+		/>
+	</svelte:fragment>
+</Table>
