@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import type { ComponentType } from 'svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 
 	export let text: string = '';
 	export let variant: 'primary' | 'secondary' | 'danger' | 'ghost' = 'ghost';
@@ -84,10 +85,9 @@
 	$: activeSizeClasses = isIconOnly ? iconOnlySizeClasses : sizeClasses;
 	$: classes = `${baseClasses} ${activeSizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
 	$: iconSize = effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16;
-	$: tooltipPosClass = tooltipPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2';
 </script>
 
-<div class="group relative inline-flex">
+<Tooltip text={tooltip} position={tooltipPosition}>
 	{#if href}
 		<a
 			{href}
@@ -97,8 +97,6 @@
 			aria-label={ariaLabel || tooltip || undefined}
 			class={classes}
 			on:click
-			on:mouseenter
-			on:mouseleave
 		>
 			{#if icon && iconPosition === 'left'}
 				<svelte:component this={icon} size={iconSize} class={baseIconColor} />
@@ -119,8 +117,6 @@
 			aria-label={ariaLabel || tooltip || undefined}
 			class={classes}
 			on:click
-			on:mouseenter
-			on:mouseleave
 		>
 			{#if icon && iconPosition === 'left'}
 				<svelte:component this={icon} size={iconSize} class={baseIconColor} />
@@ -134,12 +130,4 @@
 			{/if}
 		</button>
 	{/if}
-
-	{#if tooltip}
-		<div class="pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 {tooltipPosClass} opacity-0 transition-opacity group-hover:opacity-100">
-			<div class="whitespace-nowrap rounded-xl border border-neutral-300 bg-white px-2 py-1 text-xs font-medium text-neutral-900 shadow-lg dark:border-neutral-700/60 dark:bg-neutral-800 dark:text-neutral-50">
-				{tooltip}
-			</div>
-		</div>
-	{/if}
-</div>
+</Tooltip>
