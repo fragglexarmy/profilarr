@@ -3,8 +3,9 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { pcdManager, canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { ENTITY_TYPES } from '$shared/pcd/portable.ts';
-import type { EntityType } from '$shared/pcd/portable.ts';
+import type { EntityType, PortableDelayProfile } from '$shared/pcd/portable.ts';
 import { deserializeDelayProfile } from '$pcd/entities/deserialize.ts';
+import { validatePortableData } from '$pcd/entities/validate.ts';
 
 const VALID_ENTITY_TYPES: ReadonlySet<string> = new Set(ENTITY_TYPES);
 
@@ -45,6 +46,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error: 'Database cache not available' }, { status: 500 });
 	}
 
+	const validationError = validatePortableData(entityType as EntityType, data as Record<string, unknown>);
+	if (validationError) {
+		return json({ error: validationError }, { status: 400 });
+	}
+
 	try {
 		await deserialize({
 			databaseId: databaseId as number,
@@ -71,7 +77,7 @@ interface DeserializeArgs {
 async function deserialize({ databaseId, cache, layer, entityType, data }: DeserializeArgs) {
 	switch (entityType) {
 		case 'delay_profile':
-			return deserializeDelayProfile({ databaseId, cache, layer, portable: data as never });
+			return deserializeDelayProfile({ databaseId, cache, layer, portable: data as unknown as PortableDelayProfile });
 		default:
 			throw new Error(`Import not yet implemented for entity type: ${entityType}`);
 	}
