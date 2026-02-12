@@ -24,6 +24,8 @@
 	export let justify: 'center' | 'between' = 'center';
 	export let title: string = '';
 	export let ariaLabel: string = '';
+	export let tooltip: string = '';
+	export let tooltipPosition: 'top' | 'bottom' = 'bottom';
 
 	let isSmallScreen = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -81,51 +83,63 @@
 	$: isIconOnly = icon && !text;
 	$: activeSizeClasses = isIconOnly ? iconOnlySizeClasses : sizeClasses;
 	$: classes = `${baseClasses} ${activeSizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
+	$: iconSize = effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16;
+	$: tooltipPosClass = tooltipPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2';
 </script>
 
-{#if href}
-	<a
-		{href}
-		{target}
-		{rel}
-		title={title || undefined}
-		aria-label={ariaLabel || undefined}
-		class={classes}
-		on:click
-		on:mouseenter
-		on:mouseleave
-	>
-		{#if icon && iconPosition === 'left'}
-			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
-		{/if}
-		{#if text}
-			<span class="{baseTextColor} {hideTextOnMobile ? 'hidden md:inline' : ''}">{text}</span>
-		{/if}
-		<slot />
-		{#if icon && iconPosition === 'right'}
-			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
-		{/if}
-	</a>
-{:else}
-	<button
-		{type}
-		{disabled}
-		title={title || undefined}
-		aria-label={ariaLabel || undefined}
-		class={classes}
-		on:click
-		on:mouseenter
-		on:mouseleave
-	>
-		{#if icon && iconPosition === 'left'}
-			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
-		{/if}
-		{#if text}
-			<span class="{baseTextColor} {hideTextOnMobile ? 'hidden md:inline' : ''}">{text}</span>
-		{/if}
-		<slot />
-		{#if icon && iconPosition === 'right'}
-			<svelte:component this={icon} size={effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16} class={baseIconColor} />
-		{/if}
-	</button>
-{/if}
+<div class="group relative inline-flex">
+	{#if href}
+		<a
+			{href}
+			{target}
+			{rel}
+			title={!tooltip && title ? title : undefined}
+			aria-label={ariaLabel || tooltip || undefined}
+			class={classes}
+			on:click
+			on:mouseenter
+			on:mouseleave
+		>
+			{#if icon && iconPosition === 'left'}
+				<svelte:component this={icon} size={iconSize} class={baseIconColor} />
+			{/if}
+			{#if text}
+				<span class="{baseTextColor} {hideTextOnMobile ? 'hidden md:inline' : ''}">{text}</span>
+			{/if}
+			<slot />
+			{#if icon && iconPosition === 'right'}
+				<svelte:component this={icon} size={iconSize} class={baseIconColor} />
+			{/if}
+		</a>
+	{:else}
+		<button
+			{type}
+			{disabled}
+			title={!tooltip && title ? title : undefined}
+			aria-label={ariaLabel || tooltip || undefined}
+			class={classes}
+			on:click
+			on:mouseenter
+			on:mouseleave
+		>
+			{#if icon && iconPosition === 'left'}
+				<svelte:component this={icon} size={iconSize} class={baseIconColor} />
+			{/if}
+			{#if text}
+				<span class="{baseTextColor} {hideTextOnMobile ? 'hidden md:inline' : ''}">{text}</span>
+			{/if}
+			<slot />
+			{#if icon && iconPosition === 'right'}
+				<svelte:component this={icon} size={iconSize} class={baseIconColor} />
+			{/if}
+		</button>
+	{/if}
+
+	{#if tooltip}
+		<div class="pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 {tooltipPosClass} opacity-0 transition-opacity group-hover:opacity-100">
+			<div class="whitespace-nowrap rounded-xl border border-neutral-300 bg-white px-2 py-1 text-xs font-medium text-neutral-900 shadow-lg dark:border-neutral-700/60 dark:bg-neutral-800 dark:text-neutral-50">
+				{tooltip}
+			</div>
+		</div>
+	{/if}
+</div>
