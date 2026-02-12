@@ -6,12 +6,18 @@
 	import CardGrid from '$ui/card/CardGrid.svelte';
 	import Card from '$ui/card/Card.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import { createProgressiveList } from '$lib/client/utils/progressiveList';
 
 	export let profiles: DelayProfilesRow[];
 
 	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
+
+	const { visibleCount, sentinel, reset, setTotalCount } = createProgressiveList({ pageSize: 30 });
+	$: setTotalCount(profiles.length);
+	$: profiles, reset();
+	$: visibleProfiles = profiles.slice(0, $visibleCount);
 
 	function formatProtocol(protocol: string): string {
 		switch (protocol) {
@@ -39,7 +45,7 @@
 </script>
 
 <CardGrid columns={5} flush>
-	{#each profiles as profile}
+	{#each visibleProfiles as profile}
 		<Card href="/delay-profiles/{databaseId}/{encodeURIComponent(profile.name)}" hoverable>
 			<svelte:fragment slot="header">
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
@@ -109,3 +115,4 @@
 		</Card>
 	{/each}
 </CardGrid>
+<div use:sentinel></div>

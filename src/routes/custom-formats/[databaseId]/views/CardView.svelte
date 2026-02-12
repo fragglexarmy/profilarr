@@ -5,7 +5,11 @@
 	import { marked } from 'marked';
 	import { page } from '$app/stores';
 	import { sortConditions } from '$shared/pcd/conditions';
+	import CardGrid from '$ui/card/CardGrid.svelte';
+	import Card from '$ui/card/Card.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import { createProgressiveList } from '$lib/client/utils/progressiveList';
 
 	export let formats: CustomFormatTableRow[];
 
@@ -13,42 +17,36 @@
 
 	$: databaseId = $page.params.databaseId;
 
-	// Configure marked for inline parsing (no wrapping <p> tags for short text)
+	const { visibleCount, sentinel, reset, setTotalCount } = createProgressiveList({ pageSize: 30 });
+	$: setTotalCount(formats.length);
+	$: formats, reset();
+	$: visibleFormats = formats.slice(0, $visibleCount);
+
 	function parseMarkdown(text: string | null): string {
 		if (!text) return '';
 		return marked.parseInline(text) as string;
 	}
 
-	function getConditionColorClass(
+	function getConditionVariant(
 		condition: CustomFormatTableRow['conditions'][number]
-	): string {
-		if (condition.required && condition.negate) {
-			return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-		}
-		if (condition.required) {
-			return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-		}
-		if (condition.negate) {
-			return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
-		}
-		return 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
+	): 'danger' | 'success' | 'warning' | 'secondary' {
+		if (condition.required && condition.negate) return 'danger';
+		if (condition.required) return 'success';
+		if (condition.negate) return 'warning';
+		return 'secondary';
 	}
 </script>
 
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-	{#each formats as format}
-		<a
-			href="/custom-formats/{databaseId}/{format.id}"
-			class="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
-		>
-			<!-- Header with name and condition count -->
-			<div>
+<CardGrid flush>
+	{#each visibleFormats as format}
+		<Card href="/custom-formats/{databaseId}/{format.id}" hoverable>
+			<svelte:fragment slot="header">
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 				<div class="flex items-start justify-between gap-2">
 					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 						{format.name}
 					</h3>
-					<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
+					<div class="flex shrink-0 items-center gap-0.5" on:click|stopPropagation|preventDefault>
 						{#if format.testCount > 0}
 							<div
 								class="flex items-center gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
@@ -74,50 +72,43 @@
 						/>
 					</div>
 				</div>
+			</svelte:fragment>
+
+			<div class="space-y-3">
 				{#if format.tags.length > 0}
-					<div class="mt-2 flex flex-wrap gap-1">
+					<div class="flex flex-wrap gap-1">
 						{#each format.tags as tag}
-							<span
-								class="inline-flex items-center rounded bg-accent-100 px-1.5 py-0.5 font-mono text-[10px] text-accent-800 dark:bg-accent-900 dark:text-accent-200"
-							>
-								{tag.name}
-							</span>
+							<Label variant="info" size="sm" rounded="md">{tag.name}</Label>
 						{/each}
 					</div>
 				{/if}
+
+				<!-- Description -->
+				{#if format.description}
+					<div class="prose-inline line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400">
+						{@html parseMarkdown(format.description)}
+					</div>
+				{:else}
+					<div class="text-xs text-neutral-400 italic dark:text-neutral-500">No description</div>
+				{/if}
+
+				<!-- Conditions -->
+				{#if format.conditions.length > 0}
+					<div class="flex flex-wrap gap-1">
+						{#each sortConditions(format.conditions) as condition}
+							<Label variant={getConditionVariant(condition)} size="sm" rounded="md" mono>{condition.name}</Label>
+						{/each}
+					</div>
+				{:else}
+					<div class="text-xs text-neutral-400">None</div>
+				{/if}
 			</div>
-
-			<!-- Description -->
-			{#if format.description}
-				<div class="prose-inline line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400">
-					{@html parseMarkdown(format.description)}
-				</div>
-			{:else}
-				<div class="text-xs text-neutral-400 italic dark:text-neutral-500">No description</div>
-			{/if}
-
-			<!-- Conditions -->
-			{#if format.conditions.length > 0}
-				<div class="flex flex-wrap gap-1">
-					{#each sortConditions(format.conditions) as condition}
-						<span
-							class={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${getConditionColorClass(
-								condition
-							)}`}
-						>
-							{condition.name}
-						</span>
-					{/each}
-				</div>
-			{:else}
-				<div class="text-xs text-neutral-400">None</div>
-			{/if}
-		</a>
+		</Card>
 	{/each}
-</div>
+</CardGrid>
+<div use:sentinel></div>
 
 <style>
-	/* Inline prose styles for markdown content */
 	:global(.prose-inline code) {
 		background-color: rgb(229 231 235);
 		padding: 0.125rem 0.25rem;
