@@ -80,7 +80,7 @@
 	$: selectedLanguageName = ($current.language ?? null) as string | null;
 
 	// Language autocomplete state
-	let languageSearchQuery = initialData.language || '';
+	let languageSearchQuery = initialData.language || 'Any';
 	let showLanguageDropdown = false;
 
 	$: filteredLanguages = availableLanguages.filter((lang) =>

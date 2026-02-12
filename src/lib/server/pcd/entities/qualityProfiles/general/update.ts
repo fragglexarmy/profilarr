@@ -124,7 +124,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 	if (languageChanged) {
 		if (current.language !== null) {
 			const deleteLanguage = {
-				sql: `DELETE FROM quality_profile_languages WHERE quality_profile_name = '${esc(current.name)}' AND language_name = '${esc(current.language)}' AND type = 'simple'`,
+				sql: `DELETE FROM quality_profile_languages WHERE quality_profile_name = '${esc(current.name)}' AND language_name = '${esc(current.language)}'`,
 				parameters: [],
 				query: {} as never
 			};
@@ -137,7 +137,7 @@ export async function updateGeneral(options: UpdateGeneralOptions) {
 SELECT '${esc(current.name)}', '${esc(input.language)}', 'simple'
 WHERE NOT EXISTS (
   SELECT 1 FROM quality_profile_languages
-  WHERE quality_profile_name = '${esc(current.name)}' AND type = 'simple'
+  WHERE quality_profile_name = '${esc(current.name)}'
 )`,
 				parameters: [],
 				query: {} as never
