@@ -9,7 +9,11 @@
 	export let className: string = '';
 
 	let contextFlush = false;
-	try { contextFlush = getContext<boolean>('card-flush') ?? false; } catch { /* no parent CardGrid */ }
+	try {
+		contextFlush = getContext<boolean>('card-flush') ?? false;
+	} catch {
+		/* no parent CardGrid */
+	}
 	$: isFlush = flush || contextFlush;
 
 	$: hasHeader = !!$$slots.header;
@@ -23,15 +27,21 @@
 		lg: 'px-5 py-4'
 	}[padding];
 
-	$: bgClass = isFlush
-		? 'bg-neutral-50 dark:bg-neutral-900'
-		: 'bg-white dark:bg-neutral-800/50';
+	$: dividerClass = {
+		none: '',
+		sm: 'mx-3',
+		md: 'mx-4',
+		lg: 'mx-5'
+	}[padding];
 
-	$: hoverClass = hoverable || interactive
-		? isFlush
-			? 'transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60'
-			: 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/80'
-		: '';
+	$: bgClass = isFlush ? 'bg-neutral-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800/50';
+
+	$: hoverClass =
+		hoverable || interactive
+			? isFlush
+				? 'transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60'
+				: 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/80'
+			: '';
 
 	$: cursorClass = interactive ? 'cursor-pointer' : '';
 
@@ -44,7 +54,7 @@
 			<div class={paddingClass}>
 				<slot name="header" />
 			</div>
-			<div class="border-t border-neutral-200 dark:border-neutral-700/60"></div>
+			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 		{/if}
 
 		<div class={paddingClass}>
@@ -52,7 +62,7 @@
 		</div>
 
 		{#if hasFooter}
-			<div class="border-t border-neutral-200 dark:border-neutral-700/60"></div>
+			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 			<div class={paddingClass}>
 				<slot name="footer" />
 			</div>
@@ -65,7 +75,7 @@
 			<div class={paddingClass}>
 				<slot name="header" />
 			</div>
-			<div class="border-t border-neutral-200 dark:border-neutral-700/60"></div>
+			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 		{/if}
 
 		<div class={paddingClass}>
@@ -73,7 +83,7 @@
 		</div>
 
 		{#if hasFooter}
-			<div class="border-t border-neutral-200 dark:border-neutral-700/60"></div>
+			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 			<div class={paddingClass}>
 				<slot name="footer" />
 			</div>
