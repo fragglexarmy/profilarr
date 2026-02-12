@@ -87,7 +87,7 @@
 	$: iconSize = effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16;
 </script>
 
-<Tooltip text={tooltip} position={tooltipPosition}>
+<Tooltip text={tooltip} position={tooltipPosition} {fullWidth}>
 	{#if href}
 		<a
 			{href}

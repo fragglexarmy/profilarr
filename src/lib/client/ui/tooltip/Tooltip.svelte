@@ -3,6 +3,7 @@
 
 	export let text: string = '';
 	export let position: 'top' | 'bottom' = 'bottom';
+	export let fullWidth: boolean = false;
 
 	const PADDING = 8;
 
@@ -52,7 +53,7 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="inline-flex" bind:this={wrapperEl} on:mouseenter={show} on:mouseleave={hide}>
+<div class={fullWidth ? 'flex w-full' : 'inline-flex'} bind:this={wrapperEl} on:mouseenter={show} on:mouseleave={hide}>
 	<slot />
 	{#if text && visible}
 		<div bind:this={tooltipEl} class="pointer-events-none fixed z-50" style="{style};border-radius:0.75rem !important">
