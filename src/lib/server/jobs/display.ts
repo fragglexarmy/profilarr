@@ -30,10 +30,10 @@ export function formatJobTypeLabel(jobType: JobType): string {
 		case 'logs.cleanup':
 			return 'Logs Cleanup';
 		default:
-			return jobType
+			return (jobType as string)
 				.replace(/\./g, ' ')
 				.split('_')
-				.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
 				.join(' ');
 	}
 }
