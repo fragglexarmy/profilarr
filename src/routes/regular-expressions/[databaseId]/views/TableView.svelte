@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import Table from '$ui/table/Table.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { RegularExpressionWithTags } from '$shared/pcd/display';
-	import { Tag, Code, FileText, Link, Calendar } from 'lucide-svelte';
+	import { Tag, Code, FileText, Link, Calendar, Copy, Download } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { page } from '$app/stores';
 	import { parseUTC } from '$shared/utils/dates';
 
 	export let expressions: RegularExpressionWithTags[];
+
+	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
 
@@ -138,7 +142,27 @@
 	hoverable={true}
 	compact={false}
 	rowHref={getRowHref}
-/>
+>
+	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+	<svelte:fragment slot="actions" let:row>
+		<div class="flex items-center justify-end gap-0.5" on:click|stopPropagation>
+			<Button
+				icon={Download}
+				size="xs"
+				variant="ghost"
+				tooltip="Export"
+				on:click={() => dispatch('export', { name: row.name })}
+			/>
+			<Button
+				icon={Copy}
+				size="xs"
+				variant="ghost"
+				tooltip="Clone"
+				on:click={() => dispatch('clone', { name: row.name })}
+			/>
+		</div>
+	</svelte:fragment>
+</Table>
 
 <style>
 	/* Inline prose styles for markdown content */

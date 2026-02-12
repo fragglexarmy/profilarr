@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import Table from '$ui/table/Table.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
-	import { Tag, FileText, Layers, BookOpenText, Gauge, Earth } from 'lucide-svelte';
+	import { Tag, FileText, Layers, BookOpenText, Gauge, Earth, Copy, Download } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
 	export let profiles: QualityProfileTableRow[];
+
+	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
 
@@ -160,4 +164,24 @@
 	hoverable={true}
 	compact={false}
 	rowHref={getRowHref}
-/>
+>
+	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+	<svelte:fragment slot="actions" let:row>
+		<div class="flex items-center justify-end gap-0.5" on:click|stopPropagation>
+			<Button
+				icon={Download}
+				size="xs"
+				variant="ghost"
+				tooltip="Export"
+				on:click={() => dispatch('export', { name: row.name })}
+			/>
+			<Button
+				icon={Copy}
+				size="xs"
+				variant="ghost"
+				tooltip="Clone"
+				on:click={() => dispatch('clone', { name: row.name })}
+			/>
+		</div>
+	</svelte:fragment>
+</Table>

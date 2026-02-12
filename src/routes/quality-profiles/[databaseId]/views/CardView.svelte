@@ -1,9 +1,13 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
 	import { page } from '$app/stores';
-	import { BookOpenText, Gauge, Earth } from 'lucide-svelte';
+	import { BookOpenText, Gauge, Earth, Copy, Download } from 'lucide-svelte';
+	import Button from '$ui/button/Button.svelte';
 
 	export let profiles: QualityProfileTableRow[];
+
+	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
 </script>
@@ -16,7 +20,26 @@
 		>
 			<!-- Header with name and tags -->
 			<div>
-				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{profile.name}</h3>
+				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+				<div class="flex items-start justify-between gap-2">
+					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{profile.name}</h3>
+					<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
+						<Button
+							icon={Download}
+							size="xs"
+							variant="ghost"
+							tooltip="Export"
+							on:click={() => dispatch('export', { name: profile.name })}
+						/>
+						<Button
+							icon={Copy}
+							size="xs"
+							variant="ghost"
+							tooltip="Clone"
+							on:click={() => dispatch('clone', { name: profile.name })}
+						/>
+					</div>
+				</div>
 				{#if profile.tags.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each profile.tags as tag}

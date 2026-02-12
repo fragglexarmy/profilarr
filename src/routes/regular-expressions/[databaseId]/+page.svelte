@@ -5,6 +5,7 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ViewToggle from '$ui/actions/ViewToggle.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import CloneModal from '$ui/modal/CloneModal.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import TableView from './views/TableView.svelte';
@@ -14,12 +15,41 @@
 	import { browser } from '$app/environment';
 	import { Info, Plus, FileText, Users } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { alertStore } from '$alerts/store';
 	import type { RegularExpressionWithTags } from '$shared/pcd/display';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
 	let infoModalOpen = false;
+	let cloneModalOpen = false;
+	let cloneSourceName = '';
+
+	function handleClone(event: CustomEvent<{ name: string }>) {
+		cloneSourceName = event.detail.name;
+		cloneModalOpen = true;
+	}
+
+	async function handleExport(event: CustomEvent<{ name: string }>) {
+		const { name } = event.detail;
+		try {
+			const params = new URLSearchParams({
+				databaseId: String(data.currentDatabase.id),
+				entityType: 'regular_expression',
+				name
+			});
+			const res = await fetch(`/api/v1/pcd/export?${params}`);
+			const json = await res.json();
+			if (!res.ok) {
+				alertStore.add('error', json.error || 'Export failed');
+				return;
+			}
+			await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+			alertStore.add('success', `Copied "${name}" to clipboard`);
+		} catch {
+			alertStore.add('error', 'Export failed');
+		}
+	}
 
 	const SEARCH_FILTER_STORAGE_KEY = 'regularExpressionsSearchFilter';
 
@@ -162,9 +192,9 @@
 				</p>
 			</div>
 		{:else if $view === 'table'}
-			<TableView expressions={filtered} />
+			<TableView expressions={filtered} on:clone={handleClone} on:export={handleExport} />
 		{:else}
-			<CardView expressions={filtered} />
+			<CardView expressions={filtered} on:clone={handleClone} on:export={handleExport} />
 		{/if}
 	</div>
 </div>
@@ -214,3 +244,12 @@
 		</section>
 	</div>
 </InfoModal>
+
+<CloneModal
+	bind:open={cloneModalOpen}
+	databaseId={data.currentDatabase.id}
+	entityType="regular_expression"
+	sourceName={cloneSourceName}
+	existingNames={data.regularExpressions.map((r) => r.name)}
+	canWriteToBase={data.canWriteToBase}
+/>

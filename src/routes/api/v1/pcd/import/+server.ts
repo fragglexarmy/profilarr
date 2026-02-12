@@ -1,10 +1,20 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { pcdManager, canWriteToBase } from '$pcd/index.ts';
-import type { OperationLayer } from '$pcd/index.ts';
+import type { PCDCache, OperationLayer } from '$pcd/index.ts';
 import { ENTITY_TYPES } from '$shared/pcd/portable.ts';
-import type { EntityType, PortableDelayProfile } from '$shared/pcd/portable.ts';
-import { deserializeDelayProfile } from '$pcd/entities/deserialize.ts';
+import type {
+	EntityType,
+	PortableDelayProfile,
+	PortableRegularExpression,
+	PortableCustomFormat,
+	PortableQualityProfile,
+	PortableRadarrNaming,
+	PortableSonarrNaming,
+	PortableMediaSettings,
+	PortableQualityDefinitions
+} from '$shared/pcd/portable.ts';
+import * as deserialize from '$pcd/entities/deserialize.ts';
 import { validatePortableData } from '$pcd/entities/validate.ts';
 
 const VALID_ENTITY_TYPES: ReadonlySet<string> = new Set(ENTITY_TYPES);
@@ -52,7 +62,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	try {
-		await deserialize({
+		await deserializeEntity({
 			databaseId: databaseId as number,
 			cache,
 			layer: layer as OperationLayer,
@@ -68,17 +78,35 @@ export const POST: RequestHandler = async ({ request }) => {
 
 interface DeserializeArgs {
 	databaseId: number;
-	cache: Parameters<typeof deserializeDelayProfile>[0]['cache'];
+	cache: PCDCache;
 	layer: OperationLayer;
 	entityType: EntityType;
 	data: Record<string, unknown>;
 }
 
-async function deserialize({ databaseId, cache, layer, entityType, data }: DeserializeArgs) {
+async function deserializeEntity({ databaseId, cache, layer, entityType, data }: DeserializeArgs) {
+	const opts = { databaseId, cache, layer };
+
 	switch (entityType) {
 		case 'delay_profile':
-			return deserializeDelayProfile({ databaseId, cache, layer, portable: data as unknown as PortableDelayProfile });
-		default:
-			throw new Error(`Import not yet implemented for entity type: ${entityType}`);
+			return deserialize.deserializeDelayProfile({ ...opts, portable: data as unknown as PortableDelayProfile });
+		case 'regular_expression':
+			return deserialize.deserializeRegularExpression({ ...opts, portable: data as unknown as PortableRegularExpression });
+		case 'custom_format':
+			return deserialize.deserializeCustomFormat({ ...opts, portable: data as unknown as PortableCustomFormat });
+		case 'quality_profile':
+			return deserialize.deserializeQualityProfile({ ...opts, portable: data as unknown as PortableQualityProfile });
+		case 'radarr_naming':
+			return deserialize.deserializeRadarrNaming({ ...opts, portable: data as unknown as PortableRadarrNaming });
+		case 'sonarr_naming':
+			return deserialize.deserializeSonarrNaming({ ...opts, portable: data as unknown as PortableSonarrNaming });
+		case 'radarr_media_settings':
+			return deserialize.deserializeRadarrMediaSettings({ ...opts, portable: data as unknown as PortableMediaSettings });
+		case 'sonarr_media_settings':
+			return deserialize.deserializeSonarrMediaSettings({ ...opts, portable: data as unknown as PortableMediaSettings });
+		case 'radarr_quality_definitions':
+			return deserialize.deserializeRadarrQualityDefinitions({ ...opts, portable: data as unknown as PortableQualityDefinitions });
+		case 'sonarr_quality_definitions':
+			return deserialize.deserializeSonarrQualityDefinitions({ ...opts, portable: data as unknown as PortableQualityDefinitions });
 	}
 }

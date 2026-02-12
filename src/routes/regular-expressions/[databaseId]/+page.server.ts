@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
-import { pcdManager } from '$pcd/index.ts';
+import { pcdManager, canWriteToBase } from '$pcd/index.ts';
 import * as regularExpressionQueries from '$pcd/entities/regularExpressions/index.ts';
 
 export const load: ServerLoad = async ({ params }) => {
@@ -39,6 +39,7 @@ export const load: ServerLoad = async ({ params }) => {
 	return {
 		databases,
 		currentDatabase,
-		regularExpressions
+		regularExpressions,
+		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };

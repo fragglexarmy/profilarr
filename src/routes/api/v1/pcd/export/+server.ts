@@ -3,7 +3,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/index.ts';
 import { ENTITY_TYPES } from '$shared/pcd/portable.ts';
 import type { EntityType } from '$shared/pcd/portable.ts';
-import { serializeDelayProfile } from '$pcd/entities/serialize.ts';
+import type { PCDCache } from '$pcd/index.ts';
+import * as serialize from '$pcd/entities/serialize.ts';
 
 const VALID_ENTITY_TYPES: ReadonlySet<string> = new Set(ENTITY_TYPES);
 
@@ -31,7 +32,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 
 	try {
-		const data = await serialize(cache, entityType as EntityType, name);
+		const data = await serializeEntity(cache, entityType as EntityType, name);
 		return json({ entityType, data });
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Export failed';
@@ -42,11 +43,27 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 };
 
-async function serialize(cache: Parameters<typeof serializeDelayProfile>[0], entityType: EntityType, name: string) {
+async function serializeEntity(cache: PCDCache, entityType: EntityType, name: string) {
 	switch (entityType) {
 		case 'delay_profile':
-			return serializeDelayProfile(cache, name);
-		default:
-			throw new Error(`Export not yet implemented for entity type: ${entityType}`);
+			return serialize.serializeDelayProfile(cache, name);
+		case 'regular_expression':
+			return serialize.serializeRegularExpression(cache, name);
+		case 'custom_format':
+			return serialize.serializeCustomFormat(cache, name);
+		case 'quality_profile':
+			return serialize.serializeQualityProfile(cache, name);
+		case 'radarr_naming':
+			return serialize.serializeRadarrNaming(cache, name);
+		case 'sonarr_naming':
+			return serialize.serializeSonarrNaming(cache, name);
+		case 'radarr_media_settings':
+			return serialize.serializeRadarrMediaSettings(cache, name);
+		case 'sonarr_media_settings':
+			return serialize.serializeSonarrMediaSettings(cache, name);
+		case 'radarr_quality_definitions':
+			return serialize.serializeRadarrQualityDefinitions(cache, name);
+		case 'sonarr_quality_definitions':
+			return serialize.serializeSonarrQualityDefinitions(cache, name);
 	}
 }

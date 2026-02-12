@@ -1,11 +1,19 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import { Copy, Download } from 'lucide-svelte';
 	import type { MediaSettingsListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
 
 	export let configs: MediaSettingsListItem[];
 	export let databaseId: number;
+
+	const dispatch = createEventDispatcher<{
+		clone: { name: string; arr_type: string };
+		export: { name: string; arr_type: string };
+	}>();
 
 	const logos: Record<string, string> = {
 		radarr: radarrLogo,
@@ -69,6 +77,24 @@
 						{/if}
 					</div>
 				</div>
+			</div>
+
+			<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+			<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
+				<Button
+					icon={Download}
+					size="xs"
+					variant="ghost"
+					tooltip="Export"
+					on:click={() => dispatch('export', { name: config.name, arr_type: config.arr_type })}
+				/>
+				<Button
+					icon={Copy}
+					size="xs"
+					variant="ghost"
+					tooltip="Clone"
+					on:click={() => dispatch('clone', { name: config.name, arr_type: config.arr_type })}
+				/>
 			</div>
 		</a>
 	{/each}

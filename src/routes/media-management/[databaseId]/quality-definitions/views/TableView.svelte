@@ -1,13 +1,20 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import Table from '$ui/table/Table.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import type { Column } from '$ui/table/types';
-	import { Tag } from 'lucide-svelte';
+	import { Tag, Copy, Download } from 'lucide-svelte';
 	import type { QualityDefinitionListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
 
 	export let configs: QualityDefinitionListItem[];
 	export let databaseId: number;
+
+	const dispatch = createEventDispatcher<{
+		clone: { name: string; arr_type: string };
+		export: { name: string; arr_type: string };
+	}>();
 
 	const logos: Record<string, string> = {
 		radarr: radarrLogo,
@@ -47,5 +54,25 @@
 				/>
 			</div>
 		{/if}
+	</svelte:fragment>
+
+	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+	<svelte:fragment slot="actions" let:row>
+		<div class="flex items-center justify-end gap-0.5" on:click|stopPropagation>
+			<Button
+				icon={Download}
+				size="xs"
+				variant="ghost"
+				tooltip="Export"
+				on:click={() => dispatch('export', { name: row.name, arr_type: row.arr_type })}
+			/>
+			<Button
+				icon={Copy}
+				size="xs"
+				variant="ghost"
+				tooltip="Clone"
+				on:click={() => dispatch('clone', { name: row.name, arr_type: row.arr_type })}
+			/>
+		</div>
 	</svelte:fragment>
 </Table>

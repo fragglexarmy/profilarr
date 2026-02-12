@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import type { RegularExpressionWithTags } from '$shared/pcd/display';
-	import { ExternalLink } from 'lucide-svelte';
+	import { ExternalLink, Copy, Download } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { page } from '$app/stores';
+	import Button from '$ui/button/Button.svelte';
 
 	export let expressions: RegularExpressionWithTags[];
+
+	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
 
@@ -23,20 +27,37 @@
 		>
 			<!-- Header with name and tags -->
 			<div>
+				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 				<div class="flex items-start justify-between gap-2">
 					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 						{expression.name}
 					</h3>
-					{#if expression.regex101_id}
-						<button
-							type="button"
-							class="relative z-10 flex-shrink-0 text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
-							title="View on regex101"
-							on:click|preventDefault|stopPropagation={() => window.open(`https://regex101.com/r/${expression.regex101_id}`, '_blank')}
-						>
-							<ExternalLink size={14} />
-						</button>
-					{/if}
+					<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
+						{#if expression.regex101_id}
+							<button
+								type="button"
+								class="relative z-10 flex-shrink-0 text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
+								title="View on regex101"
+								on:click={() => window.open(`https://regex101.com/r/${expression.regex101_id}`, '_blank')}
+							>
+								<ExternalLink size={14} />
+							</button>
+						{/if}
+						<Button
+							icon={Download}
+							size="xs"
+							variant="ghost"
+							tooltip="Export"
+							on:click={() => dispatch('export', { name: expression.name })}
+						/>
+						<Button
+							icon={Copy}
+							size="xs"
+							variant="ghost"
+							tooltip="Clone"
+							on:click={() => dispatch('clone', { name: expression.name })}
+						/>
+					</div>
 				</div>
 				{#if expression.tags.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">

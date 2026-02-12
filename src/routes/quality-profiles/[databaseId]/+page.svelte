@@ -6,13 +6,44 @@
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ViewToggle from '$ui/actions/ViewToggle.svelte';
+	import CloneModal from '$ui/modal/CloneModal.svelte';
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import { browser } from '$app/environment';
+	import { alertStore } from '$alerts/store';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+
+	let cloneModalOpen = false;
+	let cloneSourceName = '';
+
+	function handleClone(event: CustomEvent<{ name: string }>) {
+		cloneSourceName = event.detail.name;
+		cloneModalOpen = true;
+	}
+
+	async function handleExport(event: CustomEvent<{ name: string }>) {
+		const { name } = event.detail;
+		try {
+			const params = new URLSearchParams({
+				databaseId: String(data.currentDatabase.id),
+				entityType: 'quality_profile',
+				name
+			});
+			const res = await fetch(`/api/v1/pcd/export?${params}`);
+			const json = await res.json();
+			if (!res.ok) {
+				alertStore.add('error', json.error || 'Export failed');
+				return;
+			}
+			await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+			alertStore.add('success', `Copied "${name}" to clipboard`);
+		} catch {
+			alertStore.add('error', 'Export failed');
+		}
+	}
 
 	// Initialize data page store
 	const { search, view, filtered, setItems } = createDataPageStore(data.qualityProfiles, {
@@ -72,9 +103,18 @@
 				<p class="text-neutral-600 dark:text-neutral-400">No quality profiles match your search</p>
 			</div>
 		{:else if $view === 'table'}
-			<TableView profiles={$filtered} />
+			<TableView profiles={$filtered} on:clone={handleClone} on:export={handleExport} />
 		{:else}
-			<CardView profiles={$filtered} />
+			<CardView profiles={$filtered} on:clone={handleClone} on:export={handleExport} />
 		{/if}
 	</div>
 </div>
+
+<CloneModal
+	bind:open={cloneModalOpen}
+	databaseId={data.currentDatabase.id}
+	entityType="quality_profile"
+	sourceName={cloneSourceName}
+	existingNames={data.qualityProfiles.map((p) => p.name)}
+	canWriteToBase={data.canWriteToBase}
+/>
