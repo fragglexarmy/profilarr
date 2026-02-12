@@ -10,7 +10,7 @@
  * Future: Advanced mode with adaptive backoff per scratchpad.md
  */
 
-import type { RadarrTag, RadarrMovie } from '$lib/server/utils/arr/types.ts';
+import type { ArrTag, RadarrMovie } from '$lib/server/utils/arr/types.ts';
 import type { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
 
 const FILTER_TAG_PREFIX = 'profilarr-';
@@ -47,7 +47,7 @@ export function isFilterTag(label: string): boolean {
  */
 export function hasFilterTag(
 	itemTagIds: number[],
-	allTags: RadarrTag[],
+	allTags: ArrTag[],
 	filterName: string
 ): boolean {
 	const targetLabel = getFilterTagLabel(filterName);
@@ -69,7 +69,7 @@ export function hasFilterTag(
  */
 export function filterByFilterTag<T extends { _tags: number[] }>(
 	items: T[],
-	allTags: RadarrTag[],
+	allTags: ArrTag[],
 	filterName: string
 ): T[] {
 	return items.filter((item) => !hasFilterTag(item._tags, allTags, filterName));
@@ -199,7 +199,7 @@ export async function resetFilterCooldown(
  */
 export function isFilterExhausted<T extends { _tags: number[] }>(
 	matchedItems: T[],
-	allTags: RadarrTag[],
+	allTags: ArrTag[],
 	filterName: string
 ): boolean {
 	const untaggedItems = filterByFilterTag(matchedItems, allTags, filterName);

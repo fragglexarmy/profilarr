@@ -9,7 +9,7 @@ import { normalizeRadarrItem, normalizeRadarrItems } from '../../lib/server/upgr
 import type {
 	RadarrMovie,
 	RadarrMovieFile,
-	RadarrQualityProfile
+	ArrQualityProfile
 } from '../../lib/server/utils/arr/types.ts';
 
 class NormalizeTest extends BaseTest {
@@ -105,7 +105,7 @@ class NormalizeTest extends BaseTest {
 	/**
 	 * Create a mock quality profile based on real Radarr API response
 	 */
-	private createMockProfile(overrides: Partial<RadarrQualityProfile> = {}): RadarrQualityProfile {
+	private createMockProfile(overrides: Partial<ArrQualityProfile> = {}): ArrQualityProfile {
 		return {
 			id: 7,
 			name: '1080p Quality',
@@ -522,7 +522,7 @@ class NormalizeTest extends BaseTest {
 
 		this.test('batch normalization handles empty input', () => {
 			const movieFileMap = new Map<number, RadarrMovieFile>();
-			const profileMap = new Map<number, RadarrQualityProfile>();
+			const profileMap = new Map<number, ArrQualityProfile>();
 
 			const results = normalizeRadarrItems([], movieFileMap, profileMap, 80);
 

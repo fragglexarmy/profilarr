@@ -6,7 +6,7 @@
 import type {
 	RadarrMovie,
 	RadarrMovieFile,
-	RadarrQualityProfile
+	ArrQualityProfile
 } from '$lib/server/utils/arr/types.ts';
 import type { UpgradeItem } from './types.ts';
 
@@ -22,7 +22,7 @@ import type { UpgradeItem } from './types.ts';
 export function normalizeRadarrItem(
 	movie: RadarrMovie,
 	movieFile: RadarrMovieFile | undefined,
-	profile: RadarrQualityProfile | undefined,
+	profile: ArrQualityProfile | undefined,
 	cutoffPercent: number,
 	tagMap?: Map<number, string>
 ): UpgradeItem {
@@ -101,7 +101,7 @@ export function normalizeRadarrItem(
 export function normalizeRadarrItems(
 	movies: RadarrMovie[],
 	movieFileMap: Map<number, RadarrMovieFile>,
-	profileMap: Map<number, RadarrQualityProfile>,
+	profileMap: Map<number, ArrQualityProfile>,
 	cutoffPercent: number,
 	tagMap?: Map<number, string>
 ): UpgradeItem[] {

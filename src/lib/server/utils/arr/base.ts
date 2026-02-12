@@ -8,7 +8,7 @@ import type {
 	ArrQualityDefinition,
 	ArrCustomFormat,
 	ArrQualityProfilePayload,
-	RadarrQualityProfile,
+	ArrQualityProfile,
 	ArrCommand,
 	ArrLogResponse,
 	ArrLogFile,
@@ -256,22 +256,22 @@ export class BaseArrClient extends BaseHttpClient {
 	/**
 	 * Get all quality profiles
 	 */
-	getQualityProfiles(): Promise<RadarrQualityProfile[]> {
-		return this.get<RadarrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
+	getQualityProfiles(): Promise<ArrQualityProfile[]> {
+		return this.get<ArrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
 	}
 
 	/**
 	 * Get a quality profile by ID
 	 */
-	getQualityProfile(id: number): Promise<RadarrQualityProfile> {
-		return this.get<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`);
+	getQualityProfile(id: number): Promise<ArrQualityProfile> {
+		return this.get<ArrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`);
 	}
 
 	/**
 	 * Create a new quality profile
 	 */
-	createQualityProfile(profile: ArrQualityProfilePayload): Promise<RadarrQualityProfile> {
-		return this.post<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile`, profile);
+	createQualityProfile(profile: ArrQualityProfilePayload): Promise<ArrQualityProfile> {
+		return this.post<ArrQualityProfile>(`/api/${this.apiVersion}/qualityprofile`, profile);
 	}
 
 	/**
@@ -280,8 +280,8 @@ export class BaseArrClient extends BaseHttpClient {
 	updateQualityProfile(
 		id: number,
 		profile: ArrQualityProfilePayload
-	): Promise<RadarrQualityProfile> {
-		return this.put<RadarrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`, profile);
+	): Promise<ArrQualityProfile> {
+		return this.put<ArrQualityProfile>(`/api/${this.apiVersion}/qualityprofile/${id}`, profile);
 	}
 
 	/**

@@ -15,7 +15,7 @@ import {
 	applyFilterTagToMovies,
 	resetFilterCooldown
 } from '../../lib/server/upgrades/cooldown.ts';
-import type { RadarrTag, RadarrMovie } from '../../lib/server/utils/arr/types.ts';
+import type { ArrTag, RadarrMovie } from '../../lib/server/utils/arr/types.ts';
 import type { RadarrClient } from '../../lib/server/utils/arr/clients/radarr.ts';
 
 /**
@@ -23,7 +23,7 @@ import type { RadarrClient } from '../../lib/server/utils/arr/clients/radarr.ts'
  * Stores state in-memory to simulate Radarr behavior
  */
 class MockRadarrClient {
-	tags: RadarrTag[] = [];
+	tags: ArrTag[] = [];
 	movies: RadarrMovie[] = [];
 	private nextTagId = 1;
 
@@ -50,7 +50,7 @@ class MockRadarrClient {
 		} as RadarrMovie));
 	}
 
-	async getTags(): Promise<RadarrTag[]> {
+	async getTags(): Promise<ArrTag[]> {
 		return this.tags;
 	}
 
@@ -58,11 +58,11 @@ class MockRadarrClient {
 		return this.movies;
 	}
 
-	async getOrCreateTag(label: string): Promise<RadarrTag> {
+	async getOrCreateTag(label: string): Promise<ArrTag> {
 		const existing = this.tags.find((t) => t.label.toLowerCase() === label.toLowerCase());
 		if (existing) return existing;
 
-		const newTag: RadarrTag = { id: this.nextTagId++, label };
+		const newTag: ArrTag = { id: this.nextTagId++, label };
 		this.tags.push(newTag);
 		return newTag;
 	}
@@ -142,7 +142,7 @@ class CooldownTest extends BaseTest {
 		// =====================
 
 		this.test('hasFilterTag: finds matching tag', () => {
-			const allTags: RadarrTag[] = [
+			const allTags: ArrTag[] = [
 				{ id: 1, label: 'profilarr-my-filter' },
 				{ id: 2, label: 'other-tag' }
 			];
@@ -151,7 +151,7 @@ class CooldownTest extends BaseTest {
 		});
 
 		this.test('hasFilterTag: returns false when tag not present', () => {
-			const allTags: RadarrTag[] = [
+			const allTags: ArrTag[] = [
 				{ id: 1, label: 'profilarr-other-filter' },
 				{ id: 2, label: 'other-tag' }
 			];
@@ -160,13 +160,13 @@ class CooldownTest extends BaseTest {
 		});
 
 		this.test('hasFilterTag: returns false when item has no tags', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const itemTagIds: number[] = [];
 			assertEquals(hasFilterTag(itemTagIds, allTags, 'My Filter'), false);
 		});
 
 		this.test('hasFilterTag: handles case-insensitive filter name', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const itemTagIds = [1];
 			// getFilterTagLabel lowercases, so "MY FILTER" -> "profilarr-my-filter"
 			assertEquals(hasFilterTag(itemTagIds, allTags, 'MY FILTER'), true);
@@ -177,7 +177,7 @@ class CooldownTest extends BaseTest {
 		// =====================
 
 		this.test('filterByFilterTag: filters out tagged items', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const items = [
 				{ id: 1, title: 'Tagged Movie', _tags: [1] },
 				{ id: 2, title: 'Untagged Movie', _tags: [] },
@@ -191,7 +191,7 @@ class CooldownTest extends BaseTest {
 		});
 
 		this.test('filterByFilterTag: returns all items when none tagged', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-other-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-other-filter' }];
 			const items = [
 				{ id: 1, title: 'Movie 1', _tags: [] },
 				{ id: 2, title: 'Movie 2', _tags: [1] }
@@ -202,7 +202,7 @@ class CooldownTest extends BaseTest {
 		});
 
 		this.test('filterByFilterTag: returns empty when all tagged', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const items = [
 				{ id: 1, title: 'Movie 1', _tags: [1] },
 				{ id: 2, title: 'Movie 2', _tags: [1] }
@@ -217,7 +217,7 @@ class CooldownTest extends BaseTest {
 		// =====================
 
 		this.test('isFilterExhausted: true when all items tagged', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const items = [
 				{ id: 1, _tags: [1] },
 				{ id: 2, _tags: [1] }
@@ -227,7 +227,7 @@ class CooldownTest extends BaseTest {
 		});
 
 		this.test('isFilterExhausted: false when some items untagged', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const items = [
 				{ id: 1, _tags: [1] },
 				{ id: 2, _tags: [] }
@@ -237,7 +237,7 @@ class CooldownTest extends BaseTest {
 		});
 
 		this.test('isFilterExhausted: false when no items matched', () => {
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-my-filter' }];
 			const items: { id: number; _tags: number[] }[] = [];
 
 			assertEquals(isFilterExhausted(items, allTags, 'My Filter'), false);
@@ -245,7 +245,7 @@ class CooldownTest extends BaseTest {
 
 		this.test('isFilterExhausted: true triggers reset cycle', () => {
 			// Simulates: matched 3 items, all 3 tagged = exhausted = reset
-			const allTags: RadarrTag[] = [{ id: 1, label: 'profilarr-upgrade-filter' }];
+			const allTags: ArrTag[] = [{ id: 1, label: 'profilarr-upgrade-filter' }];
 			const matchedItems = [
 				{ id: 100, _tags: [1] },
 				{ id: 200, _tags: [1] },
@@ -267,7 +267,7 @@ class CooldownTest extends BaseTest {
 			const tagId = 42;
 
 			// Step 1: Initial state - no tags exist, 3 matched items
-			let allTags: RadarrTag[] = [];
+			let allTags: ArrTag[] = [];
 			let items = [
 				{ id: 1, title: 'Movie A', _tags: [] as number[] },
 				{ id: 2, title: 'Movie B', _tags: [] as number[] },
@@ -317,7 +317,7 @@ class CooldownTest extends BaseTest {
 			const tag1Id = 1;
 			const tag2Id = 2;
 
-			const allTags: RadarrTag[] = [
+			const allTags: ArrTag[] = [
 				{ id: tag1Id, label: getFilterTagLabel(filter1Name) },
 				{ id: tag2Id, label: getFilterTagLabel(filter2Name) }
 			];
@@ -349,7 +349,7 @@ class CooldownTest extends BaseTest {
 		this.test('scenario: new item added mid-cycle is picked up', () => {
 			const filterName = 'Ongoing Filter';
 			const tagId = 1;
-			const allTags: RadarrTag[] = [{ id: tagId, label: getFilterTagLabel(filterName) }];
+			const allTags: ArrTag[] = [{ id: tagId, label: getFilterTagLabel(filterName) }];
 
 			// Start with 2 items, both tagged (exhausted)
 			let items = [

@@ -2,9 +2,9 @@ import { BaseArrClient } from '../base.ts';
 import type {
 	RadarrMovie,
 	RadarrMovieFile,
-	RadarrQualityProfile,
+	ArrQualityProfile,
 	RadarrLibraryItem,
-	RadarrTag,
+	ArrTag,
 	ArrCommand,
 	RadarrRelease,
 	RadarrQueueItem,
@@ -26,8 +26,8 @@ export class RadarrClient extends BaseArrClient {
 	/**
 	 * Get all quality profiles
 	 */
-	override getQualityProfiles(): Promise<RadarrQualityProfile[]> {
-		return this.get<RadarrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
+	override getQualityProfiles(): Promise<ArrQualityProfile[]> {
+		return this.get<ArrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
 	}
 
 	/**
@@ -161,21 +161,21 @@ export class RadarrClient extends BaseArrClient {
 	/**
 	 * Get all tags
 	 */
-	override getTags(): Promise<RadarrTag[]> {
-		return this.get<RadarrTag[]>(`/api/${this.apiVersion}/tag`);
+	override getTags(): Promise<ArrTag[]> {
+		return this.get<ArrTag[]>(`/api/${this.apiVersion}/tag`);
 	}
 
 	/**
 	 * Create a new tag
 	 */
-	override createTag(label: string): Promise<RadarrTag> {
-		return this.post<RadarrTag>(`/api/${this.apiVersion}/tag`, { label });
+	override createTag(label: string): Promise<ArrTag> {
+		return this.post<ArrTag>(`/api/${this.apiVersion}/tag`, { label });
 	}
 
 	/**
 	 * Get a tag by label, or create it if it doesn't exist
 	 */
-	async getOrCreateTag(label: string): Promise<RadarrTag> {
+	async getOrCreateTag(label: string): Promise<ArrTag> {
 		const tags = await this.getTags();
 		const existing = tags.find((t) => t.label.toLowerCase() === label.toLowerCase());
 

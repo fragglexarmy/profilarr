@@ -6,7 +6,7 @@ import type {
 	SonarrEpisodeFile,
 	SonarrEpisodeItem,
 	SonarrLibraryItem,
-	RadarrQualityProfile,
+	ArrQualityProfile,
 	ArrCommand,
 	RenamePreviewItem
 } from '../types.ts';
@@ -64,8 +64,8 @@ export class SonarrClient extends BaseArrClient {
 	/**
 	 * Get quality profiles (override for proper typing)
 	 */
-	override getQualityProfiles(): Promise<RadarrQualityProfile[]> {
-		return this.get<RadarrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
+	override getQualityProfiles(): Promise<ArrQualityProfile[]> {
+		return this.get<ArrQualityProfile[]>(`/api/${this.apiVersion}/qualityprofile`);
 	}
 
 	/**
@@ -123,7 +123,7 @@ export class SonarrClient extends BaseArrClient {
 	 */
 	async getSeriesEpisodeDetails(
 		seriesId: number,
-		profile: RadarrQualityProfile
+		profile: ArrQualityProfile
 	): Promise<SonarrEpisodeItem[]> {
 		const [episodes, episodeFiles] = await Promise.all([
 			this.getEpisodes(seriesId),

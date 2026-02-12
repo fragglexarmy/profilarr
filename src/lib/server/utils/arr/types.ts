@@ -117,7 +117,7 @@ export interface QualityProfileFormatItem {
 /**
  * Quality profile from /api/v3/qualityprofile
  */
-export interface RadarrQualityProfile {
+export interface ArrQualityProfile {
 	id: number;
 	name: string;
 	upgradeAllowed?: boolean;
@@ -134,13 +134,11 @@ export interface RadarrQualityProfile {
 	}[];
 }
 
-/**
- * Tag from /api/v3/tag
- */
-export interface RadarrTag {
-	id: number;
-	label: string;
-}
+/** @deprecated Use ArrQualityProfile instead */
+export type RadarrQualityProfile = ArrQualityProfile;
+
+/** @deprecated Use ArrTag instead */
+export type RadarrTag = ArrTag;
 
 /**
  * Command response from /api/v3/command
