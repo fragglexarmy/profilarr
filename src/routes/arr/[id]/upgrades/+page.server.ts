@@ -160,7 +160,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const cooldownUntil = calculateCooldownUntil(config.lastRunAt, config.schedule);
+			const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
 			if (cooldownUntil && Date.now() < new Date(cooldownUntil).getTime()) {
 				return fail(400, {
 					error: `Upgrade cooldown active until ${cooldownUntil}`

@@ -32,7 +32,7 @@ const upgradeRunHandler: JobHandler = async (job) => {
 		};
 	}
 
-	const cooldownUntil = calculateCooldownUntil(config.lastRunAt, config.schedule);
+	const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
 	if (cooldownUntil) {
 		const cooldownMs = new Date(cooldownUntil).getTime();
 		if (Date.now() < cooldownMs) {
