@@ -6,12 +6,12 @@
 	import type { PageData } from './$types';
 	import type { Column } from '$lib/client/ui/table/types';
 	import Table from '$lib/client/ui/table/Table.svelte';
-	import TableActionButton from '$lib/client/ui/table/TableActionButton.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import Badge from '$lib/client/ui/badge/Badge.svelte';
 	import ActionsBar from '$lib/client/ui/actions/ActionsBar.svelte';
 	import ActionButton from '$lib/client/ui/actions/ActionButton.svelte';
 	import SearchAction from '$lib/client/ui/actions/SearchAction.svelte';
-	import Dropdown from '$lib/client/ui/dropdown/Dropdown.svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 	import { getPersistentSearchStore } from '$lib/client/stores/search';
 
 	export let data: PageData;
@@ -194,58 +194,15 @@
 	<div class="mb-4">
 		<ActionsBar>
 			<SearchAction {searchStore} placeholder="Search backups..." />
-			<ActionButton icon={Upload} hasDropdown dropdownPosition="right" on:click={triggerFileUpload}>
-				<svelte:fragment slot="dropdown">
-					<Dropdown position="right" minWidth="16rem">
-						<div class="px-4 py-3 text-left">
-							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								Upload Backup
-							</div>
-							<div class="text-xs text-neutral-500 dark:text-neutral-400">
-								Restore from a .tar.gz backup file
-							</div>
-						</div>
-					</Dropdown>
-				</svelte:fragment>
-			</ActionButton>
-			<ActionButton
-				icon={FolderArchive}
-				hasDropdown
-				dropdownPosition="right"
-				on:click={triggerCreateBackup}
-			>
-				<svelte:fragment slot="dropdown">
-					<Dropdown position="right" minWidth="16rem">
-						<div class="px-4 py-3 text-left">
-							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								Create Backup
-							</div>
-							<div class="text-xs text-neutral-500 dark:text-neutral-400">
-								Create a new backup of database and configs
-							</div>
-						</div>
-					</Dropdown>
-				</svelte:fragment>
-			</ActionButton>
-			<ActionButton
-				icon={BrushCleaning}
-				hasDropdown
-				dropdownPosition="right"
-				on:click={triggerCleanupBackups}
-			>
-				<svelte:fragment slot="dropdown">
-					<Dropdown position="right" minWidth="16rem">
-						<div class="px-4 py-3 text-left">
-							<div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								Run Backup Cleanup
-							</div>
-							<div class="text-xs text-neutral-500 dark:text-neutral-400">
-								Delete old backups using retention settings
-							</div>
-						</div>
-					</Dropdown>
-				</svelte:fragment>
-			</ActionButton>
+			<Tooltip text="Upload Backup">
+				<ActionButton icon={Upload} on:click={triggerFileUpload} />
+			</Tooltip>
+			<Tooltip text="Create Backup">
+				<ActionButton icon={FolderArchive} on:click={triggerCreateBackup} />
+			</Tooltip>
+			<Tooltip text="Run Backup Cleanup">
+				<ActionButton icon={BrushCleaning} on:click={triggerCleanupBackups} />
+			</Tooltip>
 		</ActionsBar>
 	</div>
 
@@ -268,17 +225,15 @@
 		</svelte:fragment>
 
 		<svelte:fragment slot="actions" let:row>
-			<div class="flex items-center justify-end gap-1">
-				<!-- Download Button -->
-				<TableActionButton
+			<div class="flex items-center justify-end gap-0.5">
+				<Button
 					icon={Download}
-					title="Download backup"
-					variant="neutral"
-					size="sm"
+					size="xs"
+					variant="ghost"
+					tooltip="Download"
 					on:click={() => downloadBackup(row.filename)}
 				/>
 
-				<!-- Restore Button -->
 				<form
 					method="POST"
 					action="?/restoreBackup"
@@ -300,20 +255,18 @@
 					}}
 				>
 					<input type="hidden" name="filename" value={row.filename} />
-					<button
-						type="button"
+					<Button
+						icon={RotateCcw}
+						size="xs"
+						variant="ghost"
+						tooltip="Restore"
 						on:click={(e) => {
-							const form = e.currentTarget.closest('form');
+							const form = (e.currentTarget as HTMLElement)?.closest('form');
 							if (form) openRestoreModal(row.filename, form);
 						}}
-						class="inline-flex h-6 w-6 items-center justify-center rounded border border-neutral-300 bg-white text-amber-600 transition-colors hover:border-amber-300 hover:bg-amber-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-amber-400 dark:hover:border-amber-700 dark:hover:bg-amber-900/20"
-						title="Restore from backup"
-					>
-						<RotateCcw size={12} />
-					</button>
+					/>
 				</form>
 
-				<!-- Delete Button -->
 				<form
 					method="POST"
 					action="?/deleteBackup"
@@ -332,11 +285,11 @@
 					}}
 				>
 					<input type="hidden" name="filename" value={row.filename} />
-					<TableActionButton
+					<Button
 						icon={Trash2}
-						title="Delete backup"
-						variant="danger"
-						size="sm"
+						size="xs"
+						variant="ghost"
+						tooltip="Delete"
 						on:click={(e) => {
 							const form = (e.currentTarget as HTMLElement)?.closest('form');
 							if (form) openDeleteModal(row.filename, form);

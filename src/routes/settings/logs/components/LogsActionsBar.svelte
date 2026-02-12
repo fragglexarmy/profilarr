@@ -4,6 +4,7 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 	import { type SearchStore } from '$stores/search';
 
 	interface LogFile {
@@ -137,39 +138,24 @@
 	</ActionButton>
 
 	<!-- Refresh -->
-	<ActionButton hasDropdown={true} dropdownPosition="right" on:click={onRefresh}>
-		<RefreshCw
-			size={20}
-			class="text-neutral-700 dark:text-neutral-300 {isRefreshing ? 'animate-spin' : ''}"
-		/>
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="6rem">
-				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">Refresh logs</div>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
+	<Tooltip text="Refresh logs">
+		<ActionButton on:click={onRefresh}>
+			<RefreshCw
+				size={20}
+				class="text-neutral-700 dark:text-neutral-300 {isRefreshing ? 'animate-spin' : ''}"
+			/>
+		</ActionButton>
+	</Tooltip>
 
 	<!-- Cleanup -->
 	{#if onCleanup}
-		<ActionButton icon={BrushCleaning} hasDropdown={true} dropdownPosition="right" on:click={onCleanup}>
-			<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-				<Dropdown position={dropdownPosition} minWidth="9rem">
-					<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-						Run log cleanup now
-					</div>
-				</Dropdown>
-			</svelte:fragment>
-		</ActionButton>
+		<Tooltip text="Run log cleanup">
+			<ActionButton icon={BrushCleaning} on:click={onCleanup} />
+		</Tooltip>
 	{/if}
 
 	<!-- Download -->
-	<ActionButton icon={Download} hasDropdown={true} dropdownPosition="right" on:click={onDownload}>
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="8rem">
-				<div class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-					Download logs as JSON
-				</div>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
+	<Tooltip text="Download logs as JSON">
+		<ActionButton icon={Download} on:click={onDownload} />
+	</Tooltip>
 </ActionsBar>
