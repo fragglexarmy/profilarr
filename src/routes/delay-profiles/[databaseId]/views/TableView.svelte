@@ -4,27 +4,14 @@
 	import Button from '$ui/button/Button.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { DelayProfilesRow } from '$shared/pcd/display.ts';
-	import { Tag, Clock, Zap, Shield, Calendar, Copy, Download } from 'lucide-svelte';
+	import { Tag, Clock, Zap, Shield, Copy, Download } from 'lucide-svelte';
 	import { page } from '$app/stores';
-	import { parseUTC } from '$shared/utils/dates';
 
 	export let profiles: DelayProfilesRow[];
 
 	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
 	$: databaseId = $page.params.databaseId;
-
-	function formatDate(dateString: string): string {
-		const date = parseUTC(dateString);
-		if (!date) return '-';
-		return date.toLocaleString(undefined, {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	}
 
 	function getRowHref(row: DelayProfilesRow): string {
 		return `/delay-profiles/${databaseId}/${encodeURIComponent(row.name)}`;
@@ -117,28 +104,6 @@
 					`
 				};
 			}
-		},
-		{
-			key: 'updated_at',
-			header: 'Updated',
-			headerIcon: Calendar,
-			align: 'left',
-			width: 'w-44',
-			sortable: true,
-			cell: (row: DelayProfilesRow) => ({
-				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.updated_at)}</span>`
-			})
-		},
-		{
-			key: 'created_at',
-			header: 'Created',
-			headerIcon: Calendar,
-			align: 'left',
-			width: 'w-44',
-			sortable: true,
-			cell: (row: DelayProfilesRow) => ({
-				html: `<span class="text-xs text-neutral-500 dark:text-neutral-400">${formatDate(row.created_at)}</span>`
-			})
 		}
 	];
 </script>

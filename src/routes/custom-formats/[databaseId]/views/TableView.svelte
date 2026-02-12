@@ -52,7 +52,7 @@
 								${row.tags
 									.map(
 										(tag) => `
-									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
+									<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 										${escapeHtml(tag.name)}
 									</span>
 								`
@@ -105,7 +105,7 @@
 										colorClass =
 											'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
 									}
-									return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${colorClass}">${escapeHtml(c.name)}</span>`;
+									return `<span class="inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] font-medium ${colorClass}">${escapeHtml(c.name)}</span>`;
 								})
 								.join('')}</div>`
 						: `<span class="text-neutral-400 text-xs">None</span>`
@@ -135,6 +135,7 @@
 	hoverable={true}
 	compact={false}
 	rowHref={getRowHref}
+	pageSize={50}
 >
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 	<svelte:fragment slot="actions" let:row>

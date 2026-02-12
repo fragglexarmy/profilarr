@@ -17,6 +17,15 @@
 		return `/quality-profiles/${databaseId}/${row.id}/general`;
 	}
 
+	const qualitySecondary =
+		'inline-flex items-center leading-none font-medium font-mono px-2.5 py-1 text-xs rounded-md bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
+	const qualitySuccess =
+		'inline-flex items-center leading-none font-medium font-mono px-2.5 py-1 text-xs rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
+	const labelSecondary =
+		'inline-flex items-center leading-none font-medium font-mono px-2 py-1 text-[10px] rounded-md bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
+	const labelSecondaryNoMono =
+		'inline-flex items-center leading-none font-medium px-2 py-1 text-[10px] rounded-md bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
+
 	// Define table columns for quality profiles
 	const columns: Column<QualityProfileTableRow>[] = [
 		{
@@ -36,7 +45,7 @@
 								${row.tags
 									.map(
 										(tag) => `
-									<span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
+									<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200">
 										${tag.name}
 									</span>
 								`
@@ -68,17 +77,11 @@
 			cell: (row: QualityProfileTableRow) => {
 				return {
 					html: `
-						<div class="space-y-1 py-2">
+						<div class="flex flex-wrap gap-1 py-1">
 							${row.qualities
 								.map(
 									(q) => `
-								<div class="relative px-2 py-0.5 rounded border ${
-									q.is_upgrade_until
-										? 'border-accent-200 bg-accent-50 dark:border-accent-800 dark:bg-accent-950'
-										: 'border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800'
-								}">
-									<span class="font-mono text-xs">${q.name}</span>
-								</div>
+								<span class="${q.is_upgrade_until ? qualitySuccess : qualitySecondary}">${q.name}</span>
 							`
 								)
 								.join('')}
@@ -95,10 +98,10 @@
 			width: 'w-48',
 			cell: (row: QualityProfileTableRow) => ({
 				html: `
-					<div class="text-xs space-y-0.5">
-						<div>All: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.custom_formats.all}</span></div>
-						<div>Radarr: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.custom_formats.radarr}</span></div>
-						<div>Sonarr: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.custom_formats.sonarr}</span></div>
+					<div class="text-xs space-y-1">
+						<div class="flex items-center gap-1.5">All: <span class="${labelSecondary}">${row.custom_formats.all}</span></div>
+						<div class="flex items-center gap-1.5">Radarr: <span class="${labelSecondary}">${row.custom_formats.radarr}</span></div>
+						<div class="flex items-center gap-1.5">Sonarr: <span class="${labelSecondary}">${row.custom_formats.sonarr}</span></div>
 					</div>
 				`
 			})
@@ -111,13 +114,13 @@
 			width: 'w-52',
 			cell: (row: QualityProfileTableRow) => ({
 				html: `
-					<div class="text-xs space-y-0.5">
-						<div>Minimum: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.minimum_custom_format_score}</span></div>
+					<div class="text-xs space-y-1">
+						<div class="flex items-center gap-1.5">Minimum: <span class="${labelSecondary}">${row.minimum_custom_format_score}</span></div>
 						${
 							row.upgrades_allowed
 								? `
-							<div>Upgrade Until: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.upgrade_until_score}</span></div>
-							<div>Increment: <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.upgrade_score_increment}</span></div>
+							<div class="flex items-center gap-1.5">Upgrade Until: <span class="${labelSecondary}">${row.upgrade_until_score}</span></div>
+							<div class="flex items-center gap-1.5">Increment: <span class="${labelSecondary}">${row.upgrade_score_increment}</span></div>
 						`
 								: `
 							<div class="text-neutral-500 dark:text-neutral-400">No Upgrades</div>
@@ -134,23 +137,8 @@
 			align: 'left',
 			width: 'w-40',
 			cell: (row: QualityProfileTableRow) => {
-				if (!row.language) return { html: '<span class="text-neutral-400">-</span>' };
-
-				const typePrefix = {
-					must: 'Must Include',
-					only: 'Must Only Be',
-					not: 'Does Not Include',
-					simple: ''
-				};
-
-				if (row.language.type === 'simple') {
-					return {
-						html: `<div class="text-xs"><span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.language.name}</span></div>`
-					};
-				}
-
 				return {
-					html: `<div class="text-xs">${typePrefix[row.language.type]} <span class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 rounded">${row.language.name}</span></div>`
+					html: `<span class="${labelSecondaryNoMono}">${row.language ? (row.language.name === 'Original' ? 'Any' : row.language.name) : 'Any'}</span>`
 				};
 			}
 		}
@@ -164,6 +152,7 @@
 	hoverable={true}
 	compact={false}
 	rowHref={getRowHref}
+	pageSize={50}
 >
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 	<svelte:fragment slot="actions" let:row>
