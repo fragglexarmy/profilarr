@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Tabs from '$ui/navigation/tabs/Tabs.svelte';
 	import { page } from '$app/stores';
-	import { browser } from '$app/environment';
 	import type { LayoutData } from './$types';
 
 	export let data: LayoutData;
@@ -23,12 +22,6 @@
 		href: `/media-management/${db.id}/${currentConfigType}`,
 		active: db.id === data.currentDatabase.id
 	}));
-
-	// Persist selected database + section
-	$: if (browser && data.currentDatabase?.id) {
-		localStorage.setItem('mediaManagementDatabase', String(data.currentDatabase.id));
-		localStorage.setItem('mediaManagementSection', currentConfigType);
-	}
 
 	// Back button for nested pages
 	$: backButton = isNestedPage ? { label: 'Back' } : undefined;

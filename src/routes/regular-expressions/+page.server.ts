@@ -1,11 +1,11 @@
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/index.ts';
+import { redirectToLastDatabase } from '$utils/redirect/lastDatabase.ts';
 
-export const load: ServerLoad = () => {
-	// Get all databases
-	const databases = pcdManager.getAll();
+export const load: ServerLoad = ({ cookies }) => {
+	redirectToLastDatabase(cookies, 'last_db_re', '/regular-expressions');
 
 	return {
-		databases
+		databases: pcdManager.getAll()
 	};
 };

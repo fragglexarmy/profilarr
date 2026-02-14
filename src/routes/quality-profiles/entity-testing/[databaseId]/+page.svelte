@@ -46,11 +46,6 @@
 		alertStore.add('info', readOnlyMessage);
 	}
 
-	// Persist selected database tab
-	$: if (browser && data.currentDatabase?.id) {
-		localStorage.setItem('entityTestingDatabase', String(data.currentDatabase.id));
-	}
-
 	// Show warning if parser is unavailable
 	onMount(() => {
 		if (!data.parserAvailable) {

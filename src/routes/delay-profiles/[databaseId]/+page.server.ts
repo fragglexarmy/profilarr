@@ -2,8 +2,9 @@ import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
 import { pcdManager, canWriteToBase } from '$pcd/index.ts';
 import * as delayProfileQueries from '$pcd/entities/delayProfiles/index.ts';
+import { setLastDatabase } from '$utils/redirect/lastDatabase.ts';
 
-export const load: ServerLoad = async ({ params }) => {
+export const load: ServerLoad = async ({ params, cookies }) => {
 	const { databaseId } = params;
 
 	// Validate params exist
@@ -26,6 +27,8 @@ export const load: ServerLoad = async ({ params }) => {
 	if (!currentDatabase) {
 		throw error(404, 'Database not found');
 	}
+
+	setLastDatabase(cookies, 'last_db_dp', currentDatabaseId);
 
 	// Get the cache for the database
 	const cache = pcdManager.getCache(currentDatabaseId);

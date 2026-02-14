@@ -134,10 +134,6 @@
 		active: db.id === data.currentDatabase.id
 	}));
 
-	// Persist selected database tab
-	$: if (browser && data.currentDatabase?.id) {
-		localStorage.setItem('regularExpressionsDatabase', String(data.currentDatabase.id));
-	}
 </script>
 
 <svelte:head>

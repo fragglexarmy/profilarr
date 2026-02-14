@@ -8,8 +8,9 @@ import * as entityTestQueries from '$pcd/entities/qualityProfiles/entityTests/in
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { isParserHealthy } from '$lib/server/utils/arr/parser/index.ts';
 import { logger } from '$logger/logger.ts';
+import { setLastDatabase } from '$utils/redirect/lastDatabase.ts';
 
-export const load: ServerLoad = async ({ params }) => {
+export const load: ServerLoad = async ({ params, cookies }) => {
 	const loadStart = performance.now();
 	const { databaseId } = params;
 
@@ -33,6 +34,8 @@ export const load: ServerLoad = async ({ params }) => {
 	if (!currentDatabase) {
 		throw error(404, 'Database not found');
 	}
+
+	setLastDatabase(cookies, 'last_db_et', currentDatabaseId);
 
 	// Get the cache for the database
 	const cache = pcdManager.getCache(currentDatabaseId);

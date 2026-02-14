@@ -1,9 +1,11 @@
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { pcdManager } from '$pcd/index.ts';
-import { canWriteToBase } from '$pcd/index.ts';
+import { pcdManager, canWriteToBase } from '$pcd/index.ts';
+import { setLastDatabase, setLastSection } from '$utils/redirect/lastDatabase.ts';
 
-export const load: LayoutServerLoad = async ({ params }) => {
+const ALLOWED_SECTIONS = new Set(['naming', 'media-settings', 'quality-definitions']);
+
+export const load: LayoutServerLoad = async ({ params, cookies, url }) => {
 	const { databaseId } = params;
 
 	if (!databaseId) {
@@ -20,6 +22,14 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	const currentDatabase = databases.find((db) => db.id === currentDatabaseId);
 	if (!currentDatabase) {
 		throw error(404, 'Database not found');
+	}
+
+	setLastDatabase(cookies, 'last_db_mm', currentDatabaseId);
+
+	// Persist section from URL path
+	const sectionMatch = url.pathname.match(/\/media-management\/\d+\/([^/]+)/);
+	if (sectionMatch && ALLOWED_SECTIONS.has(sectionMatch[1])) {
+		setLastSection(cookies, 'last_section_mm', sectionMatch[1]);
 	}
 
 	return {
