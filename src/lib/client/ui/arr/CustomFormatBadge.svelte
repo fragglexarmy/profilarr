@@ -13,7 +13,7 @@
 </script>
 
 <span
-	class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-800"
+	class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700/60 dark:bg-neutral-800/50"
 >
 	<span class="text-neutral-500 dark:text-neutral-400">{name}</span>
 	<span class="font-mono font-medium {scoreClass}">{displayScore}</span>

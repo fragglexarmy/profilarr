@@ -79,12 +79,12 @@
 			<div
 				class="relative my-4 flex w-full flex-col {sizeClasses[size]} {heightClasses[
 					height
-				]} max-h-[calc(100svh-2rem)] rounded-lg border border-neutral-200 bg-white shadow-xl sm:my-0 dark:border-neutral-700 dark:bg-neutral-900"
+				]} max-h-[calc(100svh-2rem)] rounded-xl border border-neutral-300 bg-white shadow-xl sm:my-0 dark:border-neutral-700/60 dark:bg-neutral-900"
 				in:scale={{ duration: 170, start: 0.97, opacity: 0.5, easing: cubicOut }}
 				out:scale={{ duration: 120, start: 0.97, opacity: 0.5, easing: cubicIn }}
 			>
 				<!-- Header -->
-				<div class="flex-shrink-0 border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
+				<div class="flex-shrink-0 border-b border-neutral-300 px-6 py-4 dark:border-neutral-700/60">
 					<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{header}</h2>
 				</div>
 
@@ -97,7 +97,7 @@
 
 				<!-- Footer -->
 				<div
-					class="flex flex-shrink-0 justify-between border-t border-neutral-200 px-6 py-4 dark:border-neutral-800"
+					class="flex flex-shrink-0 justify-between border-t border-neutral-300 px-6 py-4 dark:border-neutral-700/60"
 				>
 					<Button
 						text={cancelText}
