@@ -132,7 +132,7 @@
 			<Button
 				icon={Copy}
 				size="xs"
-				variant="ghost"
+				variant="secondary"
 				tooltip="Clone"
 				on:click={() => dispatch('clone', { name: row.name })}
 			/>

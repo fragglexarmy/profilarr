@@ -8,7 +8,6 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { PageData } from './$types';
 	import type { TestWithResult } from './+page.server';
@@ -546,10 +545,13 @@
 
 			<svelte:fragment slot="actions" let:row>
 				<div class="flex items-center justify-end gap-1">
-					<TableActionButton
+					<Button
 						icon={Pencil}
 						title="Edit test case"
-						variant="accent"
+						ariaLabel="Edit test case"
+						variant="secondary"
+						iconColor="text-accent-600 dark:text-accent-400"
+						size="xs"
 						on:click={() => {
 							if (readOnly) {
 								notifyReadOnly();
@@ -565,10 +567,13 @@
 						<input type="hidden" name="testType" value={row.type} />
 						<input type="hidden" name="formatName" value={data.format.name} />
 						<input type="hidden" name="layer" value={data.canWriteToBase ? 'base' : 'user'} />
-						<TableActionButton
+						<Button
 							icon={Trash2}
 							title="Delete test case"
-							variant="danger"
+							ariaLabel="Delete test case"
+							variant="secondary"
+							iconColor="text-red-600 dark:text-red-400"
+							size="xs"
 							on:click={(e) => {
 								if (readOnly) {
 									notifyReadOnly();

@@ -7,7 +7,6 @@
 	import Button from '$ui/button/Button.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Table from '$ui/table/Table.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
 	import { alertStore } from '$alerts/store';
 	import type { Column } from '$ui/table/types';
 
@@ -305,11 +304,13 @@
 									};
 								}}>
 									<input type="hidden" name="sessionId" value={row.id} />
-									<TableActionButton
+									<Button
 										icon={LogOut}
 										title="Revoke session"
-										variant="danger"
-										size="sm"
+										ariaLabel="Revoke session"
+										variant="secondary"
+										iconColor="text-red-600 dark:text-red-400"
+										size="xs"
 										type="submit"
 									/>
 								</form>

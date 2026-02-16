@@ -4,7 +4,7 @@
 	import { Copy, RefreshCw, Filter, ChevronLeft, ChevronRight, Rows3 } from 'lucide-svelte';
 	import { alertStore } from '$alerts/store';
 	import Table from '$ui/table/Table.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -259,32 +259,41 @@
 	<Table data={filteredLogs} {columns} emptyMessage="No logs found" hoverable={true} compact={true} responsive>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
-				<TableActionButton icon={Copy} title="Copy log entry" on:click={() => copyLog(row)} />
+				<Button
+					icon={Copy}
+					size="xs"
+					variant="secondary"
+					title="Copy log entry"
+					ariaLabel="Copy log entry"
+					on:click={() => copyLog(row)}
+				/>
 			</div>
 		</svelte:fragment>
 	</Table>
 
 	<!-- Bottom Pagination -->
 	{#if totalPages > 1}
-		<div class="mt-4 flex items-center justify-center gap-2">
+		<div
+			class="mt-4 flex items-center justify-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
+		>
 			<button
 				type="button"
 				disabled={currentPage <= 1}
 				on:click={() => goToPage(currentPage - 1)}
-				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+				class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 			>
-				Previous
+				<ChevronLeft size={20} />
 			</button>
-			<span class="text-sm text-neutral-600 dark:text-neutral-400">
+			<span class="text-sm">
 				Page {currentPage} of {totalPages}
 			</span>
 			<button
 				type="button"
 				disabled={currentPage >= totalPages}
 				on:click={() => goToPage(currentPage + 1)}
-				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+				class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 			>
-				Next
+				<ChevronRight size={20} />
 			</button>
 		</div>
 	{/if}
