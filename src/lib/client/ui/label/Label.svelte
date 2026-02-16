@@ -8,12 +8,15 @@
 		| 'success'
 		| 'warning'
 		| 'danger'
-		| 'info' = 'default';
+		| 'info'
+		| 'link' = 'default';
 	export let customVariant: string = '';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let rounded: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'full';
 	export let mono: boolean = false;
 	export let href: string | undefined = undefined;
+	export let target: string | undefined = undefined;
+	export let rel: string | undefined = undefined;
 
 	const variantClasses = {
 		default:
@@ -33,7 +36,9 @@
 		danger:
 			'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 		info:
-			'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+			'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+		link:
+			'bg-neutral-100 text-blue-700 dark:bg-neutral-800 dark:text-blue-300'
 	};
 
 	const sizeClasses = {
@@ -55,7 +60,7 @@
 </script>
 
 {#if href}
-	<a {href} class={classes}>
+	<a {href} {target} {rel} class={classes}>
 		<slot />
 	</a>
 {:else}

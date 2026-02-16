@@ -1,26 +1,40 @@
 <script lang="ts">
+	import { FlaskConical } from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
+	import Label from '$ui/label/Label.svelte';
+
 	export let status: 'up-to-date' | 'out-of-date' | 'dev-build';
 
-	const statusConfig = {
+	type StatusConfig = {
+		label: string;
+		variant: 'success' | 'danger';
+		icon?: ComponentType | null;
+	};
+
+	const statusConfig: Record<'up-to-date' | 'out-of-date' | 'dev-build', StatusConfig> = {
 		'up-to-date': {
 			label: 'Up to date',
-			class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+			variant: 'success',
+			icon: null
 		},
 		'out-of-date': {
 			label: 'Out of date',
-			class: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+			variant: 'danger',
+			icon: null
 		},
 		'dev-build': {
 			label: 'Dev build',
-			class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+			variant: 'success',
+			icon: FlaskConical
 		}
 	};
 
 	const config = statusConfig[status];
 </script>
 
-<span
-	class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {config.class}"
->
+<Label variant={config.variant} size="md" rounded="md">
+	{#if config.icon}
+		<svelte:component this={config.icon} size={12} />
+	{/if}
 	{config.label}
-</span>
+</Label>

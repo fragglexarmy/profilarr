@@ -4,7 +4,7 @@
 	import VersionBadge from './components/VersionBadge.svelte';
 	import Table from '$ui/table/Table.svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
-	import Badge from '$ui/badge/Badge.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import type { Column } from '$ui/table/types';
 
 	export let data: PageData;
@@ -26,6 +26,7 @@
 	};
 	type DevTeamMember = {
 		name: string;
+		avatarUrl: string;
 		remark?: string;
 		tags: string[];
 	};
@@ -105,11 +106,13 @@
 	const devTeam: DevTeamMember[] = [
 		{
 			name: 'santiagosayshey',
+			avatarUrl: 'https://avatars.githubusercontent.com/u/96866795?v=4',
 			remark: 'No gatekeeping allowed',
 			tags: ['Lead Profilarr Developer', 'Database Hater']
 		},
 		{
 			name: 'Seraphys',
+			avatarUrl: 'https://avatars.githubusercontent.com/u/156842860?v=4',
 			remark: 'Your sync broke? But the conditions are in order now!',
 			tags: ['Lead Database Developer', 'Sexy God']
 		}
@@ -148,7 +151,7 @@
 				<Info class="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
 				<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Application</h2>
 			</div>
-			<Table columns={infoColumns} data={appRows} compact responsive>
+			<Table columns={infoColumns} data={appRows} responsive>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'label'}
 						<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -157,11 +160,9 @@
 					{:else if column.key === 'value'}
 						{#if row.key === 'version'}
 							<div class="flex items-center gap-2">
-								<code
-									class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-								>
+								<Label variant="secondary" size="md" rounded="md" mono>
 									v{row.value}
-								</code>
+								</Label>
 								{#await data.streamed.releasesData}
 									<div class="animate-pulse">
 										<div class="h-6 w-20 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
@@ -173,20 +174,20 @@
 								{/await}
 							</div>
 						{:else if row.type === 'code'}
-							<code
-								class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-							>
+							<Label variant="secondary" size="md" rounded="md" mono>
 								{row.value}
-							</code>
+							</Label>
 						{:else if row.type === 'link'}
-							<a
+							<Label
+								variant="link"
+								size="md" rounded="md"
+								mono
 								href={row.href}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="text-sm text-accent-600 hover:underline dark:text-accent-400"
 							>
 								{row.value}
-							</a>
+							</Label>
 						{:else}
 							<span class="text-sm text-neutral-600 dark:text-neutral-400">{row.value}</span>
 						{/if}
@@ -203,7 +204,7 @@
 					{/if}
 					<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">{section.title}</h2>
 				</div>
-				<Table columns={infoColumns} data={section.rows} compact responsive>
+				<Table columns={infoColumns} data={section.rows} responsive>
 					<svelte:fragment slot="cell" let:row let:column>
 						{#if column.key === 'label'}
 							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -211,20 +212,20 @@
 							</span>
 						{:else if column.key === 'value'}
 							{#if row.type === 'code'}
-								<code
-									class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-								>
+								<Label variant="secondary" size="md" rounded="md" mono>
 									{row.value}
-								</code>
+								</Label>
 							{:else if row.type === 'link'}
-								<a
+								<Label
+									variant="link"
+									size="md" rounded="md"
+									mono
 									href={row.href}
 									target="_blank"
 									rel="noopener noreferrer"
-									class="text-sm text-accent-600 hover:underline dark:text-accent-400"
 								>
 									{row.value}
-								</a>
+								</Label>
 							{:else}
 								<span class="text-sm text-neutral-600 dark:text-neutral-400">{row.value}</span>
 							{/if}
@@ -254,13 +255,16 @@
 					<svelte:fragment slot="cell" let:row let:column>
 						{#if column.key === 'version'}
 							<div class="flex items-center gap-2">
-								<code
-									class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-								>
+								<Label variant="secondary" size="md" rounded="md" mono>
 									v{row.version}
-								</code>
+								</Label>
 								{#if row.latest}
-									<Badge variant="accent" size="sm">Latest</Badge>
+									<Label
+										size="md" rounded="md"
+										customVariant="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+									>
+										Latest
+									</Label>
 								{/if}
 							</div>
 						{:else if column.key === 'name'}
@@ -276,19 +280,21 @@
 							<Table
 								columns={migrationColumns}
 								data={data.migration.applied}
-								compact
 								responsive
 							>
 								<svelte:fragment slot="cell" let:row let:column>
 									{#if column.key === 'version'}
 										<div class="flex items-center gap-2">
-											<code
-												class="rounded bg-neutral-100 px-2 py-1 font-mono text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
-											>
+											<Label variant="secondary" size="md" rounded="md" mono>
 												v{row.version}
-											</code>
+											</Label>
 											{#if row.latest}
-												<Badge variant="accent" size="sm">Latest</Badge>
+												<Label
+													size="md" rounded="md"
+													customVariant="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+												>
+													Latest
+												</Label>
 											{/if}
 										</div>
 									{:else if column.key === 'name'}
@@ -343,17 +349,23 @@
 						<svelte:fragment slot="cell" let:row let:column let:index>
 							{#if column.key === 'tag_name'}
 								<div class="flex items-center gap-2">
-									<a
+									<Label
+										variant="link"
+										size="md" rounded="md"
+										mono
 										href={row.html_url}
 										target="_blank"
 										rel="noopener noreferrer"
-										data-sveltekit-reload
-										class="font-mono text-sm font-medium text-accent-600 hover:underline dark:text-accent-400"
 									>
 										{row.tag_name}
-									</a>
+									</Label>
 									{#if index === 0}
-										<Badge variant="accent" size="sm">Latest</Badge>
+										<Label
+											size="md" rounded="md"
+											customVariant="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+										>
+											Latest
+										</Label>
 									{/if}
 								</div>
 							{:else if column.key === 'published_at'}
@@ -362,29 +374,35 @@
 								</span>
 							{:else if column.key === 'prerelease'}
 								{#if row.prerelease}
-									<Badge variant="warning" size="sm">Pre-release</Badge>
+									<Label variant="warning" size="md" rounded="md">Pre-release</Label>
 								{:else}
-									<Badge variant="neutral" size="sm">Stable</Badge>
+									<Label variant="secondary" size="md" rounded="md">Stable</Label>
 								{/if}
 							{/if}
 						</svelte:fragment>
 						<svelte:fragment slot="expanded">
 							<div class="p-3">
-								<Table columns={releaseColumns} data={releasesData.releases} compact responsive>
+								<Table columns={releaseColumns} data={releasesData.releases} responsive>
 									<svelte:fragment slot="cell" let:row let:column let:rowIndex>
 										{#if column.key === 'tag_name'}
 											<div class="flex items-center gap-2">
-												<a
+												<Label
+													variant="link"
+													size="md" rounded="md"
+													mono
 													href={row.html_url}
 													target="_blank"
 													rel="noopener noreferrer"
-													data-sveltekit-reload
-													class="font-mono text-sm font-medium text-accent-600 hover:underline dark:text-accent-400"
 												>
 													{row.tag_name}
-												</a>
+												</Label>
 												{#if rowIndex === 0}
-													<Badge variant="accent" size="sm">Latest</Badge>
+													<Label
+														size="md" rounded="md"
+														customVariant="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200"
+													>
+														Latest
+													</Label>
 												{/if}
 											</div>
 										{:else if column.key === 'published_at'}
@@ -393,9 +411,9 @@
 											</span>
 										{:else if column.key === 'prerelease'}
 											{#if row.prerelease}
-												<Badge variant="warning" size="sm">Pre-release</Badge>
+												<Label variant="warning" size="md" rounded="md">Pre-release</Label>
 											{:else}
-												<Badge variant="neutral" size="sm">Stable</Badge>
+												<Label variant="secondary" size="md" rounded="md">Stable</Label>
 											{/if}
 										{/if}
 									</svelte:fragment>
@@ -415,12 +433,20 @@
 				<Users class="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
 				<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Dev Team</h2>
 			</div>
-			<Table columns={devColumns} data={devTeam} compact responsive>
+			<Table columns={devColumns} data={devTeam} responsive>
 				<svelte:fragment slot="cell" let:row let:column>
 					{#if column.key === 'name'}
-						<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-							{row.name}
-						</span>
+						<div class="flex items-center gap-2">
+							<img
+								src={row.avatarUrl}
+								alt={`${row.name} avatar`}
+								loading="lazy"
+								class="h-8 w-8 rounded-md border border-neutral-300 object-cover dark:border-neutral-700/60"
+							/>
+							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+								{row.name}
+							</span>
+						</div>
 					{:else if column.key === 'remark'}
 						{#if row.remark}
 							<span class="text-sm text-neutral-600 dark:text-neutral-400">{row.remark}</span>
@@ -432,7 +458,7 @@
 					{:else if column.key === 'tags'}
 						<div class="flex flex-wrap gap-2">
 							{#each row.tags as tag}
-								<Badge variant="neutral" size="md">{tag}</Badge>
+								<Label variant="secondary" size="md" rounded="md">{tag}</Label>
 							{/each}
 						</div>
 					{/if}
@@ -440,19 +466,16 @@
 			</Table>
 		</div>
 
-		<!-- Greetz -->
-		<div class="mt-6 text-center">
-			<p class="text-sm text-neutral-500 dark:text-neutral-400">
-				<span class="font-medium">Greetz:</span> Ba11in0nABudget, SFusion, some_guy, delavicci,
-				screamz, raphh
-			</p>
-		</div>
-
-		<!-- Dedication -->
-		<div class="mt-4 text-center">
-			<p class="text-sm text-neutral-500 italic dark:text-neutral-400">
-				This project is dedicated to Faiza, for helping me find my heart.
-			</p>
+		<div class="mt-8 border-t border-neutral-200/60 pt-4 dark:border-neutral-800/80">
+			<div class="space-y-1 text-center">
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					<span class="font-medium text-neutral-600 dark:text-neutral-300">Greetz:</span>
+					Ba11in0nABudget, delavicci, raphh, screamz, SFusion, some_guy
+				</p>
+				<p class="text-xs italic text-neutral-500 dark:text-neutral-400">
+					Dedicated to Faiza, for helping me find my heart.
+				</p>
+			</div>
 		</div>
 	</div>
 </div>

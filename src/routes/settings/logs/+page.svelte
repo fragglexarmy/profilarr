@@ -401,25 +401,27 @@
 
 	<!-- Bottom Pagination -->
 	{#if totalPages > 1}
-		<div class="mt-4 flex items-center justify-center gap-2">
+		<div
+			class="mt-4 flex items-center justify-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
+		>
 			<button
 				type="button"
 				disabled={currentPage <= 1}
 				on:click={goToPreviousPage}
-				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+				class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 			>
-				Previous
+				<ChevronLeft size={20} />
 			</button>
-			<span class="text-sm text-neutral-600 dark:text-neutral-400">
+			<span class="text-sm">
 				Page {currentPage} of {totalPages}
 			</span>
 			<button
 				type="button"
 				disabled={currentPage >= totalPages}
 				on:click={goToNextPage}
-				class="rounded px-3 py-1.5 text-sm transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
+				class="rounded p-1 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-neutral-700"
 			>
-				Next
+				<ChevronRight size={20} />
 			</button>
 		</div>
 	{/if}
