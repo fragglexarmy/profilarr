@@ -12,6 +12,7 @@
 		ArrowUpAZ
 	} from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import Card from '$ui/card/Card.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
@@ -359,42 +360,42 @@
 	<div slot="body" class="space-y-4">
 		<!-- Entity Info -->
 		{#if entity}
-			<div class="flex items-center gap-3 rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800">
-				{#if entity.poster_path}
-					<img
-						src="https://image.tmdb.org/t/p/w92{entity.poster_path}"
-						alt={entity.title}
-						class="h-16 w-11 rounded object-cover"
-					/>
-				{:else}
-					<div
-						class="flex h-16 w-11 items-center justify-center rounded bg-neutral-200 dark:bg-neutral-700"
-					>
-						{#if entity.type === 'movie'}
-							<Film size={20} class="text-neutral-400" />
-						{:else}
-							<Tv size={20} class="text-neutral-400" />
-						{/if}
+			<Card padding="sm" flush>
+				<div class="flex items-center gap-3">
+					{#if entity.poster_path}
+						<img
+							src="https://image.tmdb.org/t/p/w92{entity.poster_path}"
+							alt={entity.title}
+							class="h-16 w-11 rounded object-cover"
+						/>
+					{:else}
+						<div
+							class="flex h-16 w-11 items-center justify-center rounded bg-neutral-200 dark:bg-neutral-700"
+						>
+							{#if entity.type === 'movie'}
+								<Film size={20} class="text-neutral-400" />
+							{:else}
+								<Tv size={20} class="text-neutral-400" />
+							{/if}
+						</div>
+					{/if}
+					<div>
+						<h3 class="font-medium text-neutral-900 dark:text-neutral-100">{entity.title}</h3>
+						<p class="text-sm text-neutral-500 dark:text-neutral-400">
+							{entity.type === 'movie' ? 'Movie' : 'TV Series'}
+							{#if entity.year}
+								• {entity.year}
+							{/if}
+						</p>
 					</div>
-				{/if}
-				<div>
-					<h3 class="font-medium text-neutral-900 dark:text-neutral-100">{entity.title}</h3>
-					<p class="text-sm text-neutral-500 dark:text-neutral-400">
-						{entity.type === 'movie' ? 'Movie' : 'TV Series'}
-						{#if entity.year}
-							• {entity.year}
-						{/if}
-					</p>
 				</div>
-			</div>
+			</Card>
 		{/if}
 
 		{#if step === 1}
 			<!-- Step 1: Select Library Item -->
 			{#if filteredInstances.length === 0}
-				<div
-					class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800"
-				>
+				<Card flush>
 					<p class="text-sm text-neutral-600 dark:text-neutral-300">
 						No {entity?.type === 'movie' ? 'Radarr' : 'Sonarr'} instances configured.
 						<a
@@ -404,7 +405,7 @@
 							Configure in Settings
 						</a>
 					</p>
-				</div>
+				</Card>
 			{:else}
 				<ActionsBar>
 					<SearchAction {searchStore} placeholder="Search library..." />
@@ -440,11 +441,9 @@
 							<Loader2 size={24} class="animate-spin text-neutral-400" />
 						</div>
 					{:else if libraryItems.length === 0}
-						<div
-							class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700"
-						>
-							<p class="text-neutral-500 dark:text-neutral-400">No items found in library.</p>
-						</div>
+						<Card padding="lg">
+							<p class="text-center text-neutral-500 dark:text-neutral-400">No items found in library.</p>
+						</Card>
 					{:else}
 						<!-- Potential Matches -->
 						{#if potentialMatches.length > 0}
@@ -452,53 +451,12 @@
 								<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">
 									Suggested Match
 								</p>
-								<div
-									class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700"
-								>
-									<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
-										{#each potentialMatches as item}
-											<button
-												type="button"
-												class="flex w-full cursor-pointer items-center justify-between gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
-												on:click={() => (selectedItem = selectedItem?.id === item.id ? null : item)}
-											>
-												<div class="min-w-0 flex-1">
-													<p
-														class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
-													>
-														{item.title}
-													</p>
-													{#if item.year}
-														<p class="text-xs text-neutral-500 dark:text-neutral-400">
-															{item.year}
-														</p>
-													{/if}
-												</div>
-												<IconCheckbox checked={selectedItem?.id === item.id} icon={Check} />
-											</button>
-										{/each}
-									</div>
-								</div>
-							</div>
-						{:else}
-							<p class="text-xs text-neutral-500 italic dark:text-neutral-400">
-								This item might not be in your library. Select manually below.
-							</p>
-						{/if}
-
-						<!-- All Items -->
-						<div class="space-y-2">
-							{#if potentialMatches.length > 0}
-								<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">All Items</p>
-							{/if}
-							<div
-								class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700"
-							>
-								<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
-									{#each filteredLibrary as item}
+								<Card padding="none">
+								<div class="divide-y divide-neutral-200 dark:divide-neutral-700/60">
+									{#each potentialMatches as item}
 										<button
 											type="button"
-											class="flex w-full cursor-pointer items-center justify-between gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
+											class="flex w-full cursor-pointer items-center justify-between gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/80"
 											on:click={() => (selectedItem = selectedItem?.id === item.id ? null : item)}
 										>
 											<div class="min-w-0 flex-1">
@@ -517,15 +475,52 @@
 										</button>
 									{/each}
 								</div>
+							</Card>
 							</div>
+						{:else}
+							<p class="text-xs text-neutral-500 italic dark:text-neutral-400">
+								This item might not be in your library. Select manually below.
+							</p>
+						{/if}
+
+						<!-- All Items -->
+						<div class="space-y-2">
+							{#if potentialMatches.length > 0}
+								<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">All Items</p>
+							{/if}
+							<Card padding="none">
+								<div class="divide-y divide-neutral-200 dark:divide-neutral-700/60">
+									{#each filteredLibrary as item}
+										<button
+											type="button"
+											class="flex w-full cursor-pointer items-center justify-between gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/80"
+											on:click={() => (selectedItem = selectedItem?.id === item.id ? null : item)}
+										>
+											<div class="min-w-0 flex-1">
+												<p
+													class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
+												>
+													{item.title}
+												</p>
+												{#if item.year}
+													<p class="text-xs text-neutral-500 dark:text-neutral-400">
+														{item.year}
+													</p>
+												{/if}
+											</div>
+											<IconCheckbox checked={selectedItem?.id === item.id} icon={Check} />
+										</button>
+									{/each}
+								</div>
+							</Card>
 						</div>
 					{/if}
 				{:else}
-					<div class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700">
-						<p class="text-neutral-500 dark:text-neutral-400">
+					<Card padding="lg">
+						<p class="text-center text-neutral-500 dark:text-neutral-400">
 							Select an instance to load library.
 						</p>
-					</div>
+					</Card>
 				{/if}
 			{/if}
 		{:else}
@@ -536,15 +531,13 @@
 					<p class="text-sm text-neutral-600 dark:text-neutral-400">
 						Select a season to search for releases:
 					</p>
-					<div class="flex flex-wrap gap-2">
+					<div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
 						{#each selectedItem?.seasons || [] as season}
-							<button
-								type="button"
-								class="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
-								on:click={() => changeSeason(season)}
-							>
-								Season {season}
-							</button>
+							<Card hoverable padding="sm" onclick={() => changeSeason(season)}>
+								<p class="text-center text-sm font-medium text-neutral-900 dark:text-neutral-100">
+									Season {season}
+								</p>
+							</Card>
 						{/each}
 					</div>
 				</div>
@@ -562,10 +555,10 @@
 						{#each selectedItem.seasons as season}
 							<button
 								type="button"
-								class="rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors {selectedSeason ===
+								class="rounded-xl border border-neutral-300 px-3 py-1.5 text-sm font-medium transition-colors dark:border-neutral-700/60 {selectedSeason ===
 								season
-									? 'border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300'
-									: 'border-neutral-200 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800'}"
+									? 'text-accent-600 dark:text-accent-400'
+									: 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800/80'}"
 								on:click={() => changeSeason(season)}
 							>
 								S{season}
@@ -614,18 +607,18 @@
 				</ActionsBar>
 
 				{#if releases.length === 0}
-					<div class="rounded-lg border border-neutral-200 p-8 text-center dark:border-neutral-700">
-						<p class="text-neutral-500 dark:text-neutral-400">
+					<Card padding="lg">
+						<p class="text-center text-neutral-500 dark:text-neutral-400">
 							No releases found{entity?.type === 'series' ? ` for season ${selectedSeason}` : ''}.
 						</p>
-					</div>
+					</Card>
 				{:else}
-					<div class="overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
-						<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
+					<Card padding="none">
+						<div class="divide-y divide-neutral-200 dark:divide-neutral-700/60">
 							{#each filteredReleases as release}
 								<button
 									type="button"
-									class="flex w-full cursor-pointer items-center justify-between gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
+									class="flex w-full cursor-pointer items-center justify-between gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/80"
 									on:click={() => toggleRelease(release.title)}
 								>
 									<div class="min-w-0 flex-1">
@@ -654,7 +647,7 @@
 								</button>
 							{/each}
 						</div>
-					</div>
+					</Card>
 				{/if}
 			{/if}
 		{/if}

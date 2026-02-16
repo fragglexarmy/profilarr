@@ -14,6 +14,7 @@
 	} from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -226,6 +227,7 @@
 	confirmText="Add"
 	confirmDisabled={!tmdbConfigured}
 	size="xl"
+	bodyOverflow="visible"
 	on:cancel={handleCancel}
 	on:confirm={handleConfirm}
 >
@@ -306,8 +308,9 @@
 			<!-- Results -->
 			{#if isSearching || activeQuery || results.length > 0}
 				<div
-					class="max-h-96 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700"
+					class="overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700/60 dark:bg-neutral-800/50"
 				>
+				<div class="max-h-96 overflow-y-auto">
 					{#if isSearching}
 						<div class="flex items-center justify-center p-8">
 							<Loader2 size={24} class="animate-spin text-neutral-400" />
@@ -317,14 +320,14 @@
 							No results found
 						</div>
 					{:else}
-						<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
+						<div class="divide-y divide-neutral-200 dark:divide-neutral-700/60">
 							{#each sortedResults as item}
 								{@const alreadyAdded = isAlreadyAdded(item)}
 								<button
 									type="button"
 									class="flex w-full gap-3 p-3 text-left transition-colors {alreadyAdded
 										? 'cursor-not-allowed opacity-50'
-										: 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800'}"
+										: 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/80'}"
 									on:click={() => !alreadyAdded && toggleItem(item)}
 									disabled={alreadyAdded}
 								>
@@ -398,6 +401,7 @@
 						</div>
 					{/if}
 				</div>
+				</div>
 			{/if}
 
 			<!-- Selected Items -->
@@ -408,19 +412,18 @@
 					</div>
 					<div class="flex flex-wrap gap-2">
 						{#each Array.from(selectedItems.values()) as item}
-							<button
-								type="button"
-								on:click={() => removeItem(item)}
-								class="flex items-center gap-1.5 rounded-full bg-accent-100 py-1 pr-1.5 pl-2 text-xs font-medium text-accent-800 hover:bg-accent-200 dark:bg-accent-900 dark:text-accent-200 dark:hover:bg-accent-800"
-							>
-								{#if item.type === 'movie'}
-									<Film size={12} />
-								{:else}
-									<Tv size={12} />
-								{/if}
-								{item.title}
-								<X size={12} />
-							</button>
+							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+							<div class="cursor-pointer" on:click={() => removeItem(item)}>
+								<Label variant="default" size="md" rounded="xl">
+									{#if item.type === 'movie'}
+										<Film size={12} />
+									{:else}
+										<Tv size={12} />
+									{/if}
+									{item.title}
+									<X size={12} />
+								</Label>
+							</div>
 						{/each}
 					</div>
 				</div>

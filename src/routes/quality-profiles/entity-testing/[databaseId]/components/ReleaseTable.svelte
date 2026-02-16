@@ -13,8 +13,8 @@
 	} from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
-	import Badge from '$ui/badge/Badge.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import CustomFormatBadge from '$ui/arr/CustomFormatBadge.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
@@ -165,7 +165,7 @@
 						{#if release.indexers.length > 0}
 							<div class="flex flex-wrap gap-1">
 								{#each release.indexers as indexer}
-									<Badge variant="neutral" size="sm">{indexer}</Badge>
+									<Label variant="secondary" size="sm" rounded="xl">{indexer}</Label>
 								{/each}
 							</div>
 						{:else}
@@ -175,7 +175,7 @@
 						{#if release.languages.length > 0}
 							<div class="flex flex-wrap gap-1">
 								{#each release.languages as lang}
-									<Badge variant="neutral" size="sm">{lang}</Badge>
+									<Label variant="secondary" size="sm" rounded="xl">{lang}</Label>
 								{/each}
 							</div>
 						{:else}
@@ -189,11 +189,11 @@
 				<svelte:fragment slot="actions" let:row={release}>
 					{@const releaseFormId = `delete-release-form-${release.id}`}
 					<div class="flex items-center gap-1">
-						<TableActionButton
+						<Button
 							icon={Pencil}
-							title="Edit release"
-							variant="accent"
-							size="sm"
+							tooltip="Edit release"
+							variant="secondary"
+							size="xs"
 							on:click={() => dispatch('edit', { entityType, entityTmdbId, release })}
 						/>
 						<form
@@ -216,11 +216,12 @@
 						>
 							<input type="hidden" name="releaseId" value={release.id} />
 							<input type="hidden" name="layer" value={deleteLayer} />
-							<TableActionButton
+							<Button
 								icon={Trash2}
-								title="Delete release"
-								variant="danger"
-								size="sm"
+								tooltip="Delete release"
+								variant="secondary"
+								size="xs"
+								iconColor="group-hover:text-red-500 dark:group-hover:text-red-400"
 								on:click={() => {
 									const form = document.getElementById(releaseFormId) as HTMLFormElement;
 									dispatch('confirmDelete', { release, formRef: form });
@@ -240,7 +241,7 @@
 								<div class="pt-0.5 font-medium text-neutral-500 dark:text-neutral-400">Parsed</div>
 								<div class="flex flex-wrap items-center gap-2">
 									<span
-										class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800"
+										class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 									>
 										<HardDrive size={12} class="text-blue-500" />
 										<span class="text-neutral-500 dark:text-neutral-400">Source</span>
@@ -249,7 +250,7 @@
 										>
 									</span>
 									<span
-										class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800"
+										class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 									>
 										<Layers size={12} class="text-indigo-500" />
 										<span class="text-neutral-500 dark:text-neutral-400">Resolution</span>
@@ -259,7 +260,7 @@
 									</span>
 									{#if evaluation.parsed.modifier !== 'None'}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800"
+											class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 										>
 											<Tag size={12} class="text-amber-500" />
 											<span class="text-neutral-500 dark:text-neutral-400">Modifier</span>
@@ -270,7 +271,7 @@
 									{/if}
 									{#if evaluation.parsed.releaseGroup}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800"
+											class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 										>
 											<Users size={12} class="text-teal-500" />
 											<span class="text-neutral-500 dark:text-neutral-400">Group</span>
@@ -281,7 +282,7 @@
 									{/if}
 									{#if evaluation.parsed.edition}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800"
+											class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 										>
 											<Bookmark size={12} class="text-orange-500" />
 											<span class="text-neutral-500 dark:text-neutral-400">Edition</span>
@@ -292,12 +293,15 @@
 									{/if}
 									{#if evaluation.parsed.languages.length > 0}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800"
+											class="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700/60 dark:bg-neutral-800/50"
 										>
 											<Earth size={12} class="text-emerald-500" />
 											<span class="text-neutral-500 dark:text-neutral-400">Languages</span>
 											<span class="font-medium text-neutral-800 dark:text-neutral-100"
 												>{evaluation.parsed.languages.join(', ')}</span
+											>
+											<span class="text-[10px] text-neutral-400 dark:text-neutral-500"
+												>({evaluation.parsed.languageSource})</span
 											>
 										</span>
 									{/if}

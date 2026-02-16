@@ -3,7 +3,8 @@
 	import { Film, Tv, Trash2, Import } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import ReleaseTable from './ReleaseTable.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import type { Column } from '$ui/table/types';
@@ -133,9 +134,7 @@
 				{/if}
 			</div>
 		{:else if column.key === 'type'}
-			<span
-				class="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
-			>
+			<Label variant="secondary" size="sm" rounded="xl">
 				{#if row.type === 'movie'}
 					<Film size={12} class="text-amber-500" />
 					Movie
@@ -143,7 +142,7 @@
 					<Tv size={12} class="text-cyan-500" />
 					Series
 				{/if}
-			</span>
+			</Label>
 		{:else if column.key === 'releases'}
 			<span class="text-neutral-600 dark:text-neutral-400">
 				{row.releases.length}
@@ -154,10 +153,11 @@
 	<svelte:fragment slot="actions" let:row>
 		{@const formId = `delete-form-${row.id}`}
 		<div class="flex items-center gap-1">
-			<TableActionButton
+			<Button
 				icon={Import}
-				title="Import releases from Arr"
-				variant="accent"
+				tooltip="Import releases from Arr"
+				variant="secondary"
+				size="xs"
 				on:click={() => dispatch('importReleases', { entity: row })}
 			/>
 			<form
@@ -182,10 +182,12 @@
 				<input type="hidden" name="entityTmdbId" value={row.tmdb_id} />
 				<input type="hidden" name="entityTitle" value={row.title} />
 				<input type="hidden" name="layer" value={deleteLayer} />
-				<TableActionButton
+				<Button
 					icon={Trash2}
-					title="Delete entity"
-					variant="danger"
+					tooltip="Delete entity"
+					variant="secondary"
+					size="xs"
+					iconColor="group-hover:text-red-500 dark:group-hover:text-red-400"
 					on:click={() => {
 						const form = document.getElementById(formId) as HTMLFormElement;
 						dispatch('confirmDelete', { entity: row, formRef: form });
