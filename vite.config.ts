@@ -11,10 +11,7 @@ export default defineConfig({
 	server: {
 		port: 6969,
 		host: true,
-		hmr: false,
 		watch: {
-			usePolling: true,
-			interval: 3000,
 			ignored: ['**/data/**', '**/logs/**', '**/backups/**', '**/dist/**', '**/*.db*', '**/.git/**', '**/node_modules/**', '**/research/**']
 		}
 	},
