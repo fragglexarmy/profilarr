@@ -7,11 +7,9 @@ import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import * as entityTestQueries from '$pcd/entities/qualityProfiles/entityTests/index.ts';
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { isParserHealthy } from '$lib/server/utils/arr/parser/index.ts';
-import { logger } from '$logger/logger.ts';
 import { setLastDatabase } from '$utils/redirect/lastDatabase.ts';
 
 export const load: ServerLoad = async ({ params, cookies }) => {
-	const loadStart = performance.now();
 	const { databaseId } = params;
 
 	// Validate params exist
@@ -43,34 +41,16 @@ export const load: ServerLoad = async ({ params, cookies }) => {
 		throw error(500, 'Database cache not available');
 	}
 
-	let t = performance.now();
 	const testEntities = await entityTestQueries.list(cache);
-	await logger.debug(`entityTestQueries.list: ${(performance.now() - t).toFixed(0)}ms`, {
-		source: 'EntityTesting'
-	});
-
-	t = performance.now();
 	const qualityProfiles = await qualityProfileQueries.select(cache);
-	await logger.debug(`qualityProfileQueries.select: ${(performance.now() - t).toFixed(0)}ms`, {
-		source: 'EntityTesting'
-	});
-
-	t = performance.now();
 	const cfScoresData = await qualityProfileQueries.allCfScores(cache);
-	await logger.debug(`qualityProfileQueries.allCfScores: ${(performance.now() - t).toFixed(0)}ms`, {
-		source: 'EntityTesting'
-	});
 
 	// Check if TMDB API key is configured
 	const tmdbSettings = tmdbSettingsQueries.get();
 	const tmdbConfigured = !!tmdbSettings?.api_key;
 
 	// Check parser availability
-	t = performance.now();
 	const parserAvailable = await isParserHealthy();
-	await logger.debug(`isParserHealthy: ${(performance.now() - t).toFixed(0)}ms`, {
-		source: 'EntityTesting'
-	});
 
 	// Get enabled Arr instances for release import
 	const arrInstances = arrInstancesQueries.getEnabled().map((instance) => ({
@@ -78,10 +58,6 @@ export const load: ServerLoad = async ({ params, cookies }) => {
 		name: instance.name,
 		type: instance.type as 'radarr' | 'sonarr'
 	}));
-
-	await logger.debug(`Total load time: ${(performance.now() - loadStart).toFixed(0)}ms`, {
-		source: 'EntityTesting'
-	});
 
 	return {
 		databases,

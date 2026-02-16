@@ -205,7 +205,6 @@ export async function getParserVersion(): Promise<string | null> {
 	try {
 		const data = await getClient().health();
 		cachedParserVersion = data.version;
-		await logger.debug(`Parser version: ${data.version}`, { source: 'ParserClient' });
 		return cachedParserVersion;
 	} catch (err) {
 		await logger.warn('Failed to connect to parser service', {
@@ -284,9 +283,6 @@ export async function parseWithCacheBatch(
 	const parserVersion = await getParserVersion();
 	if (!parserVersion) {
 		// Parser not available - return all nulls
-		await logger.debug(`Parser unavailable, skipping ${items.length} items`, {
-			source: 'ParserCache'
-		});
 		for (const item of items) {
 			results.set(getCacheKey(item.title, item.type), null);
 		}
@@ -327,14 +323,6 @@ export async function parseWithCacheBatch(
 			results.set(cacheKey, result);
 		}
 	}
-
-	await logger.debug(
-		`Parsed ${items.length} releases: ${cacheHits} cache hits, ${uncached.length} parsed`,
-		{
-			source: 'ParserCache',
-			meta: { total: items.length, cacheHits, parsed: uncached.length, version: parserVersion }
-		}
-	);
 
 	return results;
 }
@@ -466,10 +454,6 @@ export async function matchPatternsBatch(
 
 	// If all cached, return immediately
 	if (uncachedTexts.length === 0) {
-		await logger.debug(`Pattern match: ${texts.length} cache hits, 0 computed`, {
-			source: 'PatternMatchCache',
-			meta: { total: texts.length, cacheHits, patternsHash }
-		});
 		return results;
 	}
 
@@ -478,13 +462,6 @@ export async function matchPatternsBatch(
 	if (!fetchedResults) {
 		// Parser unavailable - return partial results if any
 		if (cacheHits > 0) {
-			await logger.debug(
-				`Pattern match: ${cacheHits} cache hits, parser unavailable for ${uncachedTexts.length}`,
-				{
-					source: 'PatternMatchCache',
-					meta: { total: texts.length, cacheHits, uncached: uncachedTexts.length }
-				}
-			);
 			return results;
 		}
 		return null;
@@ -506,11 +483,6 @@ export async function matchPatternsBatch(
 	if (toCache.length > 0) {
 		patternMatchCacheQueries.setBatch(toCache, patternsHash);
 	}
-
-	await logger.debug(`Pattern match: ${cacheHits} cache hits, ${uncachedTexts.length} computed`, {
-		source: 'PatternMatchCache',
-		meta: { total: texts.length, cacheHits, computed: uncachedTexts.length, patternsHash }
-	});
 
 	return results;
 }
