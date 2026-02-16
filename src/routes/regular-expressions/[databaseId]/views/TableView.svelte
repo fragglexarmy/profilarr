@@ -7,6 +7,7 @@
 	import { Tag, Code, FileText, Link, Copy, Download } from 'lucide-svelte';
 	import { marked } from 'marked';
 	import { page } from '$app/stores';
+	import { FEATURES } from '$shared/features.ts';
 
 	export let expressions: RegularExpressionWithTags[];
 
@@ -114,13 +115,15 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 	<svelte:fragment slot="actions" let:row>
 		<div class="flex items-center justify-end gap-0.5" on:click|stopPropagation>
-			<Button
-				icon={Download}
-				size="xs"
-				variant="ghost"
-				tooltip="Export"
-				on:click={() => dispatch('export', { name: row.name })}
-			/>
+			{#if FEATURES.importExport}
+				<Button
+					icon={Download}
+					size="xs"
+					variant="ghost"
+					tooltip="Export"
+					on:click={() => dispatch('export', { name: row.name })}
+				/>
+			{/if}
 			<Button
 				icon={Copy}
 				size="xs"

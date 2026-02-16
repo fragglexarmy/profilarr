@@ -8,6 +8,7 @@
 	import type { NamingListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
+	import { FEATURES } from '$shared/features.ts';
 
 	export let configs: NamingListItem[];
 	export let databaseId: number;
@@ -67,13 +68,15 @@
 
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 				<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
-					<Button
-						icon={Download}
-						size="xs"
-						variant="ghost"
-						tooltip="Export"
-						on:click={() => dispatch('export', { name: config.name, arr_type: config.arr_type })}
-					/>
+					{#if FEATURES.importExport}
+						<Button
+							icon={Download}
+							size="xs"
+							variant="ghost"
+							tooltip="Export"
+							on:click={() => dispatch('export', { name: config.name, arr_type: config.arr_type })}
+						/>
+					{/if}
 					<Button
 						icon={Copy}
 						size="xs"

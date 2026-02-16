@@ -10,6 +10,7 @@
 	import CodeBlock from '$ui/display/CodeBlock.svelte';
 	import Markdown from '$ui/display/Markdown.svelte';
 	import { createProgressiveList } from '$lib/client/utils/progressiveList';
+	import { FEATURES } from '$shared/features.ts';
 
 	export let expressions: RegularExpressionWithTags[];
 
@@ -55,13 +56,15 @@
 									)}
 							/>
 						{/if}
-						<Button
-							icon={Download}
-							size="xs"
-							variant="ghost"
-							tooltip="Export"
-							on:click={() => dispatch('export', { name: expression.name })}
-						/>
+						{#if FEATURES.importExport}
+							<Button
+								icon={Download}
+								size="xs"
+								variant="ghost"
+								tooltip="Export"
+								on:click={() => dispatch('export', { name: expression.name })}
+							/>
+						{/if}
 						<Button
 							icon={Copy}
 							size="xs"

@@ -7,6 +7,7 @@
 	import Card from '$ui/card/Card.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import { createProgressiveList } from '$lib/client/utils/progressiveList';
+	import { FEATURES } from '$shared/features.ts';
 
 	export let profiles: DelayProfilesRow[];
 
@@ -52,13 +53,15 @@
 				<div class="flex items-center justify-between">
 					<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{profile.name}</h3>
 					<div class="flex items-center gap-0.5" on:click|stopPropagation|preventDefault>
-						<Button
-							icon={Download}
-							size="xs"
-							variant="ghost"
-							tooltip="Export"
-							on:click={() => dispatch('export', { name: profile.name })}
-						/>
+						{#if FEATURES.importExport}
+							<Button
+								icon={Download}
+								size="xs"
+								variant="ghost"
+								tooltip="Export"
+								on:click={() => dispatch('export', { name: profile.name })}
+							/>
+						{/if}
 						<Button
 							icon={Copy}
 							size="xs"

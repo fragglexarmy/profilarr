@@ -7,6 +7,7 @@
 	import type { QualityDefinitionListItem } from '$shared/pcd/display.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
 	import sonarrLogo from '$lib/client/assets/Sonarr.svg';
+	import { FEATURES } from '$shared/features.ts';
 
 	export let configs: QualityDefinitionListItem[];
 	export let databaseId: number;
@@ -59,13 +60,15 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 	<svelte:fragment slot="actions" let:row>
 		<div class="flex items-center justify-end gap-0.5" on:click|stopPropagation>
-			<Button
-				icon={Download}
-				size="xs"
-				variant="ghost"
-				tooltip="Export"
-				on:click={() => dispatch('export', { name: row.name, arr_type: row.arr_type })}
-			/>
+			{#if FEATURES.importExport}
+				<Button
+					icon={Download}
+					size="xs"
+					variant="ghost"
+					tooltip="Export"
+					on:click={() => dispatch('export', { name: row.name, arr_type: row.arr_type })}
+				/>
+			{/if}
 			<Button
 				icon={Copy}
 				size="xs"

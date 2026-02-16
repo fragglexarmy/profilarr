@@ -10,6 +10,7 @@
 	import Label from '$ui/label/Label.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import { createProgressiveList } from '$lib/client/utils/progressiveList';
+	import { FEATURES } from '$shared/features.ts';
 
 	export let formats: CustomFormatTableRow[];
 
@@ -56,13 +57,15 @@
 								<span>{format.testCount}</span>
 							</div>
 						{/if}
-						<Button
-							icon={Download}
-							size="xs"
-							variant="ghost"
-							tooltip="Export"
-							on:click={() => dispatch('export', { name: format.name })}
-						/>
+						{#if FEATURES.importExport}
+							<Button
+								icon={Download}
+								size="xs"
+								variant="ghost"
+								tooltip="Export"
+								on:click={() => dispatch('export', { name: format.name })}
+							/>
+						{/if}
 						<Button
 							icon={Copy}
 							size="xs"
