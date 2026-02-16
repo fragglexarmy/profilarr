@@ -12,6 +12,7 @@ ParsedInfo:
     - resolution
     - modifier
     - languages
+    - languageSource
     - year
   properties:
     source:
@@ -28,6 +29,12 @@ ParsedInfo:
       items:
         type: string
       description: Detected languages
+    languageSource:
+      type: string
+      enum:
+        - Indexer
+        - Title
+      description: Where the language information came from (Indexer = indexer-provided, Title = parsed from release title)
     releaseGroup:
       type: string
       nullable: true
@@ -59,6 +66,11 @@ ReleaseInput:
       description: Release title to parse and evaluate
     type:
       $ref: '#/MediaType'
+    languages:
+      type: array
+      items:
+        type: string
+      description: Indexer-provided languages. When present and non-empty, these override languages parsed from the title.
 
 ReleaseEvaluation:
   type: object

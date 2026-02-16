@@ -287,6 +287,11 @@ export interface components {
             modifier: string;
             /** @description Detected languages */
             languages: string[];
+            /**
+             * @description Where the language information came from (Indexer = indexer-provided, Title = parsed from release title)
+             * @enum {string}
+             */
+            languageSource: "Indexer" | "Title";
             /** @description Detected release group */
             releaseGroup?: string | null;
             /** @description Detected year */
@@ -302,6 +307,8 @@ export interface components {
             /** @description Release title to parse and evaluate */
             title: string;
             type: components["schemas"]["MediaType"];
+            /** @description Indexer-provided languages. When present and non-empty, these override languages parsed from the title. */
+            languages?: string[];
         };
         ReleaseEvaluation: {
             /** @description Release ID */

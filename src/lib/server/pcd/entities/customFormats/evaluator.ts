@@ -63,6 +63,20 @@ const sourceNames: Record<QualitySource, string> = {
 	[QualitySource.Bluray]: 'bluray'
 };
 
+// Display-friendly names for parsed info shown in the UI
+const sourceDisplayNames: Record<QualitySource, string> = {
+	[QualitySource.Unknown]: 'Unknown',
+	[QualitySource.Cam]: 'CAM',
+	[QualitySource.Telesync]: 'Telesync',
+	[QualitySource.Telecine]: 'Telecine',
+	[QualitySource.Workprint]: 'Workprint',
+	[QualitySource.DVD]: 'DVD',
+	[QualitySource.TV]: 'Television',
+	[QualitySource.WebDL]: 'WEB-DL',
+	[QualitySource.WebRip]: 'WEBRip',
+	[QualitySource.Bluray]: 'Blu-ray'
+};
+
 const resolutionNames: Record<Resolution, string> = {
 	[Resolution.Unknown]: 'unknown',
 	[Resolution.R360p]: '360p',
@@ -81,6 +95,15 @@ const modifierNames: Record<QualityModifier, string> = {
 	[QualityModifier.RawHD]: 'rawhd',
 	[QualityModifier.BRDisk]: 'brdisk',
 	[QualityModifier.Remux]: 'remux'
+};
+
+const modifierDisplayNames: Record<QualityModifier, string> = {
+	[QualityModifier.None]: 'None',
+	[QualityModifier.Regional]: 'Regional',
+	[QualityModifier.Screener]: 'Screener',
+	[QualityModifier.RawHD]: 'Raw-HD',
+	[QualityModifier.BRDisk]: 'BR-DISK',
+	[QualityModifier.Remux]: 'Remux'
 };
 
 const releaseTypeNames: Record<ReleaseType, string> = {
@@ -152,15 +175,36 @@ const languageNames: Record<Language, string> = {
 	[Language.Original]: 'Original'
 };
 
+/** Reverse lookup: display name → Language enum value */
+const languageNameToEnum = new Map<string, Language>(
+	Object.entries(languageNames).map(([enumVal, name]) => [name, Number(enumVal) as Language])
+);
+
+/** Convert indexer language display names to Language enum values. Unrecognized names are skipped. */
+function indexerLanguagesToEnum(names: string[]): Language[] {
+	const result: Language[] = [];
+	for (const name of names) {
+		const enumVal = languageNameToEnum.get(name);
+		if (enumVal !== undefined) {
+			result.push(enumVal);
+		}
+	}
+	return result;
+}
+
 /**
  * Get serializable parsed info for frontend display
  */
-export function getParsedInfo(parsed: ParseResult): ParsedInfo {
+export function getParsedInfo(parsed: ParseResult, indexerLangs?: string[]): ParsedInfo {
+	const useIndexer = indexerLangs && indexerLangs.length > 0;
+	const effectiveLangs = useIndexer ? indexerLanguagesToEnum(indexerLangs) : parsed.languages;
+
 	return {
-		source: sourceNames[parsed.source] || 'Unknown',
+		source: sourceDisplayNames[parsed.source] || 'Unknown',
 		resolution: resolutionNames[parsed.resolution] || 'Unknown',
-		modifier: modifierNames[parsed.modifier] || 'None',
-		languages: parsed.languages.map((l) => languageNames[l] || 'Unknown'),
+		modifier: modifierDisplayNames[parsed.modifier] || 'None',
+		languages: effectiveLangs.map((l) => languageNames[l] || 'Unknown'),
+		languageSource: useIndexer ? 'Indexer' : 'Title',
 		releaseGroup: parsed.releaseGroup,
 		year: parsed.year,
 		edition: parsed.edition,
@@ -181,14 +225,15 @@ function evaluateCondition(
 	condition: ConditionData,
 	parsed: ParseResult,
 	title: string,
-	patternMatches?: Map<string, boolean>
+	patternMatches?: Map<string, boolean>,
+	indexerLangs?: Language[]
 ): ConditionEvalResult {
 	switch (condition.type) {
 		case 'release_title':
 			return evaluatePattern(condition, title, patternMatches);
 
 		case 'language':
-			return evaluateLanguage(condition, parsed);
+			return evaluateLanguage(condition, parsed, indexerLangs);
 
 		case 'source':
 			return evaluateSource(condition, parsed);
@@ -262,13 +307,21 @@ function evaluatePattern(
 /**
  * Evaluate language condition
  */
-function evaluateLanguage(condition: ConditionData, parsed: ParseResult): ConditionEvalResult {
+function evaluateLanguage(
+	condition: ConditionData,
+	parsed: ParseResult,
+	indexerLangs?: Language[]
+): ConditionEvalResult {
 	if (!condition.languages || condition.languages.length === 0) {
 		return { matched: false, expected: 'No languages defined', actual: 'N/A' };
 	}
 
-	const parsedLangNames = parsed.languages.map((l) => languageNames[l] || 'Unknown');
-	const actual = parsedLangNames.length > 0 ? parsedLangNames.join(', ') : 'None detected';
+	// Prefer indexer languages when available
+	const effectiveLangs =
+		indexerLangs && indexerLangs.length > 0 ? indexerLangs : parsed.languages;
+
+	const langNames = effectiveLangs.map((l) => languageNames[l] || 'Unknown');
+	const actual = langNames.length > 0 ? langNames.join(', ') : 'None detected';
 
 	const expectedParts: string[] = [];
 	for (const lang of condition.languages) {
@@ -284,7 +337,7 @@ function evaluateLanguage(condition: ConditionData, parsed: ParseResult): Condit
 		const langEnum = Language[lang.name as keyof typeof Language];
 		if (langEnum === undefined) continue;
 
-		const hasLanguage = parsed.languages.includes(langEnum);
+		const hasLanguage = effectiveLangs.includes(langEnum);
 
 		if (lang.except) {
 			if (hasLanguage) return { matched: false, expected, actual };
@@ -477,12 +530,19 @@ export function evaluateCustomFormat(
 	conditions: ConditionData[],
 	parsed: ParseResult,
 	title: string,
-	patternMatches?: Map<string, boolean>
+	patternMatches?: Map<string, boolean>,
+	indexerLangNames?: string[]
 ): EvaluationResult {
+	// Convert indexer language names to enum values once
+	const indexerLangs =
+		indexerLangNames && indexerLangNames.length > 0
+			? indexerLanguagesToEnum(indexerLangNames)
+			: undefined;
+
 	const results: ConditionResult[] = [];
 
 	for (const condition of conditions) {
-		const evalResult = evaluateCondition(condition, parsed, title, patternMatches);
+		const evalResult = evaluateCondition(condition, parsed, title, patternMatches, indexerLangs);
 		const passes = condition.negate ? !evalResult.matched : evalResult.matched;
 
 		results.push({

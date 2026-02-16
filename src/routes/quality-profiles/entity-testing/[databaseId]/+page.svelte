@@ -100,7 +100,8 @@
 					releases: entity.releases.map((r) => ({
 						id: r.id,
 						title: r.title,
-						type: entity.type
+						type: entity.type,
+						languages: r.languages.length > 0 ? r.languages : undefined
 					}))
 				})
 			});
@@ -359,7 +360,7 @@
 		<ActionButton
 			icon={Sliders}
 			hasDropdown={true}
-			dropdownPosition="middle"
+			dropdownPosition="right"
 			square={!selectedProfile}
 		>
 			{#if selectedProfile}
@@ -367,7 +368,7 @@
 					>{selectedProfile.name}</span
 				>
 			{/if}
-			<Dropdown slot="dropdown" position="middle">
+			<Dropdown slot="dropdown" position="right">
 				<DropdownItem
 					label="No Profile"
 					selected={selectedProfileId === null}
@@ -382,8 +383,8 @@
 				{/each}
 			</Dropdown>
 		</ActionButton>
-		<ActionButton icon={Clapperboard} hasDropdown={true} dropdownPosition="middle">
-			<Dropdown slot="dropdown" position="middle">
+		<ActionButton icon={Clapperboard} hasDropdown={true} dropdownPosition="right">
+			<Dropdown slot="dropdown" position="right">
 				<DropdownItem
 					icon={Film}
 					label="Movies"

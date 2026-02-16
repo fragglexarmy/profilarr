@@ -193,6 +193,7 @@ export interface ParsedInfo {
 	resolution: string;
 	modifier: string;
 	languages: string[];
+	languageSource: 'Indexer' | 'Title';
 	releaseGroup: string | null;
 	year: number;
 	edition: string | null;

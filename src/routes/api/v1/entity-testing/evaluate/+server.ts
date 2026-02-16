@@ -58,7 +58,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			return {
 				releaseId: release.id,
 				title: release.title,
-				parsed: parsed ? getParsedInfo(parsed) : undefined,
+				parsed: parsed ? getParsedInfo(parsed, release.languages) : undefined,
 				cfMatches: {}
 			};
 		});
@@ -108,14 +108,14 @@ export const POST: RequestHandler = async ({ request }) => {
 				continue;
 			}
 
-			const result = evaluateCustomFormat(cf.conditions, parsed, release.title, patternMatches);
+			const result = evaluateCustomFormat(cf.conditions, parsed, release.title, patternMatches, release.languages);
 			cfMatches[cf.name] = result.matches;
 		}
 
 		return {
 			releaseId: release.id,
 			title: release.title,
-			parsed: getParsedInfo(parsed),
+			parsed: getParsedInfo(parsed, release.languages),
 			cfMatches
 		};
 	});
