@@ -135,7 +135,7 @@
 	// Define built-in groups with their tags (order matters - first match wins)
 	const builtInGroups = [
 		{ name: 'Audio', key: 'audio' as const, tags: ['audio'], custom: false },
-		{ name: 'HDR/Colour', key: 'hdr' as const, tags: ['hdr', 'colour grade'], custom: false },
+		{ name: 'HDR', key: 'hdr' as const, tags: ['hdr'], custom: false },
 		{
 			name: 'Release Group',
 			key: 'release-group' as const,
@@ -164,7 +164,7 @@
 			custom: false
 		},
 		{ name: 'Indexer Flag', key: 'indexer-flag' as const, tags: ['flag'], custom: false },
-		{ name: 'Edition', key: 'edition' as const, tags: ['edition'], custom: false },
+		{ name: 'Edition', key: 'edition' as const, tags: ['edition', 'colour grade'], custom: false },
 		{
 			name: 'Enhancement',
 			key: 'enhancement' as const,
