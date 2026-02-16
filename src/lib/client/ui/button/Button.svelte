@@ -27,6 +27,7 @@
 	export let ariaLabel: string = '';
 	export let tooltip: string = '';
 	export let tooltipPosition: 'top' | 'bottom' = 'bottom';
+	export let loading: boolean = false;
 
 	let isSmallScreen = false;
 	let mediaQuery: MediaQueryList | null = null;
@@ -80,10 +81,11 @@
 	$: baseTextColor =
 		textColor || (variant === 'ghost' ? 'text-neutral-700 dark:text-neutral-300' : '');
 	$: baseIconColor =
-		iconColor || (variant === 'ghost' ? 'text-neutral-500 dark:text-neutral-400' : '');
+		(iconColor || (variant === 'ghost' ? 'text-neutral-500 dark:text-neutral-400' : '')) +
+		(loading ? ' animate-spin' : '');
 	$: isIconOnly = icon && !text;
 	$: activeSizeClasses = isIconOnly ? iconOnlySizeClasses : sizeClasses;
-	$: classes = `${baseClasses} ${activeSizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
+	$: classes = `group ${baseClasses} ${activeSizeClasses[effectiveSize]} ${variantClasses[variant]} ${widthClass}`;
 	$: iconSize = effectiveSize === 'xs' ? 12 : effectiveSize === 'sm' ? 14 : 16;
 </script>
 

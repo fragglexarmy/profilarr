@@ -16,6 +16,7 @@
 	export let loading = false; // Shows spinner and disables buttons
 	export let size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
 	export let height: 'auto' | 'md' | 'lg' | 'xl' | 'full' = 'auto';
+	export let bodyOverflow: 'auto' | 'visible' = 'auto';
 
 	const sizeClasses = {
 		sm: 'max-w-sm',
@@ -88,7 +89,7 @@
 				</div>
 
 				<!-- Body -->
-				<div class="flex-1 overflow-auto px-6 py-4">
+				<div class="flex-1 px-6 py-4 {bodyOverflow === 'visible' ? 'overflow-visible' : 'overflow-auto'}">
 					<slot name="body">
 						<p class="text-sm text-neutral-600 dark:text-neutral-400">{bodyMessage}</p>
 					</slot>
@@ -109,6 +110,7 @@
 						icon={loading ? Loader2 : Check}
 						variant={confirmDanger ? 'danger' : 'primary'}
 						disabled={confirmDisabled || loading}
+						{loading}
 						on:click={handleConfirm}
 					/>
 				</div>
