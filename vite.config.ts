@@ -11,9 +11,7 @@ export default defineConfig({
 	server: {
 		port: 6969,
 		host: true,
-		hmr: {
-			host: 'localhost'
-		},
+		hmr: false,
 		watch: {
 			usePolling: true,
 			interval: 1000,
