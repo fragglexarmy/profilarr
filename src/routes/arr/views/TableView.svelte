@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { ExternalLink, Trash2 } from 'lucide-svelte';
+	import { ExternalLink, Unlink } from 'lucide-svelte';
 	import Table from '$ui/table/Table.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
-	import Badge from '$ui/badge/Badge.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';
 	import radarrLogo from '$lib/client/assets/Radarr.svg';
@@ -50,13 +50,6 @@
 		dispatch('delete', instance);
 	}
 
-	// Handle external link click
-	function handleExternalClick(e: Event, url: string) {
-		e.stopPropagation();
-		e.preventDefault();
-		window.open(url, '_blank');
-	}
-
 	// Define table columns
 	const columns: Column<ArrInstance>[] = [
 		{ key: 'name', header: 'Name', align: 'left' },
@@ -77,7 +70,7 @@
 					{/if}
 					<img
 						src={getLogoPath(row.type)}
-						alt="{formatType(row.type)} logo"
+						alt={`${formatType(row.type)} logo`}
 						class="h-8 w-8 rounded-lg {loadedImages.has(row.id) ? 'opacity-100' : 'opacity-0'}"
 						on:load={() => handleImageLoad(row.id)}
 					/>
@@ -89,13 +82,13 @@
 				</div>
 			</div>
 		{:else if column.key === 'url'}
-			<Badge variant="neutral" mono>{row.url}</Badge>
+			<Label variant="secondary" size="sm" rounded="md" mono>{row.url}</Label>
 		{:else if column.key === 'enabled'}
 			<div class="flex justify-center">
 				{#if row.enabled}
-					<Badge variant="success">Enabled</Badge>
+					<Label variant="success" size="sm" rounded="md">Enabled</Label>
 				{:else}
-					<Badge variant="neutral">Disabled</Badge>
+					<Label variant="secondary" size="sm" rounded="md">Disabled</Label>
 				{/if}
 			</div>
 		{/if}
@@ -103,13 +96,22 @@
 
 	<svelte:fragment slot="actions" let:row>
 		<div class="relative z-10 flex items-center justify-end gap-1">
-			<button type="button" on:click={(e) => handleExternalClick(e, row.url)}>
-				<TableActionButton icon={ExternalLink} title="Open in {formatType(row.type)}" />
-			</button>
-			<TableActionButton
-				icon={Trash2}
-				title="Delete instance"
-				variant="danger"
+			<Button
+				icon={ExternalLink}
+				size="xs"
+				variant="secondary"
+				title={`Open in ${formatType(row.type)}`}
+				ariaLabel={`Open in ${formatType(row.type)}`}
+				href={row.url}
+				target="_blank"
+				rel="noopener noreferrer"
+			/>
+			<Button
+				icon={Unlink}
+				size="xs"
+				title="Unlink instance"
+				variant="secondary"
+				iconColor="text-red-600 dark:text-red-400"
 				on:click={(e) => handleDeleteClick(e, row)}
 			/>
 		</div>

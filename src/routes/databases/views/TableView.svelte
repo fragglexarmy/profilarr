@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { ExternalLink, Unlink, Lock, Code } from 'lucide-svelte';
 	import Table from '$ui/table/Table.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
-	import Badge from '$ui/badge/Badge.svelte';
+	import Button from '$ui/button/Button.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import type { Column } from '$ui/table/types';
 	import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
 	import { parseUTC } from '$shared/utils/dates';
@@ -49,13 +49,6 @@
 		dispatch('unlink', database);
 	}
 
-	// Handle external link click
-	function handleExternalClick(e: Event, url: string) {
-		e.stopPropagation();
-		e.preventDefault();
-		window.open(url, '_blank');
-	}
-
 	// Define table columns
 	const columns: Column<DatabaseInstance>[] = [
 		{ key: 'name', header: 'Name', align: 'left' },
@@ -75,31 +68,52 @@
 						{row.name}
 					</div>
 					{#if row.is_private}
-						<Badge variant="neutral" icon={Lock} mono>Private</Badge>
+						<Label variant="secondary" size="sm" rounded="md" mono>
+							<Lock size={12} />
+							Private
+						</Label>
 					{/if}
 					{#if row.personal_access_token}
-						<Badge variant="info" icon={Code} mono>Dev</Badge>
+						<Label variant="info" size="sm" rounded="md" mono>
+							<Code size={12} />
+							Dev
+						</Label>
 					{/if}
 				</div>
 			</div>
 		{:else if column.key === 'repository_url'}
-			<Badge variant="neutral" mono>{row.repository_url.replace('https://github.com/', '')}</Badge>
+			<Label variant="secondary" size="sm" rounded="md" mono>
+				{row.repository_url.replace('https://github.com/', '')}
+			</Label>
 		{:else if column.key === 'sync_strategy'}
-			<Badge variant="neutral" mono>{formatSyncStrategy(row.sync_strategy)}</Badge>
+			<Label variant="secondary" size="sm" rounded="md" mono>
+				{formatSyncStrategy(row.sync_strategy)}
+			</Label>
 		{:else if column.key === 'last_synced_at'}
-			<Badge variant="neutral" mono>{formatLastSynced(row.last_synced_at)}</Badge>
+			<Label variant="secondary" size="sm" rounded="md" mono>
+				{formatLastSynced(row.last_synced_at)}
+			</Label>
 		{/if}
 	</svelte:fragment>
 
 	<svelte:fragment slot="actions" let:row>
 		<div class="relative z-10 flex items-center justify-end gap-1">
-			<button type="button" on:click={(e) => handleExternalClick(e, row.repository_url)}>
-				<TableActionButton icon={ExternalLink} title="View on GitHub" />
-			</button>
-			<TableActionButton
+			<Button
+				icon={ExternalLink}
+				size="xs"
+				variant="secondary"
+				title="View on GitHub"
+				ariaLabel="View on GitHub"
+				href={row.repository_url}
+				target="_blank"
+				rel="noopener noreferrer"
+			/>
+			<Button
 				icon={Unlink}
+				size="xs"
 				title="Unlink database"
-				variant="danger"
+				variant="secondary"
+				iconColor="text-red-600 dark:text-red-400"
 				on:click={(e) => handleUnlinkClick(e, row)}
 			/>
 		</div>
