@@ -14,8 +14,8 @@ export default defineConfig({
 		hmr: false,
 		watch: {
 			usePolling: true,
-			interval: 1000,
-			ignored: ['**/data/**', '**/logs/**', '**/backups/**', '**/dist/**', '**/*.db*']
+			interval: 3000,
+			ignored: ['**/data/**', '**/logs/**', '**/backups/**', '**/dist/**', '**/*.db*', '**/.git/**', '**/node_modules/**', '**/research/**']
 		}
 	},
 	define: {
