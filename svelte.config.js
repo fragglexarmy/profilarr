@@ -10,7 +10,6 @@ const config = {
 			usage: 'deno-compile',
 			out: 'dist/build'
 		}),
-		outDir: 'dist/.svelte-kit',
 		alias: {
 			$api: './src/lib/api',
 			$config: './src/lib/server/utils/config/config.ts',
