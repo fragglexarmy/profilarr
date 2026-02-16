@@ -10,7 +10,7 @@
 		| 'danger'
 		| 'info' = 'default';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
-	export let rounded: 'sm' | 'md' | 'full' = 'full';
+	export let rounded: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'full';
 	export let mono: boolean = false;
 	export let href: string | undefined = undefined;
 
@@ -44,6 +44,8 @@
 	const roundedClasses = {
 		sm: 'rounded',
 		md: 'rounded-md',
+		lg: 'rounded-lg',
+		xl: 'rounded-xl',
 		full: 'rounded-full'
 	};
 
