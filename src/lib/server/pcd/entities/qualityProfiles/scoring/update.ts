@@ -3,7 +3,7 @@
  */
 
 import type { PCDCache } from '$pcd/index.ts';
-import { writeOperation, type OperationLayer, type WriteResult } from '$pcd/index.ts';
+import { writeOperation, recompileCache, type OperationLayer, type WriteResult } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
 import type { CompiledQuery } from 'kysely';
 
@@ -396,6 +396,7 @@ WHERE quality_profile_name = '${esc(profileName)}'
 			description: op.description,
 			queries: op.queries,
 			desiredState: op.desiredState,
+			skipRecompile: true,
 			metadata: {
 				operation: 'update',
 				entity: 'quality_profile',
@@ -409,11 +410,13 @@ WHERE quality_profile_name = '${esc(profileName)}'
 		});
 
 		if (!result.success) {
+			await recompileCache(databaseId);
 			return result;
 		}
 		lastResult = result;
 	}
 
+	await recompileCache(databaseId);
 	return lastResult ?? { success: true };
 }
 

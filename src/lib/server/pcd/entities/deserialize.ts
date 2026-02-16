@@ -7,6 +7,7 @@
 
 import type { PCDCache } from '$pcd/index.ts';
 import { getCache, type OperationLayer } from '$pcd/index.ts';
+import { recompileCache } from '$pcd/index.ts';
 import type {
 	PortableDelayProfile,
 	PortableRegularExpression,
@@ -105,12 +106,13 @@ export async function deserializeCustomFormat(
 		});
 	}
 
-	// 3. Add tests
+	// 3. Add tests (skip recompile per-test, recompile once at end)
 	for (const test of portable.tests) {
 		await cfQueries.createTest({
 			databaseId,
 			layer,
 			formatName: portable.name,
+			skipRecompile: true,
 			input: {
 				title: test.title,
 				type: test.type,
@@ -118,6 +120,10 @@ export async function deserializeCustomFormat(
 				description: test.description
 			}
 		});
+	}
+
+	if (portable.tests.length > 0) {
+		await recompileCache(databaseId);
 	}
 
 	return createResult;

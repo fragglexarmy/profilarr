@@ -21,7 +21,7 @@ export { compile, invalidate, invalidateAll } from './database/compiler.ts';
 // WRITER
 // ============================================================================
 
-export { writeOperation, canWriteToBase } from './ops/writer.ts';
+export { writeOperation, recompileCache, canWriteToBase } from './ops/writer.ts';
 
 // ============================================================================
 // MANIFEST

@@ -299,7 +299,7 @@ async function supersedePriorUserOps(
  * For user layer: inserts a published user op (origin=user, state=published)
  */
 export async function writeOperation(options: WriteOptions): Promise<WriteResult> {
-	const { databaseId, layer, description, queries, metadata, desiredState } = options;
+	const { databaseId, layer, description, queries, metadata, desiredState, skipRecompile } = options;
 
 	try {
 		const instance = databaseInstancesQueries.getById(databaseId);
@@ -345,7 +345,9 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		}
 
 		if (metadata && (await cancelOutCreate(databaseId, layer, metadata))) {
-			await compile(instance.local_path, instance.id);
+			if (!skipRecompile) {
+				await compile(instance.local_path, instance.id);
+			}
 			return { success: true };
 		}
 
@@ -384,12 +386,14 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 			await supersedePriorUserOps(databaseId, opId, metadata);
 		}
 
-		await compile(instance.local_path, instance.id);
+		if (!skipRecompile) {
+			await compile(instance.local_path, instance.id);
 
-		await logger.debug('Cache recompiled after write', {
-			source: 'PCDWriter',
-			meta: { databaseId }
-		});
+			await logger.debug('Cache recompiled after write', {
+				source: 'PCDWriter',
+				meta: { databaseId }
+			});
+		}
 
 		return { success: true, filepath: `pcd_ops:${opId}` };
 	} catch (error) {
@@ -399,6 +403,20 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 		});
 		return { success: false, error: String(error) };
 	}
+}
+
+/**
+ * Recompile the cache for a database instance.
+ * Use after a batch of writeOperation calls with skipRecompile: true.
+ */
+export async function recompileCache(databaseId: number): Promise<void> {
+	const instance = databaseInstancesQueries.getById(databaseId);
+	if (!instance) return;
+	await compile(instance.local_path, instance.id);
+	await logger.debug('Cache recompiled after batch write', {
+		source: 'PCDWriter',
+		meta: { databaseId }
+	});
 }
 
 /**

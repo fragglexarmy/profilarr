@@ -8,7 +8,7 @@
  */
 
 import type { PCDCache } from '$pcd/index.ts';
-import { writeOperation, type OperationLayer, type WriteResult } from '$pcd/index.ts';
+import { writeOperation, recompileCache, type OperationLayer, type WriteResult } from '$pcd/index.ts';
 import type { ConditionData } from '$shared/pcd/display.ts';
 import { uuid } from '$shared/utils/uuid.ts';
 import { logger } from '$logger/logger.ts';
@@ -454,6 +454,7 @@ WHERE custom_format_name = '${esc(formatName)}'
 			description: op.description,
 			queries: op.queries,
 			desiredState: op.desiredState,
+			skipRecompile: true,
 			metadata: {
 				operation: 'update',
 				entity: 'custom_format',
@@ -468,12 +469,14 @@ WHERE custom_format_name = '${esc(formatName)}'
 		});
 
 		if (!result.success) {
+			await recompileCache(databaseId);
 			return result;
 		}
 
 		lastResult = result;
 	}
 
+	await recompileCache(databaseId);
 	return lastResult ?? { success: true };
 }
 

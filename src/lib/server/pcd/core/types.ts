@@ -107,6 +107,8 @@ export interface WriteOptions {
 	metadata?: OperationMetadata;
 	/** Optional desired state payload for diff/UI */
 	desiredState?: Record<string, unknown> | null;
+	/** Skip cache recompile after write (caller must recompile manually) */
+	skipRecompile?: boolean;
 }
 
 /**

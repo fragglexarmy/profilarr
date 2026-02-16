@@ -16,6 +16,7 @@ interface CreateTestOptions {
 	layer: OperationLayer;
 	formatName: string;
 	input: CreateTestInput;
+	skipRecompile?: boolean;
 }
 
 /**
@@ -29,7 +30,7 @@ function esc(value: string): string {
  * Create a custom format test by writing an operation to the specified layer
  */
 export async function createTest(options: CreateTestOptions) {
-	const { databaseId, layer, formatName, input } = options;
+	const { databaseId, layer, formatName, input, skipRecompile } = options;
 
 	// Ensure unique (format, title, type)
 	const cache = getCache(databaseId);
@@ -64,6 +65,7 @@ export async function createTest(options: CreateTestOptions) {
 		layer,
 		description: `create-test-${formatName}`,
 		queries: [insertTest],
+		skipRecompile,
 		desiredState: {
 			custom_format_name: formatName,
 			title: input.title,
