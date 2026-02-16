@@ -9,6 +9,7 @@
 		| 'warning'
 		| 'danger'
 		| 'info' = 'default';
+	export let customVariant: string = '';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let rounded: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'full';
 	export let mono: boolean = false;
@@ -49,7 +50,8 @@
 		full: 'rounded-full'
 	};
 
-	$: classes = `inline-flex items-center leading-none font-medium ${variantClasses[variant]} ${sizeClasses[size]} ${roundedClasses[rounded]} ${mono ? 'font-mono' : ''}`;
+	$: resolvedVariantClasses = customVariant || variantClasses[variant];
+	$: classes = `inline-flex items-center leading-none font-medium ${resolvedVariantClasses} ${sizeClasses[size]} ${roundedClasses[rounded]} ${mono ? 'font-mono' : ''}`;
 </script>
 
 {#if href}

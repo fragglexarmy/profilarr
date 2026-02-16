@@ -5,13 +5,15 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import JsonView from '$ui/meta/JsonView.svelte';
 	import Table from '$ui/table/Table.svelte';
-	import TableActionButton from '$ui/table/TableActionButton.svelte';
+	import Button from '$ui/button/Button.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import type { Column, SortDirection, SortState } from '$ui/table/types';
 	import LogsActionsBar from './components/LogsActionsBar.svelte';
+	import LogLevelLabelCell from './components/LogLevelLabelCell.svelte';
 	import { getPersistentSearchStore } from '$lib/client/stores/search';
 	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
+	import type { ComponentType } from 'svelte';
 
 	export let data: PageData;
 
@@ -22,6 +24,8 @@
 		source?: string;
 		meta?: unknown;
 	}
+
+	const levelCellComponent = LogLevelLabelCell as unknown as ComponentType;
 
 	// Initialize search store
 	const searchStore = getPersistentSearchStore('settingsLogsSearch', { debounceMs: 300 });
@@ -49,14 +53,6 @@
 		}
 	}
 
-	// Level colors
-	const levelColors: Record<string, string> = {
-		DEBUG: 'text-cyan-600 dark:text-cyan-400',
-		INFO: 'text-green-600 dark:text-green-400',
-		WARN: 'text-yellow-600 dark:text-yellow-400',
-		ERROR: 'text-red-600 dark:text-red-400'
-	};
-
 	// Table columns
 	const columns: Column<LogEntry>[] = [
 		{
@@ -72,9 +68,7 @@
 			key: 'level',
 			header: 'Level',
 			sortable: true,
-			cell: (row) => ({
-				html: `<span class="font-semibold ${levelColors[row.level] || 'text-neutral-600 dark:text-neutral-400'}">${row.level}</span>`
-			})
+			cell: () => levelCellComponent
 		},
 		{
 			key: 'source',
@@ -383,9 +377,23 @@
 	>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
-				<TableActionButton icon={Copy} title="Copy log entry" on:click={() => copyLog(row)} />
+				<Button
+					icon={Copy}
+					size="xs"
+					variant="secondary"
+					title="Copy log entry"
+					ariaLabel="Copy log entry"
+					on:click={() => copyLog(row)}
+				/>
 				{#if row.meta}
-					<TableActionButton icon={Eye} title="View metadata" on:click={() => viewMeta(row.meta)} />
+					<Button
+						icon={Eye}
+						size="xs"
+						variant="secondary"
+						title="View metadata"
+						ariaLabel="View metadata"
+						on:click={() => viewMeta(row.meta)}
+					/>
 				{/if}
 			</div>
 		</svelte:fragment>

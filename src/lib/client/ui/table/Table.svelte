@@ -90,6 +90,15 @@
 		onSortChange?.(sortKey ? { key: sortKey, direction: sortDirection } : null);
 	}
 
+	function handleSortKeydown(event: KeyboardEvent, column: Column<T>) {
+		if (event.key !== 'Enter' && event.key !== ' ') {
+			return;
+		}
+
+		event.preventDefault();
+		toggleSort(column);
+	}
+
 	function compareValues(a: any, b: any): number {
 		if (a == null && b == null) return 0;
 		if (a == null) return -1;
@@ -238,8 +247,9 @@
 							class={`${compact ? 'px-4 py-2.5' : 'px-6 py-3'} text-xs font-semibold text-neutral-500 dark:text-neutral-400 ${getAlignClass(column.align)} ${column.width || ''}`}
 						>
 							{#if column.sortable}
-								<button
-									type="button"
+								<div
+									role="button"
+									tabindex="0"
 									class={`group flex w-full items-center gap-1.5 text-xs font-semibold ${
 										column.align === 'center'
 											? 'justify-center'
@@ -248,6 +258,7 @@
 												: 'justify-start'
 									}`}
 									on:click={() => toggleSort(column)}
+									on:keydown={(event) => handleSortKeydown(event, column)}
 								>
 									{#if column.headerIcon}
 										<svelte:component this={column.headerIcon} size={14} />
@@ -262,7 +273,7 @@
 											⇅
 										{/if}
 									</span>
-								</button>
+								</div>
 							{:else}
 								<div
 									class={`flex items-center gap-1.5 ${
