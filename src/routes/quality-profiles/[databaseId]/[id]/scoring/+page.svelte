@@ -171,7 +171,7 @@
 			tags: ['enhancement', 'enhancements'],
 			custom: false
 		},
-		{ name: 'Languages', key: 'languages' as const, tags: ['languages'], custom: false }
+		{ name: 'Languages', key: 'languages' as const, tags: ['language', 'languages', 'asl'], custom: false }
 	];
 
 	// Custom groups from localStorage
