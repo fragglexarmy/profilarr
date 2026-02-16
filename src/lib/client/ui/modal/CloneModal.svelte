@@ -14,13 +14,13 @@
 
 	let newName = '';
 	let loading = false;
-	let selectedLayer: 'user' | 'base' = 'user';
 
 	// Pre-populate name when modal opens
 	$: if (open && sourceName) {
 		newName = `${sourceName} (Copy)`;
-		selectedLayer = canWriteToBase ? 'base' : 'user';
 	}
+
+	$: layer = canWriteToBase ? 'base' : 'user';
 
 	$: nameConflict = existingNames.some((n) => n.toLowerCase() === newName.trim().toLowerCase());
 	$: confirmDisabled = !newName.trim() || nameConflict || loading;
@@ -50,7 +50,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					databaseId,
-					layer: selectedLayer,
+					layer,
 					entityType,
 					data: exportJson.data
 				})
@@ -101,23 +101,6 @@
 				</p>
 			{/if}
 
-			{#if canWriteToBase}
-				<div class="space-y-2">
-					<label class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-						Layer
-					</label>
-					<div class="flex gap-3">
-						<label class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-							<input type="radio" bind:group={selectedLayer} value="base" />
-							Base
-						</label>
-						<label class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-							<input type="radio" bind:group={selectedLayer} value="user" />
-							User
-						</label>
-					</div>
-				</div>
-			{/if}
 		</div>
 	</div>
 </Modal>
