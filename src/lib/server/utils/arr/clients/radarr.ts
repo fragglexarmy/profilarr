@@ -1,4 +1,5 @@
 import { BaseArrClient } from '../base.ts';
+import { HttpError } from '$utils/http/types.ts';
 import type {
 	RadarrMovie,
 	RadarrMovieFile,
@@ -34,14 +35,40 @@ export class RadarrClient extends BaseArrClient {
 	 * Get movie files by movie IDs
 	 * Uses movieId params for batching (NOT movieFileIds which can error on stale IDs)
 	 */
-	getMovieFiles(movieIds: number[]): Promise<RadarrMovieFile[]> {
+	async getMovieFiles(movieIds: number[]): Promise<RadarrMovieFile[]> {
 		if (movieIds.length === 0) {
-			return Promise.resolve([]);
+			return [];
 		}
 
-		// Build query string with repeated movieId params
-		const queryString = movieIds.map((id) => `movieId=${id}`).join('&');
-		return this.get<RadarrMovieFile[]>(`/api/${this.apiVersion}/moviefile?${queryString}`);
+		const MAX_IDS_PER_REQUEST = 200;
+
+		const fetchBatch = async (ids: number[]): Promise<RadarrMovieFile[]> => {
+			const queryString = ids.map((id) => `movieId=${id}`).join('&');
+			try {
+				return await this.get<RadarrMovieFile[]>(`/api/${this.apiVersion}/moviefile?${queryString}`);
+			} catch (error) {
+				// If URL still exceeds upstream limits, split and retry recursively.
+				if (error instanceof HttpError && error.status === 414 && ids.length > 1) {
+					const midpoint = Math.ceil(ids.length / 2);
+					const [left, right] = await Promise.all([
+						fetchBatch(ids.slice(0, midpoint)),
+						fetchBatch(ids.slice(midpoint))
+					]);
+					return [...left, ...right];
+				}
+
+				throw error;
+			}
+		};
+
+		const files: RadarrMovieFile[] = [];
+		for (let i = 0; i < movieIds.length; i += MAX_IDS_PER_REQUEST) {
+			const chunk = movieIds.slice(i, i + MAX_IDS_PER_REQUEST);
+			const chunkFiles = await fetchBatch(chunk);
+			files.push(...chunkFiles);
+		}
+
+		return files;
 	}
 
 	/**
