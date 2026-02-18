@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { clickOutside } from '$lib/client/utils/clickOutside';
 	import FormInput from '$ui/form/FormInput.svelte';
 
@@ -20,6 +20,8 @@
 	export let hideLabel: boolean = true;
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let constrainMenuHeight: boolean = true;
+	/** Fixed positioning to escape overflow containers */
+	export let fixed: boolean = false;
 
 	const dispatch = createEventDispatcher<{ change: string }>();
 
@@ -27,6 +29,9 @@
 	let searchQuery = '';
 	let inputElement: HTMLInputElement | HTMLTextAreaElement | null = null;
 	let highlightedIndex = -1;
+	let containerEl: HTMLElement;
+	let dropdownEl: HTMLElement;
+	let fixedStyle = '';
 
 	$: selectedOption = options.find((opt) => opt.value === value);
 	$: if (!open) {
@@ -131,10 +136,31 @@
 		highlightedIndex = 0;
 		inputElement?.focus();
 	}
+
+	function updateFixedPosition() {
+		if (!fixed || !containerEl) return;
+		const rect = containerEl.getBoundingClientRect();
+		fixedStyle = `top: ${rect.bottom + 4}px; left: ${rect.left}px; width: ${rect.width}px;`;
+	}
+
+	$: if (fixed && open && containerEl) {
+		updateFixedPosition();
+	}
+
+	onMount(() => {
+		if (fixed) {
+			window.addEventListener('scroll', updateFixedPosition, true);
+			window.addEventListener('resize', updateFixedPosition);
+			return () => {
+				window.removeEventListener('scroll', updateFixedPosition, true);
+				window.removeEventListener('resize', updateFixedPosition);
+			};
+		}
+	});
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="relative" use:clickOutside={close} class:w-full={fullWidth} on:keydown={handleKeyDown}>
+<div class="relative" use:clickOutside={close} class:w-full={fullWidth} on:keydown={handleKeyDown} bind:this={containerEl}>
 	<FormInput
 		{label}
 		{description}
@@ -173,10 +199,14 @@
 
 	{#if open && filteredOptions.length > 0}
 		<div
+			bind:this={dropdownEl}
 			role="listbox"
-			class="absolute top-full z-50 mt-1 w-full overflow-y-auto rounded-xl border border-neutral-300 bg-white p-1 shadow-sm dark:border-neutral-700/60 dark:bg-neutral-800 {constrainMenuHeight
+			class="z-50 overflow-y-auto rounded-xl border border-neutral-300 bg-white p-1 shadow-lg dark:border-neutral-700/60 dark:bg-neutral-800 {constrainMenuHeight
 				? 'max-h-60'
-				: ''}"
+				: ''} {fixed
+				? 'fixed'
+				: 'absolute top-full mt-1 w-full'}"
+			style={fixed ? fixedStyle : ''}
 		>
 			{#each filteredOptions as option, index}
 				{@const isHighlighted = highlightedIndex === index}

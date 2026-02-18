@@ -17,6 +17,7 @@
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
+	import SearchDropdown from '$ui/form/SearchDropdown.svelte';
 
 	export let group: FilterGroup;
 	export let appType: UpgradeAppType = 'radarr';
@@ -108,12 +109,12 @@
 					{@const field = getFilterField(child.field)}
 					<div class="flex items-center gap-2">
 						<!-- Field -->
-						<DropdownSelect
+						<SearchDropdown
 							value={child.field}
 							options={fields.map((f) => ({ value: f.id, label: f.label }))}
-							minWidth="10rem"
-							responsiveButton
-							compactDropdownThreshold={7}
+							placeholder="Search fields..."
+							hideLabel
+							fullWidth={false}
 							fixed
 							on:change={(e) => onFieldChange(child, e.detail)}
 						/>
