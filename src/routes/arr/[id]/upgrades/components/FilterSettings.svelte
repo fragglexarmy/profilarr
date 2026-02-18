@@ -8,7 +8,7 @@
 		Trash2,
 		Pencil
 	} from 'lucide-svelte';
-	import { createEmptyFilterConfig, maxCountPerRun, type FilterConfig, type UpgradeAppType } from '$shared/upgrades/filters';
+	import { createEmptyFilterConfig, maxCountPerRun, resolveTagLabel, type FilterConfig, type UpgradeAppType } from '$shared/upgrades/filters';
 	import { uuid } from '$shared/utils/uuid';
 	import { selectors } from '$shared/upgrades/selectors';
 	import { createSearchStore, getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
@@ -149,6 +149,13 @@
 	function handleChange() {
 		filters = filters;
 		notifyChange();
+	}
+
+	function getSharedTagFilters(currentFilter: FilterConfig): string[] {
+		const currentTag = resolveTagLabel(currentFilter);
+		return filters
+			.filter((f) => f.id !== currentFilter.id && resolveTagLabel(f) === currentTag)
+			.map((f) => f.name);
 	}
 
 	function toggleEnabled(id: string) {
@@ -369,7 +376,7 @@
 				<!-- Selection Settings -->
 				<Card padding="md">
 					<h3 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Settings</h3>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 						<div>
 							<label
 								for="cutoff-{row.id}"
@@ -438,6 +445,33 @@
 							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
 								Items to select per run
 							</p>
+						</div>
+						<div>
+							<label
+								for="tag-{row.id}"
+								class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
+							>
+								Cooldown Tag
+							</label>
+							<div class="mt-1">
+								<FormInput
+									label="Cooldown tag"
+									hideLabel
+									name="tag-{row.id}"
+									placeholder={resolveTagLabel(row)}
+									bind:value={row.tag}
+									on:input={handleChange}
+								/>
+							</div>
+							{#if getSharedTagFilters(row).length > 0}
+								<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+									Shared with: {getSharedTagFilters(row).join(', ')}
+								</p>
+							{:else}
+								<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+									Tag applied in your arr instance for cooldown tracking. Avoid reusing tags you use elsewhere.
+								</p>
+							{/if}
 						</div>
 					</div>
 				</Card>

@@ -14,7 +14,7 @@ import type { RadarrMovie, RadarrMovieFile, SonarrSeries, ArrTag } from '$lib/se
 import { normalizeRadarrItems, normalizeSonarrItems } from './normalize.ts';
 import {
 	filterByFilterTag,
-	getFilterTagLabel,
+	resolveTagLabel,
 	applyFilterTagToMovies,
 	applyFilterTagToSeries,
 	isFilterExhausted,
@@ -321,15 +321,16 @@ export async function processUpgradeConfig(
 		);
 
 		// Step 3: Filter by filter-level tag (items already searched by this filter)
-		if (isFilterExhausted(matchedItems, tags, filter.name)) {
-			const resetResult = await resetFilterCooldown(client as RadarrClient & SonarrClient, filter.name);
+		const tagLabel = resolveTagLabel(filter);
+
+		if (isFilterExhausted(matchedItems, tags, tagLabel)) {
+			const resetResult = await resetFilterCooldown(client as RadarrClient & SonarrClient, tagLabel);
 			if (resetResult.reset > 0) {
 				const updatedTags = await client.getTags();
 				tags.length = 0;
 				tags.push(...updatedTags);
 
 				// Also strip the tag from local items so filterByFilterTag sees them as available
-				const tagLabel = getFilterTagLabel(filter.name);
 				const filterTagId = updatedTags.find((t) => t.label === tagLabel)?.id;
 				if (filterTagId !== undefined) {
 					for (const item of matchedItems) {
@@ -339,7 +340,7 @@ export async function processUpgradeConfig(
 			}
 		}
 
-		const afterCooldownItems = filterByFilterTag(matchedItems, tags, filter.name);
+		const afterCooldownItems = filterByFilterTag(matchedItems, tags, tagLabel);
 		const afterCooldownCount = afterCooldownItems.length;
 
 		// Step 4: If dry run, also exclude items from previous dry runs
@@ -489,7 +490,6 @@ export async function processUpgradeConfig(
 						}
 
 						// Apply filter tag
-						const tagLabel = getFilterTagLabel(filter.name);
 						const filterTag = await radarr.getOrCreateTag(tagLabel);
 						const tagResult = await applyFilterTagToMovies(
 							radarr,
@@ -547,7 +547,6 @@ export async function processUpgradeConfig(
 						}
 
 						// Apply filter tag using bulk editor
-						const tagLabel = getFilterTagLabel(filter.name);
 						const filterTag = await sonarr.getOrCreateTag(tagLabel);
 						const tagResult = await applyFilterTagToSeries(
 							sonarr,

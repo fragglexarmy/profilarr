@@ -14,27 +14,9 @@ import type { ArrTag, RadarrMovie, SonarrSeries } from '$lib/server/utils/arr/ty
 import type { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
 import type { SonarrClient } from '$lib/server/utils/arr/clients/sonarr.ts';
 
+export { getFilterTagLabel, resolveTagLabel } from '$shared/upgrades/filters.ts';
+
 const FILTER_TAG_PREFIX = 'profilarr-';
-
-/**
- * Slugify a filter name for use in tags
- * Converts "Things I Don't Want to Upgrade" -> "things-i-dont-want-to-upgrade"
- */
-function slugify(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/['']/g, '') // Remove apostrophes
-		.replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with dashes
-		.replace(/^-+|-+$/g, '') // Trim leading/trailing dashes
-		.slice(0, 50); // Limit length
-}
-
-/**
- * Get the tag label for a specific filter
- */
-export function getFilterTagLabel(filterName: string): string {
-	return `${FILTER_TAG_PREFIX}${slugify(filterName)}`;
-}
 
 /**
  * Check if a tag label is a profilarr filter tag
@@ -44,19 +26,18 @@ export function isFilterTag(label: string): boolean {
 }
 
 /**
- * Check if an item has a specific filter's tag
+ * Check if an item has a specific tag by label
  */
 export function hasFilterTag(
 	itemTagIds: number[],
 	allTags: ArrTag[],
-	filterName: string
+	tagLabel: string
 ): boolean {
-	const targetLabel = getFilterTagLabel(filterName);
 	const tagMap = new Map(allTags.map((t) => [t.id, t.label]));
 
 	for (const tagId of itemTagIds) {
 		const label = tagMap.get(tagId);
-		if (label === targetLabel) {
+		if (label === tagLabel) {
 			return true;
 		}
 	}
@@ -65,15 +46,15 @@ export function hasFilterTag(
 }
 
 /**
- * Filter items that do NOT have the filter's tag
+ * Filter items that do NOT have the given tag
  * Returns only items eligible for searching (not yet searched by this filter)
  */
 export function filterByFilterTag<T extends { _tags: number[] }>(
 	items: T[],
 	allTags: ArrTag[],
-	filterName: string
+	tagLabel: string
 ): T[] {
-	return items.filter((item) => !hasFilterTag(item._tags, allTags, filterName));
+	return items.filter((item) => !hasFilterTag(item._tags, allTags, tagLabel));
 }
 
 // =========================================================================
@@ -158,20 +139,19 @@ export async function removeFilterTag(
  */
 export async function resetFilterCooldown(
 	client: RadarrClient,
-	filterName: string
+	tagLabel: string
 ): Promise<{ reset: number; failed: number; errors: string[] }>;
 /**
  * Reset filter cooldown for Sonarr — bulk removes the tag from all tagged series
  */
 export async function resetFilterCooldown(
 	client: SonarrClient,
-	filterName: string
+	tagLabel: string
 ): Promise<{ reset: number; failed: number; errors: string[] }>;
 export async function resetFilterCooldown(
 	client: RadarrClient | SonarrClient,
-	filterName: string
+	tagLabel: string
 ): Promise<{ reset: number; failed: number; errors: string[] }> {
-	const tagLabel = getFilterTagLabel(filterName);
 
 	// Find the tag ID
 	const tags = await client.getTags();
@@ -272,8 +252,8 @@ export async function applyFilterTagToSeries(
 export function isFilterExhausted<T extends { _tags: number[] }>(
 	matchedItems: T[],
 	allTags: ArrTag[],
-	filterName: string
+	tagLabel: string
 ): boolean {
-	const untaggedItems = filterByFilterTag(matchedItems, allTags, filterName);
+	const untaggedItems = filterByFilterTag(matchedItems, allTags, tagLabel);
 	return untaggedItems.length === 0 && matchedItems.length > 0;
 }

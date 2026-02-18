@@ -51,8 +51,8 @@ export interface FilterConfig {
 	selector: string;
 	count: number;
 	cutoff: number;
-	// Cooldown is handled via filter-level tags (profilarr-{filterId})
-	// Future: cooldownMode?: 'basic' | 'advanced' for adaptive backoff
+	/** Custom tag name for cooldown tracking. If empty/undefined, auto-generated from filter name. */
+	tag?: string;
 }
 
 export type FilterMode = 'round_robin' | 'random';
@@ -788,3 +788,36 @@ export const maxCountPerRun: Record<string, number> = {
 	radarr: 5,
 	sonarr: 1
 };
+
+// =============================================================================
+// Tag label utilities
+// =============================================================================
+
+const FILTER_TAG_PREFIX = 'profilarr-';
+
+function slugify(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/['']/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 50);
+}
+
+/**
+ * Get the auto-generated tag label for a filter name
+ */
+export function getFilterTagLabel(filterName: string): string {
+	return `${FILTER_TAG_PREFIX}${slugify(filterName)}`;
+}
+
+/**
+ * Resolve the effective tag label for a filter.
+ * Uses custom tag if set, otherwise auto-generates from filter name.
+ */
+export function resolveTagLabel(filter: Pick<FilterConfig, 'name' | 'tag'>): string {
+	if (filter.tag?.trim()) {
+		return filter.tag.trim();
+	}
+	return getFilterTagLabel(filter.name);
+}
