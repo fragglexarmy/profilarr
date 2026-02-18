@@ -54,10 +54,6 @@ export function getAuthState(event: RequestEvent): AuthState {
 	if (config.authMode === 'local') {
 		const clientIp = getClientIp(event, false);
 		if (isLocalAddress(clientIp)) {
-			void logger.debug('Local IP bypass', {
-				source: 'Auth',
-				meta: { ip: clientIp }
-			});
 			return {
 				needsSetup: !hasLocalUsers,
 				user: null,
