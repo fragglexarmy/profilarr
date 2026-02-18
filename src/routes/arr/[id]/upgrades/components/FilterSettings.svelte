@@ -1,13 +1,12 @@
 <script lang="ts">
 	import {
 		Plus,
-		Pencil,
-		Check,
 		Power,
 		Copy,
 		ClipboardCopy,
 		ClipboardPaste,
-		Trash2
+		Trash2,
+		Pencil
 	} from 'lucide-svelte';
 	import { createEmptyFilterConfig, maxCountPerRun, type FilterConfig, type UpgradeAppType } from '$shared/upgrades/filters';
 	import { uuid } from '$shared/utils/uuid';
@@ -16,6 +15,7 @@
 	import type { Readable } from 'svelte/store';
 	import { page } from '$app/stores';
 	import FilterGroupComponent from './FilterGroup.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -113,8 +113,13 @@
 		if (editingId) {
 			const filter = filters.find((f) => f.id === editingId);
 			if (filter) {
-				// Check for duplicate names
 				const trimmedName = editingName.trim();
+				if (!trimmedName) {
+					// Revert to original name if empty
+					editingId = null;
+					editingName = '';
+					return;
+				}
 				const isDuplicate = filters.some(
 					(f) => f.id !== editingId && f.name.toLowerCase() === trimmedName.toLowerCase()
 				);
@@ -122,13 +127,23 @@
 					alertStore.add('error', 'A filter with this name already exists');
 					return;
 				}
-				filter.name = trimmedName || filter.name;
+				filter.name = trimmedName;
 				filters = filters;
 				notifyChange();
 			}
 		}
 		editingId = null;
 		editingName = '';
+	}
+
+	function handleNameKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			saveEditing();
+		} else if (e.key === 'Escape') {
+			editingId = null;
+			editingName = '';
+		}
 	}
 
 	function handleChange() {
@@ -236,29 +251,34 @@
 		<svelte:fragment slot="cell" let:row let:column>
 			{#if column.key === 'name'}
 				<div class="flex flex-col gap-2">
-					<div class="flex items-center">
+					<div class="flex items-center gap-1.5">
 						{#if editingId === row.id}
 							<!-- svelte-ignore a11y_autofocus -->
-							<input
-								type="text"
-								bind:value={editingName}
-								on:click|stopPropagation
-								on:keydown={(e) => e.key === 'Enter' && saveEditing()}
-								on:blur={() => saveEditing()}
-								class="w-40 rounded border border-neutral-300 bg-white px-2 py-1 text-sm font-medium text-neutral-900 focus:border-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-								autofocus
-							/>
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
+							<div class="w-48" on:click|stopPropagation on:keydown={handleNameKeydown}>
+								<FormInput
+									label="Filter name"
+									hideLabel
+									name="filter-name-{row.id}"
+									bind:value={editingName}
+									on:blur={() => saveEditing()}
+								/>
+							</div>
 						{:else}
 							<span
-								class={row.enabled
+								class="{row.enabled
 									? 'text-neutral-900 dark:text-neutral-100'
-									: 'text-neutral-400 dark:text-neutral-500'}
+									: 'text-neutral-400 dark:text-neutral-500'}"
 							>
 								{row.name}
 							</span>
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
+							<div on:click|stopPropagation>
+								<Button icon={Pencil} size="xs" on:click={() => startEditing(row)} />
+							</div>
 							{#if !row.enabled}
 								<span
-									class="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"
+									class="rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"
 								>
 									Disabled
 								</span>
@@ -267,47 +287,32 @@
 					</div>
 					<!-- Mobile: buttons below name -->
 					<div class="flex flex-wrap items-center gap-1 md:hidden">
-						{#if editingId === row.id}
-							<Button
-								text="Save"
-								icon={Check}
-								iconColor="text-green-600 dark:text-green-400"
-								on:click={() => saveEditing()}
-							/>
-						{:else}
-							<Button
-								text={row.enabled ? 'Disable' : 'Enable'}
-								icon={Power}
-								iconColor={row.enabled
-									? 'text-green-600 dark:text-green-400'
-									: 'text-neutral-400 dark:text-neutral-500'}
-								on:click={() => toggleEnabled(row.id)}
-							/>
-							<Button
-								text="Rename"
-								icon={Pencil}
-								iconColor="text-blue-600 dark:text-blue-400"
-								on:click={() => startEditing(row)}
-							/>
-							<Button
-								text="Copy"
-								icon={ClipboardCopy}
-								iconColor="text-amber-600 dark:text-amber-400"
-								on:click={() => copyFilter(row.id)}
-							/>
-							<Button
-								text="Paste"
-								icon={ClipboardPaste}
-								iconColor="text-amber-600 dark:text-amber-400"
-								on:click={() => pasteIntoFilter(row.id)}
-							/>
-							<Button
-								text="Duplicate"
-								icon={Copy}
-								iconColor="text-violet-600 dark:text-violet-400"
-								on:click={() => duplicateFilter(row.id)}
-							/>
-						{/if}
+						<Button
+							text={row.enabled ? 'Disable' : 'Enable'}
+							icon={Power}
+							iconColor={row.enabled
+								? 'text-green-600 dark:text-green-400'
+								: 'text-neutral-400 dark:text-neutral-500'}
+							on:click={() => toggleEnabled(row.id)}
+						/>
+						<Button
+							text="Copy"
+							icon={ClipboardCopy}
+							iconColor="text-amber-600 dark:text-amber-400"
+							on:click={() => copyFilter(row.id)}
+						/>
+						<Button
+							text="Paste"
+							icon={ClipboardPaste}
+							iconColor="text-amber-600 dark:text-amber-400"
+							on:click={() => pasteIntoFilter(row.id)}
+						/>
+						<Button
+							text="Duplicate"
+							icon={Copy}
+							iconColor="text-violet-600 dark:text-violet-400"
+							on:click={() => duplicateFilter(row.id)}
+						/>
 						<Button
 							text="Delete"
 							icon={Trash2}
@@ -322,47 +327,32 @@
 		<!-- Desktop: buttons in actions slot -->
 		<svelte:fragment slot="actions" let:row>
 			<div class="hidden items-center gap-1 md:flex">
-				{#if editingId === row.id}
-					<Button
-						text="Save"
-						icon={Check}
-						iconColor="text-green-600 dark:text-green-400"
-						on:click={() => saveEditing()}
-					/>
-				{:else}
-					<Button
-						text={row.enabled ? 'Disable' : 'Enable'}
-						icon={Power}
-						iconColor={row.enabled
-							? 'text-green-600 dark:text-green-400'
-							: 'text-neutral-400 dark:text-neutral-500'}
-						on:click={() => toggleEnabled(row.id)}
-					/>
-					<Button
-						text="Rename"
-						icon={Pencil}
-						iconColor="text-blue-600 dark:text-blue-400"
-						on:click={() => startEditing(row)}
-					/>
-					<Button
-						text="Copy"
-						icon={ClipboardCopy}
-						iconColor="text-amber-600 dark:text-amber-400"
-						on:click={() => copyFilter(row.id)}
-					/>
-					<Button
-						text="Paste"
-						icon={ClipboardPaste}
-						iconColor="text-amber-600 dark:text-amber-400"
-						on:click={() => pasteIntoFilter(row.id)}
-					/>
-					<Button
-						text="Duplicate"
-						icon={Copy}
-						iconColor="text-violet-600 dark:text-violet-400"
-						on:click={() => duplicateFilter(row.id)}
-					/>
-				{/if}
+				<Button
+					text={row.enabled ? 'Disable' : 'Enable'}
+					icon={Power}
+					iconColor={row.enabled
+						? 'text-green-600 dark:text-green-400'
+						: 'text-neutral-400 dark:text-neutral-500'}
+					on:click={() => toggleEnabled(row.id)}
+				/>
+				<Button
+					text="Copy"
+					icon={ClipboardCopy}
+					iconColor="text-amber-600 dark:text-amber-400"
+					on:click={() => copyFilter(row.id)}
+				/>
+				<Button
+					text="Paste"
+					icon={ClipboardPaste}
+					iconColor="text-amber-600 dark:text-amber-400"
+					on:click={() => pasteIntoFilter(row.id)}
+				/>
+				<Button
+					text="Duplicate"
+					icon={Copy}
+					iconColor="text-violet-600 dark:text-violet-400"
+					on:click={() => duplicateFilter(row.id)}
+				/>
 				<Button
 					text="Delete"
 					icon={Trash2}
