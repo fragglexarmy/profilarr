@@ -52,7 +52,7 @@ export function getAuthState(event: RequestEvent): AuthState {
 
 	// AUTH=local - skip auth for local IPs
 	if (config.authMode === 'local') {
-		const clientIp = getClientIp(event);
+		const clientIp = getClientIp(event, false);
 		if (isLocalAddress(clientIp)) {
 			void logger.debug('Local IP bypass', {
 				source: 'Auth',

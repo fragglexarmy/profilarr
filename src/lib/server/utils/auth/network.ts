@@ -104,24 +104,24 @@ const IP_HEADERS = [
 
 /**
  * Extract client IP from request
- *
- * Checks common proxy headers in order (like Overseerr's approach),
- * then falls back to SvelteKit's getClientAddress()
+ * When trustProxy is true (default), checks proxy headers first for accurate logging.
+ * When false, only uses the real TCP connection address.
  */
-export function getClientIp(event: { getClientAddress: () => string; request: Request }): string {
-	const headers = event.request.headers;
-
-	// Check proxy headers in order
-	for (const header of IP_HEADERS) {
-		const value = headers.get(header);
-		if (value) {
-			// x-forwarded-for may contain multiple IPs: "client, proxy1, proxy2"
-			const ip = value.split(',')[0].trim();
-			if (ip) return ip;
+export function getClientIp(
+	event: { getClientAddress: () => string; request: Request },
+	trustProxy: boolean = true
+): string {
+	if (trustProxy) {
+		const headers = event.request.headers;
+		for (const header of IP_HEADERS) {
+			const value = headers.get(header);
+			if (value) {
+				const ip = value.split(',')[0].trim();
+				if (ip) return ip;
+			}
 		}
 	}
 
-	// Fall back to SvelteKit's built-in
 	try {
 		const address = event.getClientAddress();
 		if (address && address !== 'unknown') {
@@ -131,6 +131,5 @@ export function getClientIp(event: { getClientAddress: () => string; request: Re
 		// Can throw during prerendering
 	}
 
-	// Default to loopback
-	return '127.0.0.1';
+	return trustProxy ? '127.0.0.1' : '0.0.0.0';
 }
