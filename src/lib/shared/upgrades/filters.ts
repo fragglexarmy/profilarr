@@ -138,10 +138,17 @@ export const availabilityOrder: Record<string, number> = {
 };
 
 export const statusOrder: Record<string, number> = {
+	// Radarr movie status (progression: tba → announced → inCinemas → released)
+	tba: 0,
+	announced: 1,
+	inCinemas: 2,
+	released: 3,
+	// Sonarr series status (progression: upcoming → continuing → ended)
 	upcoming: 0,
 	continuing: 1,
 	ended: 2,
-	deleted: 3
+	// Both: deleted is the terminal state
+	deleted: 4
 };
 
 /** Fields that use ordinal comparison and their order maps */
@@ -259,9 +266,22 @@ const sharedFilterFields: FilterField[] = [
 const radarrFilterFields: FilterField[] = [
 	// Ordinal
 	{
+		id: 'status',
+		label: 'Status',
+		description: 'The actual release status of the movie. Progresses: TBA → Announced → In Cinemas → Released',
+		operators: ordinalOperators,
+		valueType: 'select',
+		values: [
+			{ value: 'tba', label: 'TBA' },
+			{ value: 'announced', label: 'Announced' },
+			{ value: 'inCinemas', label: 'In Cinemas' },
+			{ value: 'released', label: 'Released' }
+		]
+	},
+	{
 		id: 'minimum_availability',
 		label: 'Minimum Availability',
-		description: 'The minimum availability status. Progresses: TBA → Announced → In Cinemas → Released',
+		description: 'The configured minimum availability setting. Progresses: TBA → Announced → In Cinemas → Released',
 		operators: ordinalOperators,
 		valueType: 'select',
 		values: [
@@ -530,8 +550,8 @@ export function createDefaultGroup(appType: UpgradeAppType = 'radarr'): FilterGr
 			},
 			{
 				type: 'rule',
-				field: 'minimum_availability',
-				operator: 'gte',
+				field: 'status',
+				operator: 'eq',
 				value: 'released'
 			}
 		]

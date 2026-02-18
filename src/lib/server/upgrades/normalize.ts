@@ -89,8 +89,8 @@ export function normalizeRadarrItem(
 		digital_release: digitalRelease,
 		physical_release: physicalRelease,
 
-		// Sonarr fields (defaults for Radarr)
-		status: '',
+		// Radarr status (actual release state)
+		status: movie.status ?? '',
 		network: '',
 		series_type: '',
 		certification: '',
