@@ -74,7 +74,7 @@
 			class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 		>
 			<p class="text-neutral-600 dark:text-neutral-400">
-				No media settings configs found for {data.currentDatabase.name}
+				No media settings configs found for {data.currentDatabase?.name}
 			</p>
 		</div>
 	{:else if $filtered.length === 0}

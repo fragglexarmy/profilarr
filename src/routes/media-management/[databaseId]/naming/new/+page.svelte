@@ -52,14 +52,14 @@
 {:else if selectedArrType === 'radarr'}
 	<RadarrNamingForm
 		mode="create"
-		databaseName={data.currentDatabase.name}
+		databaseName={data.currentDatabase?.name}
 		canWriteToBase={data.canWriteToBase}
 		initialData={null}
 	/>
 {:else}
 	<SonarrNamingForm
 		mode="create"
-		databaseName={data.currentDatabase.name}
+		databaseName={data.currentDatabase?.name}
 		canWriteToBase={data.canWriteToBase}
 		initialData={null}
 	/>

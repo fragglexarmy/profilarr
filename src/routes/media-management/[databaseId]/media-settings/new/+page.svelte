@@ -52,7 +52,7 @@
 	<MediaSettingsForm
 		mode="create"
 		arrType={selectedArrType}
-		databaseName={data.currentDatabase.name}
+		databaseName={data.currentDatabase?.name}
 		canWriteToBase={data.canWriteToBase}
 		initialData={null}
 	/>

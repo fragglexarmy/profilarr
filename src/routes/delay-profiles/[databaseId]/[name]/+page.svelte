@@ -29,7 +29,7 @@
 <div class="p-4 md:p-8">
 	<DelayProfileForm
 		mode="edit"
-		databaseName={data.currentDatabase.name}
+		databaseName={data.currentDatabase?.name}
 		canWriteToBase={data.canWriteToBase}
 		actionUrl="?/update"
 		{initialData}

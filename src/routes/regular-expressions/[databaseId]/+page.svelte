@@ -137,7 +137,7 @@
 </script>
 
 <svelte:head>
-	<title>Regular Expressions - {data.currentDatabase.name} - Profilarr</title>
+	<title>Regular Expressions - {data.currentDatabase?.name} - Profilarr</title>
 </svelte:head>
 
 <div class="space-y-6 px-4 pt-4 pb-8 md:px-8">
@@ -176,7 +176,7 @@
 				class="rounded-lg border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
 			>
 				<p class="text-neutral-600 dark:text-neutral-400">
-					No regular expressions found for {data.currentDatabase.name}
+					No regular expressions found for {data.currentDatabase?.name}
 				</p>
 			</div>
 		{:else if filtered.length === 0}

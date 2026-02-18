@@ -346,7 +346,7 @@
 </script>
 
 <svelte:head>
-	<title>Entity Testing - {data.currentDatabase.name} - Profilarr</title>
+	<title>Entity Testing - {data.currentDatabase?.name} - Profilarr</title>
 </svelte:head>
 
 <div class="space-y-6 px-4 pt-4 pb-8 md:px-8">
@@ -421,7 +421,7 @@
 					</div>
 				{:else}
 					<p class="text-neutral-600 dark:text-neutral-400">
-						No entity tests found for {data.currentDatabase.name}
+						No entity tests found for {data.currentDatabase?.name}
 					</p>
 				{/if}
 			</div>

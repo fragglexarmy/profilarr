@@ -21,13 +21,13 @@
 </script>
 
 <svelte:head>
-	<title>New Regular Expression - {data.currentDatabase.name} - Profilarr</title>
+	<title>New Regular Expression - {data.currentDatabase?.name} - Profilarr</title>
 </svelte:head>
 
 <div class="p-4 md:p-8">
 	<RegularExpressionForm
 		mode="create"
-		databaseName={data.currentDatabase.name}
+		databaseName={data.currentDatabase?.name}
 		canWriteToBase={data.canWriteToBase}
 		{initialData}
 		onCancel={handleCancel}

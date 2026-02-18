@@ -23,13 +23,13 @@
 </script>
 
 <svelte:head>
-	<title>New Delay Profile - {data.currentDatabase.name} - Profilarr</title>
+	<title>New Delay Profile - {data.currentDatabase?.name} - Profilarr</title>
 </svelte:head>
 
 <div class="p-4 md:p-8">
 	<DelayProfileForm
 		mode="create"
-		databaseName={data.currentDatabase.name}
+		databaseName={data.currentDatabase?.name}
 		canWriteToBase={data.canWriteToBase}
 		{initialData}
 		onCancel={handleCancel}

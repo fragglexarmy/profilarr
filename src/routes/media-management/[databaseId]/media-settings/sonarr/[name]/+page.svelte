@@ -9,7 +9,7 @@
 <MediaSettingsForm
 	mode="edit"
 	arrType="sonarr"
-	databaseName={data.currentDatabase.name}
+	databaseName={data.currentDatabase?.name}
 	canWriteToBase={data.canWriteToBase}
 	actionUrl="?/update"
 	initialData={data.mediaSettingsConfig}
