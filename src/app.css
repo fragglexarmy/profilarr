@@ -2,6 +2,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap');
 @import 'tailwindcss';
 
+/* Exclude non-source directories from Tailwind scanning */
+@source not "../dist";
+@source not "../research";
+@source not "../config";
+@source not "../bruno";
+@source not "../docker";
+@source not "../scripts";
+@source not "../docs";
+@source not "../packages";
+@source not "../test-results";
+@source not "../node_modules";
+
 /* Highlight.js: atom-one-light for light mode */
 @import 'highlight.js/styles/atom-one-light.css';
 
