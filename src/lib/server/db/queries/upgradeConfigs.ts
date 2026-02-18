@@ -8,7 +8,6 @@ interface UpgradeConfigRow {
 	id: number;
 	arr_instance_id: number;
 	enabled: number;
-	dry_run: number;
 	schedule: number;
 	filter_mode: string;
 	filters: string;
@@ -23,7 +22,6 @@ interface UpgradeConfigRow {
  */
 export interface UpgradeConfigInput {
 	enabled?: boolean;
-	dryRun?: boolean;
 	schedule?: number;
 	filterMode?: FilterMode;
 	filters?: FilterConfig[];
@@ -38,7 +36,6 @@ function rowToConfig(row: UpgradeConfigRow): UpgradeConfig {
 		id: row.id,
 		arrInstanceId: row.arr_instance_id,
 		enabled: row.enabled === 1,
-		dryRun: row.dry_run === 1,
 		schedule: row.schedule,
 		filterMode: row.filter_mode as FilterMode,
 		filters: JSON.parse(row.filters) as FilterConfig[],
@@ -95,7 +92,6 @@ export const upgradeConfigsQueries = {
 
 		// Create new
 		const enabled = input.enabled !== undefined ? (input.enabled ? 1 : 0) : 0;
-		const dryRun = input.dryRun !== undefined ? (input.dryRun ? 1 : 0) : 0;
 		const schedule = input.schedule ?? 360;
 		const filterMode = input.filterMode ?? 'round_robin';
 		const filters = JSON.stringify(input.filters ?? []);
@@ -103,11 +99,10 @@ export const upgradeConfigsQueries = {
 
 		db.execute(
 			`INSERT INTO upgrade_configs
-			(arr_instance_id, enabled, dry_run, schedule, filter_mode, filters, current_filter_index)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			(arr_instance_id, enabled, schedule, filter_mode, filters, current_filter_index)
+			VALUES (?, ?, ?, ?, ?, ?)`,
 			arrInstanceId,
 			enabled,
-			dryRun,
 			schedule,
 			filterMode,
 			filters,
@@ -127,10 +122,6 @@ export const upgradeConfigsQueries = {
 		if (input.enabled !== undefined) {
 			updates.push('enabled = ?');
 			params.push(input.enabled ? 1 : 0);
-		}
-		if (input.dryRun !== undefined) {
-			updates.push('dry_run = ?');
-			params.push(input.dryRun ? 1 : 0);
 		}
 		if (input.schedule !== undefined) {
 			updates.push('schedule = ?');

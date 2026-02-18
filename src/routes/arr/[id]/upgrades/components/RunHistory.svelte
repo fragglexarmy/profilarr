@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertTriangle, X, Search, Calendar, Filter, CircleDot, Check } from 'lucide-svelte';
+	import { AlertTriangle, X, Search, Calendar, Filter, CircleDot, Check, FlaskConical, Play } from 'lucide-svelte';
 	import type { UpgradeJobLog, UpgradeSelectionItem, UpgradeOriginalEpisode, UpgradeNewRelease } from '$lib/server/upgrades/types.ts';
 	import { createSearchStore, getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
 	import type { Readable } from 'svelte/store';
@@ -12,6 +12,7 @@
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import Score from '$ui/arr/Score.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import type { Column } from '$ui/table/types';
 
 	let searchStore: SearchStore = createSearchStore();
@@ -108,12 +109,12 @@
 		{ key: 'summary', header: 'Summary', sortable: false }
 	];
 
-	// Status badge config
+	// Status label config
 	const statusConfig = {
 		success: { variant: 'success' as const, icon: Check },
 		partial: { variant: 'warning' as const, icon: AlertTriangle },
 		failed: { variant: 'danger' as const, icon: X },
-		skipped: { variant: 'neutral' as const, icon: X }
+		skipped: { variant: 'secondary' as const, icon: X }
 	};
 
 	function getRunNumber(row: UpgradeJobLog): number {
@@ -303,11 +304,7 @@
 						{row.config.selectedFilter || 'Unknown'}
 					</span>
 					{#if row.config.dryRun}
-						<span
-							class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
-						>
-							DRY
-						</span>
+						<Label variant="info" size="sm" rounded="md"><FlaskConical size={10} /> Dry Run</Label>
 					{/if}
 				</div>
 			{:else if column.key === 'date'}
@@ -320,9 +317,10 @@
 				</span>
 			{:else if column.key === 'status'}
 				{@const config = statusConfig[row.status] || statusConfig.failed}
-				<Badge variant={config.variant} icon={config.icon} size="md">
+				<Label variant={config.variant} size="sm" rounded="md">
+					<svelte:component this={config.icon} size={10} />
 					{row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-				</Badge>
+				</Label>
 			{:else if column.key === 'summary'}
 				<span class="text-sm text-neutral-600 dark:text-neutral-400">
 					<span class="font-mono">{row.filter.matchedCount}</span> filtered

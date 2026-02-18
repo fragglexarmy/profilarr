@@ -6,7 +6,6 @@ import { db } from '../db.ts';
 interface RenameSettingsRow {
 	id: number;
 	arr_instance_id: number;
-	dry_run: number;
 	rename_folders: number;
 	ignore_tag: string | null;
 	summary_notifications: number;
@@ -23,7 +22,6 @@ interface RenameSettingsRow {
 export interface RenameSettings {
 	id: number;
 	arrInstanceId: number;
-	dryRun: boolean;
 	renameFolders: boolean;
 	ignoreTag: string | null;
 	summaryNotifications: boolean;
@@ -38,7 +36,6 @@ export interface RenameSettings {
  * Input for creating/updating rename settings
  */
 export interface RenameSettingsInput {
-	dryRun?: boolean;
 	renameFolders?: boolean;
 	ignoreTag?: string | null;
 	summaryNotifications?: boolean;
@@ -53,7 +50,6 @@ function rowToSettings(row: RenameSettingsRow): RenameSettings {
 	return {
 		id: row.id,
 		arrInstanceId: row.arr_instance_id,
-		dryRun: row.dry_run === 1,
 		renameFolders: row.rename_folders === 1,
 		ignoreTag: row.ignore_tag,
 		summaryNotifications: row.summary_notifications === 1,
@@ -109,7 +105,6 @@ export const arrRenameSettingsQueries = {
 		}
 
 		// Create new with defaults
-		const dryRun = input.dryRun !== undefined ? (input.dryRun ? 1 : 0) : 1;
 		const renameFolders = input.renameFolders !== undefined ? (input.renameFolders ? 1 : 0) : 0;
 		const ignoreTag = input.ignoreTag ?? null;
 		const summaryNotifications =
@@ -119,10 +114,9 @@ export const arrRenameSettingsQueries = {
 
 		db.execute(
 			`INSERT INTO arr_rename_settings
-			(arr_instance_id, dry_run, rename_folders, ignore_tag, summary_notifications, enabled, schedule)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			(arr_instance_id, rename_folders, ignore_tag, summary_notifications, enabled, schedule)
+			VALUES (?, ?, ?, ?, ?, ?)`,
 			arrInstanceId,
-			dryRun,
 			renameFolders,
 			ignoreTag,
 			summaryNotifications,
@@ -140,10 +134,6 @@ export const arrRenameSettingsQueries = {
 		const updates: string[] = [];
 		const params: (string | number | null)[] = [];
 
-		if (input.dryRun !== undefined) {
-			updates.push('dry_run = ?');
-			params.push(input.dryRun ? 1 : 0);
-		}
 		if (input.renameFolders !== undefined) {
 			updates.push('rename_folders = ?');
 			params.push(input.renameFolders ? 1 : 0);

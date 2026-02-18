@@ -23,17 +23,11 @@ const upgradeRunHandler: JobHandler = async (job) => {
 		return { status: 'failure', error: 'Arr instance not found' };
 	}
 
-	// Manual runs are only allowed in dry run (unless dev)
 	const isDev = import.meta.env.VITE_CHANNEL === 'dev';
-	if (job.source === 'manual' && !config.dryRun && !isDev) {
-		return {
-			status: 'failure',
-			error: 'Manual runs only allowed in Dry Run mode. Enable Dry Run first.'
-		};
-	}
+	const dryRun = Boolean(job.payload.dryRun);
 
 	// Skip cooldown for dry runs and dev runs
-	const skipCooldown = config.dryRun || isDev;
+	const skipCooldown = dryRun || isDev;
 	if (!skipCooldown) {
 		const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
 		if (cooldownUntil) {
@@ -72,7 +66,7 @@ const upgradeRunHandler: JobHandler = async (job) => {
 	}
 
 	try {
-		const log = await processUpgradeConfig(config, instance, job.source === 'manual');
+		const log = await processUpgradeConfig(config, instance, job.source === 'manual', dryRun);
 
 		// Update filter index for round-robin mode after successful processing
 		if (log.status !== 'failed' && config.filterMode === 'round_robin') {

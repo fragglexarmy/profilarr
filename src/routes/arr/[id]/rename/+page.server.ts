@@ -6,7 +6,6 @@ import { renameRunsQueries } from '$db/queries/renameRuns.ts';
 import { logger } from '$logger/logger.ts';
 import { scheduleRenameForInstance } from '$lib/server/jobs/init.ts';
 import { enqueueJob } from '$lib/server/jobs/queueService.ts';
-import { jobQueueQueries } from '$db/queries/jobQueue.ts';
 import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
 
 export const load: ServerLoad = ({ params }) => {
@@ -49,7 +48,6 @@ export const actions: Actions = {
 
 		try {
 			const enabled = formData.get('enabled') === 'true';
-			const dryRun = formData.get('dryRun') === 'true';
 			const renameFolders = formData.get('renameFolders') === 'true';
 			const ignoreTag = (formData.get('ignoreTag') as string) || null;
 			const schedule = parseInt(formData.get('schedule') as string, 10) || 1440;
@@ -57,7 +55,6 @@ export const actions: Actions = {
 
 			const settingsData = {
 				enabled,
-				dryRun,
 				renameFolders,
 				ignoreTag,
 				schedule,
@@ -111,7 +108,6 @@ export const actions: Actions = {
 
 		try {
 			const enabled = formData.get('enabled') === 'true';
-			const dryRun = formData.get('dryRun') === 'true';
 			const renameFolders = formData.get('renameFolders') === 'true';
 			const ignoreTag = (formData.get('ignoreTag') as string) || null;
 			const schedule = parseInt(formData.get('schedule') as string, 10) || 1440;
@@ -119,7 +115,6 @@ export const actions: Actions = {
 
 			const settingsData = {
 				enabled,
-				dryRun,
 				renameFolders,
 				ignoreTag,
 				schedule,
@@ -152,7 +147,7 @@ export const actions: Actions = {
 		}
 	},
 
-	run: async ({ params }) => {
+	run: async ({ params, request }) => {
 		const id = parseInt(params.id || '', 10);
 
 		if (isNaN(id)) {
@@ -174,17 +169,14 @@ export const actions: Actions = {
 			return fail(400, { error: `Rename not yet supported for ${instance.type}` });
 		}
 
-		try {
-			const scheduled = jobQueueQueries.getByDedupeKey(`arr.rename:${id}`);
-			const warning =
-				scheduled && (scheduled.status === 'queued' || scheduled.status === 'running')
-					? 'A rename job is already queued. This run was queued anyway.'
-					: undefined;
+		const formData = await request.formData();
+		const dryRun = formData.get('dryRun') === 'true';
 
+		try {
 			const queued = enqueueJob({
 				jobType: 'arr.rename',
 				runAt: new Date().toISOString(),
-				payload: { instanceId: id },
+				payload: { instanceId: id, dryRun },
 				source: 'manual'
 			});
 
@@ -195,11 +187,11 @@ export const actions: Actions = {
 					instanceId: id,
 					instanceName: instance.name,
 					displayName: buildJobDisplayName('arr.rename', { instanceId: id }),
-					warning
+					dryRun
 				}
 			});
 
-			return { success: true, queued: true, warning };
+			return { success: true, queued: true };
 		} catch (err) {
 			await logger.error('Manual rename run failed', {
 				source: 'rename',

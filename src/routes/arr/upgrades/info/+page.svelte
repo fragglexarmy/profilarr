@@ -99,9 +99,9 @@
 		{
 			id: 'dry-run',
 			name: 'Dry Run',
-			summary: 'Test without triggering searches',
+			summary: 'Test without downloading',
 			details:
-				"Enable dry run mode to test your filters without triggering actual searches. The full filter/select pipeline runs, but no searches are sent to your arr instance. Check the logs to see what would have been searched."
+				'Click the "Dry Run" button to test your filters. The full filter/select pipeline runs and searches your indexers for releases, but skips downloading. Check the run history to see what would have been upgraded. Note: dry runs are rate-limited to once every 10 minutes since they still search indexers.'
 		}
 	];
 

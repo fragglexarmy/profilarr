@@ -26,13 +26,15 @@ const renameRunHandler: JobHandler = async (job) => {
 		return { status: 'skipped', output: `Rename not supported for ${instance.type}` };
 	}
 
+	const dryRun = Boolean(job.payload.dryRun);
+
 	try {
-		const log = await processRenameConfig(settings, instance, job.source === 'manual');
+		const log = await processRenameConfig(settings, instance, job.source === 'manual', dryRun);
 
 		arrRenameSettingsQueries.updateLastRun(instanceId);
 
 		const nextRunAt = calculateNextRunFromMinutes(new Date().toISOString(), settings.schedule);
-		const output = settings.dryRun
+		const output = dryRun
 			? `${log.results.filesNeedingRename} files would be renamed`
 			: `${log.results.filesRenamed}/${log.results.filesNeedingRename} files renamed`;
 

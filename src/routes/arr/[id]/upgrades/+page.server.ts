@@ -9,8 +9,11 @@ import { clearDryRunExclusions } from '$lib/server/upgrades/processor.ts';
 import { logDryRunCacheCleared } from '$lib/server/upgrades/logger.ts';
 import { scheduleUpgradeForInstance } from '$lib/server/jobs/init.ts';
 import { upsertScheduledJob } from '$lib/server/jobs/queueService.ts';
-import { calculateCooldownUntil } from '$lib/server/jobs/scheduleUtils.ts';
 import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
+
+/** In-memory rate limit for upgrade dry runs: Map<instanceId, lastDryRunTimestamp> */
+const dryRunTimestamps = new Map<number, number>();
+const DRY_RUN_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
 
 export const load: ServerLoad = ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -54,7 +57,6 @@ export const actions: Actions = {
 
 		try {
 			const enabled = formData.get('enabled') === 'true';
-			const dryRun = formData.get('dryRun') === 'true';
 			const schedule = parseInt(formData.get('schedule') as string, 10) || 360;
 			const filterMode = (formData.get('filterMode') as FilterMode) || 'round_robin';
 			const filtersJson = formData.get('filters') as string;
@@ -62,7 +64,6 @@ export const actions: Actions = {
 
 			const configData = {
 				enabled,
-				dryRun,
 				schedule,
 				filterMode,
 				filters
@@ -80,7 +81,6 @@ export const actions: Actions = {
 				meta: {
 					instanceId: id,
 					enabled,
-					dryRun,
 					schedule,
 					filterMode,
 					filterCount: filters.length,
@@ -144,34 +144,37 @@ export const actions: Actions = {
 			return fail(400, { error: 'No enabled filters. Enable at least one filter.' });
 		}
 
-		// Check for dev mode - in dev mode, allow manual runs even without dry run
-		const isDev = import.meta.env.VITE_CHANNEL === 'dev';
+		const formData = await request.formData();
+		const dryRun = formData.get('dryRun') === 'true';
 
-		// Only allow manual runs in dry run mode (or dev mode)
-		if (!config.dryRun && !isDev) {
-			return fail(400, {
-				error: 'Manual runs only allowed in Dry Run mode. Enable Dry Run first.'
-			});
+		// Rate limit dry runs to once per 10 minutes per instance
+		if (dryRun) {
+			const lastDryRun = dryRunTimestamps.get(id);
+			if (lastDryRun && Date.now() - lastDryRun < DRY_RUN_COOLDOWN_MS) {
+				const remainingMs = DRY_RUN_COOLDOWN_MS - (Date.now() - lastDryRun);
+				const remainingMin = Math.ceil(remainingMs / 60000);
+				await logger.warn(`Dry run cooldown active for "${instance.name}" - ${remainingMin}m remaining`, {
+					source: 'upgrades',
+					meta: { instanceId: id, instanceName: instance.name, remainingMin }
+				});
+				return fail(400, {
+					error: `Dry run cooldown active. Try again in ${remainingMin} minute${remainingMin !== 1 ? 's' : ''}.`
+				});
+			}
 		}
 
 		try {
-			// Skip cooldown check for dry runs and dev runs
-			if (!config.dryRun && !isDev) {
-				const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
-				if (cooldownUntil && Date.now() < new Date(cooldownUntil).getTime()) {
-					return fail(400, {
-						error: `Upgrade cooldown active until ${cooldownUntil}`
-					});
-				}
-			}
-
 			const queued = upsertScheduledJob({
 				jobType: 'arr.upgrade',
 				runAt: new Date().toISOString(),
-				payload: { instanceId: id },
+				payload: { instanceId: id, dryRun },
 				source: 'manual',
 				dedupeKey: `arr.upgrade.manual:${id}`
 			});
+
+			if (dryRun) {
+				dryRunTimestamps.set(id, Date.now());
+			}
 
 			await logger.info(`Manual upgrade run queued for "${instance.name}"`, {
 				source: 'upgrades',
@@ -180,8 +183,7 @@ export const actions: Actions = {
 					instanceId: id,
 					instanceName: instance.name,
 					displayName: buildJobDisplayName('arr.upgrade', { instanceId: id }),
-					dryRun: config.dryRun,
-					isDev
+					dryRun
 				}
 			});
 

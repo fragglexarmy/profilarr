@@ -6,13 +6,11 @@
 	import Toggle from '$ui/toggle/Toggle.svelte';
 
 	export let enabled: boolean = true;
-	export let dryRun: boolean = false;
 	export let schedule: string = '360';
 	export let filterMode: FilterMode = 'round_robin';
 	export let lastRunAt: string | null = null;
 
 	export let onEnabledChange: ((value: boolean) => void) | undefined = undefined;
-	export let onDryRunChange: ((value: boolean) => void) | undefined = undefined;
 	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
 	export let onFilterModeChange: ((value: FilterMode) => void) | undefined = undefined;
 
@@ -108,19 +106,6 @@
 			/>
 		</div>
 
-		<!-- Dry Run -->
-		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Dry Run</span>
-		<div class="md:flex md:items-center md:gap-2">
-			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Dry Run:</span>
-			<Toggle
-				checked={dryRun}
-				label={dryRun ? 'On' : 'Off'}
-				color={dryRun ? 'amber' : 'neutral'}
-				checkboxColor={dryRun ? '#F59E0B' : 'neutral'}
-				on:change={(e) => onDryRunChange?.(e.detail)}
-			/>
-		</div>
-
 		<!-- Divider (desktop only) -->
 		<div class="hidden h-6 w-px bg-neutral-200 md:block dark:bg-neutral-700"></div>
 
@@ -146,35 +131,35 @@
 				on:change={(e) => onFilterModeChange?.(e.detail as FilterMode)}
 			/>
 		</div>
-	</div>
 
-	<!-- Status info -->
-	{#if lastRunAt}
-		<div class="mt-4 flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-4 text-xs text-neutral-500 md:mt-3 md:border-0 md:pt-0 dark:border-neutral-700 dark:text-neutral-400">
-			{#if !enabled}
-				<span
-					class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
-					>Paused</span
-				>
-			{:else if timeUntilNext !== null && timeUntilNext <= 0}
-				<span
-					class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400"
-					>Ready</span
-				>
-			{:else if timeUntilNext !== null}
+		<!-- Run status (right-aligned on desktop, full-width row on mobile) -->
+		{#if lastRunAt}
+			<div class="col-span-2 flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 md:ml-auto md:border-0 md:pt-0 dark:border-neutral-700 dark:text-neutral-400">
+				{#if !enabled}
+					<span
+						class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
+						>Paused</span
+					>
+				{:else if timeUntilNext !== null && timeUntilNext <= 0}
+					<span
+						class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400"
+						>Ready</span
+					>
+				{:else if timeUntilNext !== null}
+					<span>
+						Next: <span
+							class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+							>{formatTimeRemaining(timeUntilNext)}</span
+						>
+					</span>
+				{/if}
 				<span>
-					Next Run: <span
+					Last: <span
 						class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-						>{formatTimeRemaining(timeUntilNext)}</span
+						>{formatLastRun(lastRunAt)}</span
 					>
 				</span>
-			{/if}
-			<span>
-				Last Run: <span
-					class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-					>{formatLastRun(lastRunAt)}</span
-				>
-			</span>
-		</div>
-	{/if}
+			</div>
+		{/if}
+	</div>
 </div>

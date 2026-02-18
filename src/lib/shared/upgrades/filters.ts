@@ -61,7 +61,6 @@ export interface UpgradeConfig {
 	id?: number;
 	arrInstanceId: number;
 	enabled: boolean;
-	dryRun: boolean;
 	schedule: number; // minutes
 	filterMode: FilterMode;
 	filters: FilterConfig[];
@@ -580,7 +579,6 @@ export function createEmptyUpgradeConfig(arrInstanceId: number): UpgradeConfig {
 	return {
 		arrInstanceId,
 		enabled: false,
-		dryRun: false,
 		schedule: 360, // 6 hours
 		filterMode: 'round_robin',
 		filters: [],

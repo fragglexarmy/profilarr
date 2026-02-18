@@ -19,7 +19,8 @@ function createSkippedLog(
 	settings: RenameSettings,
 	instance: ArrInstance,
 	reason: string,
-	manual: boolean = false
+	manual: boolean = false,
+	dryRun: boolean = false
 ): RenameJobLog {
 	const now = new Date().toISOString();
 	return {
@@ -31,7 +32,7 @@ function createSkippedLog(
 		completedAt: now,
 		status: 'skipped',
 		config: {
-			dryRun: settings.dryRun,
+			dryRun,
 			renameFolders: settings.renameFolders,
 			ignoreTag: settings.ignoreTag,
 			manual
@@ -104,7 +105,8 @@ async function processRadarrRename(
 	instance: ArrInstance,
 	startedAt: Date,
 	logId: string,
-	manual: boolean
+	manual: boolean,
+	dryRun: boolean
 ): Promise<RenameJobLog> {
 	const fetchStart = Date.now();
 
@@ -142,7 +144,7 @@ async function processRadarrRename(
 	const filesNeedingRename = renameItems.reduce((sum, item) => sum + item.previews.length, 0);
 
 	// If dry run, just return the preview info
-	if (settings.dryRun) {
+	if (dryRun) {
 		const log: RenameJobLog = {
 			id: logId,
 			instanceId: instance.id,
@@ -307,7 +309,8 @@ async function processSonarrRename(
 	instance: ArrInstance,
 	startedAt: Date,
 	logId: string,
-	manual: boolean
+	manual: boolean,
+	dryRun: boolean
 ): Promise<RenameJobLog> {
 	const fetchStart = Date.now();
 
@@ -347,7 +350,7 @@ async function processSonarrRename(
 	const filesNeedingRename = renameItems.reduce((sum, item) => sum + item.previews.length, 0);
 
 	// If dry run, just return the preview info
-	if (settings.dryRun) {
+	if (dryRun) {
 		const log: RenameJobLog = {
 			id: logId,
 			instanceId: instance.id,
@@ -521,25 +524,26 @@ async function processSonarrRename(
 export async function processRenameConfig(
 	settings: RenameSettings,
 	instance: ArrInstance,
-	manual: boolean = false
+	manual: boolean = false,
+	dryRun: boolean = false
 ): Promise<RenameJobLog> {
 	const startedAt = new Date();
 	const logId = crypto.randomUUID();
 
-	await logRenameStart(instance.id, instance.name, settings.dryRun, manual);
+	await logRenameStart(instance.id, instance.name, dryRun, manual);
 
 	try {
 		if (instance.type === 'radarr') {
 			const client = new RadarrClient(instance.url, instance.api_key);
 			try {
-				return await processRadarrRename(client, settings, instance, startedAt, logId, manual);
+				return await processRadarrRename(client, settings, instance, startedAt, logId, manual, dryRun);
 			} finally {
 				client.close();
 			}
 		} else if (instance.type === 'sonarr') {
 			const client = new SonarrClient(instance.url, instance.api_key);
 			try {
-				return await processSonarrRename(client, settings, instance, startedAt, logId, manual);
+				return await processSonarrRename(client, settings, instance, startedAt, logId, manual, dryRun);
 			} finally {
 				client.close();
 			}
@@ -548,7 +552,8 @@ export async function processRenameConfig(
 				settings,
 				instance,
 				`Rename not supported for ${instance.type}`,
-				manual
+				manual,
+				dryRun
 			);
 			await logRenameSkipped(
 				instance.id,
@@ -561,7 +566,7 @@ export async function processRenameConfig(
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		await logRenameError(instance.id, instance.name, errorMessage);
 
-		const log = createSkippedLog(settings, instance, errorMessage, manual);
+		const log = createSkippedLog(settings, instance, errorMessage, manual, dryRun);
 		log.id = logId;
 		log.startedAt = startedAt.toISOString();
 		log.completedAt = new Date().toISOString();

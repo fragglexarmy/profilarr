@@ -5,13 +5,14 @@
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { isDirty, initEdit, update, current, clear } from '$lib/client/stores/dirty';
-	import { Info, Save, Play, RotateCcw, Settings, SlidersHorizontal, History } from 'lucide-svelte';
+	import { Info, Save, Play, RotateCcw, Settings, SlidersHorizontal, History, FlaskConical } from 'lucide-svelte';
 	import CoreSettings from './components/CoreSettings.svelte';
 	import FilterSettings from './components/FilterSettings.svelte';
 	import RunHistory from './components/RunHistory.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -20,7 +21,6 @@
 	onMount(() => {
 		const initialFormData = {
 			enabled: data.config?.enabled ?? false,
-			dryRun: data.config?.dryRun ?? true,
 			schedule: String(data.config?.schedule ?? 360),
 			filterMode: (data.config?.filterMode ?? 'round_robin') as FilterMode,
 			filters: JSON.stringify(data.config?.filters ?? [])
@@ -42,7 +42,6 @@
 
 	// Read current values from dirty store (same pattern as working pages)
 	$: enabled = ($current.enabled ?? false) as boolean;
-	$: dryRun = ($current.dryRun ?? true) as boolean;
 	$: schedule = ($current.schedule ?? '360') as string;
 	$: filterMode = ($current.filterMode ?? 'round_robin') as FilterMode;
 	$: filters = JSON.parse(($current.filters ?? '[]') as string) as FilterConfig[];
@@ -53,7 +52,7 @@
 		lastFormId = form;
 		if (form.success && !form.queued && !form.cacheCleared) {
 			alertStore.add('success', 'Configuration saved successfully');
-			initEdit({ enabled, dryRun, schedule, filterMode, filters: JSON.stringify(filters) });
+			initEdit({ enabled, schedule, filterMode, filters: JSON.stringify(filters) });
 		}
 		if (form.success && form.queued) {
 			alertStore.add('success', 'Upgrade run queued');
@@ -80,43 +79,44 @@
 	</div>
 	<div slot="right" class="flex items-center gap-2">
 		<Button text="Info" icon={Info} href="/arr/upgrades/info" />
-		{#if !isNewConfig && data.config?.dryRun}
-			<Button
-				text={clearing ? 'Clearing...' : 'Reset'}
-				icon={RotateCcw}
-				disabled={clearing || running || saving}
-				on:click={() => {
-					const clearForm = document.getElementById('clear-cache-form');
-					if (clearForm instanceof HTMLFormElement) {
-						clearForm.requestSubmit();
-					}
-				}}
-			/>
-			<Button
-				text={running ? 'Running...' : 'Test'}
-				icon={Play}
-				iconColor="text-amber-600 dark:text-amber-400"
-				disabled={running || saving || clearing || $isDirty}
-				on:click={() => {
-					const runForm = document.getElementById('run-form');
-					if (runForm instanceof HTMLFormElement) {
-						runForm.requestSubmit();
-					}
-				}}
-			/>
-		{:else if !isNewConfig && isDev}
-			<Button
-				text={running ? 'Running...' : 'Dev Run'}
-				icon={Play}
-				iconColor="text-red-600 dark:text-red-400"
-				disabled={running || saving || $isDirty}
-				on:click={() => {
-					const runForm = document.getElementById('run-form');
-					if (runForm instanceof HTMLFormElement) {
-						runForm.requestSubmit();
-					}
-				}}
-			/>
+		{#if !isNewConfig}
+			<Tooltip text="Clear dry run exclusion cache so items can be re-selected">
+				<Button
+					text={clearing ? 'Clearing...' : 'Reset Cache'}
+					icon={RotateCcw}
+					disabled={clearing || running || saving}
+					on:click={() => {
+						const f = document.getElementById('clear-cache-form');
+						if (f instanceof HTMLFormElement) f.requestSubmit();
+					}}
+				/>
+			</Tooltip>
+			<Tooltip text="Search indexers without downloading (limited to once every 10 min)">
+				<Button
+					text={running ? 'Running...' : 'Dry Run'}
+					icon={FlaskConical}
+					iconColor="text-amber-600 dark:text-amber-400"
+					disabled={running || saving || clearing || $isDirty}
+					on:click={() => {
+						const f = document.getElementById('dry-run-form');
+						if (f instanceof HTMLFormElement) f.requestSubmit();
+					}}
+				/>
+			</Tooltip>
+			{#if isDev}
+				<Tooltip text="Run a live search that will download upgrades">
+					<Button
+						text={running ? 'Running...' : 'Live Run'}
+						icon={Play}
+						iconColor="text-red-600 dark:text-red-400"
+						disabled={running || saving || $isDirty}
+						on:click={() => {
+							const f = document.getElementById('live-run-form');
+							if (f instanceof HTMLFormElement) f.requestSubmit();
+						}}
+					/>
+				</Tooltip>
+			{/if}
 		{/if}
 		<Button
 			text={saving ? 'Saving...' : 'Save'}
@@ -124,10 +124,8 @@
 			iconColor="text-blue-600 dark:text-blue-400"
 			disabled={saving || running || !$isDirty}
 			on:click={() => {
-				const saveForm = document.getElementById('save-form');
-				if (saveForm instanceof HTMLFormElement) {
-					saveForm.requestSubmit();
-				}
+				const f = document.getElementById('save-form');
+				if (f instanceof HTMLFormElement) f.requestSubmit();
 			}}
 		/>
 	</div>
@@ -143,12 +141,10 @@
 		</h2>
 		<CoreSettings
 			{enabled}
-			{dryRun}
 			{schedule}
 			{filterMode}
 			lastRunAt={data.config?.lastRunAt ?? null}
 			onEnabledChange={(v) => update('enabled', v)}
-			onDryRunChange={(v) => update('dryRun', v)}
 			onScheduleChange={(v) => update('schedule', v)}
 			onFilterModeChange={(v) => update('filterMode', v)}
 		/>
@@ -194,14 +190,13 @@
 	}}
 >
 	<input type="hidden" name="enabled" value={enabled} />
-	<input type="hidden" name="dryRun" value={dryRun} />
 	<input type="hidden" name="schedule" value={schedule} />
 	<input type="hidden" name="filterMode" value={filterMode} />
 	<input type="hidden" name="filters" value={JSON.stringify(filters)} />
 </form>
-{#if !isNewConfig && (data.config?.dryRun || isDev)}
+{#if !isNewConfig}
 	<form
-		id="run-form"
+		id="dry-run-form"
 		method="POST"
 		action="?/run"
 		class="hidden"
@@ -212,9 +207,24 @@
 				running = false;
 			};
 		}}
-	></form>
-{/if}
-{#if !isNewConfig && data.config?.dryRun}
+	>
+		<input type="hidden" name="dryRun" value="true" />
+	</form>
+	<form
+		id="live-run-form"
+		method="POST"
+		action="?/run"
+		class="hidden"
+		use:enhance={() => {
+			running = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				running = false;
+			};
+		}}
+	>
+		<input type="hidden" name="dryRun" value="false" />
+	</form>
 	<form
 		id="clear-cache-form"
 		method="POST"

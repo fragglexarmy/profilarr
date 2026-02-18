@@ -4,13 +4,14 @@
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { isDirty, initEdit, update, current, clear } from '$lib/client/stores/dirty';
-	import { Info, Save, Play, Settings, History } from 'lucide-svelte';
+	import { Info, Save, FlaskConical, Play, Settings, History } from 'lucide-svelte';
 	import RenameSettings from './components/RenameSettings.svelte';
 	import RenameRunHistory from './components/RenameRunHistory.svelte';
 	import RenameInfoModal from './components/RenameInfoModal.svelte';
 	import DirtyModal from '$lib/client/ui/modal/DirtyModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -19,7 +20,6 @@
 	onMount(() => {
 		const initialFormData = {
 			enabled: data.settings?.enabled ?? false,
-			dryRun: data.settings?.dryRun ?? true,
 			renameFolders: data.settings?.renameFolders ?? false,
 			ignoreTag: data.settings?.ignoreTag ?? '',
 			schedule: String(data.settings?.schedule ?? 1440),
@@ -37,7 +37,6 @@
 	let running = false;
 
 	$: enabled = ($current.enabled ?? false) as boolean;
-	$: dryRun = ($current.dryRun ?? true) as boolean;
 	$: renameFolders = ($current.renameFolders ?? false) as boolean;
 	$: ignoreTag = ($current.ignoreTag ?? '') as string;
 	$: schedule = ($current.schedule ?? '1440') as string;
@@ -48,13 +47,10 @@
 		lastFormId = form;
 		if (form.success && !form.queued) {
 			alertStore.add('success', 'Configuration saved successfully');
-			initEdit({ enabled, dryRun, renameFolders, ignoreTag, schedule, summaryNotifications });
+			initEdit({ enabled, renameFolders, ignoreTag, schedule, summaryNotifications });
 		}
 		if (form.success && form.queued) {
 			alertStore.add('success', 'Rename run queued');
-			if (form.warning) {
-				alertStore.add('warning', form.warning);
-			}
 		}
 		if (form.error) {
 			alertStore.add('error', form.error);
@@ -75,19 +71,31 @@
 	</div>
 	<div slot="right" class="flex items-center gap-2">
 		<Button text="How it works" icon={Info} on:click={() => (showInfoModal = true)} />
-		{#if !isNewConfig && data.settings?.dryRun}
-			<Button
-				text={running ? 'Running...' : 'Test Run'}
-				icon={Play}
-				iconColor="text-amber-600 dark:text-amber-400"
-				disabled={running || saving || $isDirty}
-				on:click={() => {
-					const runForm = document.getElementById('run-form');
-					if (runForm instanceof HTMLFormElement) {
-						runForm.requestSubmit();
-					}
-				}}
-			/>
+		{#if !isNewConfig}
+			<Tooltip text="Preview which files would be renamed without making changes">
+				<Button
+					text={running ? 'Running...' : 'Dry Run'}
+					icon={FlaskConical}
+					iconColor="text-amber-600 dark:text-amber-400"
+					disabled={running || saving || $isDirty}
+					on:click={() => {
+						const f = document.getElementById('dry-run-form');
+						if (f instanceof HTMLFormElement) f.requestSubmit();
+					}}
+				/>
+			</Tooltip>
+			<Tooltip text="Rename files and folders now">
+				<Button
+					text={running ? 'Running...' : 'Run Now'}
+					icon={Play}
+					iconColor="text-green-600 dark:text-green-400"
+					disabled={running || saving || $isDirty}
+					on:click={() => {
+						const f = document.getElementById('live-run-form');
+						if (f instanceof HTMLFormElement) f.requestSubmit();
+					}}
+				/>
+			</Tooltip>
 		{/if}
 		<Button
 			text={saving ? 'Saving...' : 'Save'}
@@ -114,14 +122,12 @@
 		</h2>
 		<RenameSettings
 			{enabled}
-			{dryRun}
 			{renameFolders}
 			{ignoreTag}
 			{schedule}
 			{summaryNotifications}
 			lastRunAt={data.settings?.lastRunAt ?? null}
 			onEnabledChange={(v) => update('enabled', v)}
-			onDryRunChange={(v) => update('dryRun', v)}
 			onRenameFoldersChange={(v) => update('renameFolders', v)}
 			onIgnoreTagChange={(v) => update('ignoreTag', v)}
 			onScheduleChange={(v) => update('schedule', v)}
@@ -155,7 +161,6 @@
 	}}
 >
 	<input type="hidden" name="enabled" value={enabled} />
-	<input type="hidden" name="dryRun" value={dryRun} />
 	<input type="hidden" name="renameFolders" value={renameFolders} />
 	<input type="hidden" name="ignoreTag" value={ignoreTag} />
 	<input type="hidden" name="schedule" value={schedule} />
@@ -163,7 +168,7 @@
 </form>
 {#if !isNewConfig}
 	<form
-		id="run-form"
+		id="dry-run-form"
 		method="POST"
 		action="?/run"
 		class="hidden"
@@ -174,7 +179,24 @@
 				running = false;
 			};
 		}}
-	></form>
+	>
+		<input type="hidden" name="dryRun" value="true" />
+	</form>
+	<form
+		id="live-run-form"
+		method="POST"
+		action="?/run"
+		class="hidden"
+		use:enhance={() => {
+			running = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				running = false;
+			};
+		}}
+	>
+		<input type="hidden" name="dryRun" value="false" />
+	</form>
 {/if}
 
 <RenameInfoModal bind:open={showInfoModal} />

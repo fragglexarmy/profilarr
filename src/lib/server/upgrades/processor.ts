@@ -159,7 +159,8 @@ function getNextFilter(config: UpgradeConfig): FilterConfig | null {
 function createSkippedLog(
 	config: UpgradeConfig,
 	instance: ArrInstance,
-	reason: string
+	reason: string,
+	dryRun: boolean = false
 ): UpgradeJobLog {
 	const now = new Date().toISOString();
 	return {
@@ -174,7 +175,7 @@ function createSkippedLog(
 			schedule: config.schedule,
 			filterMode: config.filterMode,
 			selectedFilter: '',
-			dryRun: config.dryRun
+			dryRun
 		},
 		library: {
 			totalItems: 0,
@@ -222,7 +223,8 @@ function pickSeasonForSearch(series: SonarrSeries): number {
 export async function processUpgradeConfig(
 	config: UpgradeConfig,
 	instance: ArrInstance,
-	manual: boolean = false
+	manual: boolean = false,
+	dryRun: boolean = false
 ): Promise<UpgradeJobLog> {
 	const startedAt = new Date();
 	const logId = crypto.randomUUID();
@@ -231,7 +233,7 @@ export async function processUpgradeConfig(
 	const filter = getNextFilter(config);
 
 	if (!filter) {
-		const log = createSkippedLog(config, instance, 'No enabled filters');
+		const log = createSkippedLog(config, instance, 'No enabled filters', dryRun);
 		await logUpgradeSkipped(instance.id, instance.name, 'No enabled filters');
 		return log;
 	}
@@ -346,7 +348,7 @@ export async function processUpgradeConfig(
 		// Step 4: If dry run, also exclude items from previous dry runs
 		let availableItems = afterCooldownItems;
 		let dryRunExcludedCount = 0;
-		if (config.dryRun) {
+		if (dryRun) {
 			const excluded = getDryRunExclusions(instance.id);
 			if (excluded.size > 0) {
 				availableItems = afterCooldownItems.filter((item) => !excluded.has(item.id));
@@ -386,7 +388,7 @@ export async function processUpgradeConfig(
 		let successful = 0;
 		let failed = 0;
 		const errors: string[] = [];
-		const isDryRun = config.dryRun;
+		const isDryRun = dryRun;
 		const selectionItems: UpgradeSelectionItem[] = [];
 
 		if (selectedItems.length > 0) {
@@ -588,7 +590,7 @@ export async function processUpgradeConfig(
 				schedule: config.schedule,
 				filterMode: config.filterMode,
 				selectedFilter: filter.name,
-				dryRun: isDryRun
+				dryRun
 			},
 			library: {
 				totalItems,
@@ -625,7 +627,7 @@ export async function processUpgradeConfig(
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		await logUpgradeError(instance.id, instance.name, errorMessage);
 
-		const log = createSkippedLog(config, instance, errorMessage);
+		const log = createSkippedLog(config, instance, errorMessage, dryRun);
 		log.id = logId;
 		log.startedAt = startedAt.toISOString();
 		log.completedAt = new Date().toISOString();
