@@ -3,6 +3,7 @@
 	import Toggle from '$ui/toggle/Toggle.svelte';
 	import SyncFooter from './SyncFooter.svelte';
 	import { alertStore } from '$lib/client/alerts/store.ts';
+	import { deserialize } from '$app/forms';
 
 	interface DatabaseWithProfiles {
 		id: number;
@@ -12,7 +13,7 @@
 
 	export let databases: DatabaseWithProfiles[];
 	export let state: Record<number, Record<string, boolean>> = {};
-	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
+	export let syncTrigger: 'manual' | 'on_pull' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
 	export let canSave: boolean = true;
 	export let warning: string | null = null;
@@ -105,11 +106,11 @@
 				body: new FormData()
 			});
 
-			if (response.ok) {
-				const data = await response.json();
-				alertStore.add('success', data?.message ?? 'Sync queued');
-			} else {
-				alertStore.add('error', 'Sync failed');
+			const result = deserialize(await response.text());
+			if (result.type === 'success') {
+				alertStore.add('success', result.data?.message ?? 'Sync queued');
+			} else if (result.type === 'failure') {
+				alertStore.add('warning', result.data?.error ?? 'Sync failed');
 			}
 		} catch {
 			alertStore.add('error', 'Sync failed');

@@ -235,6 +235,11 @@ export const actions: Actions = {
 			return fail(404, { error: 'Instance not found' });
 		}
 
+		const status = arrSyncQueries.getSyncConfigStatus(id);
+		if (status.delayProfiles.syncStatus === 'pending' || status.delayProfiles.syncStatus === 'in_progress') {
+			return fail(409, { error: 'Sync already in progress' });
+		}
+
 		try {
 			arrSyncQueries.setDelayProfilesStatusPending(id);
 			const queued = enqueueJob({
@@ -276,6 +281,11 @@ export const actions: Actions = {
 			return fail(404, { error: 'Instance not found' });
 		}
 
+		const status = arrSyncQueries.getSyncConfigStatus(id);
+		if (status.qualityProfiles.syncStatus === 'pending' || status.qualityProfiles.syncStatus === 'in_progress') {
+			return fail(409, { error: 'Sync already in progress' });
+		}
+
 		try {
 			arrSyncQueries.setQualityProfilesStatusPending(id);
 			const queued = enqueueJob({
@@ -315,6 +325,11 @@ export const actions: Actions = {
 		const instance = arrInstancesQueries.getById(id);
 		if (!instance) {
 			return fail(404, { error: 'Instance not found' });
+		}
+
+		const status = arrSyncQueries.getSyncConfigStatus(id);
+		if (status.mediaManagement.syncStatus === 'pending' || status.mediaManagement.syncStatus === 'in_progress') {
+			return fail(409, { error: 'Sync already in progress' });
 		}
 
 		try {
