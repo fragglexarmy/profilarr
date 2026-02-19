@@ -1,4 +1,5 @@
 import { BaseArrClient } from '../base.ts';
+import { stripNamespaceSuffix } from '$lib/server/sync/namespace.ts';
 import type {
 	SonarrSeries,
 	SonarrRelease,
@@ -119,7 +120,7 @@ export class SonarrClient extends BaseArrClient {
 					sizeOnDisk: s.statistics.sizeOnDisk,
 					percentOfEpisodes: s.statistics.percentOfEpisodes
 				})),
-				isProfilarrProfile: profilarrProfileNames?.has(profileName) ?? false
+				isProfilarrProfile: profilarrProfileNames?.has(stripNamespaceSuffix(profileName)) ?? false
 			};
 		});
 	}
