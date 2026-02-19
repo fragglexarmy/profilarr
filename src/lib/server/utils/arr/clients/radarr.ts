@@ -138,6 +138,13 @@ export class RadarrClient extends BaseArrClient {
 		return libraryItems;
 	}
 
+	/**
+	 * Delete a movie from Radarr
+	 */
+	deleteMovie(movieId: number): Promise<void> {
+		return this.delete(`/api/${this.apiVersion}/movie/${movieId}`);
+	}
+
 	// =========================================================================
 	// Search Methods
 	// =========================================================================

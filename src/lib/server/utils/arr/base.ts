@@ -1,6 +1,7 @@
 import { BaseHttpClient } from '../http/client.ts';
 import type {
 	ArrSystemStatus,
+	ArrHealthItem,
 	ArrDelayProfile,
 	ArrTag,
 	ArrMediaManagementConfig,
@@ -88,6 +89,13 @@ export class BaseArrClient extends BaseHttpClient {
 
 			return false;
 		}
+	}
+
+	/**
+	 * Get health check items from the arr instance
+	 */
+	getHealth(): Promise<ArrHealthItem[]> {
+		return this.get<ArrHealthItem[]>(`/api/${this.apiVersion}/health`);
 	}
 
 	// =========================================================================

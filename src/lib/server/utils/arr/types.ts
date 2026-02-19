@@ -744,6 +744,16 @@ export interface ArrQualityProfilePayload {
 // =============================================================================
 
 /**
+ * Health check item from /api/v3/health
+ */
+export interface ArrHealthItem {
+	source: string;
+	type: string;
+	message: string;
+	wikiUrl?: string;
+}
+
+/**
  * System status response from /api/v3/system/status
  * Based on actual Radarr API response
  */

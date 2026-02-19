@@ -377,5 +377,5 @@
 
 <!-- Cleanup Modal (edit mode only) -->
 {#if mode === 'edit' && instance}
-	<CleanupModal bind:open={showCleanupModal} instanceId={instance.id} />
+	<CleanupModal bind:open={showCleanupModal} instanceId={instance.id} instanceType={type} />
 {/if}

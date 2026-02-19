@@ -37,6 +37,13 @@ export class SonarrClient extends BaseArrClient {
 		return this.get<SonarrSeries>(`/api/${this.apiVersion}/series/${seriesId}`);
 	}
 
+	/**
+	 * Delete a series from Sonarr
+	 */
+	deleteSeries(seriesId: number): Promise<void> {
+		return this.delete(`/api/${this.apiVersion}/series/${seriesId}`);
+	}
+
 	// =========================================================================
 	// Episode Methods
 	// =========================================================================
