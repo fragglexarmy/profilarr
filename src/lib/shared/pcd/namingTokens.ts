@@ -593,12 +593,18 @@ export function resolveFormat(
 ): string {
 	if (!format) return '';
 
+	// Build case-insensitive lookup map
+	const lowerMap = new Map<string, string>();
+	for (const [key, val] of Object.entries(sampleValues)) {
+		lowerMap.set(key.toLowerCase(), val);
+	}
+
 	// Match tokens: {prefix token suffix} where prefix/suffix are optional [ ] - _ . space chars
 	const tokenRegex = /\{(?<prefix>[-\[( ._]*)(?<token>[A-Za-z][A-Za-z0-9 :+-]*)(?<suffix>[-\]) ._]*)\}/g;
 
 	const resolved = format.replace(tokenRegex, (_match, prefix: string, token: string, suffix: string) => {
 		const trimmedToken = token.trim();
-		const value = sampleValues[trimmedToken];
+		const value = lowerMap.get(trimmedToken.toLowerCase());
 
 		if (value === undefined) {
 			// Unknown token — leave as-is
@@ -636,8 +642,8 @@ function getValidTokenNames(arrType: 'radarr' | 'sonarr'): Set<string> {
 	const names = new Set<string>();
 	for (const category of categories) {
 		for (const t of category.tokens) {
-			// Strip outer braces: "{Movie Title}" → "Movie Title"
-			names.add(t.token.slice(1, -1));
+			// Strip outer braces and lowercase for case-insensitive matching
+			names.add(t.token.slice(1, -1).toLowerCase());
 		}
 	}
 	return names;
@@ -687,7 +693,7 @@ export function validateNamingFormat(
 
 	while ((match = tokenRegex.exec(format)) !== null) {
 		const tokenName = match[1].trim();
-		if (!validNames.has(tokenName)) {
+		if (!validNames.has(tokenName.toLowerCase())) {
 			errors.push(`Unknown token: {${tokenName}}`);
 		}
 	}
