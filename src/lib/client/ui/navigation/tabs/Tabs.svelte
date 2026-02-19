@@ -16,6 +16,7 @@
 
 	interface BackButton {
 		label: string;
+		href?: string;
 	}
 
 	interface Breadcrumb {
@@ -64,7 +65,7 @@
 
 	function handleTabSelect(href: string) {
 		dropdownOpen = false;
-		goto(href);
+		goto(href, { replaceState: true });
 	}
 </script>
 
@@ -73,12 +74,13 @@
 {:else if useMobileMode}
 	<!-- Mobile: Custom dropdown with icons -->
 	<div class="border-b border-neutral-200 py-3 dark:border-neutral-800">
-		<div class="relative" bind:this={triggerEl} use:clickOutside={() => (dropdownOpen = false)}>
-			<button
-				type="button"
-				on:click={() => (dropdownOpen = !dropdownOpen)}
-				class="flex w-full items-center justify-between gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-100 dark:hover:bg-neutral-700"
-			>
+		<div class="flex items-center gap-2">
+			<div class="relative flex-1" bind:this={triggerEl} use:clickOutside={() => (dropdownOpen = false)}>
+				<button
+					type="button"
+					on:click={() => (dropdownOpen = !dropdownOpen)}
+					class="flex w-full items-center justify-between gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-100 dark:hover:bg-neutral-700"
+				>
 				<span class="flex items-center gap-2">
 					{#if activeTab?.icon}
 						<svelte:component this={activeTab.icon} size={16} class="text-accent-500" />
@@ -104,6 +106,17 @@
 				</Dropdown>
 			{/if}
 		</div>
+			{#if backButton}
+				<button
+					type="button"
+					on:click={() => history.back()}
+					class="flex cursor-pointer items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+				>
+					<ArrowLeft size={14} />
+					{backButton.label}
+				</button>
+			{/if}
+		</div>
 	</div>
 {:else}
 	<!-- Desktop: Tab bar -->
@@ -111,10 +124,10 @@
 		<nav class="-mb-px flex items-center justify-between gap-2" aria-label="Tabs">
 			<div class="flex gap-2">
 				{#each tabs as tab (tab.href)}
-					<a
-						href={tab.href}
-						data-sveltekit-preload-data="tap"
-						class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors {tab.active
+					<button
+						type="button"
+						on:click={() => handleTabSelect(tab.href)}
+						class="flex cursor-pointer items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors {tab.active
 							? 'border-accent-600 text-accent-600 dark:border-accent-500 dark:text-accent-500'
 							: 'border-transparent text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:text-neutral-50'}"
 					>
@@ -122,7 +135,7 @@
 							<svelte:component this={tab.icon} size={16} />
 						{/if}
 						{tab.label}
-					</a>
+					</button>
 				{/each}
 
 				<!-- Actions slot for custom action tabs (like Add Instance) -->
@@ -144,7 +157,7 @@
 				<button
 					type="button"
 					on:click={() => history.back()}
-					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+					class="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
 				>
 					<ArrowLeft size={14} />
 					{backButton.label}
