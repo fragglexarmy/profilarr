@@ -10,6 +10,10 @@ export interface Selector<T = any> {
 	select: (items: T[], count: number) => T[];
 }
 
+function sortTitle(title: string | undefined): string {
+	return (title || '').toLowerCase().replace(/^[^a-z0-9]+/, '').replace(/^(the|a|an)\s+/, '');
+}
+
 /**
  * All available selectors
  */
@@ -73,6 +77,24 @@ export const selectors: Selector[] = [
 		description: 'Select least popular items first',
 		select: (items, count) => {
 			const sorted = [...items].sort((a, b) => (a.popularity || 0) - (b.popularity || 0));
+			return sorted.slice(0, count);
+		}
+	},
+	{
+		id: 'alphabetical_asc',
+		label: 'A-Z',
+		description: 'Select items alphabetically by title (A to Z)',
+		select: (items, count) => {
+			const sorted = [...items].sort((a, b) => sortTitle(a.title).localeCompare(sortTitle(b.title)));
+			return sorted.slice(0, count);
+		}
+	},
+	{
+		id: 'alphabetical_desc',
+		label: 'Z-A',
+		description: 'Select items alphabetically by title (Z to A)',
+		select: (items, count) => {
+			const sorted = [...items].sort((a, b) => sortTitle(b.title).localeCompare(sortTitle(a.title)));
 			return sorted.slice(0, count);
 		}
 	}
