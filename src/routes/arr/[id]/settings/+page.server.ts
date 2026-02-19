@@ -1,8 +1,17 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { arrCleanupSettingsQueries } from '$db/queries/arrCleanupSettings.ts';
 import { cleanupJobsForArrInstance } from '$lib/server/jobs/cleanup.ts';
+import { scheduleCleanupForInstance } from '$lib/server/jobs/init.ts';
+import { calculateNextRun } from '$lib/server/jobs/scheduleUtils.ts';
 import { logger } from '$logger/logger.ts';
+
+export const load = ({ params }) => {
+	const id = parseInt(params.id || '', 10);
+	const cleanupSettings = arrCleanupSettingsQueries.getByInstanceId(id);
+	return { cleanupSettings: cleanupSettings ?? null };
+};
 
 export const actions: Actions = {
 	update: async ({ params, request }) => {
@@ -23,7 +32,7 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const name = formData.get('name')?.toString().trim();
 		const url = formData.get('url')?.toString().trim();
-		const apiKey = formData.get('api_key')?.toString().trim();
+		const apiKey = formData.get('api_key')?.toString().trim() || instance.api_key;
 		const tagsJson = formData.get('tags')?.toString() || '';
 		const enabled = formData.get('enabled')?.toString() === '1';
 
@@ -34,10 +43,6 @@ export const actions: Actions = {
 
 		if (!url) {
 			return fail(400, { error: 'URL is required' });
-		}
-
-		if (!apiKey) {
-			return fail(400, { error: 'API Key is required' });
 		}
 
 		// Check for duplicate name
@@ -69,9 +74,13 @@ export const actions: Actions = {
 				enabled
 			});
 
+			const cleanup = arrCleanupSettingsQueries.getByInstanceId(id);
 			await logger.info(`Updated arr instance: ${name}`, {
 				source: 'arr/[id]/settings',
-				meta: { id, name, type: instance.type, url }
+				meta: {
+					id, name, type: instance.type, url,
+					cleanup: cleanup ? { enabled: cleanup.enabled, cron: cleanup.cron } : null
+				}
 			});
 
 			return { success: true };
@@ -82,6 +91,34 @@ export const actions: Actions = {
 			});
 
 			return fail(500, { error: 'Failed to update instance' });
+		}
+	},
+
+	updateCleanup: async ({ params, request }) => {
+		const id = parseInt(params.id || '', 10);
+		if (isNaN(id)) {
+			return fail(400, { error: 'Invalid instance ID' });
+		}
+
+		const formData = await request.formData();
+		const enabled = formData.get('enabled')?.toString() === '1';
+		const cron = formData.get('cron')?.toString() || '0 0 * * 0';
+
+		try {
+			arrCleanupSettingsQueries.upsert(id, { enabled, cron });
+
+			const nextRunAt = calculateNextRun(cron);
+			if (nextRunAt) arrCleanupSettingsQueries.updateNextRunAt(id, nextRunAt);
+
+			scheduleCleanupForInstance(id);
+
+			return { success: true };
+		} catch (err) {
+			await logger.error('Failed to save cleanup settings', {
+				source: 'arr/[id]/settings',
+				meta: { error: err instanceof Error ? err.message : String(err) }
+			});
+			return fail(500, { error: 'Failed to save cleanup settings' });
 		}
 	},
 

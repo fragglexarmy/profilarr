@@ -157,14 +157,5 @@ export async function deleteStaleItems(
 		}
 	}
 
-	await logger.info('Cleanup complete', {
-		source: SOURCE,
-		meta: {
-			deletedCFs: deletedCustomFormats.map((cf) => cf.strippedName),
-			deletedQPs: deletedQualityProfiles.map((qp) => qp.strippedName),
-			skippedQPs: skippedQualityProfiles.map((s) => s.item.strippedName)
-		}
-	});
-
 	return { deletedCustomFormats, deletedQualityProfiles, skippedQualityProfiles };
 }

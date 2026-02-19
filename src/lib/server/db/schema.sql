@@ -1,7 +1,7 @@
 -- Profilarr Database Schema
 -- This file documents the current database schema after all migrations
 -- DO NOT execute this file directly - use migrations instead
--- Last updated: 2026-01-28
+-- Last updated: 2026-02-20
 
 -- ==============================================================================
 -- TABLE: migrations
@@ -276,7 +276,7 @@ CREATE TABLE database_instances (
 -- ==============================================================================
 -- TABLE: upgrade_configs
 -- Purpose: Store upgrade configuration per arr instance for automated quality upgrades
--- Migration: 011_create_upgrade_configs.ts, 012_add_upgrade_last_run.ts, 013_add_upgrade_dry_run.ts
+-- Migration: 011_create_upgrade_configs.ts, 012_add_upgrade_last_run.ts, 013_add_upgrade_dry_run.ts, 051_cron_scheduling.ts
 -- ==============================================================================
 
 CREATE TABLE upgrade_configs (
@@ -288,7 +288,7 @@ CREATE TABLE upgrade_configs (
     -- Core settings
     enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch
     dry_run INTEGER NOT NULL DEFAULT 0,         -- 1=dry run mode, 0=normal (Migration 013)
-    schedule INTEGER NOT NULL DEFAULT 360,      -- Run interval in minutes (default 6 hours)
+    cron TEXT NOT NULL DEFAULT '0 */6 * * *',   -- Cron expression (Migration 051, replaced schedule)
     filter_mode TEXT NOT NULL DEFAULT 'round_robin', -- 'round_robin' or 'random'
 
     -- Filters (stored as JSON array of FilterConfig objects)
@@ -297,6 +297,7 @@ CREATE TABLE upgrade_configs (
     -- State tracking
     current_filter_index INTEGER NOT NULL DEFAULT 0, -- For round-robin mode
     last_run_at DATETIME,                            -- When upgrade job last ran (Migration 012)
+    next_run_at TEXT,                                -- Next scheduled run (Migration 051)
 
     -- Metadata
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -614,7 +615,7 @@ CREATE INDEX idx_pattern_match_cache_created_at ON pattern_match_cache(created_a
 -- ==============================================================================
 -- TABLE: arr_rename_settings
 -- Purpose: Store rename configuration per arr instance for bulk file/folder renaming
--- Migration: 024_create_arr_rename_settings.ts, 025_add_rename_notification_mode.ts
+-- Migration: 024_create_arr_rename_settings.ts, 025_add_rename_notification_mode.ts, 051_cron_scheduling.ts
 -- ==============================================================================
 
 CREATE TABLE arr_rename_settings (
@@ -631,7 +632,8 @@ CREATE TABLE arr_rename_settings (
 
     -- Job scheduling
     enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch for scheduled job
-    schedule INTEGER NOT NULL DEFAULT 1440,     -- Run interval in minutes (default 24 hours)
+    cron TEXT NOT NULL DEFAULT '0 0 * * *',     -- Cron expression (Migration 051, replaced schedule)
+    next_run_at TEXT,                           -- Next scheduled run (Migration 051)
     last_run_at DATETIME,                       -- When rename job last ran
 
     -- Metadata
@@ -643,6 +645,36 @@ CREATE TABLE arr_rename_settings (
 
 -- Arr rename settings indexes (Migration: 024_create_arr_rename_settings.ts)
 CREATE INDEX idx_arr_rename_settings_arr_instance ON arr_rename_settings(arr_instance_id);
+
+-- ==============================================================================
+-- TABLE: arr_cleanup_settings
+-- Purpose: Store cleanup scheduling configuration per arr instance
+-- Migration: 052_create_arr_cleanup_settings.ts
+-- ==============================================================================
+
+CREATE TABLE arr_cleanup_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Relationship (one config per arr instance)
+    arr_instance_id INTEGER NOT NULL UNIQUE,
+
+    -- Settings
+    enabled INTEGER NOT NULL DEFAULT 0,         -- Master on/off switch
+    cron TEXT NOT NULL DEFAULT '0 0 * * 0',     -- Cron expression (default: weekly Sunday midnight)
+
+    -- State tracking
+    next_run_at TEXT,                           -- Next scheduled run
+    last_run_at TEXT,                           -- When cleanup job last ran
+
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (arr_instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE
+);
+
+-- Arr cleanup settings indexes (Migration: 052_create_arr_cleanup_settings.ts)
+CREATE INDEX idx_arr_cleanup_settings_instance ON arr_cleanup_settings(arr_instance_id);
 
 -- ==============================================================================
 -- TABLE: upgrade_runs
@@ -665,7 +697,7 @@ CREATE TABLE upgrade_runs (
     dry_run INTEGER NOT NULL DEFAULT 0,         -- 1=dry run, 0=live
 
     -- Config snapshot (flat for queryability)
-    schedule INTEGER NOT NULL,                  -- Schedule interval in minutes
+    cron TEXT NOT NULL,                         -- Cron expression (Migration 051, renamed from schedule)
     filter_mode TEXT NOT NULL,                  -- 'round_robin' or 'random'
     filter_name TEXT NOT NULL,                  -- Name of the filter used
 

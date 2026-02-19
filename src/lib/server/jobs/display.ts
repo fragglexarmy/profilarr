@@ -21,6 +21,8 @@ export function formatJobTypeLabel(jobType: JobType): string {
 			return 'Arr Rename';
 		case 'arr.upgrade':
 			return 'Arr Upgrade';
+		case 'arr.cleanup':
+			return 'Arr Cleanup';
 		case 'pcd.sync':
 			return 'PCD Sync';
 		case 'backup.create':
@@ -63,7 +65,7 @@ export function buildJobDisplayName(
 	}
 
 	const isArrSync = jobType === 'arr.sync' || jobType.startsWith('arr.sync.');
-	if ((isArrSync || jobType === 'arr.rename' || jobType === 'arr.upgrade') && instanceId !== null) {
+	if ((isArrSync || jobType === 'arr.rename' || jobType === 'arr.upgrade' || jobType === 'arr.cleanup') && instanceId !== null) {
 		const name =
 			lookups?.arrNameById?.get(instanceId) ?? arrInstancesQueries.getById(instanceId)?.name;
 		return name ? `${base} - ${name}` : base;

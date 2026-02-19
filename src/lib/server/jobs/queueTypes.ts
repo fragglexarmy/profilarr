@@ -8,6 +8,7 @@ export type JobType =
 	| 'pcd.sync'
 	| 'backup.create'
 	| 'backup.cleanup'
+	| 'arr.cleanup'
 	| 'logs.cleanup';
 
 export type JobStatus = 'queued' | 'running' | 'success' | 'failed' | 'cancelled';

@@ -10,4 +10,4 @@
 	<title>{data.instance.name} - Settings - Profilarr</title>
 </svelte:head>
 
-<InstanceForm mode="edit" {form} instance={data.instance} />
+<InstanceForm mode="edit" {form} instance={data.instance} cleanupSettings={data.cleanupSettings} />

@@ -3,6 +3,7 @@ import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { arrRenameSettingsQueries } from '$db/queries/arrRenameSettings.ts';
+import { arrCleanupSettingsQueries } from '$db/queries/arrCleanupSettings.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { backupSettingsQueries } from '$db/queries/backupSettings.ts';
 import { logSettingsQueries } from '$db/queries/logSettings.ts';
@@ -59,7 +60,7 @@ export function scheduleArrSyncForInstance(instanceId: number): void {
 export function scheduleUpgradeForInstance(instanceId: number): void {
 	const config = upgradeConfigsQueries.getByArrInstanceId(instanceId);
 	if (!config || !config.enabled) {
-		jobQueueQueries.cancelByDedupeKey(`arr.upgrade:${instanceId}`);
+		jobQueueQueries.unscheduleByDedupeKey(`arr.upgrade:${instanceId}`);
 		return;
 	}
 
@@ -68,7 +69,7 @@ export function scheduleUpgradeForInstance(instanceId: number): void {
 		nextRun = calculateNextRun(config.cron) ?? null;
 	}
 	if (!nextRun) {
-		jobQueueQueries.cancelByDedupeKey(`arr.upgrade:${instanceId}`);
+		jobQueueQueries.unscheduleByDedupeKey(`arr.upgrade:${instanceId}`);
 		return;
 	}
 
@@ -86,7 +87,7 @@ export function scheduleUpgradeForInstance(instanceId: number): void {
 export function scheduleRenameForInstance(instanceId: number): void {
 	const settings = arrRenameSettingsQueries.getByInstanceId(instanceId);
 	if (!settings || !settings.enabled) {
-		jobQueueQueries.cancelByDedupeKey(`arr.rename:${instanceId}`);
+		jobQueueQueries.unscheduleByDedupeKey(`arr.rename:${instanceId}`);
 		return;
 	}
 
@@ -95,7 +96,7 @@ export function scheduleRenameForInstance(instanceId: number): void {
 		nextRun = calculateNextRun(settings.cron) ?? null;
 	}
 	if (!nextRun) {
-		jobQueueQueries.cancelByDedupeKey(`arr.rename:${instanceId}`);
+		jobQueueQueries.unscheduleByDedupeKey(`arr.rename:${instanceId}`);
 		return;
 	}
 
@@ -105,6 +106,33 @@ export function scheduleRenameForInstance(instanceId: number): void {
 		payload: { instanceId },
 		source: 'schedule',
 		dedupeKey: `arr.rename:${instanceId}`
+	});
+
+	notify(job.runAt);
+}
+
+export function scheduleCleanupForInstance(instanceId: number): void {
+	const settings = arrCleanupSettingsQueries.getByInstanceId(instanceId);
+	if (!settings || !settings.enabled) {
+		jobQueueQueries.unscheduleByDedupeKey(`arr.cleanup:${instanceId}`);
+		return;
+	}
+
+	let nextRun = settings.nextRunAt;
+	if (!nextRun) {
+		nextRun = calculateNextRun(settings.cron) ?? null;
+	}
+	if (!nextRun) {
+		jobQueueQueries.unscheduleByDedupeKey(`arr.cleanup:${instanceId}`);
+		return;
+	}
+
+	const job = jobQueueQueries.upsertScheduled({
+		jobType: 'arr.cleanup',
+		runAt: nextRun,
+		payload: { instanceId },
+		source: 'schedule',
+		dedupeKey: `arr.cleanup:${instanceId}`
 	});
 
 	notify(job.runAt);
@@ -187,6 +215,7 @@ export function scheduleAllJobs(): void {
 		scheduleArrSyncForInstance(instance.id);
 		scheduleUpgradeForInstance(instance.id);
 		scheduleRenameForInstance(instance.id);
+		scheduleCleanupForInstance(instance.id);
 	}
 
 	const databases = databaseInstancesQueries.getAll();

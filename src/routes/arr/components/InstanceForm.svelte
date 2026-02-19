@@ -1,14 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { Save, Wifi, Trash2, Eraser, Loader2 } from 'lucide-svelte';
+	import { parseUTC } from '$shared/utils/dates';
 	import CleanupModal from './CleanupModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { isDirty, initEdit, initCreate, update, current, clear } from '$lib/client/stores/dirty';
 	import type { ArrInstance } from '$db/queries/arrInstances.ts';
+	import type { CleanupSettings } from '$db/queries/arrCleanupSettings.ts';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
+	import Toggle from '$ui/toggle/Toggle.svelte';
+	import CronInput from '$ui/cron/CronInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import Button from '$ui/button/Button.svelte';
@@ -20,6 +24,7 @@
 	export let initialType: string = '';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	export let form: any = undefined;
+	export let cleanupSettings: CleanupSettings | null = null;
 
 	// Parse tags from JSON string
 	const parseTags = (tagsJson: string | null): string[] => {
@@ -40,7 +45,9 @@
 				url: instance.url,
 				apiKey: '', // Never pre-populate for security
 				enabled: instance.enabled ? 'true' : 'false',
-				tags: JSON.stringify(parseTags(instance.tags))
+				tags: JSON.stringify(parseTags(instance.tags)),
+				cleanupEnabled: cleanupSettings?.enabled ?? false,
+				cleanupCron: cleanupSettings?.cron ?? '0 0 * * 0'
 			});
 		} else {
 			initCreate({
@@ -49,7 +56,9 @@
 				url: '',
 				apiKey: '',
 				enabled: 'true',
-				tags: '[]'
+				tags: '[]',
+				cleanupEnabled: false,
+				cleanupCron: '0 0 * * 0'
 			});
 		}
 		return () => clear();
@@ -62,6 +71,15 @@
 	$: apiKey = ($current.apiKey ?? '') as string;
 	$: enabled = ($current.enabled ?? 'true') as string;
 	$: tags = JSON.parse(($current.tags ?? '[]') as string) as string[];
+	$: cleanupEnabled = ($current.cleanupEnabled ?? false) as boolean;
+	$: cleanupCron = ($current.cleanupCron ?? '0 0 * * 0') as string;
+
+	// CronInput sync pattern (bind:value needs a local variable)
+	let cronInputValue = cleanupSettings?.cron ?? '0 0 * * 0';
+	$: cronInputValue = cleanupCron;
+	$: if (cronInputValue !== cleanupCron) {
+		update('cleanupCron', cronInputValue);
+	}
 
 	// UI state
 	let saving = false;
@@ -111,29 +129,35 @@
 		}
 	}
 
-	// Test connection and submit if successful
+	// Save handler
 	async function handleSave() {
-		if (!type || !url || !apiKey) {
-			alertStore.add('error', 'Please fill in Type, URL, and API Key');
-			return;
-		}
-
 		saving = true;
 
 		try {
-			const response = await fetch('/arr/test', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ type, url, apiKey })
-			});
-
-			const result = await response.json();
-
-			if (!response.ok) {
-				throw new Error(result.error || result.message || 'Connection test failed');
+			// Save cleanup settings if they changed from server values
+			if (mode === 'edit') {
+				const origEnabled = cleanupSettings?.enabled ?? false;
+				const origCron = cleanupSettings?.cron ?? '0 0 * * 0';
+				if (cleanupEnabled !== origEnabled || cleanupCron !== origCron) {
+					await saveCleanupSettings();
+				}
 			}
 
-			// Connection successful, submit the form
+			// Only test connection if API key was provided
+			if (apiKey) {
+				const response = await fetch('/arr/test', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ type, url, apiKey })
+				});
+
+				const result = await response.json();
+
+				if (!response.ok) {
+					throw new Error(result.error || result.message || 'Connection test failed');
+				}
+			}
+
 			const saveForm = document.getElementById('save-form');
 			if (saveForm instanceof HTMLFormElement) {
 				saveForm.requestSubmit();
@@ -145,7 +169,7 @@
 		}
 	}
 
-	$: canSubmit = $isDirty && !!name && !!url && !!apiKey && (mode === 'edit' || !!type);
+	$: canSubmit = $isDirty && !!name && !!url && (mode === 'edit' || (!!apiKey && !!type));
 
 	// Handle form response
 	let lastFormId: unknown = null;
@@ -160,7 +184,9 @@
 				url,
 				apiKey: '',
 				enabled,
-				tags: JSON.stringify(tags)
+				tags: JSON.stringify(tags),
+				cleanupEnabled,
+				cleanupCron
 			});
 		}
 		if (form.error) {
@@ -173,6 +199,71 @@
 	$: description = mode === 'create'
 		? 'Configure a new Radarr or Sonarr instance.'
 		: `Configure connection and sync settings for ${instance?.name || 'this instance'}.`;
+
+	// Save cleanup settings alongside the main save
+	async function saveCleanupSettings() {
+		const formData = new FormData();
+		formData.set('enabled', cleanupEnabled ? '1' : '0');
+		formData.set('cron', cleanupCron);
+		await fetch('?/updateCleanup', { method: 'POST', body: formData });
+	}
+
+	// Cleanup run status
+	let now = Date.now();
+	let clockInterval: ReturnType<typeof setInterval>;
+
+	onMount(() => {
+		clockInterval = setInterval(() => {
+			now = Date.now();
+		}, 1000);
+	});
+
+	onDestroy(() => {
+		if (clockInterval) clearInterval(clockInterval);
+	});
+
+	$: cleanupNextRunTime = cleanupSettings?.nextRunAt
+		? new Date(cleanupSettings.nextRunAt).getTime()
+		: null;
+	$: cleanupTimeUntilNext = cleanupNextRunTime ? cleanupNextRunTime - now : null;
+
+	function formatTimeRemaining(ms: number): string {
+		if (ms <= 0) return 'now';
+		const seconds = Math.floor(ms / 1000);
+		const minutes = Math.floor(seconds / 60);
+		const hours = Math.floor(minutes / 60);
+		if (hours > 0) {
+			const remainingMinutes = minutes % 60;
+			return `${hours}h ${remainingMinutes}m`;
+		}
+		if (minutes > 0) return `${minutes}m`;
+		return `${seconds}s`;
+	}
+
+	function formatLastRun(isoString: string): string {
+		const date = parseUTC(isoString);
+		if (!date) return '-';
+		const today = new Date();
+		const yesterday = new Date(today);
+		yesterday.setDate(yesterday.getDate() - 1);
+
+		let dateStr: string;
+		if (date.toDateString() === today.toDateString()) {
+			dateStr = 'Today';
+		} else if (date.toDateString() === yesterday.toDateString()) {
+			dateStr = 'Yesterday';
+		} else {
+			dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+		}
+
+		const timeStr = date.toLocaleTimeString('en-US', {
+			hour: 'numeric',
+			minute: '2-digit',
+			hour12: true
+		});
+
+		return `${dateStr}, ${timeStr}`;
+	}
 </script>
 
 <div class="space-y-6" class:mt-6={mode === 'edit'}>
@@ -190,13 +281,6 @@
 					iconColor="text-red-600 dark:text-red-400"
 					disabled={saving || deleting}
 					on:click={() => (showDeleteModal = true)}
-				/>
-				<Button
-					text="Cleanup"
-					icon={Eraser}
-					iconColor="text-amber-600 dark:text-amber-400"
-					disabled={saving || deleting}
-					on:click={() => (showCleanupModal = true)}
 				/>
 			{/if}
 			<Button
@@ -275,7 +359,7 @@
 					name="api_key"
 					value={apiKey}
 					placeholder="Enter API key"
-					description={mode === 'edit' ? 'Re-enter API key to save changes' : ''}
+					description={mode === 'edit' ? 'Leave blank to keep existing key' : ''}
 					required
 					private_
 					on:input={(e) => update('apiKey', e.detail)}
@@ -301,6 +385,69 @@
 				on:change={(e) => update('tags', JSON.stringify(e.detail))}
 			/>
 		</div>
+		<!-- Cleanup (edit mode only) -->
+		{#if mode === 'edit' && instance}
+			<div class="space-y-2">
+				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+					Cleanup
+				</span>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					Remove stale configs and media flagged as removed from TMDB/TVDB
+				</p>
+				<div class="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 md:flex md:flex-wrap md:gap-x-6">
+					<div class="md:flex md:items-center md:gap-2">
+						<Toggle
+							checked={cleanupEnabled}
+							label={cleanupEnabled ? 'Enabled' : 'Disabled'}
+							color={cleanupEnabled ? 'green' : 'red'}
+							on:change={(e) => update('cleanupEnabled', e.detail)}
+						/>
+					</div>
+
+					{#if cleanupEnabled}
+						<!-- Schedule -->
+						<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Schedule</span>
+						<div class="md:flex md:items-center md:gap-2">
+							<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Schedule:</span>
+							<CronInput bind:value={cronInputValue} minIntervalMinutes={60} onWarning={(msg) => alertStore.add('warning', msg)} />
+						</div>
+
+						<!-- Run status + Run Now (right-aligned together) -->
+						<div class="col-span-2 flex flex-wrap items-center gap-3 md:ml-auto">
+							{#if cleanupSettings?.lastRunAt}
+								<div class="flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 md:border-0 md:pt-0 dark:border-neutral-700 dark:text-neutral-400">
+									{#if cleanupTimeUntilNext !== null && cleanupTimeUntilNext <= 0}
+										<span
+											class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400"
+											>Ready</span
+										>
+									{:else if cleanupTimeUntilNext !== null}
+										<span>
+											Next: <span
+												class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+												>{formatTimeRemaining(cleanupTimeUntilNext)}</span
+											>
+										</span>
+									{/if}
+									<span>
+										Last: <span
+											class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+											>{formatLastRun(cleanupSettings.lastRunAt)}</span
+										>
+									</span>
+								</div>
+							{/if}
+							<Button
+								text="Run Now"
+								icon={Eraser}
+								iconColor="text-amber-600 dark:text-amber-400"
+								on:click={() => (showCleanupModal = true)}
+							/>
+						</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 

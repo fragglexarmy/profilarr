@@ -124,13 +124,5 @@ export async function deleteRemovedEntities(
 		}
 	}
 
-	await logger.info('Entity cleanup complete', {
-		source: SOURCE,
-		meta: {
-			deleted: deletedEntities.map((e) => e.title),
-			failed: failedEntities.map((f) => f.entity.title)
-		}
-	});
-
 	return { deletedEntities, failedEntities };
 }
