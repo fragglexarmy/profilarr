@@ -1079,7 +1079,7 @@
 			<div class="font-medium text-neutral-900 dark:text-neutral-100">Grouping</div>
 			<div class="mt-1">
 				Organize custom formats into separate tables based on their tags. You can select multiple
-				groups at once. Available groups include Audio, HDR/Colour, Release Group, Codec,
+				groups at once. Available groups include Audio, HDR, Release Group, Codec,
 				Resolution, and more. Formats that don't match any selected group appear in the "Other"
 				table. If a format matches multiple groups, it appears in the first matching group only.
 			</div>
