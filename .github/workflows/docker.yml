@@ -81,8 +81,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          # FOR NOW: ARM disabled for faster debugging - re-enable linux/arm64 when stable
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

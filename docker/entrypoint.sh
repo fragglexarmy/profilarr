@@ -58,6 +58,12 @@ mkdir -p /config/data /config/logs /config/backups /config/databases
 chown -R "${PUID}:${PGID}" /config
 
 # -----------------------------------------------------------------------------
+# Set architecture-dependent SQLite path
+# -----------------------------------------------------------------------------
+ARCH=$(uname -m)
+export DENO_SQLITE_PATH="/usr/lib/${ARCH}-linux-gnu/libsqlite3.so.0"
+
+# -----------------------------------------------------------------------------
 # Drop privileges and run
 # -----------------------------------------------------------------------------
 exec gosu "${APP_USER}" /app/profilarr

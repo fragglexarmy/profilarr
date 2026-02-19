@@ -35,7 +35,11 @@ ENV VITE_CHANNEL=${VITE_CHANNEL}
 
 ENV APP_BASE_PATH=/build/dist/build
 RUN deno run -A npm:vite build
-RUN deno compile \
+RUN DENO_TARGET=$(case "${TARGETARCH}" in \
+        arm64) echo "aarch64-unknown-linux-gnu" ;; \
+        *)     echo "x86_64-unknown-linux-gnu" ;; \
+    esac) && \
+    deno compile \
     --no-check \
     --allow-net \
     --allow-read \
@@ -44,7 +48,7 @@ RUN deno compile \
     --allow-ffi \
     --allow-run \
     --allow-sys \
-    --target x86_64-unknown-linux-gnu \
+    --target "$DENO_TARGET" \
     --output dist/build/profilarr \
     dist/build/mod.ts
 
@@ -95,7 +99,7 @@ ENV PORT=6868
 ENV HOST=0.0.0.0
 ENV APP_BASE_PATH=/config
 ENV TZ=UTC
-ENV DENO_SQLITE_PATH=/usr/lib/x86_64-linux-gnu/libsqlite3.so.0
+# DENO_SQLITE_PATH is set in entrypoint.sh based on architecture
 
 # Expose port
 EXPOSE 6868
