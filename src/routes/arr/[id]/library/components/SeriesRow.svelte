@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CircleAlert } from 'lucide-svelte';
 	import Badge from '$ui/badge/Badge.svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 	import type { SonarrLibraryItem } from '$utils/arr/types.ts';
 	import type { Column } from '$ui/table/types';
 
@@ -30,7 +31,7 @@
 		{/if}
 	</div>
 {:else if column.key === 'qualityProfileName'}
-	<div class="group relative inline-flex">
+	<Tooltip text={row.isProfilarrProfile ? '' : 'Not managed by Profilarr'} position="top">
 		<Badge
 			variant={row.isProfilarrProfile ? 'accent' : 'warning'}
 			icon={row.isProfilarrProfile ? null : CircleAlert}
@@ -38,14 +39,7 @@
 		>
 			{row.qualityProfileName}
 		</Badge>
-		{#if !row.isProfilarrProfile}
-			<div
-				class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 rounded bg-neutral-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 group-hover:opacity-100 dark:bg-neutral-700"
-			>
-				Not managed by Profilarr
-			</div>
-		{/if}
-	</div>
+	</Tooltip>
 {:else if column.key === 'episodes'}
 	<Badge variant={row.episodeFileCount === row.episodeCount ? 'success' : 'neutral'} mono>
 		{row.episodeFileCount}/{row.episodeCount}
