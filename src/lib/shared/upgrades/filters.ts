@@ -3,6 +3,7 @@
  * Defines all available filter fields for upgrade filtering
  */
 
+import { Cron } from 'croner';
 import { uuid } from '../utils/uuid.ts';
 
 /** App types relevant to upgrade filters */
@@ -61,7 +62,8 @@ export interface UpgradeConfig {
 	id?: number;
 	arrInstanceId: number;
 	enabled: boolean;
-	schedule: number; // minutes
+	cron: string;
+	nextRunAt: string | null;
 	filterMode: FilterMode;
 	filters: FilterConfig[];
 	currentFilterIndex: number;
@@ -579,7 +581,8 @@ export function createEmptyUpgradeConfig(arrInstanceId: number): UpgradeConfig {
 	return {
 		arrInstanceId,
 		enabled: false,
-		schedule: 360, // 6 hours
+		cron: '0 */6 * * *',
+		nextRunAt: null,
 		filterMode: 'round_robin',
 		filters: [],
 		currentFilterIndex: 0
@@ -780,12 +783,70 @@ export function evaluateGroup(item: Record<string, unknown>, group: FilterGroup)
 }
 
 /**
- * Per-run count limits by app type
+ * Search rate limits by app type
  */
-export const maxCountPerRun: Record<string, number> = {
-	radarr: 5,
-	sonarr: 1
+export const searchRateLimits: Record<string, { maxPerHour: number; minIntervalMinutes: number }> = {
+	radarr: { maxPerHour: 10, minIntervalMinutes: 10 },
+	sonarr: { maxPerHour: 1, minIntervalMinutes: 60 }
 };
+
+/**
+ * Calculate max searches per run that stays within the hourly rate limit.
+ *
+ * maxCount = floor(maxPerHour / runsPerHour)
+ *
+ * This guarantees: runsPerHour × maxCount ≤ maxPerHour
+ */
+export function calculateMaxCount(appType: string, runsPerHour: number): number {
+	const limit = searchRateLimits[appType];
+	if (!limit) return 5;
+	const effective = Math.max(runsPerHour, 0.001);
+	// Cap at maxPerHour: even if runs are infrequent, all searches fire in one burst
+	return Math.max(1, Math.min(limit.maxPerHour, Math.floor(limit.maxPerHour / effective)));
+}
+
+/**
+ * Count how many times a cron expression fires per hour.
+ *
+ * For `*\/N * * * *` patterns: ceil(60/N)
+ * For all other patterns: simulates a 24-hour window and averages.
+ */
+export function getRunsPerHour(cronExpr: string): number | null {
+	if (!cronExpr) return null;
+	try {
+		// Fast path for */N * * * * (every-N-minutes pattern)
+		const everyMatch = cronExpr.trim().match(/^\*\/(\d+)\s+\*\s+\*\s+\*\s+\*$/);
+		if (everyMatch) {
+			const n = parseInt(everyMatch[1], 10);
+			if (n > 0 && n <= 60) return Math.ceil(60 / n);
+		}
+
+		// Fast path for N * * * * (hourly at fixed minute): exactly 1 run/hour
+		const hourlyMatch = cronExpr.trim().match(/^(\d+)\s+\*\s+\*\s+\*\s+\*$/);
+		if (hourlyMatch) {
+			const m = parseInt(hourlyMatch[1], 10);
+			if (m >= 0 && m <= 59) return 1;
+		}
+
+		// For all other patterns: count runs in a 28-day window and average
+		// (28 days = 4 full weeks, handles weekly patterns correctly)
+		const cron = new Cron(cronExpr);
+		const start = new Date('2025-06-02T00:00:00Z'); // Monday
+		const end = new Date('2025-06-30T00:00:00Z'); // 28 days later
+		const windowHours = 28 * 24;
+		let count = 0;
+		let cursor = start;
+		while (count < 100000) {
+			const next = cron.nextRun(cursor);
+			if (!next || next >= end) break;
+			count++;
+			cursor = new Date(next.getTime() + 1000);
+		}
+		return count / windowHours;
+	} catch {
+		return null;
+	}
+}
 
 // =============================================================================
 // Tag label utilities

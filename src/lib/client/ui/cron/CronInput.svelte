@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { Cron } from 'croner';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
-import FormInput from '$ui/form/FormInput.svelte';
-import NumberInput from '$ui/form/NumberInput.svelte';
-import TimeInput from '$ui/form/TimeInput.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
+	import NumberInput from '$ui/form/NumberInput.svelte';
+	import TimeInput from '$ui/form/TimeInput.svelte';
 
 	export let value: string = '0 * * * *';
 	export let disabled: boolean = false;
+	export let minIntervalMinutes: number = 0;
+	export let onWarning: ((message: string) => void) | undefined = undefined;
 
 	type ScheduleType = 'every' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
@@ -139,6 +141,32 @@ import TimeInput from '$ui/form/TimeInput.svelte';
 		return false;
 	}
 
+	function validateMinInterval(expr: string): string | null {
+		if (minIntervalMinutes <= 0) return null;
+		try {
+			const cron = new Cron(expr);
+			const now = new Date();
+			const runs: Date[] = [];
+			let cursor = now;
+			for (let i = 0; i < 3; i++) {
+				const next = cron.nextRun(cursor);
+				if (!next) break;
+				runs.push(next);
+				cursor = new Date(next.getTime() + 1000);
+			}
+			if (runs.length < 2) return null;
+			for (let i = 1; i < runs.length; i++) {
+				const gapMin = (runs[i].getTime() - runs[i - 1].getTime()) / 60000;
+				if (gapMin < minIntervalMinutes) {
+					return `Minimum interval is ${minIntervalMinutes} minutes`;
+				}
+			}
+			return null;
+		} catch {
+			return null;
+		}
+	}
+
 	function setValue(nextValue: string) {
 		if (nextValue === value) return;
 		value = nextValue;
@@ -166,7 +194,7 @@ import TimeInput from '$ui/form/TimeInput.svelte';
 	}
 
 	function onCustomInput(nextValue: string) {
-		customCron = nextValue;
+		customCron = nextValue.trim();
 		updateCron();
 	}
 
@@ -188,14 +216,31 @@ import TimeInput from '$ui/form/TimeInput.svelte';
 	}
 
 	$: cronError = (() => {
-		if (scheduleType !== 'custom') return null;
-		try {
-			new Cron(customCron);
-			return null;
-		} catch (error) {
-			return error instanceof Error ? error.message : 'Invalid cron expression';
+		if (scheduleType === 'custom') {
+			try {
+				new Cron(customCron);
+			} catch (error) {
+				return error instanceof Error ? error.message : 'Invalid cron expression';
+			}
+			return validateMinInterval(value);
 		}
+		if (scheduleType === 'every') {
+			if (minIntervalMinutes <= 0) return null;
+			if (intervalMinutes < minIntervalMinutes) {
+				return `Minimum interval is ${minIntervalMinutes} minutes`;
+			}
+			return null;
+		}
+		// hourly, daily, weekly, monthly — always well above any minimum
+		return null;
 	})();
+
+	$: everyMin = minIntervalMinutes > 0 ? Math.max(1, minIntervalMinutes) : 1;
+
+	$: if (scheduleType === 'every' && intervalMinutes < everyMin) {
+		intervalMinutes = everyMin;
+		updateCron();
+	}
 </script>
 
 <div class="flex flex-wrap items-center gap-1.5">
@@ -214,10 +259,12 @@ import TimeInput from '$ui/form/TimeInput.svelte';
 			<NumberInput
 				name="cron-interval-minutes"
 				value={intervalMinutes}
-				min={1}
+				min={everyMin}
 				max={60}
 				step={1}
 				{disabled}
+				onMinBlocked={() => onWarning?.(`Minimum interval is ${everyMin} minutes`)}
+				onMaxBlocked={() => onWarning?.('Maximum interval is 60 minutes')}
 				on:change={(event) => {
 					const next = event.detail;
 					if (next !== undefined) {
@@ -331,5 +378,8 @@ import TimeInput from '$ui/form/TimeInput.svelte';
 				on:input={(event) => onCustomInput(event.detail)}
 			/>
 		</div>
+	{/if}
+	{#if cronError && scheduleType !== 'custom'}
+		<span class="text-xs text-red-500">{cronError}</span>
 	{/if}
 </div>

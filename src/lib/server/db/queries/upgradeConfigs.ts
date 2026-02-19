@@ -8,7 +8,8 @@ interface UpgradeConfigRow {
 	id: number;
 	arr_instance_id: number;
 	enabled: number;
-	schedule: number;
+	cron: string;
+	next_run_at: string | null;
 	filter_mode: string;
 	filters: string;
 	current_filter_index: number;
@@ -22,7 +23,7 @@ interface UpgradeConfigRow {
  */
 export interface UpgradeConfigInput {
 	enabled?: boolean;
-	schedule?: number;
+	cron?: string;
 	filterMode?: FilterMode;
 	filters?: FilterConfig[];
 	currentFilterIndex?: number;
@@ -36,7 +37,8 @@ function rowToConfig(row: UpgradeConfigRow): UpgradeConfig {
 		id: row.id,
 		arrInstanceId: row.arr_instance_id,
 		enabled: row.enabled === 1,
-		schedule: row.schedule,
+		cron: row.cron,
+		nextRunAt: row.next_run_at,
 		filterMode: row.filter_mode as FilterMode,
 		filters: JSON.parse(row.filters) as FilterConfig[],
 		currentFilterIndex: row.current_filter_index,
@@ -92,18 +94,18 @@ export const upgradeConfigsQueries = {
 
 		// Create new
 		const enabled = input.enabled !== undefined ? (input.enabled ? 1 : 0) : 0;
-		const schedule = input.schedule ?? 360;
+		const cron = input.cron ?? '0 */6 * * *';
 		const filterMode = input.filterMode ?? 'round_robin';
 		const filters = JSON.stringify(input.filters ?? []);
 		const currentFilterIndex = input.currentFilterIndex ?? 0;
 
 		db.execute(
 			`INSERT INTO upgrade_configs
-			(arr_instance_id, enabled, schedule, filter_mode, filters, current_filter_index)
+			(arr_instance_id, enabled, cron, filter_mode, filters, current_filter_index)
 			VALUES (?, ?, ?, ?, ?, ?)`,
 			arrInstanceId,
 			enabled,
-			schedule,
+			cron,
 			filterMode,
 			filters,
 			currentFilterIndex
@@ -123,9 +125,9 @@ export const upgradeConfigsQueries = {
 			updates.push('enabled = ?');
 			params.push(input.enabled ? 1 : 0);
 		}
-		if (input.schedule !== undefined) {
-			updates.push('schedule = ?');
-			params.push(input.schedule);
+		if (input.cron !== undefined) {
+			updates.push('cron = ?');
+			params.push(input.cron);
 		}
 		if (input.filterMode !== undefined) {
 			updates.push('filter_mode = ?');
@@ -209,17 +211,27 @@ export const upgradeConfigsQueries = {
 	},
 
 	/**
+	 * Update next_run_at
+	 */
+	updateNextRunAt(arrInstanceId: number, nextRunAt: string | null): void {
+		db.execute(
+			'UPDATE upgrade_configs SET next_run_at = ?, updated_at = CURRENT_TIMESTAMP WHERE arr_instance_id = ?',
+			nextRunAt,
+			arrInstanceId
+		);
+	},
+
+	/**
 	 * Get all enabled configs that are due to run
-	 * A config is due if: last_run_at is null OR (now - last_run_at) >= schedule minutes
-	 * Note: last_run_at may be stored as ISO string with T and Z, normalize for julianday
+	 * A config is due if: next_run_at is null OR now >= next_run_at
 	 */
 	getDueConfigs(): UpgradeConfig[] {
 		const rows = db.query<UpgradeConfigRow>(`
 			SELECT * FROM upgrade_configs
 			WHERE enabled = 1
 			AND (
-				last_run_at IS NULL
-				OR (julianday('now') - julianday(replace(replace(last_run_at, 'T', ' '), 'Z', ''))) * 24 * 60 >= schedule
+				next_run_at IS NULL
+				OR datetime('now') >= datetime(replace(replace(next_run_at, 'T', ' '), 'Z', ''))
 			)
 		`);
 		return rows.map(rowToConfig);

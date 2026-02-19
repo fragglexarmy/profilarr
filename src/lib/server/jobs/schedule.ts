@@ -63,12 +63,18 @@ export function scheduleUpgradeForInstance(instanceId: number): void {
 		return;
 	}
 
-	const baseRunAt = config.lastRunAt ?? new Date().toISOString();
-	const runAt = calculateNextRunFromMinutes(baseRunAt, config.schedule);
+	let nextRun = config.nextRunAt;
+	if (!nextRun) {
+		nextRun = calculateNextRun(config.cron) ?? null;
+	}
+	if (!nextRun) {
+		jobQueueQueries.cancelByDedupeKey(`arr.upgrade:${instanceId}`);
+		return;
+	}
 
 	const job = jobQueueQueries.upsertScheduled({
 		jobType: 'arr.upgrade',
-		runAt,
+		runAt: nextRun,
 		payload: { instanceId },
 		source: 'schedule',
 		dedupeKey: `arr.upgrade:${instanceId}`
@@ -84,12 +90,18 @@ export function scheduleRenameForInstance(instanceId: number): void {
 		return;
 	}
 
-	const baseRunAt = settings.lastRunAt ?? new Date().toISOString();
-	const runAt = calculateNextRunFromMinutes(baseRunAt, settings.schedule);
+	let nextRun = settings.nextRunAt;
+	if (!nextRun) {
+		nextRun = calculateNextRun(settings.cron) ?? null;
+	}
+	if (!nextRun) {
+		jobQueueQueries.cancelByDedupeKey(`arr.rename:${instanceId}`);
+		return;
+	}
 
 	const job = jobQueueQueries.upsertScheduled({
 		jobType: 'arr.rename',
-		runAt,
+		runAt: nextRun,
 		payload: { instanceId },
 		source: 'schedule',
 		dedupeKey: `arr.rename:${instanceId}`

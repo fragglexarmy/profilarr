@@ -11,7 +11,7 @@ interface UpgradeRunRow {
 	completed_at: string;
 	status: string;
 	dry_run: number;
-	schedule: number;
+	cron: string;
 	filter_mode: string;
 	filter_name: string;
 	filter_id: string;
@@ -47,7 +47,7 @@ function rowToLog(row: UpgradeRunRow): UpgradeJobLog {
 		status: row.status as 'success' | 'partial' | 'failed' | 'skipped',
 
 		config: {
-			schedule: row.schedule,
+			cron: row.cron,
 			filterMode: row.filter_mode,
 			selectedFilter: row.filter_name,
 			dryRun: row.dry_run === 1
@@ -95,7 +95,7 @@ export const upgradeRunsQueries = {
 		db.execute(
 			`INSERT INTO upgrade_runs (
 				id, instance_id, started_at, completed_at, status, dry_run,
-				schedule, filter_mode, filter_name, filter_id,
+				cron, filter_mode, filter_name, filter_id,
 				library_total, library_cached, library_fetch_ms,
 				matched_count, after_cooldown, cooldown_hours, dry_run_excluded,
 				selection_method, selection_requested, selected_count,
@@ -108,7 +108,7 @@ export const upgradeRunsQueries = {
 			log.completedAt,
 			log.status,
 			log.config.dryRun ? 1 : 0,
-			log.config.schedule,
+			log.config.cron,
 			log.config.filterMode,
 			log.config.selectedFilter,
 			log.filter.id,

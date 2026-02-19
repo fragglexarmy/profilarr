@@ -3,7 +3,7 @@ import type { JobHandler } from '../queueTypes.ts';
 import { arrRenameSettingsQueries } from '$db/queries/arrRenameSettings.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { processRenameConfig } from '$lib/server/rename/processor.ts';
-import { calculateNextRunFromMinutes } from '../scheduleUtils.ts';
+import { calculateNextRun } from '../scheduleUtils.ts';
 import { logger } from '$logger/logger.ts';
 
 const renameRunHandler: JobHandler = async (job) => {
@@ -33,7 +33,9 @@ const renameRunHandler: JobHandler = async (job) => {
 
 		arrRenameSettingsQueries.updateLastRun(instanceId);
 
-		const nextRunAt = calculateNextRunFromMinutes(new Date().toISOString(), settings.schedule);
+		const nextRunAt = calculateNextRun(settings.cron);
+		if (nextRunAt) arrRenameSettingsQueries.updateNextRunAt(instanceId, nextRunAt);
+
 		const output = dryRun
 			? `${log.results.filesNeedingRename} files would be renamed`
 			: `${log.results.filesRenamed}/${log.results.filesNeedingRename} files renamed`;
@@ -47,7 +49,7 @@ const renameRunHandler: JobHandler = async (job) => {
 		return {
 			status,
 			output,
-			rescheduleAt: job.source === 'schedule' ? nextRunAt : undefined
+			rescheduleAt: job.source === 'schedule' ? nextRunAt ?? undefined : undefined
 		};
 	} catch (error) {
 		await logger.error('Rename job failed', {

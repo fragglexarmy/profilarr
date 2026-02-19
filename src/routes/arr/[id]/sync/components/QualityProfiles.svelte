@@ -170,6 +170,7 @@
 		{isDirty}
 		{canSave}
 		{warning}
+		onWarning={(msg) => alertStore.add('warning', msg)}
 		on:save={handleSave}
 		on:sync={handleSync}
 	/>

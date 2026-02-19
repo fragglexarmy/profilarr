@@ -5,11 +5,13 @@ import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { upgradeRunsQueries } from '$db/queries/upgradeRuns.ts';
 import { logger } from '$logger/logger.ts';
 import type { FilterConfig, FilterMode } from '$shared/upgrades/filters.ts';
+import { searchRateLimits, getRunsPerHour, calculateMaxCount } from '$shared/upgrades/filters.ts';
 import { clearDryRunExclusions } from '$lib/server/upgrades/processor.ts';
 import { logDryRunCacheCleared } from '$lib/server/upgrades/logger.ts';
 import { scheduleUpgradeForInstance } from '$lib/server/jobs/init.ts';
 import { upsertScheduledJob } from '$lib/server/jobs/queueService.ts';
 import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
+import { validateCronExpression, calculateNextRun } from '$lib/server/jobs/scheduleUtils.ts';
 
 /** In-memory rate limit for upgrade dry runs: Map<instanceId, lastDryRunTimestamp> */
 const dryRunTimestamps = new Map<number, number>();
@@ -57,19 +59,43 @@ export const actions: Actions = {
 
 		try {
 			const enabled = formData.get('enabled') === 'true';
-			const schedule = parseInt(formData.get('schedule') as string, 10) || 360;
+			const cron = (formData.get('cron') as string) || '0 */6 * * *';
 			const filterMode = (formData.get('filterMode') as FilterMode) || 'round_robin';
 			const filtersJson = formData.get('filters') as string;
 			const filters: FilterConfig[] = filtersJson ? JSON.parse(filtersJson) : [];
 
+			// Validate cron expression
+			const minInterval = searchRateLimits[instance.type]?.minIntervalMinutes ?? 10;
+			const cronError = validateCronExpression(cron, minInterval);
+			if (cronError) {
+				return fail(400, { error: cronError });
+			}
+
+			// Validate filter counts against rate limits
+			const rph = getRunsPerHour(cron);
+			if (rph !== null) {
+				const maxCount = calculateMaxCount(instance.type, rph);
+				for (const f of filters) {
+					if (f.count > maxCount) {
+						return fail(400, {
+							error: `Filter "${f.name}" count (${f.count}) exceeds max (${maxCount}) for this schedule.`
+						});
+					}
+				}
+			}
+
 			const configData = {
 				enabled,
-				schedule,
+				cron,
 				filterMode,
 				filters
 			};
 
 			upgradeConfigsQueries.upsert(id, configData);
+
+			// Calculate and store next run time
+			const nextRunAt = calculateNextRun(cron);
+			if (nextRunAt) upgradeConfigsQueries.updateNextRunAt(id, nextRunAt);
 
 			await logger.info(`Upgrade config saved for instance "${instance.name}"`, {
 				source: 'upgrades',
@@ -81,7 +107,7 @@ export const actions: Actions = {
 				meta: {
 					instanceId: id,
 					enabled,
-					schedule,
+					cron,
 					filterMode,
 					filterCount: filters.length,
 					filters: filters.map((f: FilterConfig) => ({

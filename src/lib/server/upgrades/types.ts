@@ -118,7 +118,7 @@ export interface UpgradeJobLog {
 	status: 'success' | 'partial' | 'failed' | 'skipped';
 
 	config: {
-		schedule: number;
+		cron: string;
 		filterMode: string;
 		selectedFilter: string;
 		dryRun: boolean;

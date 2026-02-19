@@ -10,7 +10,8 @@ interface RenameSettingsRow {
 	ignore_tag: string | null;
 	summary_notifications: number;
 	enabled: number;
-	schedule: number;
+	cron: string;
+	next_run_at: string | null;
 	last_run_at: string | null;
 	created_at: string;
 	updated_at: string;
@@ -26,7 +27,8 @@ export interface RenameSettings {
 	ignoreTag: string | null;
 	summaryNotifications: boolean;
 	enabled: boolean;
-	schedule: number;
+	cron: string;
+	nextRunAt: string | null;
 	lastRunAt: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -40,7 +42,7 @@ export interface RenameSettingsInput {
 	ignoreTag?: string | null;
 	summaryNotifications?: boolean;
 	enabled?: boolean;
-	schedule?: number;
+	cron?: string;
 }
 
 /**
@@ -54,7 +56,8 @@ function rowToSettings(row: RenameSettingsRow): RenameSettings {
 		ignoreTag: row.ignore_tag,
 		summaryNotifications: row.summary_notifications === 1,
 		enabled: row.enabled === 1,
-		schedule: row.schedule,
+		cron: row.cron,
+		nextRunAt: row.next_run_at,
 		lastRunAt: row.last_run_at,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at
@@ -110,18 +113,18 @@ export const arrRenameSettingsQueries = {
 		const summaryNotifications =
 			input.summaryNotifications !== undefined ? (input.summaryNotifications ? 1 : 0) : 1;
 		const enabled = input.enabled !== undefined ? (input.enabled ? 1 : 0) : 0;
-		const schedule = input.schedule ?? 1440;
+		const cron = input.cron ?? '0 0 * * *';
 
 		db.execute(
 			`INSERT INTO arr_rename_settings
-			(arr_instance_id, rename_folders, ignore_tag, summary_notifications, enabled, schedule)
+			(arr_instance_id, rename_folders, ignore_tag, summary_notifications, enabled, cron)
 			VALUES (?, ?, ?, ?, ?, ?)`,
 			arrInstanceId,
 			renameFolders,
 			ignoreTag,
 			summaryNotifications,
 			enabled,
-			schedule
+			cron
 		);
 
 		return this.getByInstanceId(arrInstanceId)!;
@@ -150,9 +153,9 @@ export const arrRenameSettingsQueries = {
 			updates.push('enabled = ?');
 			params.push(input.enabled ? 1 : 0);
 		}
-		if (input.schedule !== undefined) {
-			updates.push('schedule = ?');
-			params.push(input.schedule);
+		if (input.cron !== undefined) {
+			updates.push('cron = ?');
+			params.push(input.cron);
 		}
 
 		if (updates.length === 0) {
@@ -192,16 +195,27 @@ export const arrRenameSettingsQueries = {
 	},
 
 	/**
+	 * Update next_run_at
+	 */
+	updateNextRunAt(arrInstanceId: number, nextRunAt: string | null): void {
+		db.execute(
+			'UPDATE arr_rename_settings SET next_run_at = ?, updated_at = CURRENT_TIMESTAMP WHERE arr_instance_id = ?',
+			nextRunAt,
+			arrInstanceId
+		);
+	},
+
+	/**
 	 * Get all enabled configs that are due to run
-	 * A config is due if: last_run_at is null OR (now - last_run_at) >= schedule minutes
+	 * A config is due if: next_run_at is null OR now >= next_run_at
 	 */
 	getDueConfigs(): RenameSettings[] {
 		const rows = db.query<RenameSettingsRow>(`
 			SELECT * FROM arr_rename_settings
 			WHERE enabled = 1
 			AND (
-				last_run_at IS NULL
-				OR (julianday('now') - julianday(replace(replace(last_run_at, 'T', ' '), 'Z', ''))) * 24 * 60 >= schedule
+				next_run_at IS NULL
+				OR datetime('now') >= datetime(replace(replace(next_run_at, 'T', ' '), 'Z', ''))
 			)
 		`);
 		return rows.map(rowToSettings);

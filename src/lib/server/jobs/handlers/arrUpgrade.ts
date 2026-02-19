@@ -4,7 +4,7 @@ import { upgradeConfigsQueries } from '$db/queries/upgradeConfigs.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import type { FilterConfig } from '$shared/upgrades/filters.ts';
 import { processUpgradeConfig } from '$lib/server/upgrades/processor.ts';
-import { calculateCooldownUntil, calculateNextRunFromMinutes } from '../scheduleUtils.ts';
+import { calculateNextRun } from '../scheduleUtils.ts';
 import { logger } from '$logger/logger.ts';
 
 const upgradeRunHandler: JobHandler = async (job) => {
@@ -23,45 +23,16 @@ const upgradeRunHandler: JobHandler = async (job) => {
 		return { status: 'failure', error: 'Arr instance not found' };
 	}
 
-	const isDev = import.meta.env.VITE_CHANNEL === 'dev';
 	const dryRun = Boolean(job.payload.dryRun);
-
-	// Skip cooldown for dry runs and dev runs
-	const skipCooldown = dryRun || isDev;
-	if (!skipCooldown) {
-		const cooldownUntil = calculateCooldownUntil(config.lastRunAt ?? null, config.schedule);
-		if (cooldownUntil) {
-			const cooldownMs = new Date(cooldownUntil).getTime();
-			if (Date.now() < cooldownMs) {
-				await logger.warn(`Upgrade cooldown active until ${cooldownUntil}`, {
-					source: 'UpgradeJob',
-					meta: { instanceId, instanceName: instance.name, cooldownUntil, jobSource: job.source }
-				});
-
-				if (job.source === 'manual') {
-					return {
-						status: 'failure',
-						error: `Upgrade cooldown active until ${cooldownUntil}`
-					};
-				}
-
-				return {
-					status: 'skipped',
-					output: 'Upgrade cooldown active',
-					rescheduleAt: cooldownUntil
-				};
-			}
-		}
-	}
 
 	const enabledFilters = config.filters.filter((f: FilterConfig) => f.enabled);
 	if (enabledFilters.length === 0) {
-		const baseRunAt = config.lastRunAt ?? new Date().toISOString();
-		const nextRun = calculateNextRunFromMinutes(baseRunAt, config.schedule);
+		const nextRunAt = calculateNextRun(config.cron);
+		if (nextRunAt) upgradeConfigsQueries.updateNextRunAt(config.arrInstanceId, nextRunAt);
 		return {
 			status: 'skipped',
 			output: 'No enabled upgrade filters',
-			rescheduleAt: job.source === 'schedule' ? nextRun : undefined
+			rescheduleAt: job.source === 'schedule' ? nextRunAt ?? undefined : undefined
 		};
 	}
 
@@ -76,14 +47,15 @@ const upgradeRunHandler: JobHandler = async (job) => {
 		// Update last run timestamp
 		upgradeConfigsQueries.updateLastRun(config.arrInstanceId);
 
-		const nextRunAt = calculateNextRunFromMinutes(new Date().toISOString(), config.schedule);
+		const nextRunAt = calculateNextRun(config.cron);
+		if (nextRunAt) upgradeConfigsQueries.updateNextRunAt(config.arrInstanceId, nextRunAt);
 
 		const output = `Processed ${log.selection.actualCount} item(s) using "${log.config.selectedFilter}"`;
 		if (log.status === 'failed') {
 			return {
 				status: 'failure',
 				error: log.results.errors.join('; '),
-				rescheduleAt: job.source === 'schedule' ? nextRunAt : undefined
+				rescheduleAt: job.source === 'schedule' ? nextRunAt ?? undefined : undefined
 			};
 		}
 
@@ -91,14 +63,14 @@ const upgradeRunHandler: JobHandler = async (job) => {
 			return {
 				status: 'skipped',
 				output,
-				rescheduleAt: job.source === 'schedule' ? nextRunAt : undefined
+				rescheduleAt: job.source === 'schedule' ? nextRunAt ?? undefined : undefined
 			};
 		}
 
 		return {
 			status: 'success',
 			output,
-			rescheduleAt: job.source === 'schedule' ? nextRunAt : undefined
+			rescheduleAt: job.source === 'schedule' ? nextRunAt ?? undefined : undefined
 		};
 	} catch (error) {
 		await logger.error('Upgrade job failed', {

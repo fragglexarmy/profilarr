@@ -12,6 +12,7 @@
 	export let isDirty: boolean = false;
 	export let canSave: boolean = true;
 	export let warning: string | null = null;
+	export let onWarning: ((message: string) => void) | undefined = undefined;
 
 	const dispatch = createEventDispatcher<{ save: void; sync: void }>();
 
@@ -50,7 +51,7 @@
 
 			{#if syncTrigger === 'schedule'}
 				<div class="min-w-[18rem] flex-1">
-					<CronInput bind:value={cronExpression} disabled={saving} />
+					<CronInput bind:value={cronExpression} disabled={saving} minIntervalMinutes={10} {onWarning} />
 				</div>
 			{/if}
 		</div>

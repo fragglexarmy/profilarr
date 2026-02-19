@@ -7,6 +7,7 @@ import { logger } from '$logger/logger.ts';
 import { scheduleRenameForInstance } from '$lib/server/jobs/init.ts';
 import { enqueueJob } from '$lib/server/jobs/queueService.ts';
 import { buildJobDisplayName } from '$lib/server/jobs/display.ts';
+import { validateCronExpression, calculateNextRun } from '$lib/server/jobs/scheduleUtils.ts';
 
 export const load: ServerLoad = ({ params }) => {
 	const id = parseInt(params.id || '', 10);
@@ -50,18 +51,29 @@ export const actions: Actions = {
 			const enabled = formData.get('enabled') === 'true';
 			const renameFolders = formData.get('renameFolders') === 'true';
 			const ignoreTag = (formData.get('ignoreTag') as string) || null;
-			const schedule = parseInt(formData.get('schedule') as string, 10) || 1440;
+			const cron = (formData.get('cron') as string) || '0 0 * * *';
 			const summaryNotifications = formData.get('summaryNotifications') === 'true';
+
+			// Validate cron expression (10 min minimum for renames)
+			const cronError = validateCronExpression(cron, 10);
+			if (cronError) {
+				return fail(400, { error: cronError });
+			}
 
 			const settingsData = {
 				enabled,
 				renameFolders,
 				ignoreTag,
-				schedule,
+				cron,
 				summaryNotifications
 			};
 
 			arrRenameSettingsQueries.upsert(id, settingsData);
+
+			// Calculate and store next run time
+			const nextRunAt = calculateNextRun(cron);
+			if (nextRunAt) arrRenameSettingsQueries.updateNextRunAt(id, nextRunAt);
+
 			scheduleRenameForInstance(id);
 
 			await logger.info(`Rename settings saved for instance "${instance.name}"`, {
@@ -110,18 +122,29 @@ export const actions: Actions = {
 			const enabled = formData.get('enabled') === 'true';
 			const renameFolders = formData.get('renameFolders') === 'true';
 			const ignoreTag = (formData.get('ignoreTag') as string) || null;
-			const schedule = parseInt(formData.get('schedule') as string, 10) || 1440;
+			const cron = (formData.get('cron') as string) || '0 0 * * *';
 			const summaryNotifications = formData.get('summaryNotifications') === 'true';
+
+			// Validate cron expression (10 min minimum for renames)
+			const cronError = validateCronExpression(cron, 10);
+			if (cronError) {
+				return fail(400, { error: cronError });
+			}
 
 			const settingsData = {
 				enabled,
 				renameFolders,
 				ignoreTag,
-				schedule,
+				cron,
 				summaryNotifications
 			};
 
 			arrRenameSettingsQueries.update(id, settingsData);
+
+			// Calculate and store next run time
+			const nextRunAt = calculateNextRun(cron);
+			if (nextRunAt) arrRenameSettingsQueries.updateNextRunAt(id, nextRunAt);
+
 			scheduleRenameForInstance(id);
 
 			await logger.info(`Rename settings updated for instance "${instance.name}"`, {

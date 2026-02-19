@@ -22,7 +22,7 @@
 			enabled: data.settings?.enabled ?? false,
 			renameFolders: data.settings?.renameFolders ?? false,
 			ignoreTag: data.settings?.ignoreTag ?? '',
-			schedule: String(data.settings?.schedule ?? 1440),
+			cron: data.settings?.cron ?? '0 0 * * *',
 			summaryNotifications: data.settings?.summaryNotifications ?? true
 		};
 		// Always use initEdit - isDirty should be false until user makes changes
@@ -39,7 +39,7 @@
 	$: enabled = ($current.enabled ?? false) as boolean;
 	$: renameFolders = ($current.renameFolders ?? false) as boolean;
 	$: ignoreTag = ($current.ignoreTag ?? '') as string;
-	$: schedule = ($current.schedule ?? '1440') as string;
+	$: cron = ($current.cron ?? '0 0 * * *') as string;
 	$: summaryNotifications = ($current.summaryNotifications ?? true) as boolean;
 
 	let lastFormId: unknown = null;
@@ -47,7 +47,7 @@
 		lastFormId = form;
 		if (form.success && !form.queued) {
 			alertStore.add('success', 'Configuration saved successfully');
-			initEdit({ enabled, renameFolders, ignoreTag, schedule, summaryNotifications });
+			initEdit({ enabled, renameFolders, ignoreTag, cron, summaryNotifications });
 		}
 		if (form.success && form.queued) {
 			alertStore.add('success', 'Rename run queued');
@@ -124,14 +124,16 @@
 			{enabled}
 			{renameFolders}
 			{ignoreTag}
-			{schedule}
+			{cron}
 			{summaryNotifications}
 			lastRunAt={data.settings?.lastRunAt ?? null}
+			nextRunAt={data.settings?.nextRunAt ?? null}
 			onEnabledChange={(v) => update('enabled', v)}
 			onRenameFoldersChange={(v) => update('renameFolders', v)}
 			onIgnoreTagChange={(v) => update('ignoreTag', v)}
-			onScheduleChange={(v) => update('schedule', v)}
+			onCronChange={(v) => update('cron', v)}
 			onSummaryNotificationsChange={(v) => update('summaryNotifications', v)}
+			onWarning={(msg) => alertStore.add('warning', msg)}
 		/>
 	</section>
 </div>
@@ -163,7 +165,7 @@
 	<input type="hidden" name="enabled" value={enabled} />
 	<input type="hidden" name="renameFolders" value={renameFolders} />
 	<input type="hidden" name="ignoreTag" value={ignoreTag} />
-	<input type="hidden" name="schedule" value={schedule} />
+	<input type="hidden" name="cron" value={cron} />
 	<input type="hidden" name="summaryNotifications" value={summaryNotifications} />
 </form>
 {#if !isNewConfig}

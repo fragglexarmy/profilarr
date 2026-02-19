@@ -273,6 +273,7 @@
 		{saving}
 		{syncing}
 		{isDirty}
+		onWarning={(msg) => alertStore.add('warning', msg)}
 		on:save={handleSave}
 		on:sync={handleSync}
 	/>

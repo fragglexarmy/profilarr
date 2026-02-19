@@ -52,6 +52,7 @@ import { migration as migration047 } from './migrations/047_create_arr_database_
 import { migration as migration048 } from './migrations/048_fix_sync_database_foreign_keys.ts';
 import { migration as migration049 } from './migrations/049_create_job_queue.ts';
 import { migration as migration050 } from './migrations/050_remove_dry_run_columns.ts';
+import { migration as migration051 } from './migrations/051_cron_scheduling.ts';
 
 export interface Migration {
 	version: number;
@@ -322,7 +323,8 @@ export function loadMigrations(): Migration[] {
 		migration047,
 		migration048,
 		migration049,
-		migration050
+		migration050,
+		migration051
 	];
 
 	// Sort by version number

@@ -8,7 +8,7 @@
 		Trash2,
 		Pencil
 	} from 'lucide-svelte';
-	import { createEmptyFilterConfig, maxCountPerRun, resolveTagLabel, type FilterConfig, type UpgradeAppType } from '$shared/upgrades/filters';
+	import { createEmptyFilterConfig, calculateMaxCount, searchRateLimits, resolveTagLabel, type FilterConfig, type UpgradeAppType } from '$shared/upgrades/filters';
 	import { uuid } from '$shared/utils/uuid';
 	import { selectors } from '$shared/upgrades/selectors';
 	import { createSearchStore, getPersistentSearchStore, type SearchStore } from '$lib/client/stores/search';
@@ -37,10 +37,26 @@
 
 	export let filters: FilterConfig[] = [];
 	export let appType: string = 'radarr';
+	export let runsPerHour: number = 1;
 	export let onFiltersChange: ((filters: FilterConfig[]) => void) | undefined = undefined;
 
 	$: resolvedAppType = (appType === 'radarr' || appType === 'sonarr' ? appType : 'radarr') as UpgradeAppType;
-	$: countMax = maxCountPerRun[resolvedAppType] ?? 5;
+	$: countMax = calculateMaxCount(resolvedAppType, runsPerHour);
+
+	// Auto-clamp filter counts when max decreases
+	$: {
+		let clamped = false;
+		for (const f of filters) {
+			if (f.count > countMax) {
+				f.count = countMax;
+				clamped = true;
+			}
+		}
+		if (clamped) {
+			filters = filters;
+			notifyChange();
+		}
+	}
 
 	function notifyChange() {
 		onFiltersChange?.(filters);
@@ -443,7 +459,7 @@
 								/>
 							</div>
 							<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-								Items to select per run
+								Items per run (max {countMax} at this schedule)
 							</p>
 						</div>
 						<div>

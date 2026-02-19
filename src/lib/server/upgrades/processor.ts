@@ -172,7 +172,7 @@ function createSkippedLog(
 		completedAt: now,
 		status: 'skipped',
 		config: {
-			schedule: config.schedule,
+			cron: config.cron,
 			filterMode: config.filterMode,
 			selectedFilter: '',
 			dryRun
@@ -587,7 +587,7 @@ export async function processUpgradeConfig(
 			completedAt: completedAt.toISOString(),
 			status: failed > 0 && successful === 0 ? 'failed' : failed > 0 ? 'partial' : 'success',
 			config: {
-				schedule: config.schedule,
+				cron: config.cron,
 				filterMode: config.filterMode,
 				selectedFilter: filter.name,
 				dryRun

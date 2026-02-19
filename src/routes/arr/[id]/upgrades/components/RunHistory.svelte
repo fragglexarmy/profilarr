@@ -153,11 +153,8 @@
 		return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
 	}
 
-	function formatSchedule(minutes: number): string {
-		if (minutes < 60) return `Every ${minutes} minutes`;
-		if (minutes === 60) return 'Every hour';
-		if (minutes < 1440) return `Every ${minutes / 60} hours`;
-		return 'Every day';
+	function formatSchedule(cron: string): string {
+		return cron || '-';
 	}
 
 	function formatFilterMode(mode: string): string {
@@ -340,7 +337,7 @@
 						>Config</span
 					>
 					<span class="text-sm text-neutral-900 dark:text-neutral-100">
-						Schedule: {formatSchedule(row.config.schedule)} | Mode: {formatFilterMode(
+						Schedule: {formatSchedule(row.config.cron)} | Mode: {formatFilterMode(
 							row.config.filterMode
 						)}
 					</span>

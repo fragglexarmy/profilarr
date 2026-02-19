@@ -3,30 +3,30 @@
 	import { filterModes, type FilterMode } from '$shared/upgrades/filters';
 	import { parseUTC } from '$shared/utils/dates';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
+	import CronInput from '$ui/cron/CronInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
 
 	export let enabled: boolean = true;
-	export let schedule: string = '360';
+	export let cron: string = '0 */6 * * *';
 	export let filterMode: FilterMode = 'round_robin';
 	export let lastRunAt: string | null = null;
+	export let nextRunAt: string | null = null;
+	export let minIntervalMinutes: number = 10;
 
 	export let onEnabledChange: ((value: boolean) => void) | undefined = undefined;
-	export let onScheduleChange: ((value: string) => void) | undefined = undefined;
+	export let onCronChange: ((value: string) => void) | undefined = undefined;
 	export let onFilterModeChange: ((value: FilterMode) => void) | undefined = undefined;
-
-	const scheduleOptions = [
-		{ value: '30', label: '30 min' },
-		{ value: '60', label: '1 hour' },
-		{ value: '120', label: '2 hours' },
-		{ value: '240', label: '4 hours' },
-		{ value: '360', label: '6 hours' },
-		{ value: '480', label: '8 hours' },
-		{ value: '720', label: '12 hours' },
-		{ value: '1440', label: '24 hours' }
-	];
+	export let onWarning: ((message: string) => void) | undefined = undefined;
 
 	// Map filterModes to DropdownSelect format
 	$: modeOptions = filterModes.map((m) => ({ value: m.id, label: m.label }));
+
+	// Track cron changes from CronInput
+	let cronValue = cron;
+	$: cronValue = cron; // sync from parent
+	$: if (cronValue !== cron) {
+		onCronChange?.(cronValue);
+	}
 
 	// Cooldown tracking
 	let now = Date.now();
@@ -42,10 +42,7 @@
 		if (interval) clearInterval(interval);
 	});
 
-	$: scheduleMinutes = parseInt(schedule, 10);
-	$: lastRunTime = parseUTC(lastRunAt)?.getTime() ?? null;
-	$: scheduleMs = scheduleMinutes * 60 * 1000;
-	$: nextRunTime = lastRunTime ? lastRunTime + scheduleMs : null;
+	$: nextRunTime = nextRunAt ? new Date(nextRunAt).getTime() : null;
 	$: timeUntilNext = nextRunTime ? nextRunTime - now : null;
 
 	function formatTimeRemaining(ms: number): string {
@@ -113,11 +110,7 @@
 		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Schedule</span>
 		<div class="md:flex md:items-center md:gap-2">
 			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Schedule:</span>
-			<DropdownSelect
-				value={schedule}
-				options={scheduleOptions}
-				on:change={(e) => onScheduleChange?.(e.detail)}
-			/>
+			<CronInput bind:value={cronValue} {minIntervalMinutes} onWarning={onWarning} />
 		</div>
 
 		<!-- Filter Mode -->

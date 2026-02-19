@@ -131,7 +131,7 @@
 							<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
 								{#each database.delayProfiles as profile}
 									<Toggle
-										checked={isSelected(database.id, profile.name)}
+										checked={selectedKey === `${database.id}-${profile.name}`}
 										label={profile.name}
 										ariaLabel={`Toggle delay profile ${profile.name} from ${database.name}`}
 										on:change={(e) => setProfile(database.id, profile.name, e.detail)}
@@ -151,6 +151,7 @@
 		{saving}
 		{syncing}
 		{isDirty}
+		onWarning={(msg) => alertStore.add('warning', msg)}
 		on:save={handleSave}
 		on:sync={handleSync}
 	/>

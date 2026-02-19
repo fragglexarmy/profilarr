@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
 	import type { FilterConfig, FilterMode } from '$shared/upgrades/filters';
+	import { searchRateLimits, getRunsPerHour } from '$shared/upgrades/filters';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { alertStore } from '$lib/client/alerts/store';
@@ -21,7 +22,7 @@
 	onMount(() => {
 		const initialFormData = {
 			enabled: data.config?.enabled ?? false,
-			schedule: String(data.config?.schedule ?? 360),
+			cron: data.config?.cron ?? '0 */6 * * *',
 			filterMode: (data.config?.filterMode ?? 'round_robin') as FilterMode,
 			filters: JSON.stringify(data.config?.filters ?? [])
 		};
@@ -42,9 +43,13 @@
 
 	// Read current values from dirty store (same pattern as working pages)
 	$: enabled = ($current.enabled ?? false) as boolean;
-	$: schedule = ($current.schedule ?? '360') as string;
+	$: cron = ($current.cron ?? '0 */6 * * *') as string;
 	$: filterMode = ($current.filterMode ?? 'round_robin') as FilterMode;
 	$: filters = JSON.parse(($current.filters ?? '[]') as string) as FilterConfig[];
+
+	// Derive runs per hour for dynamic count limits
+	$: runsPerHour = getRunsPerHour(cron) ?? 1;
+	$: appMinInterval = searchRateLimits[data.instance.type]?.minIntervalMinutes ?? 10;
 
 	// Handle form response - use a processed flag to avoid re-running on field changes
 	let lastFormId: unknown = null;
@@ -52,7 +57,7 @@
 		lastFormId = form;
 		if (form.success && !form.queued && !form.cacheCleared) {
 			alertStore.add('success', 'Configuration saved successfully');
-			initEdit({ enabled, schedule, filterMode, filters: JSON.stringify(filters) });
+			initEdit({ enabled, cron, filterMode, filters: JSON.stringify(filters) });
 		}
 		if (form.success && form.queued) {
 			alertStore.add('success', 'Upgrade run queued');
@@ -141,12 +146,15 @@
 		</h2>
 		<CoreSettings
 			{enabled}
-			{schedule}
+			{cron}
 			{filterMode}
 			lastRunAt={data.config?.lastRunAt ?? null}
+			nextRunAt={data.config?.nextRunAt ?? null}
+			minIntervalMinutes={appMinInterval}
 			onEnabledChange={(v) => update('enabled', v)}
-			onScheduleChange={(v) => update('schedule', v)}
+			onCronChange={(v) => update('cron', v)}
 			onFilterModeChange={(v) => update('filterMode', v)}
+			onWarning={(msg) => alertStore.add('warning', msg)}
 		/>
 	</section>
 
@@ -160,6 +168,7 @@
 		<FilterSettings
 			{filters}
 			appType={data.instance.type}
+			{runsPerHour}
 			onFiltersChange={(v) => update('filters', JSON.stringify(v))}
 		/>
 	</section>
@@ -190,7 +199,7 @@
 	}}
 >
 	<input type="hidden" name="enabled" value={enabled} />
-	<input type="hidden" name="schedule" value={schedule} />
+	<input type="hidden" name="cron" value={cron} />
 	<input type="hidden" name="filterMode" value={filterMode} />
 	<input type="hidden" name="filters" value={JSON.stringify(filters)} />
 </form>

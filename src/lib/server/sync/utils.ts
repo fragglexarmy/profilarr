@@ -1,29 +1,13 @@
 /**
  * Sync utility functions
- * Small helpers for cron scheduling and startup recovery
+ * Startup recovery and re-export of shared cron utilities
  */
 
-import { Cron } from 'croner';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { logger } from '$logger/logger.ts';
 
-// =============================================================================
-// Cron utilities
-// =============================================================================
-
-/**
- * Calculate the next run time from a cron expression
- */
-export function calculateNextRun(cronExpr: string | null): string | null {
-	if (!cronExpr) return null;
-	try {
-		const cron = new Cron(cronExpr);
-		const nextRun = cron.nextRun();
-		return nextRun?.toISOString() ?? null;
-	} catch {
-		return null;
-	}
-}
+// Re-export from shared schedule utils
+export { calculateNextRun } from '$lib/server/jobs/scheduleUtils.ts';
 
 // =============================================================================
 // Startup recovery
