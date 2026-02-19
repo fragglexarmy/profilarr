@@ -424,7 +424,7 @@
 					Cleanup
 				</span>
 				<p class="text-xs text-neutral-500 dark:text-neutral-400">
-					Remove stale configs and media flagged as removed from TMDB/TVDB
+					Remove unused quality profiles, custom formats, and media flagged as removed from TMDB/TVDB
 				</p>
 				<div class="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 md:flex md:flex-wrap md:gap-x-6">
 					<div class="md:flex md:items-center md:gap-2">
