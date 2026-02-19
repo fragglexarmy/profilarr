@@ -13,6 +13,7 @@
 		Pencil
 	} from 'lucide-svelte';
 	import IconCheckbox from '$lib/client/ui/form/IconCheckbox.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import GroupModal from './components/GroupModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
@@ -656,8 +657,10 @@
 								{/if}
 							</div>
 							{#if item.type === 'group' && item.members}
-								<div class="mt-1 hidden text-xs text-neutral-600 dark:text-neutral-400 md:block">
-									{item.members.map((m) => m.name).join(', ')}
+								<div class="mt-1 hidden flex-wrap gap-1 md:flex">
+									{#each item.members as member}
+										<Label variant="secondary" size="sm" rounded="md">{member.name}</Label>
+									{/each}
 								</div>
 							{/if}
 						</div>
@@ -755,11 +758,11 @@
 				</div>
 				{#if item.type === 'group' && item.members}
 					<div
-						class="mt-3 border-t border-neutral-200 pt-3 text-xs text-neutral-600 dark:border-neutral-700 dark:text-neutral-400 md:hidden"
+						class="mt-3 flex flex-wrap gap-1 border-t border-neutral-200 pt-3 md:hidden"
 					>
-						<div class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
-							{item.members.map((m) => m.name).join(', ')}
-						</div>
+						{#each item.members as member}
+							<Label variant="secondary" size="sm" rounded="md">{member.name}</Label>
+						{/each}
 					</div>
 				{/if}
 			</div>
