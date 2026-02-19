@@ -7,6 +7,7 @@
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2, Info } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
@@ -264,18 +265,11 @@
 			<!-- Multi-Episode Style -->
 			<div class="space-y-4">
 				<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Multi-Episode Style</h2>
-				<div class="grid gap-2">
-					{#each MULTI_EPISODE_STYLE_OPTIONS as option}
-						<Toggle
-							checked={formData.multiEpisodeStyle === option.value}
-							label={option.label}
-							ariaLabel={`Set multi-episode style to ${option.label}`}
-							on:change={(e) => {
-								if (e.detail) update('multiEpisodeStyle', option.value);
-							}}
-						/>
-					{/each}
-				</div>
+				<DropdownSelect
+					value={formData.multiEpisodeStyle}
+					options={MULTI_EPISODE_STYLE_OPTIONS}
+					on:change={(e) => update('multiEpisodeStyle', e.detail)}
+				/>
 			</div>
 
 			<hr class="border-neutral-200 dark:border-neutral-700" />
@@ -298,23 +292,12 @@
 				</div>
 
 				{#if formData.replaceIllegalCharacters}
-					<div>
-						<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-							Colon Replacement
-						</span>
-						<div class="mt-2 grid gap-2">
-							{#each SONARR_COLON_REPLACEMENT_OPTIONS as option}
-								<Toggle
-									checked={formData.colonReplacementFormat === option.value}
-									label={option.label}
-									ariaLabel={`Set colon replacement to ${option.label}`}
-									on:change={(e) => {
-										if (e.detail) update('colonReplacementFormat', option.value);
-									}}
-								/>
-							{/each}
-						</div>
-					</div>
+					<DropdownSelect
+						label="Colon Replacement"
+						value={formData.colonReplacementFormat}
+						options={SONARR_COLON_REPLACEMENT_OPTIONS}
+						on:change={(e) => update('colonReplacementFormat', e.detail)}
+					/>
 
 					{#if showCustomColonInput}
 						<FormInput

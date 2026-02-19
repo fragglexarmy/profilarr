@@ -7,6 +7,7 @@
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2, Info } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
@@ -220,23 +221,12 @@
 				</div>
 
 				{#if formData.replaceIllegalCharacters}
-					<div>
-						<span class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-							Colon Replacement
-						</span>
-						<div class="mt-2 grid gap-2">
-							{#each RADARR_COLON_REPLACEMENT_OPTIONS as option}
-								<Toggle
-									checked={formData.colonReplacementFormat === option.value}
-									label={option.label}
-									ariaLabel={`Set colon replacement to ${option.label}`}
-									on:change={(e) => {
-										if (e.detail) update('colonReplacementFormat', option.value);
-									}}
-								/>
-							{/each}
-						</div>
-					</div>
+					<DropdownSelect
+						label="Colon Replacement"
+						value={formData.colonReplacementFormat}
+						options={RADARR_COLON_REPLACEMENT_OPTIONS}
+						on:change={(e) => update('colonReplacementFormat', e.detail)}
+					/>
 				{/if}
 			</div>
 		{/if}

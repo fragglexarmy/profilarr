@@ -4,6 +4,7 @@
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Card from '$ui/card/Card.svelte';
 	import Button from '$ui/button/Button.svelte';
@@ -97,6 +98,8 @@
 	];
 
 	$: isValid = formData.name.trim() !== '';
+	$: protocolDescription =
+		protocolOptions.find((o) => o.value === formData.preferredProtocol)?.description ?? '';
 
 	async function handleSaveClick() {
 		selectedLayer = canWriteToBase ? 'base' : 'user';
@@ -198,24 +201,21 @@
 			/>
 
 			<!-- Protocol Preference -->
-			<div>
+			<div class="space-y-2">
 				<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 					Protocol Preference
 				</h3>
-				<div class="mt-2 grid gap-2">
-					{#each protocolOptions as option}
-						<div>
-							<Toggle
-								label={option.label}
-								checked={formData.preferredProtocol === option.value}
-								on:change={() => update('preferredProtocol', option.value)}
-							/>
-							<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
-								{option.description}
-							</p>
-						</div>
-					{/each}
-				</div>
+				<DropdownSelect
+					value={formData.preferredProtocol}
+					options={protocolOptions}
+					fullWidth
+					on:change={(e) => update('preferredProtocol', e.detail)}
+				/>
+				{#if protocolDescription}
+					<p class="text-xs text-neutral-500 dark:text-neutral-400">
+						{protocolDescription}
+					</p>
+				{/if}
 			</div>
 
 			<!-- Delays -->

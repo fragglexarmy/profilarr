@@ -6,6 +6,7 @@
 	import Modal from '$ui/modal/Modal.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
@@ -64,6 +65,8 @@
 			? `Create a new ${arrLabel} media settings configuration for ${databaseName}`
 			: `Update ${arrLabel} media settings configuration`;
 	$: isValid = formData.name.trim() !== '';
+	$: propersRepacksDescription =
+		PROPERS_REPACKS_OPTIONS.find((o) => o.value === formData.propersRepacks)?.description ?? '';
 
 	async function handleSaveClick() {
 		if (saving) return;
@@ -137,20 +140,17 @@
 		<!-- Propers and Repacks -->
 		<div class="space-y-4">
 			<h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Propers and Repacks</h2>
-			<div class="grid gap-2">
-				{#each PROPERS_REPACKS_OPTIONS as option}
-					<div>
-						<Toggle
-							label={option.label}
-							checked={formData.propersRepacks === option.value}
-							on:change={() => update('propersRepacks', option.value)}
-						/>
-						<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
-							{option.description}
-						</p>
-					</div>
-				{/each}
-			</div>
+			<DropdownSelect
+				value={formData.propersRepacks}
+				options={PROPERS_REPACKS_OPTIONS}
+				fullWidth
+				on:change={(e) => update('propersRepacks', e.detail)}
+			/>
+			{#if propersRepacksDescription}
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					{propersRepacksDescription}
+				</p>
+			{/if}
 		</div>
 
 		<hr class="border-neutral-200 dark:border-neutral-700" />
