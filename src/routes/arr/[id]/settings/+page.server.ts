@@ -3,7 +3,7 @@ import type { Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrCleanupSettingsQueries } from '$db/queries/arrCleanupSettings.ts';
 import { cleanupJobsForArrInstance } from '$lib/server/jobs/cleanup.ts';
-import { scheduleCleanupForInstance } from '$lib/server/jobs/init.ts';
+import { scheduleCleanupForInstance, scheduleLibraryRefreshForInstance } from '$lib/server/jobs/init.ts';
 import { calculateNextRun } from '$lib/server/jobs/scheduleUtils.ts';
 import { logger } from '$logger/logger.ts';
 
@@ -35,6 +35,7 @@ export const actions: Actions = {
 		const apiKey = formData.get('api_key')?.toString().trim() || instance.api_key;
 		const tagsJson = formData.get('tags')?.toString() || '';
 		const enabled = formData.get('enabled')?.toString() === '1';
+		const libraryRefreshInterval = parseInt(formData.get('library_refresh_interval')?.toString() || '0', 10) || 0;
 
 		// Validate required fields
 		if (!name) {
@@ -71,14 +72,17 @@ export const actions: Actions = {
 				url,
 				apiKey,
 				tags,
-				enabled
+				enabled,
+				libraryRefreshInterval
 			});
+
+			scheduleLibraryRefreshForInstance(id);
 
 			const cleanup = arrCleanupSettingsQueries.getByInstanceId(id);
 			await logger.info(`Updated arr instance: ${name}`, {
 				source: 'arr/[id]/settings',
 				meta: {
-					id, name, type: instance.type, url,
+					id, name, type: instance.type, url, libraryRefreshInterval,
 					cleanup: cleanup ? { enabled: cleanup.enabled, cron: cleanup.cron } : null
 				}
 			});

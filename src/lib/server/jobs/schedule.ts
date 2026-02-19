@@ -138,6 +138,27 @@ export function scheduleCleanupForInstance(instanceId: number): void {
 	notify(job.runAt);
 }
 
+export function scheduleLibraryRefreshForInstance(instanceId: number): void {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance || instance.enabled === 0 || instance.library_refresh_interval <= 0) {
+		jobQueueQueries.unscheduleByDedupeKey(`arr.library.refresh:${instanceId}`);
+		return;
+	}
+
+	const baseRunAt = instance.library_last_refreshed_at ?? new Date().toISOString();
+	const runAt = calculateNextRunFromMinutes(baseRunAt, instance.library_refresh_interval);
+
+	const job = jobQueueQueries.upsertScheduled({
+		jobType: 'arr.library.refresh',
+		runAt,
+		payload: { instanceId },
+		source: 'schedule',
+		dedupeKey: `arr.library.refresh:${instanceId}`
+	});
+
+	notify(job.runAt);
+}
+
 export function schedulePcdSyncForDatabase(databaseId: number): void {
 	const instance = databaseInstancesQueries.getById(databaseId);
 	if (!instance || instance.enabled === 0 || instance.sync_strategy <= 0) {
@@ -216,6 +237,7 @@ export function scheduleAllJobs(): void {
 		scheduleUpgradeForInstance(instance.id);
 		scheduleRenameForInstance(instance.id);
 		scheduleCleanupForInstance(instance.id);
+		scheduleLibraryRefreshForInstance(instance.id);
 	}
 
 	const databases = databaseInstancesQueries.getAll();

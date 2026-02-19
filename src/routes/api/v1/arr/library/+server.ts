@@ -2,68 +2,16 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import type { components } from '$api/v1.d.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
-import { pcdManager } from '$pcd/index.ts';
-import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { cache } from '$cache/cache.ts';
 import { RadarrClient } from '$utils/arr/clients/radarr.ts';
 import { SonarrClient } from '$utils/arr/clients/sonarr.ts';
+import { getProfilarrProfileNames, getProfilesByDatabase } from '$lib/server/sync/libraryHelpers.ts';
 import { logger } from '$logger/logger.ts';
 
 type LibraryResponse = components['schemas']['LibraryResponse'];
-type ProfileByDatabase = components['schemas']['ProfileByDatabase'];
 type ErrorResponse = components['schemas']['ErrorResponse'];
 
-const LIBRARY_CACHE_TTL = 300; // 5 minutes
-
-/**
- * Get all quality profile names from all enabled Profilarr databases
- */
-async function getProfilarrProfileNames(): Promise<Set<string>> {
-	const profileNames = new Set<string>();
-	const databases = pcdManager.getAll().filter((db) => db.enabled);
-
-	for (const db of databases) {
-		const dbCache = pcdManager.getCache(db.id);
-		if (!dbCache?.isBuilt()) continue;
-
-		try {
-			const names = await qualityProfileQueries.names(dbCache);
-			for (const name of names) {
-				profileNames.add(name);
-			}
-		} catch {
-			// Cache query failed, skip this database
-		}
-	}
-
-	return profileNames;
-}
-
-/**
- * Get profiles grouped by database
- */
-async function getProfilesByDatabase(): Promise<ProfileByDatabase[]> {
-	const profilesByDatabase: ProfileByDatabase[] = [];
-	const databases = pcdManager.getAll().filter((db) => db.enabled);
-
-	for (const db of databases) {
-		const dbCache = pcdManager.getCache(db.id);
-		if (!dbCache?.isBuilt()) continue;
-
-		try {
-			const names = await qualityProfileQueries.names(dbCache);
-			profilesByDatabase.push({
-				databaseId: db.id,
-				databaseName: db.name,
-				profiles: names
-			});
-		} catch {
-			// Skip if cache query fails
-		}
-	}
-
-	return profilesByDatabase;
-}
+const MANUAL_CACHE_TTL = 86400; // 24 hours for manual mode
 
 /**
  * GET /api/v1/arr/library
@@ -92,6 +40,10 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 
 	const cacheKey = `library:${id}`;
+	const ttl =
+		instance.library_refresh_interval > 0
+			? instance.library_refresh_interval * 60
+			: MANUAL_CACHE_TTL;
 	const profilesByDatabase = await getProfilesByDatabase();
 
 	try {
@@ -109,7 +61,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			const client = new RadarrClient(instance.url, instance.api_key);
 			try {
 				const items = await client.getLibrary(profilarrProfileNames);
-				cache.set(cacheKey, items, LIBRARY_CACHE_TTL);
+				cache.set(cacheKey, items, ttl);
 
 				await logger.info(`Fetched library for ${instance.name}`, {
 					source: 'arr/library',
@@ -138,7 +90,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			const client = new SonarrClient(instance.url, instance.api_key);
 			try {
 				const items = await client.getLibrary(profilarrProfileNames);
-				cache.set(cacheKey, items, LIBRARY_CACHE_TTL);
+				cache.set(cacheKey, items, ttl);
 
 				await logger.info(`Fetched library for ${instance.name}`, {
 					source: 'arr/library',
@@ -192,6 +144,11 @@ export const DELETE: RequestHandler = async ({ url }) => {
 	}
 
 	cache.delete(`library:${id}`);
+
+	await logger.debug(`Manual library refresh triggered`, {
+		source: 'arr/library',
+		meta: { instanceId: id }
+	});
 
 	return json({ success: true } satisfies components['schemas']['CacheInvalidatedResponse']);
 };

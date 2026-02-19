@@ -11,6 +11,8 @@ export interface ArrInstance {
 	api_key: string;
 	tags: string | null;
 	enabled: number;
+	library_refresh_interval: number;
+	library_last_refreshed_at: string | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -31,6 +33,7 @@ export interface UpdateArrInstanceInput {
 	apiKey?: string;
 	tags?: string[];
 	enabled?: boolean;
+	libraryRefreshInterval?: number;
 }
 
 /**
@@ -119,6 +122,10 @@ export const arrInstancesQueries = {
 			updates.push('enabled = ?');
 			params.push(input.enabled ? 1 : 0);
 		}
+		if (input.libraryRefreshInterval !== undefined) {
+			updates.push('library_refresh_interval = ?');
+			params.push(input.libraryRefreshInterval);
+		}
 
 		if (updates.length === 0) {
 			return false;
@@ -167,6 +174,17 @@ export const arrInstancesQueries = {
 	/**
 	 * Check if an instance with the same API key already exists
 	 */
+	/**
+	 * Update library_last_refreshed_at timestamp
+	 */
+	updateLibraryRefreshedAt(id: number): void {
+		db.execute(
+			'UPDATE arr_instances SET library_last_refreshed_at = ? WHERE id = ?',
+			new Date().toISOString(),
+			id
+		);
+	},
+
 	apiKeyExists(apiKey: string, excludeId?: number): boolean {
 		if (excludeId !== undefined) {
 			const result = db.queryFirst<{ count: number }>(

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { AlertTriangle, Film, ExternalLink } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 	import { goto, invalidateAll } from '$app/navigation';
@@ -37,6 +37,26 @@
 	let profilesByDatabase: { databaseId: number; databaseName: string; profiles: string[] }[] = [];
 	let loading = true;
 	let refreshing = false;
+
+	// Cache age tracking
+	let cacheAgeTick = 0;
+	let cacheAgeInterval: ReturnType<typeof setInterval>;
+
+	function formatCacheAge(seconds: number): string {
+		if (seconds < 60) return 'just now';
+		const minutes = Math.floor(seconds / 60);
+		if (minutes < 60) return `${minutes}m ago`;
+		const hours = Math.floor(minutes / 60);
+		const remainingMinutes = minutes % 60;
+		if (remainingMinutes === 0) return `${hours}h ago`;
+		return `${hours}h ${remainingMinutes}m ago`;
+	}
+
+	$: cacheAgeSeconds = (() => {
+		cacheAgeTick;
+		return libraryCache.getAge(data.instance.id);
+	})();
+	$: cacheAgeText = cacheAgeSeconds !== null ? formatCacheAge(cacheAgeSeconds) : null;
 
 	async function fetchLibrary(force = false) {
 		const instanceId = data.instance.id;
@@ -99,6 +119,13 @@
 	onMount(() => {
 		currentInstanceId = data.instance.id;
 		fetchLibrary();
+		cacheAgeInterval = setInterval(() => {
+			cacheAgeTick++;
+		}, 30000); // Update age display every 30s
+	});
+
+	onDestroy(() => {
+		if (cacheAgeInterval) clearInterval(cacheAgeInterval);
 	});
 
 	// Refetch if instance changes (navigation between instances)
@@ -543,6 +570,8 @@
 			{activeFilters}
 			uniqueQualities={loading ? [] : uniqueQualities}
 			uniqueProfiles={loading ? [] : uniqueProfiles}
+			cacheAgeText={loading ? null : cacheAgeText}
+			{refreshing}
 			onToggleColumn={toggleColumn}
 			onToggleFilter={toggleFilter}
 			onRefresh={handleRefresh}
@@ -554,7 +583,7 @@
 			<!-- ============================================================ -->
 			<!-- Radarr Library -->
 			<!-- ============================================================ -->
-			{#if allMoviesWithFiles.length === 0 && !loading}
+			{#if allMoviesWithFiles.length === 0 && !loading && !refreshing}
 				<div
 					class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
 				>
@@ -571,54 +600,56 @@
 					</div>
 				</div>
 			{:else}
-				<div class="transition-all duration-300 {loading ? 'opacity-60' : 'opacity-100'}">
-					<ExpandableTable
-						columns={radarrColumns}
-						data={loading ? radarrSkeletonData : moviesWithFiles}
-						getRowId={(row) => row.id}
-						compact={true}
-						defaultSort={radarrDefaultSort}
-						responsive
-						emptyMessage={activeFilters.length > 0 || debouncedQuery
-							? 'No movies match the current filters'
-							: 'No movies with files'}
-					>
-						<svelte:fragment slot="cell" let:row let:column>
-							{#if loading}
-								<MovieRowSkeleton {column} />
-							{:else}
-								<MovieRow {row} {column} mode="cell" />
-							{/if}
-						</svelte:fragment>
+				<ExpandableTable
+					columns={radarrColumns}
+					data={loading || refreshing ? radarrSkeletonData : moviesWithFiles}
+					getRowId={(row) => row.id}
+					compact={true}
+					defaultSort={radarrDefaultSort}
+					pageSize={25}
+					responsive
+					flushExpanded
+					emptyMessage={activeFilters.length > 0 || debouncedQuery
+						? 'No movies match the current filters'
+						: 'No movies with files'}
+				>
+					<svelte:fragment slot="cell" let:row let:column>
+						{#if loading || refreshing}
+							<MovieRowSkeleton {column} />
+						{:else}
+							<MovieRow {row} {column} mode="cell" />
+						{/if}
+					</svelte:fragment>
 
-						<svelte:fragment slot="actions" let:row>
-							{#if !loading && row.tmdbId}
-								<a
-									href="{baseUrl}/movie/{row.tmdbId}"
-									target="_blank"
-									rel="noopener noreferrer"
-									class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-									title="Open in Radarr"
-									on:click|stopPropagation
-								>
-									<ExternalLink size={14} />
-								</a>
-							{/if}
-						</svelte:fragment>
+					<svelte:fragment slot="actions" let:row>
+						{#if !loading && !refreshing && row.tmdbId}
+							<a
+								href="{baseUrl}/movie/{row.tmdbId}"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+								title="Open in Radarr"
+								on:click|stopPropagation
+							>
+								<ExternalLink size={14} />
+							</a>
+						{/if}
+					</svelte:fragment>
 
-						<svelte:fragment slot="expanded" let:row>
-							{#if !loading}
+					<svelte:fragment slot="expanded" let:row>
+						{#if !loading && !refreshing}
+							<div class="p-4">
 								<MovieRow {row} column={allRadarrColumns[0]} mode="expanded" />
-							{/if}
-						</svelte:fragment>
-					</ExpandableTable>
-				</div>
+							</div>
+						{/if}
+					</svelte:fragment>
+				</ExpandableTable>
 			{/if}
 		{:else if isSonarr}
 			<!-- ============================================================ -->
 			<!-- Sonarr Library -->
 			<!-- ============================================================ -->
-			{#if sonarrLibrary.length === 0 && !loading}
+			{#if sonarrLibrary.length === 0 && !loading && !refreshing}
 				<div
 					class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
 				>
@@ -633,66 +664,65 @@
 					</div>
 				</div>
 			{:else}
-				<div class="transition-all duration-300 {loading ? 'opacity-60' : 'opacity-100'}">
-					<ExpandableTable
-						columns={sonarrColumns}
-						data={loading ? sonarrSkeletonData : filteredSeries}
-						getRowId={(row) => row.id}
-						compact={true}
-						defaultSort={sonarrDefaultSort}
-						responsive
-						flushExpanded
-						bind:expandedRows={sonarrExpandedRows}
-						emptyMessage={activeFilters.length > 0 || debouncedQuery
-							? 'No series match the current filters'
-							: 'No series found'}
-					>
-						<svelte:fragment slot="cell" let:row let:column>
-							{#if loading}
-								<SeriesRowSkeleton {column} />
+				<ExpandableTable
+					columns={sonarrColumns}
+					data={loading || refreshing ? sonarrSkeletonData : filteredSeries}
+					getRowId={(row) => row.id}
+					compact={true}
+					defaultSort={sonarrDefaultSort}
+					pageSize={25}
+					responsive
+					flushExpanded
+					bind:expandedRows={sonarrExpandedRows}
+					emptyMessage={activeFilters.length > 0 || debouncedQuery
+						? 'No series match the current filters'
+						: 'No series found'}
+				>
+					<svelte:fragment slot="cell" let:row let:column>
+						{#if loading || refreshing}
+							<SeriesRowSkeleton {column} />
+						{:else}
+							<SeriesRow {row} {column} />
+						{/if}
+					</svelte:fragment>
+
+					<svelte:fragment slot="actions" let:row>
+						{#if !loading && !refreshing && row.tvdbId}
+							<a
+								href="{baseUrl}/series/{row.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+								title="Open in Sonarr"
+								on:click|stopPropagation
+							>
+								<ExternalLink size={14} />
+							</a>
+						{/if}
+					</svelte:fragment>
+
+					<svelte:fragment slot="expanded" let:row>
+						{#if !loading && !refreshing}
+							{@const seriesId = row.id}
+							{@const isEpisodeLoading = episodeLoadingSet.has(seriesId)}
+							{@const episodesBySeasonNumber = episodesBySeriesAndSeason.get(seriesId) ?? new Map()}
+
+							{#if isEpisodeLoading}
+								<div class="flex items-center gap-2 p-4 text-sm text-neutral-500 dark:text-neutral-400">
+									<div class="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-accent-500"></div>
+									Loading episodes...
+								</div>
 							{:else}
-								<SeriesRow {row} {column} />
+								<div class="p-4">
+									<SeasonTable
+										seasons={row.seasons}
+										{episodesBySeasonNumber}
+									/>
+								</div>
 							{/if}
-						</svelte:fragment>
-
-						<svelte:fragment slot="actions" let:row>
-							{#if !loading && row.tvdbId}
-								<a
-									href="{baseUrl}/series/{row.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}"
-									target="_blank"
-									rel="noopener noreferrer"
-									class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-									title="Open in Sonarr"
-									on:click|stopPropagation
-								>
-									<ExternalLink size={14} />
-								</a>
-							{/if}
-						</svelte:fragment>
-
-						<svelte:fragment slot="expanded" let:row>
-							{#if !loading}
-								{@const seriesId = row.id}
-								{@const isEpisodeLoading = episodeLoadingSet.has(seriesId)}
-								{@const episodesBySeasonNumber = episodesBySeriesAndSeason.get(seriesId) ?? new Map()}
-
-								{#if isEpisodeLoading}
-									<div class="flex items-center gap-2 p-4 text-sm text-neutral-500 dark:text-neutral-400">
-										<div class="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-accent-500"></div>
-										Loading episodes...
-									</div>
-								{:else}
-									<div class="p-4">
-										<SeasonTable
-											seasons={row.seasons}
-											{episodesBySeasonNumber}
-										/>
-									</div>
-								{/if}
-							{/if}
-						</svelte:fragment>
-					</ExpandableTable>
-				</div>
+						{/if}
+					</svelte:fragment>
+				</ExpandableTable>
 			{/if}
 		{/if}
 	{/if}

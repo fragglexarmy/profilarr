@@ -9,6 +9,7 @@ export type JobType =
 	| 'backup.create'
 	| 'backup.cleanup'
 	| 'arr.cleanup'
+	| 'arr.library.refresh'
 	| 'logs.cleanup';
 
 export type JobStatus = 'queued' | 'running' | 'success' | 'failed' | 'cancelled';

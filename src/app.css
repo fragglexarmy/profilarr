@@ -14,6 +14,10 @@
 @source not "../test-results";
 @source not "../node_modules";
 
+html {
+	scrollbar-gutter: stable;
+}
+
 /* Highlight.js: atom-one-light for light mode */
 @import 'highlight.js/styles/atom-one-light.css';
 

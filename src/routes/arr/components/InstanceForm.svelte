@@ -46,6 +46,7 @@
 				apiKey: '', // Never pre-populate for security
 				enabled: instance.enabled ? 'true' : 'false',
 				tags: JSON.stringify(parseTags(instance.tags)),
+				libraryRefreshInterval: String(instance.library_refresh_interval ?? 0),
 				cleanupEnabled: cleanupSettings?.enabled ?? false,
 				cleanupCron: cleanupSettings?.cron ?? '0 0 * * 0'
 			});
@@ -57,6 +58,7 @@
 				apiKey: '',
 				enabled: 'true',
 				tags: '[]',
+				libraryRefreshInterval: '0',
 				cleanupEnabled: false,
 				cleanupCron: '0 0 * * 0'
 			});
@@ -71,6 +73,7 @@
 	$: apiKey = ($current.apiKey ?? '') as string;
 	$: enabled = ($current.enabled ?? 'true') as string;
 	$: tags = JSON.parse(($current.tags ?? '[]') as string) as string[];
+	$: libraryRefreshInterval = ($current.libraryRefreshInterval ?? '0') as string;
 	$: cleanupEnabled = ($current.cleanupEnabled ?? false) as boolean;
 	$: cleanupCron = ($current.cleanupCron ?? '0 0 * * 0') as string;
 
@@ -97,6 +100,17 @@
 	const enabledOptions = [
 		{ value: 'true', label: 'Enabled' },
 		{ value: 'false', label: 'Disabled' }
+	];
+
+	const libraryRefreshOptions = [
+		{ value: '0', label: 'Manual' },
+		{ value: '10', label: 'Every 10 minutes' },
+		{ value: '30', label: 'Every 30 minutes' },
+		{ value: '60', label: 'Every hour' },
+		{ value: '360', label: 'Every 6 hours' },
+		{ value: '720', label: 'Every 12 hours' },
+		{ value: '1440', label: 'Every 24 hours' },
+		{ value: '10080', label: 'Weekly' }
 	];
 
 	// Manual test connection
@@ -185,6 +199,7 @@
 				apiKey: '',
 				enabled,
 				tags: JSON.stringify(tags),
+				libraryRefreshInterval,
 				cleanupEnabled,
 				cleanupCron
 			});
@@ -385,6 +400,23 @@
 				on:change={(e) => update('tags', JSON.stringify(e.detail))}
 			/>
 		</div>
+		<!-- Library Refresh (edit mode only) -->
+		{#if mode === 'edit' && instance}
+			<div class="space-y-2">
+				<span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+					Library Refresh
+				</span>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400">
+					How often to refresh cached library data in the background
+				</p>
+				<DropdownSelect
+					value={libraryRefreshInterval}
+					options={libraryRefreshOptions}
+					fullWidth
+					on:change={(e) => update('libraryRefreshInterval', e.detail)}
+				/>
+			</div>
+		{/if}
 		<!-- Cleanup (edit mode only) -->
 		{#if mode === 'edit' && instance}
 			<div class="space-y-2">
@@ -476,6 +508,7 @@
 	<input type="hidden" name="api_key" value={apiKey} />
 	<input type="hidden" name="enabled" value={enabled === 'true' ? '1' : '0'} />
 	<input type="hidden" name="tags" value={JSON.stringify(tags)} />
+	<input type="hidden" name="library_refresh_interval" value={libraryRefreshInterval} />
 </form>
 
 <!-- Hidden delete form (edit mode only) -->

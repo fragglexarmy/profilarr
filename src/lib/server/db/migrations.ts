@@ -54,6 +54,7 @@ import { migration as migration049 } from './migrations/049_create_job_queue.ts'
 import { migration as migration050 } from './migrations/050_remove_dry_run_columns.ts';
 import { migration as migration051 } from './migrations/051_cron_scheduling.ts';
 import { migration as migration052 } from './migrations/052_create_arr_cleanup_settings.ts';
+import { migration as migration053 } from './migrations/053_add_library_refresh_to_arr_instances.ts';
 
 export interface Migration {
 	version: number;
@@ -326,7 +327,8 @@ export function loadMigrations(): Migration[] {
 		migration049,
 		migration050,
 		migration051,
-		migration052
+		migration052,
+		migration053
 	];
 
 	// Sort by version number

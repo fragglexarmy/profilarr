@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 -- ==============================================================================
 -- TABLE: arr_instances
 -- Purpose: Store configuration for *arr application instances (Radarr, Sonarr, etc.)
--- Migration: 001_create_arr_instances.ts
+-- Migration: 001_create_arr_instances.ts, 053_add_library_refresh_to_arr_instances.ts
 -- ==============================================================================
 
 CREATE TABLE arr_instances (
@@ -35,6 +35,10 @@ CREATE TABLE arr_instances (
     -- Configuration
     tags TEXT,                              -- JSON array of tags (e.g., '["movies","4k"]')
     enabled INTEGER NOT NULL DEFAULT 1,     -- 1=enabled, 0=disabled
+
+    -- Library refresh (Migration 053)
+    library_refresh_interval INTEGER NOT NULL DEFAULT 0, -- 0=manual, >0=auto-refresh every X minutes
+    library_last_refreshed_at TEXT,         -- When library cache was last refreshed
 
     -- Metadata
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

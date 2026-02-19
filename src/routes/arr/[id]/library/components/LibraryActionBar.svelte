@@ -11,6 +11,7 @@
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 	import { type SearchStore } from '$stores/search';
 
 	type FilterOperator = 'eq' | 'neq';
@@ -30,6 +31,8 @@
 	export let activeFilters: ActiveFilter[];
 	export let uniqueQualities: string[];
 	export let uniqueProfiles: string[];
+	export let cacheAgeText: string | null = null;
+	export let refreshing: boolean = false;
 
 	export let onToggleColumn: (key: string) => void;
 	export let onToggleFilter: (
@@ -45,6 +48,7 @@
 	$: isRadarr = instanceType === 'radarr';
 	$: searchPlaceholder = isRadarr ? 'Search movies...' : 'Search series...';
 	$: openLabel = isRadarr ? 'Open in Radarr' : 'Open in Sonarr';
+	$: refreshTooltip = cacheAgeText ? `Refresh: Last updated ${cacheAgeText}` : 'Refresh library';
 	$: filterDescription = isRadarr
 		? 'Filter movies by quality or profile'
 		: 'Filter series by profile';
@@ -158,30 +162,10 @@
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
-	<ActionButton icon={RefreshCw} hasDropdown={true} dropdownPosition="right">
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="10rem">
-				<button
-					type="button"
-					on:click={onRefresh}
-					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					Refresh library
-				</button>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
-	<ActionButton icon={ExternalLink} hasDropdown={true} dropdownPosition="right">
-		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
-			<Dropdown position={dropdownPosition} minWidth="10rem">
-				<button
-					type="button"
-					on:click={onOpen}
-					class="w-full rounded-lg px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
-				>
-					{openLabel}
-				</button>
-			</Dropdown>
-		</svelte:fragment>
-	</ActionButton>
+	<Tooltip text={refreshTooltip}>
+		<ActionButton icon={RefreshCw} iconClass={refreshing ? 'animate-spin' : ''} on:click={onRefresh} />
+	</Tooltip>
+	<Tooltip text={openLabel}>
+		<ActionButton icon={ExternalLink} on:click={onOpen} />
+	</Tooltip>
 </ActionsBar>

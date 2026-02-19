@@ -26,6 +26,7 @@ export {
 	scheduleUpgradeForInstance,
 	scheduleRenameForInstance,
 	scheduleCleanupForInstance,
+	scheduleLibraryRefreshForInstance,
 	schedulePcdSyncForDatabase,
 	scheduleBackupJobs,
 	scheduleLogCleanup
