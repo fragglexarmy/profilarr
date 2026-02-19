@@ -1,7 +1,7 @@
 import { db } from '../db.ts';
 
 // Types
-export type SyncTrigger = 'manual' | 'on_pull' | 'on_change' | 'schedule';
+export type SyncTrigger = 'manual' | 'on_pull' | 'schedule';
 
 export interface ProfileSelection {
 	databaseId: number;
@@ -378,21 +378,18 @@ export const arrSyncQueries = {
 	 * Used when events occur (pull, change)
 	 * Also sets sync_status to 'pending' for the new status-based flow
 	 */
-	markForSync(trigger: 'on_pull' | 'on_change'): void {
-		const triggers = trigger === 'on_change' ? ['on_pull', 'on_change'] : ['on_pull'];
-		const placeholders = triggers.map(() => '?').join(', ');
-
+	markForSync(trigger: 'on_pull'): void {
 		db.execute(
-			`UPDATE arr_sync_quality_profiles_config SET should_sync = 1, sync_status = 'pending' WHERE trigger IN (${placeholders})`,
-			...triggers
+			`UPDATE arr_sync_quality_profiles_config SET should_sync = 1, sync_status = 'pending' WHERE trigger = ?`,
+			trigger
 		);
 		db.execute(
-			`UPDATE arr_sync_delay_profiles_config SET should_sync = 1, sync_status = 'pending' WHERE trigger IN (${placeholders})`,
-			...triggers
+			`UPDATE arr_sync_delay_profiles_config SET should_sync = 1, sync_status = 'pending' WHERE trigger = ?`,
+			trigger
 		);
 		db.execute(
-			`UPDATE arr_sync_media_management SET should_sync = 1, sync_status = 'pending' WHERE trigger IN (${placeholders})`,
-			...triggers
+			`UPDATE arr_sync_media_management SET should_sync = 1, sync_status = 'pending' WHERE trigger = ?`,
+			trigger
 		);
 	},
 
@@ -722,18 +719,15 @@ export const arrSyncQueries = {
 	},
 
 	getInstanceIdsForTrigger(trigger: SyncTrigger): number[] {
-		const triggers = trigger === 'on_change' ? ['on_pull', 'on_change'] : [trigger];
-		const placeholders = triggers.map(() => '?').join(', ');
-
 		const rows = db.query<{ instance_id: number }>(
-			`SELECT instance_id FROM arr_sync_quality_profiles_config WHERE trigger IN (${placeholders})
+			`SELECT instance_id FROM arr_sync_quality_profiles_config WHERE trigger = ?
 			 UNION
-			 SELECT instance_id FROM arr_sync_delay_profiles_config WHERE trigger IN (${placeholders})
+			 SELECT instance_id FROM arr_sync_delay_profiles_config WHERE trigger = ?
 			 UNION
-			 SELECT instance_id FROM arr_sync_media_management WHERE trigger IN (${placeholders})`,
-			...triggers,
-			...triggers,
-			...triggers
+			 SELECT instance_id FROM arr_sync_media_management WHERE trigger = ?`,
+			trigger,
+			trigger,
+			trigger
 		);
 
 		return rows.map((row) => row.instance_id);

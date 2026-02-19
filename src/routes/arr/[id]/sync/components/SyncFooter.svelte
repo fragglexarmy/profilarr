@@ -5,7 +5,7 @@
 	import { RefreshCw, Save, Loader2, AlertTriangle } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
-	export let syncTrigger: 'manual' | 'on_pull' | 'on_change' | 'schedule' = 'manual';
+	export let syncTrigger: 'manual' | 'on_pull' | 'schedule' = 'manual';
 	export let cronExpression: string = '0 * * * *';
 	export let saving: boolean = false;
 	export let syncing: boolean = false;
@@ -19,7 +19,6 @@
 	const triggerOptions = [
 		{ value: 'manual', label: 'Manual' },
 		{ value: 'on_pull', label: 'On Pull' },
-		{ value: 'on_change', label: 'On Change' },
 		{ value: 'schedule', label: 'Schedule' }
 	] as const;
 

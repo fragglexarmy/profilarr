@@ -4,7 +4,6 @@
  *
  * Triggers:
  * - on_pull: Triggered directly via triggerSyncs() after database git pull completes
- * - on_change: Triggered directly via triggerSyncs() after PCD files change
  * - schedule: Cron expressions evaluated by evaluateScheduledSyncs() before processing
  */
 
@@ -302,7 +301,7 @@ export async function syncInstance(instanceId: number): Promise<InstanceSyncResu
 
 /**
  * Trigger syncs for configs matching the event type
- * Called directly from pcd.ts (on_pull) and cache.ts (on_change)
+ * Called from manager.ts after database git pull completes
  */
 export async function triggerSyncs(context: TriggerContext): Promise<void> {
 	await logger.debug(`Sync trigger: ${context.event}`, {
@@ -310,13 +309,12 @@ export async function triggerSyncs(context: TriggerContext): Promise<void> {
 		meta: { databaseId: context.databaseId }
 	});
 
-	const triggers = context.event === 'on_change' ? ['on_pull', 'on_change'] : [context.event];
 	const instanceIds = arrSyncQueries.getInstanceIdsForTrigger(context.event);
 
 	for (const instanceId of instanceIds) {
 		const status = arrSyncQueries.getSyncConfigStatus(instanceId);
 
-		if (triggers.includes(status.qualityProfiles.trigger)) {
+		if (status.qualityProfiles.trigger === context.event) {
 			arrSyncQueries.setQualityProfilesStatusPending(instanceId);
 			upsertScheduledJob({
 				jobType: 'arr.sync.qualityProfiles',
@@ -326,7 +324,7 @@ export async function triggerSyncs(context: TriggerContext): Promise<void> {
 				dedupeKey: `arr.sync.qualityProfiles:event:${instanceId}`
 			});
 		}
-		if (triggers.includes(status.delayProfiles.trigger)) {
+		if (status.delayProfiles.trigger === context.event) {
 			arrSyncQueries.setDelayProfilesStatusPending(instanceId);
 			upsertScheduledJob({
 				jobType: 'arr.sync.delayProfiles',
@@ -336,7 +334,7 @@ export async function triggerSyncs(context: TriggerContext): Promise<void> {
 				dedupeKey: `arr.sync.delayProfiles:event:${instanceId}`
 			});
 		}
-		if (triggers.includes(status.mediaManagement.trigger)) {
+		if (status.mediaManagement.trigger === context.event) {
 			arrSyncQueries.setMediaManagementStatusPending(instanceId);
 			upsertScheduledJob({
 				jobType: 'arr.sync.mediaManagement',

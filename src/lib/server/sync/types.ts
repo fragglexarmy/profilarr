@@ -91,7 +91,7 @@ export interface SectionHandler {
 /**
  * Events that can trigger a sync
  */
-export type SyncTriggerEvent = 'on_pull' | 'on_change';
+export type SyncTriggerEvent = 'on_pull';
 
 /**
  * Context for a sync trigger
