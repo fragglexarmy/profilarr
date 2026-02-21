@@ -71,11 +71,14 @@
 		if (!column.sortable) return;
 
 		if (sortState?.key === column.key) {
-			// Toggle direction or clear
-			if (sortState.direction === 'asc') {
-				sortState = { key: column.key, direction: 'desc' };
+			// Cycle: default → opposite → clear
+			const defaultDir = column.defaultSortDirection ?? 'asc';
+			const oppositeDir = defaultDir === 'asc' ? 'desc' : 'asc';
+
+			if (sortState.direction === defaultDir) {
+				sortState = { key: column.key, direction: oppositeDir };
 			} else {
-				sortState = null; // Clear sort on third click
+				sortState = null;
 			}
 		} else {
 			// New column - use default direction or 'asc'
