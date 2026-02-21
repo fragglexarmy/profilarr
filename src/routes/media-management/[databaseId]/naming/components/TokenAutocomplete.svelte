@@ -23,6 +23,7 @@
 	let open = false;
 	let highlightedIndex = -1;
 	let triggerPos = -1;
+	let listboxElement: HTMLDivElement | null = null;
 
 	$: flatTokens = categories.flatMap((cat) =>
 		cat.tokens.map((t) => ({ ...t, category: cat.name }))
@@ -67,6 +68,20 @@
 		}
 	}
 
+	function handleFocus() {
+		open = true;
+		highlightedIndex = 0;
+
+		const result = findTrigger();
+		if (result.found) {
+			query = result.query;
+			triggerPos = result.pos;
+		} else {
+			query = '';
+			triggerPos = -1;
+		}
+	}
+
 	function moveHighlight(direction: 1 | -1) {
 		if (filteredTokens.length === 0) {
 			highlightedIndex = -1;
@@ -74,24 +89,31 @@
 		}
 		if (highlightedIndex < 0 || highlightedIndex >= filteredTokens.length) {
 			highlightedIndex = direction === 1 ? 0 : filteredTokens.length - 1;
-			return;
+		} else {
+			highlightedIndex =
+				(highlightedIndex + direction + filteredTokens.length) % filteredTokens.length;
 		}
-		highlightedIndex =
-			(highlightedIndex + direction + filteredTokens.length) % filteredTokens.length;
+
+		// Scroll highlighted item into view
+		if (listboxElement) {
+			const item = listboxElement.children[highlightedIndex] as HTMLElement;
+			item?.scrollIntoView({ block: 'nearest' });
+		}
 	}
 
 	function selectToken(token: FlatToken) {
 		if (!inputElement) return;
 
 		const cursor = inputElement.selectionStart ?? inputElement.value.length;
-		const before = inputElement.value.slice(0, triggerPos);
+		const insertPos = triggerPos >= 0 ? triggerPos : cursor;
+		const before = inputElement.value.slice(0, insertPos);
 		const after = inputElement.value.slice(cursor);
 		const newValue = before + token.token + after;
 
 		value = newValue;
 		inputElement.value = newValue;
 
-		const newCursor = triggerPos + token.token.length;
+		const newCursor = insertPos + token.token.length;
 		inputElement.selectionStart = newCursor;
 		inputElement.selectionEnd = newCursor;
 		inputElement.focus();
@@ -148,10 +170,12 @@
 		wrap
 		bind:inputElement
 		on:input={handleInput}
+		on:focus={handleFocus}
 	/>
 
 	{#if open && filteredTokens.length > 0}
 		<div
+			bind:this={listboxElement}
 			role="listbox"
 			class="absolute top-full z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-neutral-300 bg-white p-1 shadow-sm dark:border-neutral-700/60 dark:bg-neutral-800"
 		>
