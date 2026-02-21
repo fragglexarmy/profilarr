@@ -53,7 +53,7 @@ export function createDataPageStore<T>(
 	initialItems: T[],
 	config: DataPageConfig<T>
 ): DataPageStore<T> {
-	const { storageKey, searchKeys, defaultView = 'table', debounceMs = 300 } = config;
+	const { storageKey, searchKeys, defaultView = 'cards', debounceMs = 300 } = config;
 
 	// Items store
 	const items = writable<T[]>(initialItems);
