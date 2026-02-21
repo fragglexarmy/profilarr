@@ -19,7 +19,7 @@ export interface AlertSettings {
 
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
 	position: 'top-center',
-	durationMs: 5000
+	durationMs: 8000
 };
 
 const ALERT_SETTINGS_STORAGE_KEY = 'alertSettings';
