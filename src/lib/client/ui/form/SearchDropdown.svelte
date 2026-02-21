@@ -40,6 +40,10 @@
 	$: filteredOptions = options.filter((opt) =>
 		opt.label.toLowerCase().includes(searchQuery.toLowerCase())
 	);
+	$: onlySelectedShown =
+		filteredOptions.length === 1 &&
+		filteredOptions[0].value === value &&
+		options.length > 1;
 	$: hasClear = value != null && value !== '';
 	$: if (open) {
 		if (filteredOptions.length === 0) {
@@ -197,7 +201,7 @@
 		</svelte:fragment>
 	</FormInput>
 
-	{#if open && filteredOptions.length > 0}
+	{#if open}
 		<div
 			bind:this={dropdownEl}
 			role="listbox"
@@ -228,6 +232,15 @@
 					</slot>
 				</button>
 			{/each}
+			{#if onlySelectedShown}
+				<p class="px-3 py-2 text-xs text-neutral-400 dark:text-neutral-500">
+					Clear selection to browse all options
+				</p>
+			{:else if filteredOptions.length === 0}
+				<p class="px-3 py-2 text-xs text-neutral-400 dark:text-neutral-500">
+					No matches found
+				</p>
+			{/if}
 		</div>
 	{/if}
 </div>
