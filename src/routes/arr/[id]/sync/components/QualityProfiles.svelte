@@ -54,7 +54,31 @@
 		return selectedKeys.has(`${databaseId}-${profileName}`);
 	}
 
+	$: hasAnySelection = Object.values(state).some((db) =>
+		Object.values(db).some((selected) => selected)
+	);
+
+	// Track which database currently has selections (null = none)
+	$: activeDatabaseId = (() => {
+		for (const [dbId, profiles] of Object.entries(state)) {
+			if (Object.values(profiles).some((selected) => selected)) {
+				return parseInt(dbId);
+			}
+		}
+		return null;
+	})();
+
 	function setProfile(databaseId: number, profileName: string, checked: boolean) {
+		if (checked) {
+			// Clear selections from other databases (1 database per category)
+			for (const dbId of Object.keys(state)) {
+				if (parseInt(dbId) !== databaseId) {
+					for (const name of Object.keys(state[parseInt(dbId)])) {
+						state[parseInt(dbId)][name] = false;
+					}
+				}
+			}
+		}
 		state[databaseId][profileName] = checked;
 		state = { ...state }; // Reassign to trigger reactivity
 	}
@@ -127,7 +151,8 @@
 	<div class="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
 		<h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Quality Profiles</h2>
 		<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-			Select quality profiles to sync to this instance
+			Select quality profiles to sync to this instance. Only one database can be used per instance
+			&mdash; to use a different database, sync it to a separate Arr instance.
 		</p>
 	</div>
 
@@ -138,8 +163,12 @@
 		{:else}
 			<div class="space-y-6">
 				{#each databases as database}
+					{@const isInactive = activeDatabaseId !== null && activeDatabaseId !== database.id}
 					<div class="space-y-3">
-						<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+						<h3
+							class="text-sm font-semibold text-neutral-900 dark:text-neutral-50"
+							class:opacity-50={isInactive}
+						>
 							{database.name}
 						</h3>
 
@@ -150,6 +179,7 @@
 								{#each database.qualityProfiles as profile}
 									<Toggle
 										checked={isSelected(database.id, profile.name)}
+										disabled={isInactive}
 										label={profile.name}
 										ariaLabel={`Toggle quality profile ${profile.name} from ${database.name}`}
 										on:change={(e) => setProfile(database.id, profile.name, e.detail)}
@@ -170,6 +200,7 @@
 		{syncing}
 		{isDirty}
 		{canSave}
+		hasConfig={hasAnySelection}
 		{warning}
 		onWarning={(msg) => alertStore.add('warning', msg)}
 		on:save={handleSave}

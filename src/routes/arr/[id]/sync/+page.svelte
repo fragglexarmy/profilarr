@@ -95,13 +95,13 @@
 		const issues: string[] = [];
 
 		if (!hasMediaManagement) {
-			issues.push('media management settings (configure above)');
+			issues.push('media management settings');
 		} else if (mediaManagementDirty) {
 			issues.push('media management settings to be saved');
 		}
 
 		if (!hasDelayProfile) {
-			issues.push('a delay profile (configure below)');
+			issues.push('a delay profile');
 		} else if (delayProfilesDirty) {
 			issues.push('delay profile settings to be saved');
 		}
@@ -140,6 +140,13 @@
 		bind:cronExpression={mediaManagementCron}
 		bind:isDirty={mediaManagementDirty}
 	/>
+	<DelayProfiles
+		databases={data.databases}
+		bind:state={delayProfileState}
+		bind:syncTrigger={delayProfileTrigger}
+		bind:cronExpression={delayProfileCron}
+		bind:isDirty={delayProfilesDirty}
+	/>
 	<QualityProfiles
 		databases={data.databases}
 		bind:state={qualityProfileState}
@@ -148,13 +155,6 @@
 		bind:isDirty={qualityProfilesDirty}
 		canSave={qualityProfilesCanSave}
 		warning={qualityProfilesWarning}
-	/>
-	<DelayProfiles
-		databases={data.databases}
-		bind:state={delayProfileState}
-		bind:syncTrigger={delayProfileTrigger}
-		bind:cronExpression={delayProfileCron}
-		bind:isDirty={delayProfilesDirty}
 	/>
 </div>
 
@@ -169,19 +169,20 @@
 		</div>
 
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Namespacing</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">One Database Per Instance</div>
 			<p class="mt-1">
-				Similarly named items from different databases will include invisible namespaces to ensure
-				they don't override each other.
+				Each Arr instance syncs from a single database. Quality profiles and their custom formats
+				all come from the same database. If you want to use profiles from a different database,
+				sync it to a separate Arr instance.
 			</p>
 		</div>
 
 		<div>
-			<div class="font-medium text-neutral-900 dark:text-neutral-100">Media Management First</div>
+			<div class="font-medium text-neutral-900 dark:text-neutral-100">Setup Order</div>
 			<p class="mt-1">
-				Quality profiles require all media management settings (naming, quality definitions, and
-				media settings) to be configured and saved first. This ensures your files are named
-				consistently with what the profile expects.
+				Configure from top to bottom. Media management and delay profiles must be saved before
+				quality profiles can be synced. Quality profiles depend on these settings to ensure your
+				instance is configured consistently.
 			</p>
 		</div>
 
