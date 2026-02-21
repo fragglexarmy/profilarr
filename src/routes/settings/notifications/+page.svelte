@@ -238,7 +238,7 @@
 						size="xs"
 						tooltip="Delete service"
 						on:click={(e) => {
-							const form = e.target.closest('form');
+							const form = (e.target as HTMLElement)?.closest('form');
 							if (form) openDeleteModal(row.id, row.name, form);
 						}}
 					/>

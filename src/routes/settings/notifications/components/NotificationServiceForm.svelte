@@ -124,7 +124,7 @@
 				options={typeOptions}
 				disabled={mode === 'edit'}
 				fullWidth
-				on:change={(e) => (selectedType = e.detail)}
+				on:change={(e) => (selectedType = e.detail as typeof selectedType)}
 			/>
 		</div>
 
