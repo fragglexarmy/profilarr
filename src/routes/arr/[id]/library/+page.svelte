@@ -10,6 +10,7 @@
 	import { getPersistentSearchStore, type SearchStore } from '$stores/search';
 	import { libraryCache } from '$stores/libraryCache';
 	import { sortTitle } from '$shared/utils/sort.ts';
+	import { createSearchFieldState } from '$lib/client/utils/search';
 
 	import LibraryActionBar from './components/LibraryActionBar.svelte';
 	import MovieRow from './components/MovieRow.svelte';
@@ -30,18 +31,26 @@
 	});
 
 	// Search mode (Radarr supports title + CF search, Sonarr title only)
-	let searchMode: 'title' | 'customFormats' = 'title';
-	let cfSearchTags: string[] = [];
+	const librarySearchState = createSearchFieldState(
+		`arrLibrarySearchField:${data.instance.id}`,
+		[{ value: 'title', label: 'Title' }, { value: 'customFormats', label: 'Custom Formats' }],
+		'title'
+	);
+
+	let searchMode: 'title' | 'customFormats' = librarySearchState.initialField as 'title' | 'customFormats';
+	let cfSearchTags: string[] = librarySearchState.initialTags;
 
 	function handleSearchModeChange(mode: 'title' | 'customFormats') {
 		if (mode === searchMode) return;
 		// Clear the other mode's state when switching
 		if (mode === 'title') {
 			cfSearchTags = [];
+			librarySearchState.clearTags();
 		} else {
 			searchStore.clear();
 		}
 		searchMode = mode;
+		librarySearchState.saveField(mode);
 	}
 
 	// ==========================================================================
@@ -612,7 +621,7 @@
 			{searchMode}
 			onSearchModeChange={handleSearchModeChange}
 			cfTags={cfSearchTags}
-			onCfTagsChange={(tags) => (cfSearchTags = tags)}
+			onCfTagsChange={(tags) => { cfSearchTags = tags; librarySearchState.saveTags(tags); }}
 		/>
 
 		{#if isRadarr}
