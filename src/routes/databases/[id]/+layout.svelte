@@ -52,10 +52,7 @@
 		: [];
 
 	$: breadcrumb = {
-		parent: {
-			label: 'Databases',
-			href: '/databases'
-		},
+		items: [{ label: 'Databases', href: '/databases' }],
 		current: database?.name ?? ''
 	};
 </script>

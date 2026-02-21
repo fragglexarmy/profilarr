@@ -3,6 +3,9 @@
 	import DirtyModal from '$ui/modal/DirtyModal.svelte';
 	import { page } from '$app/stores';
 	import { FileText, Filter, FlaskConical } from 'lucide-svelte';
+	import type { LayoutData } from './$types';
+
+	export let data: LayoutData;
 
 	$: databaseId = $page.params.databaseId;
 	$: formatId = $page.params.id;
@@ -29,11 +32,14 @@
 		}
 	];
 
-	$: backButton = { label: 'Back' };
+	$: breadcrumb = {
+		items: [{ label: data.databaseName, href: `/custom-formats/${databaseId}` }],
+		current: data.formatName
+	};
 </script>
 
 <div class="p-4 md:p-8">
-	<Tabs {tabs} {backButton} responsive />
+	<Tabs {tabs} {breadcrumb} responsive />
 	<slot />
 </div>
 

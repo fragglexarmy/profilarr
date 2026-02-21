@@ -49,10 +49,7 @@
 	];
 
 	$: breadcrumb = {
-		parent: {
-			label: 'Instances',
-			href: '/arr'
-		},
+		items: [{ label: 'Arr Instances', href: '/arr' }],
 		current: data.instance.name
 	};
 </script>

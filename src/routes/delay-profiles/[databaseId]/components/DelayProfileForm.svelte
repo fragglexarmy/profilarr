@@ -31,6 +31,8 @@
 	export let databaseName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
+	export let breadcrumbItems: { label: string; href: string }[] = [];
+	export let breadcrumbCurrent: string = '';
 	export let initialData: DelayProfileFormData;
 
 	// Event handlers
@@ -125,7 +127,7 @@
 </script>
 
 <div class="space-y-6">
-	<StickyCard position="top">
+	<StickyCard position="top" {breadcrumbItems} {breadcrumbCurrent}>
 		<svelte:fragment slot="left">
 			<div>
 				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{title}</h2>

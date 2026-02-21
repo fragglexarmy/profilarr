@@ -12,6 +12,9 @@
 	canWriteToBase={data.canWriteToBase}
 	actionUrl="?/update"
 	initialData={data.namingConfig}
+	breadcrumbItems={[{ label: data.currentDatabase.name, href: `/media-management/${data.currentDatabase.id}/naming` }]}
+	breadcrumbCurrent={data.namingConfig.name}
+
 />
 
 <DirtyModal />

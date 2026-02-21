@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import type { ComponentType } from 'svelte';
 	import { ArrowLeft, ChevronRight, ChevronDown } from 'lucide-svelte';
+	import Breadcrumb from '$ui/navigation/breadcrumb/Breadcrumb.svelte';
 	import { clickOutside } from '$lib/client/utils/clickOutside';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
@@ -20,10 +21,7 @@
 	}
 
 	interface Breadcrumb {
-		parent: {
-			label: string;
-			href: string;
-		};
+		items: { label: string; href: string }[];
 		current: string;
 	}
 
@@ -81,11 +79,19 @@
 					on:click={() => (dropdownOpen = !dropdownOpen)}
 					class="flex w-full items-center justify-between gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-100 dark:hover:bg-neutral-700"
 				>
-				<span class="flex items-center gap-2">
-					{#if activeTab?.icon}
-						<svelte:component this={activeTab.icon} size={16} class="text-accent-500" />
+				<span class="flex items-center gap-1.5 overflow-hidden">
+					{#if breadcrumb}
+						{#each breadcrumb.items as item}
+							<span class="shrink-0 text-neutral-500 dark:text-neutral-400">{item.label}</span>
+							<ChevronRight size={12} class="shrink-0 text-neutral-400 dark:text-neutral-600" />
+						{/each}
+						<span class="shrink-0 text-neutral-500 dark:text-neutral-400">{breadcrumb.current}</span>
+						<ChevronRight size={12} class="shrink-0 text-neutral-400 dark:text-neutral-600" />
 					{/if}
-					{activeTab?.label ?? 'Select...'}
+					{#if activeTab?.icon && !breadcrumb}
+						<svelte:component this={activeTab.icon} size={16} class="shrink-0 text-accent-500" />
+					{/if}
+					<span class="truncate">{activeTab?.label ?? 'Select...'}</span>
 				</span>
 				<ChevronDown
 					size={16}
@@ -143,16 +149,7 @@
 			</div>
 
 			{#if breadcrumb}
-				<div class="flex items-center gap-2 text-sm">
-					<a
-						href={breadcrumb.parent.href}
-						class="text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
-					>
-						{breadcrumb.parent.label}
-					</a>
-					<ChevronRight size={14} class="text-neutral-400 dark:text-neutral-600" />
-					<span class="font-medium text-neutral-900 dark:text-neutral-50">{breadcrumb.current}</span>
-				</div>
+				<Breadcrumb items={breadcrumb.items} current={breadcrumb.current} />
 			{:else if backButton}
 				<button
 					type="button"

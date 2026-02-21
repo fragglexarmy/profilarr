@@ -975,7 +975,7 @@
 					{ label: 'Overview', href: '#tab-overview', active: true, icon: Info },
 					{ label: 'Settings', href: '#tab-settings', active: false, icon: Settings },
 					{ label: 'Logs', href: '#tab-logs', active: false, icon: FileText }
-				]} breadcrumb={{ parent: { label: 'Dev', href: '/dev' }, current: 'Components' }} />
+				]} breadcrumb={{ items: [{ label: 'Dev', href: '/dev' }], current: 'Components' }} />
 			</div>
 
 			<div class="space-y-3">

@@ -29,6 +29,10 @@
 	export let actionUrl: string = '';
 	export let initialData: RegularExpressionFormData;
 
+	// Breadcrumb (optional)
+	export let breadcrumbItems: { label: string; href: string }[] = [];
+	export let breadcrumbCurrent: string = '';
+
 	// Event handlers
 	export let onCancel: () => void;
 
@@ -94,7 +98,7 @@
 </script>
 
 <div class="space-y-6">
-	<StickyCard position="top">
+	<StickyCard position="top" {breadcrumbItems} {breadcrumbCurrent}>
 		<svelte:fragment slot="left">
 			<div>
 				<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{title}</h2>

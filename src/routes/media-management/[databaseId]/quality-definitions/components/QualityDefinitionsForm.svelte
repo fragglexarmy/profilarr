@@ -56,6 +56,8 @@
 	export let databaseName: string;
 	export let canWriteToBase: boolean = false;
 	export let actionUrl: string = '';
+	export let breadcrumbItems: { label: string; href: string }[] = [];
+	export let breadcrumbCurrent: string = '';
 	export let availableQualities: string[] = [];
 	export let initialData: QualityDefinitionsConfig | null;
 
@@ -269,7 +271,7 @@
 
 </script>
 
-<StickyCard position="top">
+<StickyCard position="top" {breadcrumbItems} {breadcrumbCurrent}>
 	<div slot="left">
 		<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">{title}</h1>
 		<p class="text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
