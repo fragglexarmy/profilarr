@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { Info, FolderOpen, Database, HelpCircle, Heart, Package, Users } from 'lucide-svelte';
+	import { Info, FolderOpen, Database, HelpCircle, Heart, Package } from 'lucide-svelte';
 	import VersionBadge from './components/VersionBadge.svelte';
 	import Table from '$ui/table/Table.svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
@@ -24,13 +24,6 @@
 		published_at: string;
 		prerelease: boolean;
 	};
-	type DevTeamMember = {
-		name: string;
-		avatarUrl: string;
-		remark?: string;
-		tags: string[];
-	};
-
 	type Section = {
 		title: string;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,21 +96,6 @@
 		}
 	];
 
-	const devTeam: DevTeamMember[] = [
-		{
-			name: 'santiagosayshey',
-			avatarUrl: 'https://avatars.githubusercontent.com/u/96866795?v=4',
-			remark: 'No gatekeeping allowed',
-			tags: ['Lead Profilarr Developer', 'Database Hater']
-		},
-		{
-			name: 'Seraphys',
-			avatarUrl: 'https://avatars.githubusercontent.com/u/156842860?v=4',
-			remark: 'Your sync broke? But the conditions are in order now!',
-			tags: ['Lead Database Developer', 'Sexy God']
-		}
-	];
-
 	const infoColumns: Column<InfoRowData>[] = [
 		{ key: 'label', header: 'Label', width: 'w-40' },
 		{ key: 'value', header: 'Value' }
@@ -135,11 +113,6 @@
 		{ key: 'prerelease', header: 'Type', width: 'w-24' }
 	];
 
-	const devColumns: Column<DevTeamMember>[] = [
-		{ key: 'name', header: 'Name' },
-		{ key: 'remark', header: 'Remark' },
-		{ key: 'tags', header: 'Tags' }
-	];
 </script>
 
 <div class="p-4 md:p-8">
@@ -427,55 +400,5 @@
 			<!-- Silently handle errors - don't show releases section if fetch fails -->
 		{/await}
 
-		<!-- Dev Team Section -->
-		<div class="space-y-2">
-			<div class="flex items-center gap-2">
-				<Users class="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
-				<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Dev Team</h2>
-			</div>
-			<Table columns={devColumns} data={devTeam} responsive>
-				<svelte:fragment slot="cell" let:row let:column>
-					{#if column.key === 'name'}
-						<div class="flex items-center gap-2">
-							<img
-								src={row.avatarUrl}
-								alt={`${row.name} avatar`}
-								loading="lazy"
-								class="h-8 w-8 rounded-md border border-neutral-300 object-cover dark:border-neutral-700/60"
-							/>
-							<span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-								{row.name}
-							</span>
-						</div>
-					{:else if column.key === 'remark'}
-						{#if row.remark}
-							<span class="text-sm text-neutral-600 dark:text-neutral-400">{row.remark}</span>
-						{:else}
-							<span class="text-sm italic text-neutral-400 dark:text-neutral-500">
-								Remark pending - someone should probably ask them
-							</span>
-						{/if}
-					{:else if column.key === 'tags'}
-						<div class="flex flex-wrap gap-2">
-							{#each row.tags as tag}
-								<Label variant="secondary" size="md" rounded="md">{tag}</Label>
-							{/each}
-						</div>
-					{/if}
-				</svelte:fragment>
-			</Table>
-		</div>
-
-		<div class="mt-8 border-t border-neutral-200/60 pt-4 dark:border-neutral-800/80">
-			<div class="space-y-1 text-center">
-				<p class="text-xs text-neutral-500 dark:text-neutral-400">
-					<span class="font-medium text-neutral-600 dark:text-neutral-300">Greetz:</span>
-					Ba11in0nABudget, delavicci, raphh, screamz, SFusion, some_guy
-				</p>
-				<p class="text-xs italic text-neutral-500 dark:text-neutral-400">
-					Dedicated to Faiza, for helping me find my heart.
-				</p>
-			</div>
-		</div>
 	</div>
 </div>
