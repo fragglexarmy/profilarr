@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { alertStore } from '$alerts/store';
-	import { Plus, Trash2, Bell, BellOff, MessageSquare, Send, Loader2, Pencil } from 'lucide-svelte';
+	import { Plus, Trash2, Bell, BellOff, MessageSquare, Send, Pencil } from 'lucide-svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import NotificationHistory from './components/NotificationHistory.svelte';
 	import Table from '$ui/table/Table.svelte';
@@ -194,28 +194,24 @@
 					}}
 				>
 					<input type="hidden" name="id" value={row.id} />
-					<button
+					<Button
+						icon={Send}
+						iconColor="text-accent-600 dark:text-accent-400"
+						size="xs"
 						type="submit"
 						disabled={testingServiceId === row.id}
-						class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-accent-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-accent-400 dark:hover:bg-neutral-700"
-						title="Send test notification"
-					>
-						{#if testingServiceId === row.id}
-							<Loader2 size={12} class="animate-spin" />
-						{:else}
-							<Send size={12} />
-						{/if}
-					</button>
+						loading={testingServiceId === row.id}
+						tooltip="Send test notification"
+					/>
 				</form>
 
 				<!-- Edit Button -->
-				<a
+				<Button
+					icon={Pencil}
+					size="xs"
 					href="/settings/notifications/edit/{row.id}"
-					class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-					title="Edit service"
-				>
-					<Pencil size={12} />
-				</a>
+					tooltip="Edit service"
+				/>
 
 				<!-- Delete Button -->
 				<form
@@ -236,17 +232,16 @@
 					}}
 				>
 					<input type="hidden" name="id" value={row.id} />
-					<button
-						type="button"
+					<Button
+						icon={Trash2}
+						iconColor="text-red-600 dark:text-red-400"
+						size="xs"
+						tooltip="Delete service"
 						on:click={(e) => {
-							const form = e.currentTarget.closest('form');
+							const form = e.target.closest('form');
 							if (form) openDeleteModal(row.id, row.name, form);
 						}}
-						class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-red-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:bg-neutral-700"
-						title="Delete service"
-					>
-						<Trash2 size={12} />
-					</button>
+					/>
 				</form>
 			</div>
 		</svelte:fragment>
