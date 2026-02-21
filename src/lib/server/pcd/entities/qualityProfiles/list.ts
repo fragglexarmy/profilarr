@@ -2,6 +2,7 @@
  * Quality profile list queries
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type {
 	Tag,
@@ -32,7 +33,7 @@ export async function list(cache: PCDCache): Promise<QualityProfileTableRow[]> {
 			'upgrade_until_score',
 			'upgrade_score_increment'
 		])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	if (profiles.length === 0) return [];
@@ -178,7 +179,7 @@ export async function names(cache: PCDCache): Promise<string[]> {
 	const profiles = await db
 		.selectFrom('quality_profiles')
 		.select(['name'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	return profiles.map((p) => p.name);
@@ -193,7 +194,7 @@ export async function select(cache: PCDCache): Promise<QualityProfileOption[]> {
 	const profiles = await db
 		.selectFrom('quality_profiles')
 		.select(['id', 'name'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	return profiles;

@@ -2,6 +2,7 @@
  * Custom format list queries
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { Tag, CustomFormatTableRow, ConditionRef } from '$shared/pcd/display.ts';
 
@@ -15,7 +16,7 @@ export async function list(cache: PCDCache): Promise<CustomFormatTableRow[]> {
 	const formats = await db
 		.selectFrom('custom_formats')
 		.select(['id', 'name', 'description'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	if (formats.length === 0) return [];

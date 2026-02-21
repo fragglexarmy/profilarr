@@ -2,6 +2,7 @@
  * Quality profile qualities queries
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { QualitiesPageData, OrderedItem, QualitiesGroup } from '$shared/pcd/display.ts';
 
@@ -16,7 +17,7 @@ export async function qualities(
 	const db = cache.kb;
 
 	// 1. Get all qualities
-	const allQualities = await db.selectFrom('qualities').select(['name']).orderBy('name').execute();
+	const allQualities = await db.selectFrom('qualities').select(['name']).orderBy(sql`name COLLATE NOCASE`).execute();
 
 	// 2. Get all groups for this profile
 	const groups = await db

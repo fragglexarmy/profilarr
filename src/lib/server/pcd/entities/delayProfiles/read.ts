@@ -6,6 +6,7 @@
  * Delay profile read operations
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { DelayProfilesRow, PreferredProtocol } from '$shared/pcd/display.ts';
 
@@ -59,7 +60,7 @@ export async function list(cache: PCDCache): Promise<DelayProfilesRow[]> {
 			'created_at',
 			'updated_at'
 		])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	return profiles.map(toDelayProfile);

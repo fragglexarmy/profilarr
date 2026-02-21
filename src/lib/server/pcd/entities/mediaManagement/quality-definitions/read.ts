@@ -2,6 +2,7 @@
  * Quality definitions read operations
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { ArrType } from '$shared/pcd/types.ts';
 import type {
@@ -19,7 +20,7 @@ export async function getAvailableQualities(cache: PCDCache, arrType: ArrType): 
 		.selectFrom('quality_api_mappings')
 		.where('arr_type', '=', arrType)
 		.select(['quality_name'])
-		.orderBy('quality_name')
+		.orderBy(sql`quality_name COLLATE NOCASE`)
 		.execute();
 
 	return rows.map(row => row.quality_name);

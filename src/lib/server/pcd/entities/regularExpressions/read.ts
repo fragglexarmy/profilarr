@@ -2,6 +2,7 @@
  * Regular expression read operations
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { Tag, RegularExpressionWithTags } from '$shared/pcd/display.ts';
 
@@ -15,7 +16,7 @@ export async function list(cache: PCDCache): Promise<RegularExpressionWithTags[]
 	const expressions = await db
 		.selectFrom('regular_expressions')
 		.select(['id', 'name', 'pattern', 'regex101_id', 'description', 'created_at', 'updated_at'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	if (expressions.length === 0) return [];

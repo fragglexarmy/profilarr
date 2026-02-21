@@ -2,6 +2,7 @@
  * Custom format condition read queries for test evaluation
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { ConditionData, ConditionListItem, CustomFormatWithConditions } from '$shared/pcd/display.ts';
 
@@ -220,7 +221,7 @@ export async function getAllConditionsForEvaluation(
 	const formats = await db
 		.selectFrom('custom_formats')
 		.select(['id', 'name'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	if (formats.length === 0) return [];
@@ -437,7 +438,7 @@ export async function listConditions(
 		.selectFrom('custom_format_conditions')
 		.select(['name', 'type', 'negate', 'required'])
 		.where('custom_format_name', '=', formatName)
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	return conditions.map((c) => ({

@@ -2,6 +2,7 @@
  * Quality profile scoring queries
  */
 
+import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
 import type { QualityProfileScoring, ProfileCfScores, AllCfScoresResult } from '$shared/pcd/display.ts';
 
@@ -34,7 +35,7 @@ export async function scoring(
 	const customFormats = await db
 		.selectFrom('custom_formats')
 		.select(['name'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	// 4. Get all tags for custom formats
@@ -114,7 +115,7 @@ export async function allCfScores(cache: PCDCache): Promise<AllCfScoresResult> {
 	const customFormats = await db
 		.selectFrom('custom_formats')
 		.select(['name'])
-		.orderBy('name')
+		.orderBy(sql`name COLLATE NOCASE`)
 		.execute();
 
 	// Get all quality profiles
