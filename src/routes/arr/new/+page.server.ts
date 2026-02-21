@@ -144,7 +144,7 @@ export const actions = {
 			});
 		}
 
-		// Redirect to the new instance page (outside try-catch since redirect throws)
-		redirect(303, `/arr/${id}/settings`);
+		// Redirect to the arr list page (outside try-catch since redirect throws)
+		redirect(303, '/arr');
 	}
 } satisfies Actions;

@@ -373,7 +373,7 @@
 					label="API Key"
 					name="api_key"
 					value={apiKey}
-					placeholder="Enter API key"
+					placeholder={mode === 'edit' ? '••••••••••••••••' : 'Enter API key'}
 					description={mode === 'edit' ? 'Leave blank to keep existing key' : ''}
 					required
 					private_
@@ -495,7 +495,7 @@
 			if (result.type === 'redirect') {
 				// For create mode, clear dirty state before redirect
 				clear();
-				alertStore.add('success', 'Instance created successfully');
+				alertStore.add('success', 'Arr instance configured! Visit the Settings tab to adjust library refresh intervals, cleanup, and more.');
 			}
 			await formUpdate({ reset: false });
 			saving = false;
