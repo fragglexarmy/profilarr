@@ -7,7 +7,7 @@
 	export let instanceType: string = '';
 
 	// --- Config cleanup types ---
-	type StaleItem = { id: number; name: string; strippedName: string };
+	type StaleItem = { id: number; name: string };
 	type SkippedItem = { item: StaleItem; reason: string };
 	type ConfigScanResult = { staleCustomFormats: StaleItem[]; staleQualityProfiles: StaleItem[] };
 	type ConfigDeleteResult = {
@@ -308,7 +308,7 @@
 								</p>
 							</div>
 							{#each configResult.skippedQualityProfiles as skipped}
-								<p class="pl-6 text-sm text-neutral-500 dark:text-neutral-400">{skipped.item.strippedName}</p>
+								<p class="pl-6 text-sm text-neutral-500 dark:text-neutral-400">{skipped.item.name}</p>
 							{/each}
 						</div>
 					{/if}

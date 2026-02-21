@@ -48,9 +48,9 @@ const cleanupHandler: JobHandler = async (job) => {
 			source: 'Cleanup',
 			meta: {
 				instance: instance.name,
-				deletedCFs: deleteResult.deletedCustomFormats.map((cf) => cf.strippedName),
-				deletedQPs: deleteResult.deletedQualityProfiles.map((qp) => qp.strippedName),
-				skippedQPs: deleteResult.skippedQualityProfiles.map((s) => s.item.strippedName),
+				deletedCFs: deleteResult.deletedCustomFormats.map((cf) => cf.name),
+				deletedQPs: deleteResult.deletedQualityProfiles.map((qp) => qp.name),
+				skippedQPs: deleteResult.skippedQualityProfiles.map((s) => s.item.name),
 				deletedEntities: entityDelete.deletedEntities.map((e) => e.title),
 				failedEntities: entityDelete.failedEntities.map((f) => f.entity.title)
 			}

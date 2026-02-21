@@ -11,7 +11,6 @@ import type {
 } from '$arr/types.ts';
 import {
 	type SyncArrType,
-	type QualityDefinition,
 	getAllQualities,
 	getLanguageForProfile,
 	mapQualityName
@@ -70,17 +69,15 @@ function convertGroupId(_groupId: number, index: number): number {
 /**
  * Transform a PCD quality profile to arr API format
  *
- * @param pcdFormatIdMap - Maps PCD CF names (unsuffixed) → arr IDs for this database's CFs.
- *                         Used to resolve explicit CF scores from the profile.
- * @param allFormatIdMap - Maps all CF names currently in the arr → arr IDs (includes all databases).
- *                         Used to include every CF with score 0 (arr validation requirement).
+ * @param formatIdMap - Maps PCD CF names → arr IDs.
+ *                      Used to resolve explicit CF scores and to include every CF with score 0
+ *                      (arr validation requirement).
  */
 export function transformQualityProfile(
 	profile: PcdQualityProfile,
 	arrType: SyncArrType,
 	qualityApiMappings: Map<string, string>,
-	pcdFormatIdMap: Map<string, number>,
-	allFormatIdMap: Map<string, number>
+	formatIdMap: Map<string, number>
 ): ArrQualityProfilePayload {
 	const allQualities = getAllQualities(arrType);
 
@@ -193,7 +190,7 @@ export function transformQualityProfile(
 
 	// Add explicit scores from profile (resolve via PCD names → arr IDs)
 	for (const cf of profile.customFormats) {
-		const formatId = pcdFormatIdMap.get(cf.formatName);
+		const formatId = formatIdMap.get(cf.formatName);
 		if (formatId !== undefined) {
 			formatItems.push({
 				format: formatId,
@@ -205,7 +202,7 @@ export function transformQualityProfile(
 	}
 
 	// Add all other formats with score 0 (arr validation requirement — every CF must be listed)
-	for (const [formatName, formatId] of allFormatIdMap) {
+	for (const [formatName, formatId] of formatIdMap) {
 		if (!processedFormatIds.has(formatId)) {
 			formatItems.push({
 				format: formatId,

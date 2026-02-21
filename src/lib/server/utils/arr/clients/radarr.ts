@@ -1,6 +1,5 @@
 import { BaseArrClient } from '../base.ts';
 import { HttpError } from '$utils/http/types.ts';
-import { stripNamespaceSuffix } from '$lib/server/sync/namespace.ts';
 import type {
 	RadarrMovie,
 	RadarrMovieFile,
@@ -132,7 +131,7 @@ export class RadarrClient extends BaseArrClient {
 				minScore,
 				progress,
 				cutoffMet: customFormatScore >= cutoffScore,
-				isProfilarrProfile: profilarrProfileNames?.has(stripNamespaceSuffix(profileName)) ?? false
+				isProfilarrProfile: profilarrProfileNames?.has(profileName) ?? false
 			};
 		});
 

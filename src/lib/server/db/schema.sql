@@ -484,22 +484,6 @@ CREATE TABLE arr_sync_media_management (
 );
 
 -- ==============================================================================
--- TABLE: arr_database_namespaces
--- Purpose: Per-(Arr instance, database) namespace index for invisible sync suffixes
--- Migration: 047_create_arr_database_namespaces.ts
--- ==============================================================================
-
-CREATE TABLE arr_database_namespaces (
-    instance_id    INTEGER NOT NULL,
-    database_id    INTEGER NOT NULL,
-    namespace_index INTEGER NOT NULL,
-    PRIMARY KEY (instance_id, database_id),
-    UNIQUE (instance_id, namespace_index),
-    FOREIGN KEY (instance_id) REFERENCES arr_instances(id) ON DELETE CASCADE,
-    FOREIGN KEY (database_id) REFERENCES database_instances(id) ON DELETE CASCADE
-);
-
--- ==============================================================================
 -- INDEXES
 -- Purpose: Improve query performance
 -- ==============================================================================

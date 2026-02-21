@@ -4,9 +4,6 @@
  *
  * This is a helper syncer used by quality profiles - custom formats must be
  * synced before quality profiles since profiles reference format IDs.
- *
- * Each database's CFs are suffixed with an invisible namespace character
- * so multiple databases can coexist in the same arr instance.
  */
 
 import type { BaseArrClient } from '$arr/base.ts';
@@ -15,32 +12,27 @@ import type { SyncArrType } from '../mappings.ts';
 import { transformCustomFormat, type PcdCustomFormat } from './transformer.ts';
 
 /**
- * Sync custom formats for a single database to an arr instance.
+ * Sync custom formats to an arr instance.
  *
- * @param suffix - Zero-width namespace suffix for this database
- * @returns Map of PCD format name (unsuffixed) → arr format ID.
+ * @returns Map of PCD format name → arr format ID.
  *          The caller uses this to resolve CF scores in quality profiles.
  */
 export async function syncCustomFormats(
 	client: BaseArrClient,
 	instanceId: number,
 	instanceType: SyncArrType,
-	pcdFormats: Map<string, PcdCustomFormat>,
-	suffix: string
+	pcdFormats: Map<string, PcdCustomFormat>
 ): Promise<Map<string, number>> {
-	// Get existing formats from arr (includes suffixed names from all databases)
 	const existingFormats = await client.getCustomFormats();
 	const existingMap = new Map(existingFormats.map((f) => [f.name, f.id!]));
 
-	// Maps PCD name (unsuffixed) → arr ID
-	const pcdFormatIdMap = new Map<string, number>();
+	const formatIdMap = new Map<string, number>();
 
 	for (const [pcdName, pcdFormat] of pcdFormats) {
 		const arrFormat = transformCustomFormat(pcdFormat, instanceType);
-		const suffixedName = pcdName + suffix;
-		arrFormat.name = suffixedName;
+		arrFormat.name = pcdName;
 
-		await logger.debug(`Compiled custom format "${pcdName}" (suffixed)`, {
+		await logger.debug(`Compiled custom format "${pcdName}"`, {
 			source: 'Compile:CustomFormat',
 			meta: {
 				instanceId,
@@ -50,24 +42,24 @@ export async function syncCustomFormats(
 		});
 
 		try {
-			if (existingMap.has(suffixedName)) {
+			if (existingMap.has(pcdName)) {
 				// Update existing
-				const existingId = existingMap.get(suffixedName)!;
+				const existingId = existingMap.get(pcdName)!;
 				arrFormat.id = existingId;
 				await client.updateCustomFormat(existingId, arrFormat);
-				pcdFormatIdMap.set(pcdName, existingId);
+				formatIdMap.set(pcdName, existingId);
 				await logger.debug(`Updated custom format "${pcdName}"`, {
 					source: 'Sync:CustomFormats',
-					meta: { instanceId, formatId: existingId, pcdName, suffixedName }
+					meta: { instanceId, formatId: existingId, pcdName }
 				});
 			} else {
 				// Create new
 				const response = await client.createCustomFormat(arrFormat);
-				existingMap.set(suffixedName, response.id!);
-				pcdFormatIdMap.set(pcdName, response.id!);
+				existingMap.set(pcdName, response.id!);
+				formatIdMap.set(pcdName, response.id!);
 				await logger.debug(`Created custom format "${pcdName}"`, {
 					source: 'Sync:CustomFormats',
-					meta: { instanceId, formatId: response.id, pcdName, suffixedName }
+					meta: { instanceId, formatId: response.id, pcdName }
 				});
 			}
 		} catch (error) {
@@ -77,7 +69,6 @@ export async function syncCustomFormats(
 				meta: {
 					instanceId,
 					pcdName,
-					suffixedName,
 					request: arrFormat,
 					...errorDetails
 				}
@@ -85,7 +76,15 @@ export async function syncCustomFormats(
 		}
 	}
 
-	return pcdFormatIdMap;
+	// Include all existing CFs so the QP transformer can list every CF with score 0
+	// (arr validation requires every CF on the instance to appear in the profile's formatItems)
+	for (const [name, id] of existingMap) {
+		if (!formatIdMap.has(name)) {
+			formatIdMap.set(name, id);
+		}
+	}
+
+	return formatIdMap;
 }
 
 /**
