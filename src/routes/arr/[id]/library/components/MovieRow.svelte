@@ -57,14 +57,14 @@
 			<div class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
 				<div
 					class="h-full rounded-full transition-all {getProgressColor(row.progress, row.cutoffMet)}"
-					style="width: {Math.min(row.progress * 100, 100)}%"
+					style="width: {Math.max(0, Math.min(row.progress * 100, 100))}%"
 				></div>
 			</div>
 			{#if row.cutoffMet}
 				<Check size={16} class="flex-shrink-0 text-green-600 dark:text-green-400" />
 			{:else}
 				<span class="w-10 text-right font-mono text-xs text-neutral-500 dark:text-neutral-400">
-					{Math.round(row.progress * 100)}%
+					{Math.max(0, Math.min(Math.round(row.progress * 100), 100))}%
 				</span>
 			{/if}
 		</div>
