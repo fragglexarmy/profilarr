@@ -3,15 +3,16 @@
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
+	import SearchModeToggle from '$ui/actions/SearchModeToggle.svelte';
+	import TagInput from '$ui/form/TagInput.svelte';
 	import ViewToggle from '$ui/actions/ViewToggle.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import CloneModal from '$ui/modal/CloneModal.svelte';
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
-	import SearchFilterAction from '$ui/actions/SearchFilterAction.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
-	import { browser } from '$app/environment';
-	import { Info, Plus } from 'lucide-svelte';
+	import { filterByText, filterByTags, createSearchFieldState } from '$lib/client/utils/search';
+	import { Info, Plus, Type, Tag, AlignLeft, ListChecks } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
 	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
@@ -49,79 +50,87 @@
 		}
 	}
 
-	const SEARCH_FILTER_STORAGE_KEY = 'customFormatsSearchFilter';
-
-	// Default search filter options
-	const defaultSearchOptions = [
-		{ key: 'name', label: 'Name', enabled: true },
-		{ key: 'tags', label: 'Tags', enabled: true },
-		{ key: 'description', label: 'Description', enabled: false }
+	// Search field options
+	const searchFields = [
+		{ value: 'name', label: 'Name' },
+		{ value: 'tags', label: 'Tags' },
+		{ value: 'description', label: 'Description' },
+		{ value: 'conditions', label: 'Conditions' }
 	];
 
-	// Load saved preferences from localStorage or use defaults
-	function loadSearchOptions() {
-		if (!browser) return defaultSearchOptions;
-		try {
-			const saved = localStorage.getItem(SEARCH_FILTER_STORAGE_KEY);
-			if (saved) {
-				const savedMap = new Map(JSON.parse(saved) as [string, boolean][]);
-				return defaultSearchOptions.map((opt) => ({
-					...opt,
-					enabled: savedMap.has(opt.key) ? savedMap.get(opt.key)! : opt.enabled
-				}));
-			}
-		} catch {
-			// Ignore parse errors, use defaults
+	const searchFieldIcons: Record<string, typeof Type> = {
+		name: Type,
+		tags: Tag,
+		description: AlignLeft,
+		conditions: ListChecks
+	};
+
+	const searchState = createSearchFieldState('customFormatsSearch', searchFields);
+
+	let activeSearchField = searchState.initialField;
+	let searchTags: string[] = searchState.initialTags;
+
+	$: isTagMode = activeSearchField === 'tags' || activeSearchField === 'conditions';
+	$: searchFieldIcon = searchFieldIcons[activeSearchField] || Type;
+
+	function handleFieldChange(field: string) {
+		if (field === activeSearchField) return;
+		const wasTagMode = activeSearchField === 'tags' || activeSearchField === 'conditions';
+		const willBeTagMode = field === 'tags' || field === 'conditions';
+		if (willBeTagMode && !wasTagMode) {
+			search.clear();
+		} else if (!willBeTagMode && wasTagMode) {
+			searchTags = [];
+			searchState.clearTags();
+		} else if (willBeTagMode && wasTagMode) {
+			// Switching between tag modes — clear tags
+			searchTags = [];
+			searchState.clearTags();
 		}
-		return defaultSearchOptions;
+		activeSearchField = field;
+		searchState.saveField(field);
 	}
 
-	let searchOptions = loadSearchOptions();
-
-	// Save to localStorage when options change
-	$: if (browser) {
-		const enabledMap = searchOptions.map((opt) => [opt.key, opt.enabled] as [string, boolean]);
-		localStorage.setItem(SEARCH_FILTER_STORAGE_KEY, JSON.stringify(enabledMap));
+	function handleTagsChange(tags: string[]) {
+		searchTags = tags;
+		searchState.saveTags(tags);
 	}
 
-	// Initialize data page store (we'll use search and view, but do our own filtering)
+	// Field accessors for text search
+	const fieldAccessors: Record<
+		string,
+		(item: CustomFormatTableRow) => string | string[] | null
+	> = {
+		name: (item) => item.name,
+		tags: (item) => item.tags.map((t) => t.name),
+		description: (item) => item.description ?? null,
+		conditions: (item) => item.conditions.map((c) => c.name)
+	};
+
+	// Initialize data page store (we use search and view, but do our own filtering)
 	const { search, view, setItems } = createDataPageStore(data.customFormats, {
 		storageKey: 'customFormatsView',
 		searchKeys: ['name'], // Placeholder, we do our own filtering
 		searchKey: `customFormatsSearch:${data.currentDatabase.id}`
 	});
 
-	// Extract the debounced query store for reactive access
 	const debouncedQuery = search.debouncedQuery;
 
 	// Update items when data changes (e.g., switching databases)
 	$: setItems(data.customFormats);
 
-	// Custom filtering based on selected search options
-	$: filtered = filterFormats(data.customFormats, $debouncedQuery, searchOptions);
-
-	function filterFormats(
-		items: CustomFormatTableRow[],
-		query: string,
-		options: typeof searchOptions
-	): CustomFormatTableRow[] {
-		if (!query) return items;
-
-		const queryLower = query.toLowerCase();
-		const enabledKeys = options.filter((o) => o.enabled).map((o) => o.key);
-
-		return items.filter((item) => {
-			return enabledKeys.some((key) => {
-				if (key === 'tags') {
-					// Search within tag names
-					return item.tags.some((tag) => tag.name.toLowerCase().includes(queryLower));
-				}
-				const value = item[key as keyof CustomFormatTableRow];
-				if (value == null) return false;
-				return String(value).toLowerCase().includes(queryLower);
-			});
-		});
-	}
+	// Filtering based on active search field
+	$: filtered = (() => {
+		if (isTagMode) {
+			const getItemTags = activeSearchField === 'conditions'
+				? (item: CustomFormatTableRow) => item.conditions.map((c) => c.name)
+				: (item: CustomFormatTableRow) => item.tags.map((t) => t.name);
+			return filterByTags(data.customFormats, searchTags, getItemTags);
+		}
+		return filterByText(data.customFormats, $debouncedQuery, fieldAccessors, [
+			activeSearchField
+		]);
+	})();
 
 	// Map databases to tabs
 	$: tabs = data.databases.map((db) => ({
@@ -141,13 +150,28 @@
 	<Tabs {tabs} responsive />
 
 	<!-- Actions Bar -->
-	<ActionsBar className="w-full justify-center mx-auto md:w-auto md:mx-0">
-		<SearchAction searchStore={search} placeholder="Search custom formats..." responsive />
+	<ActionsBar>
+		<SearchModeToggle
+			options={searchFields}
+			value={activeSearchField}
+			icon={searchFieldIcon}
+			onchange={handleFieldChange}
+		/>
+		{#if isTagMode}
+			<div class="flex-1">
+				<TagInput
+					tags={searchTags}
+					placeholder="Type a {activeSearchField === 'conditions' ? 'condition' : 'tag'} name and press Enter... (prefix NOT: to exclude)"
+					onchange={handleTagsChange}
+				/>
+			</div>
+		{:else}
+			<SearchAction searchStore={search} placeholder="Search {searchFields.find(f => f.value === activeSearchField)?.label.toLowerCase() ?? ''}..." responsive />
+		{/if}
 		<ActionButton
 			icon={Plus}
 			on:click={() => goto(`/custom-formats/${data.currentDatabase.id}/new`)}
 		/>
-		<SearchFilterAction bind:options={searchOptions} />
 		<ViewToggle bind:value={$view} />
 		<ActionButton icon={Info} on:click={() => (infoModalOpen = true)} />
 	</ActionsBar>
