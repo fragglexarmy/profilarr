@@ -194,29 +194,10 @@
 			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Conditions</h3>
 			<p>
 				Each custom format has one or more conditions grouped by type (Release Title, Release Group,
-				Source, Resolution, etc.). Matching works like this:
+				Source, Resolution, etc.). Conditions use AND logic between types and OR logic within a type,
+				with <strong>Required</strong> and <strong>Negate</strong> modifiers to change this behavior.
+				Each condition type is explained in detail on the conditions tab when editing a format.
 			</p>
-			<ul class="mt-2 list-inside list-disc space-y-1">
-				<li><strong>Between types</strong> &mdash; AND: every type must pass</li>
-				<li><strong>Within a type</strong> &mdash; OR: any condition in that type can satisfy it</li>
-			</ul>
-		</section>
-
-		<section>
-			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Negate &amp; Required</h3>
-			<p>Two modifiers change the default matching behavior:</p>
-			<ul class="mt-2 list-inside list-disc space-y-1">
-				<li>
-					<strong>Required</strong> &mdash; Forces a condition to match, turning that type's logic
-					from OR to AND. If any condition in a type is required, all required conditions in that
-					type must match.
-				</li>
-				<li>
-					<strong>Negate</strong> &mdash; Inverts a condition so it matches when the pattern is
-					<em>absent</em>. Useful for excluding releases &mdash; e.g. negating a "CAM" pattern
-					rejects anything with CAM in the name.
-				</li>
-			</ul>
 		</section>
 
 		<section>

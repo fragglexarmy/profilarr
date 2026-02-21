@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { tick } from 'svelte';
-	import { Plus, Save, Loader2 } from 'lucide-svelte';
+	import { Plus, Save, Loader2, Info } from 'lucide-svelte';
 	import ConditionCard from './components/ConditionCard.svelte';
 	import Badge from '$ui/badge/Badge.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { sortConditions } from '$shared/pcd/conditions';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 	import type { ConditionData } from '$shared/pcd/display.ts';
+
+	let infoModalOpen = false;
 
 	// Extended type with stable key for Svelte keying
 	type KeyedCondition = ConditionData & { _key: string };
@@ -250,6 +253,12 @@
 		<svelte:fragment slot="right">
 			<div class="flex items-center gap-2">
 				<Button
+					text="Info"
+					icon={Info}
+					variant="secondary"
+					on:click={() => (infoModalOpen = true)}
+				/>
+				<Button
 					text="Add Condition"
 					icon={Plus}
 					iconColor="text-blue-600 dark:text-blue-400"
@@ -325,3 +334,100 @@
 		{/if}
 	</div>
 </form>
+
+<InfoModal bind:open={infoModalOpen} header="Condition Types">
+	<div class="space-y-4 text-sm text-neutral-700 dark:text-neutral-300">
+		<section>
+			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">How Conditions Work</h3>
+			<p>
+				Conditions are grouped by type. Between types, logic is <strong>AND</strong> &mdash; every
+				type must pass. Within a type, logic is <strong>OR</strong> &mdash; any condition can satisfy
+				it. Two modifiers change this:
+			</p>
+			<ul class="mt-2 list-inside list-disc space-y-1">
+				<li>
+					<strong>Required</strong> &mdash; Changes the type's logic from OR to AND. All required
+					conditions in that type must match.
+				</li>
+				<li>
+					<strong>Negate</strong> &mdash; Inverts the condition so it matches when the pattern is
+					absent.
+				</li>
+			</ul>
+		</section>
+
+		<div class="border-t border-neutral-200 pt-4 dark:border-neutral-700">
+			<h3 class="mb-3 font-semibold text-neutral-900 dark:text-neutral-100">Types</h3>
+			<div class="space-y-3">
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Release Title</div>
+					<p class="mt-0.5">
+						Matches regex patterns against the full release name. Uses reusable patterns managed on
+						the Regular Expressions page.
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Release Group</div>
+					<p class="mt-0.5">
+						Matches regex patterns against the release group name (the tag after the final dash, e.g.
+						FraMeSToR).
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Edition</div>
+					<p class="mt-0.5">
+						Matches regex patterns against the edition field (Director's Cut, Extended, etc.). Radarr
+						only.
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Resolution</div>
+					<p class="mt-0.5">
+						Matches the parsed video resolution (360p, 480p, 576p, 720p, 1080p, 2160p).
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Source</div>
+					<p class="mt-0.5">
+						Matches the release source &mdash; where the content was captured from (BluRay, WEB-DL,
+						WEBRip, DVD, Television, etc.).
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Quality Modifier</div>
+					<p class="mt-0.5">
+						Matches quality modifiers like REMUX, BRDISK, or Regional. Radarr only.
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Language</div>
+					<p class="mt-0.5">Matches the detected audio language of the release.</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Release Type</div>
+					<p class="mt-0.5">
+						Matches the type of TV release (Season Pack, Single Episode, etc.). Sonarr only.
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Indexer Flag</div>
+					<p class="mt-0.5">
+						Matches flags set by the indexer (Freeleech, Halfleech, Internal, etc.).
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Size</div>
+					<p class="mt-0.5">
+						Matches the file size of the release. Set a minimum, maximum, or both (in GB).
+					</p>
+				</div>
+				<div>
+					<div class="font-medium text-neutral-800 dark:text-neutral-200">Year</div>
+					<p class="mt-0.5">
+						Matches the release year. Set a minimum, maximum, or both.
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</InfoModal>
