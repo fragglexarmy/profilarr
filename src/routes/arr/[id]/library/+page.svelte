@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { AlertTriangle, Film, ExternalLink } from 'lucide-svelte';
+	import Button from '$ui/button/Button.svelte';
 	import { browser } from '$app/environment';
 	import { goto, invalidateAll } from '$app/navigation';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
@@ -668,16 +669,16 @@
 
 					<svelte:fragment slot="actions" let:row>
 						{#if !loading && !refreshing && row.tmdbId}
-							<a
+							<Button
+								icon={ExternalLink}
+								size="xs"
+								variant="secondary"
 								href="{baseUrl}/movie/{row.tmdbId}"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-								title="Open in Radarr"
-								on:click|stopPropagation
-							>
-								<ExternalLink size={14} />
-							</a>
+								tooltip="Open in Radarr"
+								on:click={(e) => e.stopPropagation()}
+							/>
 						{/if}
 					</svelte:fragment>
 
@@ -733,16 +734,16 @@
 
 					<svelte:fragment slot="actions" let:row>
 						{#if !loading && !refreshing && row.tvdbId}
-							<a
+							<Button
+								icon={ExternalLink}
+								size="xs"
+								variant="secondary"
 								href="{baseUrl}/series/{row.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="inline-flex h-7 w-7 items-center justify-center rounded border border-neutral-300 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-								title="Open in Sonarr"
-								on:click|stopPropagation
-							>
-								<ExternalLink size={14} />
-							</a>
+								tooltip="Open in Sonarr"
+								on:click={(e) => e.stopPropagation()}
+							/>
 						{/if}
 					</svelte:fragment>
 
