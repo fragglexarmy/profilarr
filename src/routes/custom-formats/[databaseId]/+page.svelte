@@ -184,30 +184,60 @@
 				What Are Custom Formats?
 			</h3>
 			<p>
-				Custom formats are rules that match specific release characteristics like codec, resolution,
-				source, or release group. They're used to score releases and guide quality decisions.
+				Custom formats identify specific release characteristics &mdash; codec, resolution, source,
+				release group, and more. When a release matches a format's conditions, quality profiles use
+				its score to decide which releases are preferred.
 			</p>
 		</section>
 
 		<section>
-			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">How They Work</h3>
+			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Conditions</h3>
 			<p>
-				Each custom format contains one or more conditions. A release must match all required
-				conditions (or at least one non-required condition) to be assigned the custom format.
-				Quality profiles then assign scores to determine which releases are preferred.
+				Each custom format has one or more conditions grouped by type (Release Title, Release Group,
+				Source, Resolution, etc.). Matching works like this:
 			</p>
+			<ul class="mt-2 list-inside list-disc space-y-1">
+				<li><strong>Between types</strong> &mdash; AND: every type must pass</li>
+				<li><strong>Within a type</strong> &mdash; OR: any condition in that type can satisfy it</li>
+			</ul>
 		</section>
 
 		<section>
-			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Condition Types</h3>
-			<ul class="list-inside list-disc space-y-1">
-				<li><strong>Release Title</strong> - Match patterns in the release name</li>
-				<li><strong>Release Group</strong> - Match specific release groups</li>
-				<li><strong>Edition</strong> - Match edition names (Director's Cut, etc.)</li>
-				<li><strong>Language</strong> - Match audio language</li>
-				<li><strong>Source</strong> - Match release source (BluRay, WEB, etc.)</li>
-				<li><strong>Resolution</strong> - Match video resolution</li>
+			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">Negate &amp; Required</h3>
+			<p>Two modifiers change the default matching behavior:</p>
+			<ul class="mt-2 list-inside list-disc space-y-1">
+				<li>
+					<strong>Required</strong> &mdash; Forces a condition to match, turning that type's logic
+					from OR to AND. If any condition in a type is required, all required conditions in that
+					type must match.
+				</li>
+				<li>
+					<strong>Negate</strong> &mdash; Inverts a condition so it matches when the pattern is
+					<em>absent</em>. Useful for excluding releases &mdash; e.g. negating a "CAM" pattern
+					rejects anything with CAM in the name.
+				</li>
 			</ul>
+		</section>
+
+		<section>
+			<h3 class="mb-2 font-semibold text-neutral-900 dark:text-neutral-100">
+				Regular Expressions in Profilarr
+			</h3>
+			<p>
+				Release Title conditions use regular expressions (regex) to match patterns in release names.
+				In Profilarr, regex patterns are managed as their own reusable entity &mdash; a single pattern
+				can be shared across multiple custom formats. When a pattern is updated, every format using it
+				gets the change automatically.
+			</p>
+			<p class="mt-2">
+				You can browse and manage patterns on the
+				<a
+					href="/regular-expressions/{data.currentDatabase.id}"
+					class="font-medium text-accent-600 underline hover:text-accent-500 dark:text-accent-400 dark:hover:text-accent-300"
+				>
+					Regular Expressions
+				</a> page.
+			</p>
 		</section>
 	</div>
 </InfoModal>
