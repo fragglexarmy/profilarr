@@ -235,6 +235,11 @@ export const actions: Actions = {
 			return fail(404, { error: 'Instance not found' });
 		}
 
+		const dpSync = arrSyncQueries.getDelayProfilesSync(id);
+		if (!dpSync.databaseId || !dpSync.profileName) {
+			return fail(400, { error: 'No delay profile configured' });
+		}
+
 		const status = arrSyncQueries.getSyncConfigStatus(id);
 		if (status.delayProfiles.syncStatus === 'pending' || status.delayProfiles.syncStatus === 'in_progress') {
 			return fail(409, { error: 'Sync already in progress' });
@@ -281,6 +286,11 @@ export const actions: Actions = {
 			return fail(404, { error: 'Instance not found' });
 		}
 
+		const qpSync = arrSyncQueries.getQualityProfilesSync(id);
+		if (qpSync.selections.length === 0) {
+			return fail(400, { error: 'No quality profiles configured' });
+		}
+
 		const status = arrSyncQueries.getSyncConfigStatus(id);
 		if (status.qualityProfiles.syncStatus === 'pending' || status.qualityProfiles.syncStatus === 'in_progress') {
 			return fail(409, { error: 'Sync already in progress' });
@@ -325,6 +335,11 @@ export const actions: Actions = {
 		const instance = arrInstancesQueries.getById(id);
 		if (!instance) {
 			return fail(404, { error: 'Instance not found' });
+		}
+
+		const mmSync = arrSyncQueries.getMediaManagementSync(id);
+		if (!mmSync.namingDatabaseId && !mmSync.qualityDefinitionsDatabaseId && !mmSync.mediaSettingsDatabaseId) {
+			return fail(400, { error: 'No media management configured' });
 		}
 
 		const status = arrSyncQueries.getSyncConfigStatus(id);

@@ -274,6 +274,7 @@
 		{saving}
 		{syncing}
 		{isDirty}
+		hasConfig={state.namingDatabaseId !== null || state.qualityDefinitionsDatabaseId !== null || state.mediaSettingsDatabaseId !== null}
 		onWarning={(msg) => alertStore.add('warning', msg)}
 		on:save={handleSave}
 		on:sync={handleSync}

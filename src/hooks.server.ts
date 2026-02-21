@@ -16,6 +16,7 @@ import { logger } from '$logger/logger.ts';
 import { db } from '$db/db.ts';
 import { runMigrations } from '$db/migrations.ts';
 import { initializeJobs } from '$jobs/init.ts';
+import { recoverInterruptedSyncs } from '$lib/server/sync/utils.ts';
 import { pcdManager } from '$pcd/index.ts';
 import {
 	getAuthState,
@@ -76,6 +77,9 @@ if (!isReload) {
 
 	// Initialize and start job queue
 	await initializeJobs();
+
+	// Recover any syncs that were interrupted by a restart
+	await recoverInterruptedSyncs();
 
 	// Clean expired sessions on startup
 	const expiredCount = cleanupExpiredSessions();

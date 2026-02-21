@@ -622,18 +622,20 @@ export const arrSyncQueries = {
 	},
 
 	/**
-	 * Reset any in_progress syncs back to pending (for startup recovery)
+	 * Reset any pending/in_progress syncs back to idle on startup.
+	 * If the server restarted, the jobs that were supposed to process
+	 * these are gone — neither state is valid anymore.
 	 */
 	recoverInterruptedSyncs(): number {
 		let count = 0;
 		count += db.execute(
-			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'pending' WHERE sync_status = 'in_progress'"
+			"UPDATE arr_sync_quality_profiles_config SET sync_status = 'idle' WHERE sync_status IN ('pending', 'in_progress')"
 		);
 		count += db.execute(
-			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'pending' WHERE sync_status = 'in_progress'"
+			"UPDATE arr_sync_delay_profiles_config SET sync_status = 'idle' WHERE sync_status IN ('pending', 'in_progress')"
 		);
 		count += db.execute(
-			"UPDATE arr_sync_media_management SET sync_status = 'pending' WHERE sync_status = 'in_progress'"
+			"UPDATE arr_sync_media_management SET sync_status = 'idle' WHERE sync_status IN ('pending', 'in_progress')"
 		);
 		return count;
 	},

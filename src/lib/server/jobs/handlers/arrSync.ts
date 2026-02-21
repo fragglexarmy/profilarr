@@ -81,6 +81,7 @@ const arrSyncHandler: JobHandler = async (job) => {
 		}
 
 		if (!handler.hasConfig(instanceId)) {
+			handler.completeSync(instanceId);
 			results.push(`${section}: skipped`);
 			continue;
 		}

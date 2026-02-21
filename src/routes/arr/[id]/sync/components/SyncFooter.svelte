@@ -11,6 +11,7 @@
 	export let syncing: boolean = false;
 	export let isDirty: boolean = false;
 	export let canSave: boolean = true;
+	export let hasConfig: boolean = true;
 	export let warning: string | null = null;
 	export let onWarning: ((message: string) => void) | undefined = undefined;
 
@@ -22,9 +23,9 @@
 		{ value: 'schedule', label: 'Schedule' }
 	] as const;
 
-	// Save disabled when not dirty or can't save, Sync disabled when dirty (unsaved changes)
+	// Save disabled when not dirty or can't save, Sync disabled when dirty (unsaved changes) or nothing configured
 	$: saveDisabled = saving || !isDirty || !canSave;
-	$: syncDisabled = syncing || isDirty;
+	$: syncDisabled = syncing || isDirty || !hasConfig;
 
 	function selectTrigger(value: (typeof triggerOptions)[number]['value'], enabled: boolean) {
 		// Keep trigger single-select: selecting a toggle sets it; unchecking the active one is ignored.

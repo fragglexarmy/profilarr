@@ -152,6 +152,7 @@
 		{saving}
 		{syncing}
 		{isDirty}
+		hasConfig={state.databaseId !== null && state.profileName !== null}
 		onWarning={(msg) => alertStore.add('warning', msg)}
 		on:save={handleSave}
 		on:sync={handleSync}
