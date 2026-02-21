@@ -9,6 +9,7 @@
 	import type { RadarrLibraryItem, SonarrLibraryItem, SonarrEpisodeItem } from '$utils/arr/types.ts';
 	import { getPersistentSearchStore, type SearchStore } from '$stores/search';
 	import { libraryCache } from '$stores/libraryCache';
+	import { sortTitle } from '$shared/utils/sort.ts';
 
 	import LibraryActionBar from './components/LibraryActionBar.svelte';
 	import MovieRow from './components/MovieRow.svelte';
@@ -27,6 +28,21 @@
 	$: searchStore = getPersistentSearchStore(`arrLibrarySearch:${data.instance.id}`, {
 		debounceMs: 150
 	});
+
+	// Search mode (Radarr supports title + CF search, Sonarr title only)
+	let searchMode: 'title' | 'customFormats' = 'title';
+	let cfSearchTags: string[] = [];
+
+	function handleSearchModeChange(mode: 'title' | 'customFormats') {
+		if (mode === searchMode) return;
+		// Clear the other mode's state when switching
+		if (mode === 'title') {
+			cfSearchTags = [];
+		} else {
+			searchStore.clear();
+		}
+		searchMode = mode;
+	}
 
 	// ==========================================================================
 	// Library Data State
@@ -275,6 +291,9 @@
 	$: uniqueProfiles = [
 		...new Set((library as Array<{ qualityProfileName: string }>).map((m) => m.qualityProfileName))
 	].sort();
+	$: uniqueCustomFormats = isRadarr
+		? [...new Set(radarrLibrary.flatMap((m) => m.scoreBreakdown.map((s) => s.name)))].sort()
+		: [];
 
 	function toggleFilter(
 		field: FilterField,
@@ -324,15 +343,28 @@
 
 	$: moviesWithFiles = (() => {
 		if (!isRadarr) return [];
-		const filters = activeFilters;
-		let result = allMoviesWithFiles.filter(
-			(m) => !debouncedQuery || m.title.toLowerCase().includes(debouncedQuery.toLowerCase())
-		);
+		let result = allMoviesWithFiles;
+
+		// Title search (only in title mode)
+		if (searchMode === 'title' && debouncedQuery) {
+			result = result.filter((m) =>
+				m.title.toLowerCase().includes(debouncedQuery.toLowerCase())
+			);
+		}
+
+		// CF tag filter (only in CF mode)
+		if (searchMode === 'customFormats' && cfSearchTags.length > 0) {
+			result = result.filter((m) => {
+				const cfNames = new Set(m.scoreBreakdown.map((s) => s.name.toLowerCase()));
+				return cfSearchTags.every((tag) => cfNames.has(tag.toLowerCase()));
+			});
+		}
+
 		return applyFilters(result);
 	})();
 
 	const allRadarrColumns: Column<RadarrLibraryItem>[] = [
-		{ key: 'title', header: 'Title', align: 'left', sortable: true },
+		{ key: 'title', header: 'Title', align: 'left', sortable: true, sortAccessor: (row) => sortTitle(row.title) },
 		{ key: 'qualityProfileName', header: 'Profile', align: 'left', width: 'w-40', sortable: true },
 		{ key: 'qualityName', header: 'Quality', align: 'left', width: 'w-32', sortable: true },
 		{
@@ -415,7 +447,7 @@
 	})();
 
 	const allSonarrColumns: Column<SonarrLibraryItem>[] = [
-		{ key: 'title', header: 'Title', align: 'left', sortable: true },
+		{ key: 'title', header: 'Title', align: 'left', sortable: true, sortAccessor: (row) => sortTitle(row.title) },
 		{ key: 'qualityProfileName', header: 'Profile', align: 'left', width: 'w-40', sortable: true },
 		{
 			key: 'episodes',
@@ -577,6 +609,10 @@
 			onRefresh={handleRefresh}
 			onOpen={handleOpen}
 			instanceType={data.instance.type}
+			{searchMode}
+			onSearchModeChange={handleSearchModeChange}
+			cfTags={cfSearchTags}
+			onCfTagsChange={(tags) => (cfSearchTags = tags)}
 		/>
 
 		{#if isRadarr}
@@ -609,7 +645,7 @@
 					pageSize={25}
 					responsive
 					flushExpanded
-					emptyMessage={activeFilters.length > 0 || debouncedQuery
+					emptyMessage={activeFilters.length > 0 || debouncedQuery || cfSearchTags.length > 0
 						? 'No movies match the current filters'
 						: 'No movies with files'}
 				>

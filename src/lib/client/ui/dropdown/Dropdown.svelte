@@ -82,7 +82,7 @@
 
 <div
 	bind:this={dropdownEl}
-	class="z-50 border border-neutral-300 bg-white shadow-lg dark:border-neutral-700/60 dark:bg-neutral-800 {roundedClass} {fixed
+	class="z-50 overflow-hidden border border-neutral-300 bg-white shadow-lg dark:border-neutral-700/60 dark:bg-neutral-800 {roundedClass} {fixed
 		? 'fixed'
 		: 'absolute top-full ' + marginClass} {positionClass}"
 	style="min-width: {minWidth}; {fixed ? fixedStyle : ''}"

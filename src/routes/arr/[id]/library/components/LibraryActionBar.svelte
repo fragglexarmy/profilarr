@@ -4,13 +4,16 @@
 		SlidersHorizontal,
 		TableProperties,
 		RefreshCw,
-		ExternalLink
+		ExternalLink,
+		Type,
+		Palette
 	} from 'lucide-svelte';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ActionButton from '$ui/actions/ActionButton.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import IconCheckbox from '$ui/form/IconCheckbox.svelte';
+	import TagInput from '$ui/form/TagInput.svelte';
 	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 	import { type SearchStore } from '$stores/search';
 
@@ -45,6 +48,12 @@
 	export let onOpen: () => void;
 	export let instanceType: string = 'radarr';
 
+	// Search mode (Radarr only)
+	export let searchMode: 'title' | 'customFormats' = 'title';
+	export let onSearchModeChange: (mode: 'title' | 'customFormats') => void = () => {};
+	export let cfTags: string[] = [];
+	export let onCfTagsChange: (tags: string[]) => void = () => {};
+
 	$: isRadarr = instanceType === 'radarr';
 	$: searchPlaceholder = isRadarr ? 'Search movies...' : 'Search series...';
 	$: openLabel = isRadarr ? 'Open in Radarr' : 'Open in Sonarr';
@@ -52,10 +61,55 @@
 	$: filterDescription = isRadarr
 		? 'Filter movies by quality or profile'
 		: 'Filter series by profile';
+
+	const searchModes = [
+		{ value: 'title' as const, label: 'Title' },
+		{ value: 'customFormats' as const, label: 'Custom Formats' }
+	];
+
+	$: searchModeIcon = searchMode === 'title' ? Type : Palette;
 </script>
 
 <ActionsBar>
-	<SearchAction {searchStore} placeholder={searchPlaceholder} responsive />
+	{#if isRadarr}
+		<ActionButton icon={searchModeIcon} hasDropdown={true} dropdownPosition="left">
+			<svelte:fragment slot="dropdown" let:dropdownPosition>
+				<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="12rem">
+					<div class="py-1">
+						{#each searchModes as mode}
+							<button
+								type="button"
+								on:click={() => onSearchModeChange(mode.value)}
+								class="flex w-full items-center justify-between gap-3 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 {searchMode ===
+								mode.value
+									? 'bg-neutral-50 dark:bg-neutral-700'
+									: ''}"
+							>
+								<span class="text-neutral-700 dark:text-neutral-300">{mode.label}</span>
+								<IconCheckbox
+									checked={searchMode === mode.value}
+									icon={Check}
+									color="blue"
+									shape="circle"
+								/>
+							</button>
+						{/each}
+					</div>
+				</Dropdown>
+			</svelte:fragment>
+		</ActionButton>
+	{/if}
+	{#if searchMode === 'title' || !isRadarr}
+		<SearchAction {searchStore} placeholder={searchPlaceholder} responsive />
+	{:else}
+		<div class="flex-1">
+			<TagInput
+				tags={cfTags}
+				placeholder="Type a custom format name and press Enter..."
+				onchange={onCfTagsChange}
+			/>
+		</div>
+	{/if}
 	<ActionButton icon={SlidersHorizontal} hasDropdown={true} dropdownPosition="right">
 		<svelte:fragment slot="dropdown" let:dropdownPosition let:open>
 			<Dropdown position={dropdownPosition} mobilePosition="middle" minWidth="16rem">

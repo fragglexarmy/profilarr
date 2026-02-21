@@ -3,15 +3,13 @@
  * Defines all available selectors for upgrade item selection
  */
 
+import { sortTitle } from '$shared/utils/sort.ts';
+
 export interface Selector<T = any> {
 	id: string;
 	label: string;
 	description: string;
 	select: (items: T[], count: number) => T[];
-}
-
-function sortTitle(title: string | undefined): string {
-	return (title || '').toLowerCase().replace(/^[^a-z0-9]+/, '').replace(/^(the|a|an)\s+/, '');
 }
 
 /**
