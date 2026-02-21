@@ -8,7 +8,7 @@
 	import CloneModal from '$ui/modal/CloneModal.svelte';
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
-	import SearchFilterAction from './components/SearchFilterAction.svelte';
+	import SearchFilterAction from '$ui/actions/SearchFilterAction.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 	import { browser } from '$app/environment';
 	import { Info, Plus } from 'lucide-svelte';

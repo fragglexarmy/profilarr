@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import Badge from '$ui/badge/Badge.svelte';
+	import Label from '$ui/label/Label.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 
 	export let tags: string[] = [];
@@ -10,6 +10,15 @@
 	let inputValue = '';
 	let lastDuplicateTag: string | null = null;
 	let lastDuplicateAt = 0;
+
+	function isNegated(tag: string): boolean {
+		return tag.toUpperCase().startsWith('NOT:');
+	}
+
+	function displayName(tag: string): string {
+		if (isNegated(tag)) return tag.slice(4).trim();
+		return tag;
+	}
 
 	function updateTags(newTags: string[]) {
 		tags = newTags;
@@ -51,11 +60,11 @@
 </script>
 
 <div
-	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors focus-within:border-neutral-400 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-50 dark:focus-within:border-neutral-600"
+	class="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition-colors dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:text-neutral-50"
 >
 	{#each tags as tag, index (tag)}
 		<span class="inline-flex items-center gap-1">
-			<Badge variant="accent" size="md">{tag}</Badge>
+			<Label variant={isNegated(tag) ? 'danger' : 'info'} size="md" rounded="md">{displayName(tag)}</Label>
 			<button
 				type="button"
 				on:click={() => removeTag(index)}

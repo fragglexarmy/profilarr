@@ -10,10 +10,11 @@
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import TableView from './views/TableView.svelte';
 	import CardView from './views/CardView.svelte';
-	import SearchFilterAction from './components/SearchFilterAction.svelte';
+	import SearchModeToggle from '$ui/actions/SearchModeToggle.svelte';
+	import TagInput from '$ui/form/TagInput.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
-	import { browser } from '$app/environment';
-	import { Info, Plus, FileText, Users } from 'lucide-svelte';
+	import { filterByText, filterByTags, createSearchFieldState } from '$lib/client/utils/search';
+	import { Info, Plus, FileText, Users, Type, Tag, Code, AlignLeft, Link } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { alertStore } from '$alerts/store';
 	import type { RegularExpressionWithTags } from '$shared/pcd/display';
@@ -51,42 +52,59 @@
 		}
 	}
 
-	const SEARCH_FILTER_STORAGE_KEY = 'regularExpressionsSearchFilter';
-
-	// Default search filter options - everything except description
-	const defaultSearchOptions = [
-		{ key: 'name', label: 'Name', enabled: true },
-		{ key: 'tags', label: 'Tags', enabled: true },
-		{ key: 'pattern', label: 'Pattern', enabled: true },
-		{ key: 'description', label: 'Description', enabled: false },
-		{ key: 'regex101_id', label: 'Regex101 ID', enabled: true }
+	// Search field options
+	const searchFields = [
+		{ value: 'name', label: 'Name' },
+		{ value: 'tags', label: 'Tags' },
+		{ value: 'pattern', label: 'Pattern' },
+		{ value: 'description', label: 'Description' },
+		{ value: 'regex101_id', label: 'Regex101 ID' }
 	];
 
-	// Load saved preferences from localStorage or use defaults
-	function loadSearchOptions() {
-		if (!browser) return defaultSearchOptions;
-		try {
-			const saved = localStorage.getItem(SEARCH_FILTER_STORAGE_KEY);
-			if (saved) {
-				const savedMap = new Map(JSON.parse(saved) as [string, boolean][]);
-				return defaultSearchOptions.map((opt) => ({
-					...opt,
-					enabled: savedMap.has(opt.key) ? savedMap.get(opt.key)! : opt.enabled
-				}));
-			}
-		} catch {
-			// Ignore parse errors, use defaults
+	const searchFieldIcons: Record<string, typeof Type> = {
+		name: Type,
+		tags: Tag,
+		pattern: Code,
+		description: AlignLeft,
+		regex101_id: Link
+	};
+
+	const searchState = createSearchFieldState('regularExpressionsSearch', searchFields);
+
+	let activeSearchField = searchState.initialField;
+	let searchTags: string[] = searchState.initialTags;
+
+	$: isTagMode = activeSearchField === 'tags';
+	$: searchFieldIcon = searchFieldIcons[activeSearchField] || Type;
+
+	function handleFieldChange(field: string) {
+		if (field === activeSearchField) return;
+		if (field === 'tags') {
+			search.clear();
+		} else {
+			searchTags = [];
+			searchState.clearTags();
 		}
-		return defaultSearchOptions;
+		activeSearchField = field;
+		searchState.saveField(field);
 	}
 
-	let searchOptions = loadSearchOptions();
-
-	// Save to localStorage when options change
-	$: if (browser) {
-		const enabledMap = searchOptions.map((opt) => [opt.key, opt.enabled] as [string, boolean]);
-		localStorage.setItem(SEARCH_FILTER_STORAGE_KEY, JSON.stringify(enabledMap));
+	function handleTagsChange(tags: string[]) {
+		searchTags = tags;
+		searchState.saveTags(tags);
 	}
+
+	// Field accessors for text search
+	const fieldAccessors: Record<
+		string,
+		(item: RegularExpressionWithTags) => string | string[] | null
+	> = {
+		name: (item) => item.name,
+		tags: (item) => item.tags.map((t) => t.name),
+		pattern: (item) => item.pattern,
+		description: (item) => item.description ?? null,
+		regex101_id: (item) => item.regex101_id ?? null
+	};
 
 	// Initialize data page store (we'll use search and view, but do our own filtering)
 	const { search, view, setItems } = createDataPageStore(data.regularExpressions, {
@@ -101,31 +119,19 @@
 	// Update items when data changes (e.g., switching databases)
 	$: setItems(data.regularExpressions);
 
-	// Custom filtering based on selected search options
-	$: filtered = filterExpressions(data.regularExpressions, $debouncedQuery, searchOptions);
-
-	function filterExpressions(
-		items: RegularExpressionWithTags[],
-		query: string,
-		options: typeof searchOptions
-	): RegularExpressionWithTags[] {
-		if (!query) return items;
-
-		const queryLower = query.toLowerCase();
-		const enabledKeys = options.filter((o) => o.enabled).map((o) => o.key);
-
-		return items.filter((item) => {
-			return enabledKeys.some((key) => {
-				if (key === 'tags') {
-					// Search within tag names
-					return item.tags.some((tag) => tag.name.toLowerCase().includes(queryLower));
-				}
-				const value = item[key as keyof RegularExpressionWithTags];
-				if (value == null) return false;
-				return String(value).toLowerCase().includes(queryLower);
-			});
-		});
-	}
+	// Filtering based on active search field
+	$: filtered = (() => {
+		if (isTagMode) {
+			return filterByTags(
+				data.regularExpressions,
+				searchTags,
+				(item) => item.tags.map((t) => t.name)
+			);
+		}
+		return filterByText(data.regularExpressions, $debouncedQuery, fieldAccessors, [
+			activeSearchField
+		]);
+	})();
 
 	// Map databases to tabs
 	$: tabs = data.databases.map((db) => ({
@@ -146,7 +152,23 @@
 
 	<!-- Actions Bar -->
 	<ActionsBar>
-		<SearchAction searchStore={search} placeholder="Search regular expressions..." responsive />
+		<SearchModeToggle
+			options={searchFields}
+			value={activeSearchField}
+			icon={searchFieldIcon}
+			onchange={handleFieldChange}
+		/>
+		{#if isTagMode}
+			<div class="flex-1">
+				<TagInput
+					tags={searchTags}
+					placeholder="Type a tag name and press Enter... (prefix NOT: to exclude)"
+					onchange={handleTagsChange}
+				/>
+			</div>
+		{:else}
+			<SearchAction searchStore={search} placeholder="Search {searchFields.find(f => f.value === activeSearchField)?.label.toLowerCase() ?? ''}..." responsive />
+		{/if}
 		<ActionButton icon={Plus} hasDropdown={true} dropdownPosition="right">
 			<svelte:fragment slot="dropdown">
 				<Dropdown position="right">
@@ -164,7 +186,6 @@
 				</Dropdown>
 			</svelte:fragment>
 		</ActionButton>
-		<SearchFilterAction bind:options={searchOptions} />
 		<ViewToggle bind:value={$view} />
 		<ActionButton icon={Info} on:click={() => (infoModalOpen = true)} />
 	</ActionsBar>
