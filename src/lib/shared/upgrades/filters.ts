@@ -483,9 +483,12 @@ export function getFilterFields(appType: UpgradeAppType): FilterField[] {
 }
 
 /**
- * Get a filter field by ID (checks all app types)
+ * Get a filter field by ID, scoped to app type when provided
  */
-export function getFilterField(id: string): FilterField | undefined {
+export function getFilterField(id: string, appType?: UpgradeAppType): FilterField | undefined {
+	if (appType) {
+		return getFilterFields(appType).find((f) => f.id === id);
+	}
 	return [...sharedFilterFields, ...radarrFilterFields, ...sonarrFilterFields].find((f) => f.id === id);
 }
 

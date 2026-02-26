@@ -50,7 +50,7 @@
 	}
 
 	function onFieldChange(rule: FilterRule, fieldId: string) {
-		const field = getFilterField(fieldId);
+		const field = getFilterField(fieldId, appType);
 		if (field) {
 			rule.field = fieldId;
 			rule.operator = field.operators[0].id;
@@ -106,7 +106,7 @@
 		<div class="space-y-2">
 			{#each group.children as child, childIndex}
 				{#if isRule(child)}
-					{@const field = getFilterField(child.field)}
+					{@const field = getFilterField(child.field, appType)}
 					<div class="flex items-center gap-2">
 						<!-- Field -->
 						<SearchDropdown
