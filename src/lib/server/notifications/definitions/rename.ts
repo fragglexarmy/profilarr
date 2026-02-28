@@ -49,15 +49,31 @@ function formatFileEntry(file: { existingPath: string; newPath: string }): strin
 }
 
 /**
+ * Format a folder change entry
+ */
+function formatFolderEntry(folder: { existingPath: string; newPath: string }): string {
+	return `Folder Before: ${folder.existingPath}\n\nFolder After:  ${folder.newPath}`;
+}
+
+/**
  * Build content fields for an item, grouping by season for series
  * Returns multiple fields if needed (per season, with parts if a season is too large)
  */
 function buildItemFields(
 	title: string,
-	files: { existingPath: string; newPath: string }[],
+	item: { folder?: { existingPath: string; newPath: string }; files: { existingPath: string; newPath: string }[] },
 	isSonarr: boolean
 ): { name: string; value: string }[] {
 	const fields: { name: string; value: string }[] = [];
+	const files = item.files;
+
+	// Add folder change as first field if present
+	if (item.folder) {
+		fields.push({
+			name: truncateFieldName(`${title} (Folder)`),
+			value: '```\n' + formatFolderEntry(item.folder) + '\n```'
+		});
+	}
 
 	if (!isSonarr || files.length === 0) {
 		// For Radarr or empty, just build fields splitting by size
@@ -263,16 +279,26 @@ function buildSummaryNotification(
 	// Add sample if there are renamed items
 	if (log.renamedItems.length > 0) {
 		const sample = log.renamedItems[0];
-		const sampleFile = sample.files[0];
-		const othersCount = log.results.filesNeedingRename - 1;
+		const othersCount = log.renamedItems.length - 1;
 		const othersText =
 			othersCount > 0 ? ` + ${othersCount} other${othersCount === 1 ? '' : 's'}` : '';
 
-		embed.field(
-			`Sample: ${truncateFieldName(sample.title)}${othersText}`,
-			'```\n' + formatFileEntry(sampleFile) + '\n```',
-			false
-		);
+		let sampleText = '';
+		if (sample.folder) {
+			sampleText += formatFolderEntry(sample.folder);
+		}
+		if (sample.files.length > 0) {
+			if (sampleText) sampleText += '\n\n';
+			sampleText += formatFileEntry(sample.files[0]);
+		}
+
+		if (sampleText) {
+			embed.field(
+				`Sample: ${truncateFieldName(sample.title)}${othersText}`,
+				'```\n' + sampleText + '\n```',
+				false
+			);
+		}
 	}
 
 	const genericMessage =
@@ -312,7 +338,7 @@ function buildRichNotification(
 	const isSonarr = log.instanceType === 'sonarr';
 	const contentFields: { name: string; value: string }[] = [];
 	for (const item of log.renamedItems) {
-		const itemFields = buildItemFields(item.title, item.files, isSonarr);
+		const itemFields = buildItemFields(item.title, item, isSonarr);
 		contentFields.push(...itemFields);
 	}
 

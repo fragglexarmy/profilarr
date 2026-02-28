@@ -1,525 +1,261 @@
 /**
- * Main orchestrator for processing rename configs
- * Coordinates fetching, filtering, and renaming files/folders
+ * Rename processor - orchestrates file and folder renames for Radarr/Sonarr
+ *
+ * Uses a generic adapter pattern so the same flow works for both arr types.
+ * The processor is called by the job handler (arrRename.ts).
+ *
+ * Pure processing logic lives in core.ts (testable without DB).
+ * This file wires it together with client creation, logging, and notifications.
  */
 
-import { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
-import { SonarrClient } from '$lib/server/utils/arr/clients/sonarr.ts';
-import type { ArrInstance } from '$lib/server/db/queries/arrInstances.ts';
-import type { RenameSettings } from '$lib/server/db/queries/arrRenameSettings.ts';
-import type { RenameJobLog, RenameItem } from './types.ts';
-import { logRenameRun, logRenameStart, logRenameError, logRenameSkipped } from './logger.ts';
+import { createArrClient } from '$lib/server/utils/arr/factory.ts';
+import type { RadarrClient } from '$lib/server/utils/arr/clients/radarr.ts';
+import type { SonarrClient } from '$lib/server/utils/arr/clients/sonarr.ts';
+import type { RenameSettings } from '$db/queries/arrRenameSettings.ts';
+import type { ArrInstance } from '$db/queries/arrInstances.ts';
+import type { RenameJobLog, LibrarySnapshot } from './types.ts';
+import { logRenameRun, logRenameError } from './logger.ts';
 import { notifications } from '$lib/server/notifications/definitions/index.ts';
-import { notificationServicesQueries } from '$lib/server/db/queries/notificationServices.ts';
+import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
+import { logger } from '$logger/logger.ts';
+
+import {
+	createLog,
+	getItemsNeedingFileRename,
+	processDryRun,
+	processFileRename,
+	processFolderRename,
+	diffSnapshots,
+	groupByRootFolder
+} from './core.ts';
+import type { RenameAdapter } from './core.ts';
+
+// Re-export core types/functions for consumers
+export {
+	createLog,
+	parseRenamedCount,
+	groupByRootFolder,
+	getItemsNeedingFileRename,
+	processDryRun,
+	processFileRename,
+	processFolderRename,
+	diffSnapshots
+} from './core.ts';
+export type { RenameAdapter, LibraryItem } from './core.ts';
+
+const SOURCE = 'RenameProcessor';
+
+// =========================================================================
+// Command monitoring
+// =========================================================================
 
 /**
- * Create an empty/skipped job log
+ * After calling an editor endpoint (movie/editor, series/editor), find the
+ * spawned background command (Bulk Move) and wait for it to complete.
+ * Looks for any new command with id > maxIdBefore.
  */
-function createSkippedLog(
-	settings: RenameSettings,
-	instance: ArrInstance,
-	reason: string,
-	manual: boolean = false,
-	dryRun: boolean = false
-): RenameJobLog {
-	const now = new Date().toISOString();
+async function waitForSpawnedCommand(
+	client: { getCommands(): Promise<{ id: number; status: string }[]>; waitForCommand(id: number): Promise<unknown> },
+	maxIdBefore: number,
+	label: string
+): Promise<void> {
+	// Poll for the new command to appear (may take a moment)
+	for (let attempt = 0; attempt < 30; attempt++) {
+		await new Promise((r) => setTimeout(r, 1000));
+
+		const commands = await client.getCommands();
+		const newCmd = commands.find(
+			(c) => c.id > maxIdBefore && (c.status === 'queued' || c.status === 'started')
+		);
+
+		if (newCmd) {
+			await logger.debug(`Found spawned command ${newCmd.id} for ${label}, waiting...`, {
+				source: SOURCE,
+				meta: { commandId: newCmd.id, status: newCmd.status }
+			});
+			await client.waitForCommand(newCmd.id);
+			return;
+		}
+
+		// Check if a new command already completed
+		const completed = commands.find(
+			(c) => c.id > maxIdBefore && c.status === 'completed'
+		);
+		if (completed) {
+			await logger.debug(`Spawned command ${completed.id} for ${label} already completed`, {
+				source: SOURCE,
+				meta: { commandId: completed.id }
+			});
+			return;
+		}
+	}
+
+	await logger.warn(`No spawned command found for ${label} after 30s, proceeding`, {
+		source: SOURCE
+	});
+}
+
+// =========================================================================
+// Adapter factories
+// =========================================================================
+
+function createRadarrAdapter(client: RadarrClient): RenameAdapter {
 	return {
-		id: crypto.randomUUID(),
-		instanceId: instance.id,
-		instanceName: instance.name,
-		instanceType: instance.type as 'radarr' | 'sonarr',
-		startedAt: now,
-		completedAt: now,
-		status: 'skipped',
-		config: {
-			dryRun,
-			renameFolders: settings.renameFolders,
-			ignoreTag: settings.ignoreTag,
-			manual
+		async getLibraryItems() {
+			const movies = await client.getMovies();
+			return movies.map((m) => ({
+				id: m.id,
+				title: m.title,
+				tags: m.tags ?? [],
+				rootFolderPath: m.rootFolderPath ?? ''
+			}));
 		},
-		library: {
-			totalItems: 0,
-			fetchDurationMs: 0
+		getTags: () => client.getTags(),
+		getRenamePreview: (id) => client.getRenamePreview(id),
+		renameFiles: (ids) => client.renameMovies(ids),
+		async renameFolders(ids, rootFolderPath) {
+			const BATCH_SIZE = 50;
+			for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+				const batch = ids.slice(i, i + BATCH_SIZE);
+				const beforeCmds = await client.getCommands();
+				const maxId = Math.max(0, ...beforeCmds.map((c) => c.id));
+
+				await client.renameMovieFolders(batch, rootFolderPath);
+
+				await waitForSpawnedCommand(client, maxId, `Radarr folder rename batch ${Math.floor(i / BATCH_SIZE) + 1}`);
+			}
 		},
-		filtering: {
-			afterIgnoreTag: 0,
-			skippedByTag: 0
-		},
-		results: {
-			filesNeedingRename: 0,
-			filesRenamed: 0,
-			foldersRenamed: 0,
-			commandsTriggered: 0,
-			commandsCompleted: 0,
-			commandsFailed: 0,
-			errors: [reason]
-		},
-		renamedItems: []
+		waitForCommand: (id) => client.waitForCommand(id),
+		async getSnapshot(entityIds) {
+			const idSet = new Set(entityIds);
+			const movies = await client.getMovies();
+			const relevant = movies.filter((m) => idSet.has(m.id));
+
+			const idsWithFiles = relevant.filter((m) => m.hasFile).map((m) => m.id);
+			const movieFiles = idsWithFiles.length > 0 ? await client.getMovieFiles(idsWithFiles) : [];
+			const fileMap = new Map(movieFiles.map((mf) => [mf.movieId, mf]));
+
+			const snapshot: LibrarySnapshot = new Map();
+			for (const movie of relevant) {
+				const file = fileMap.get(movie.id);
+				snapshot.set(movie.id, {
+					id: movie.id,
+					title: movie.title,
+					folderPath: movie.path ?? '',
+					files: file ? [{ id: file.id, relativePath: file.relativePath ?? '' }] : []
+				});
+			}
+			return snapshot;
+		}
 	};
 }
 
-/**
- * Send rename notification
- */
+function createSonarrAdapter(client: SonarrClient): RenameAdapter {
+	return {
+		async getLibraryItems() {
+			const series = await client.getAllSeries();
+			return series.map((s) => ({
+				id: s.id,
+				title: s.title,
+				tags: s.tags ?? [],
+				rootFolderPath: s.rootFolderPath ?? ''
+			}));
+		},
+		getTags: () => client.getTags(),
+		getRenamePreview: (id) => client.getRenamePreview(id),
+		renameFiles: (ids) => client.renameSeries(ids),
+		async renameFolders(ids, rootFolderPath) {
+			const BATCH_SIZE = 10;
+			for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+				const batch = ids.slice(i, i + BATCH_SIZE);
+				const beforeCmds = await client.getCommands();
+				const maxId = Math.max(0, ...beforeCmds.map((c) => c.id));
+
+				await client.renameSeriesFolders(batch, rootFolderPath);
+
+				await waitForSpawnedCommand(client, maxId, `Sonarr folder rename batch ${Math.floor(i / BATCH_SIZE) + 1}`);
+			}
+		},
+		waitForCommand: (id) => client.waitForCommand(id),
+		async getSnapshot(entityIds) {
+			const idSet = new Set(entityIds);
+			const allSeries = await client.getAllSeries();
+			const relevant = allSeries.filter((s) => idSet.has(s.id));
+
+			const snapshot: LibrarySnapshot = new Map();
+			const CONCURRENCY = 10;
+
+			for (let i = 0; i < relevant.length; i += CONCURRENCY) {
+				const batch = relevant.slice(i, i + CONCURRENCY);
+				const results = await Promise.all(
+					batch.map(async (s) => ({
+						series: s,
+						files: await client.getEpisodeFiles(s.id)
+					}))
+				);
+				for (const { series, files } of results) {
+					snapshot.set(series.id, {
+						id: series.id,
+						title: series.title,
+						folderPath: series.path ?? '',
+						files: files.map((f) => ({ id: f.id, relativePath: f.relativePath ?? '' }))
+					});
+				}
+			}
+			return snapshot;
+		}
+	};
+}
+
+// =========================================================================
+// Notification
+// =========================================================================
+
 async function sendRenameNotification(
 	log: RenameJobLog,
 	summaryNotifications: boolean
 ): Promise<void> {
-	// Only notify if there were files to rename
-	if (log.results.filesNeedingRename > 0) {
-		const { DiscordNotifier } = await import(
-			'$lib/server/notifications/notifiers/discord/index.ts'
-		);
-
-		// Get all enabled services that have this notification type enabled
-		const services = notificationServicesQueries.getAllEnabled();
-		const notificationType = `rename.${log.status}`;
-
-		for (const service of services) {
-			try {
-				const enabledTypes = JSON.parse(service.enabled_types) as string[];
-				if (!enabledTypes.includes(notificationType)) {
-					continue;
-				}
-
-				const config = JSON.parse(service.config);
-
-				if (service.service_type === 'discord') {
-					const notifier = new DiscordNotifier(config);
-					const notification = notifications.rename({ log, config, summaryNotifications }).build();
-					await notifier.notify(notification);
-				}
-			} catch {
-				// Errors are logged by the notifier
-			}
-		}
-	}
-}
-
-/**
- * Process rename for a Radarr instance
- */
-async function processRadarrRename(
-	client: RadarrClient,
-	settings: RenameSettings,
-	instance: ArrInstance,
-	startedAt: Date,
-	logId: string,
-	manual: boolean,
-	dryRun: boolean
-): Promise<RenameJobLog> {
-	const fetchStart = Date.now();
-
-	// Fetch movies and tags
-	const [movies, tags] = await Promise.all([client.getMovies(), client.getTags()]);
-	const fetchDurationMs = Date.now() - fetchStart;
-
-	// Find the ignore tag ID if configured
-	let ignoreTagId: number | null = null;
-	if (settings.ignoreTag) {
-		const ignoreTag = tags.find((t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase());
-		ignoreTagId = ignoreTag?.id ?? null;
-	}
-
-	// Filter out items with the ignore tag
-	const filteredMovies = ignoreTagId
-		? movies.filter((m) => !m.tags?.includes(ignoreTagId!))
-		: movies;
-
-	// Get rename previews for each movie that has a file
-	const moviesWithFiles = filteredMovies.filter((m) => m.hasFile);
-	const renameItems: RenameItem[] = [];
-
-	for (const movie of moviesWithFiles) {
-		const previews = await client.getRenamePreview(movie.id);
-		if (previews.length > 0) {
-			renameItems.push({
-				id: movie.id,
-				title: movie.title,
-				previews
-			});
-		}
-	}
-
-	const filesNeedingRename = renameItems.reduce((sum, item) => sum + item.previews.length, 0);
-
-	// If dry run, just return the preview info
-	if (dryRun) {
-		const log: RenameJobLog = {
-			id: logId,
-			instanceId: instance.id,
-			instanceName: instance.name,
-			instanceType: 'radarr',
-			startedAt: startedAt.toISOString(),
-			completedAt: new Date().toISOString(),
-			status: 'success',
-			config: {
-				dryRun: true,
-				renameFolders: settings.renameFolders,
-				ignoreTag: settings.ignoreTag,
-				manual
-			},
-			library: {
-				totalItems: movies.length,
-				fetchDurationMs
-			},
-			filtering: {
-				afterIgnoreTag: filteredMovies.length,
-				skippedByTag: movies.length - filteredMovies.length
-			},
-			results: {
-				filesNeedingRename,
-				filesRenamed: 0,
-				foldersRenamed: 0,
-				commandsTriggered: 0,
-				commandsCompleted: 0,
-				commandsFailed: 0,
-				errors: ['[DRY RUN] Rename skipped']
-			},
-			renamedItems: renameItems.map((item) => ({
-				id: item.id,
-				title: item.title,
-				files: item.previews.map((p) => ({ existingPath: p.existingPath, newPath: p.newPath }))
-			}))
-		};
-
-		await logRenameRun(log);
-		sendRenameNotification(log, settings.summaryNotifications);
-		return log;
-	}
-
-	// Execute renames
-	let filesRenamed = 0;
-	let commandsTriggered = 0;
-	let commandsCompleted = 0;
-	let commandsFailed = 0;
-	const errors: string[] = [];
-	const renamedItems: {
-		id: number;
-		title: string;
-		files: { existingPath: string; newPath: string }[];
-	}[] = [];
-
-	if (renameItems.length > 0) {
-		const movieIds = renameItems.map((item) => item.id);
-
-		try {
-			// Fire rename command without waiting - Radarr processes in background
-			await client.renameMovies(movieIds);
-			commandsTriggered++;
-			commandsCompleted++;
-
-			for (const item of renameItems) {
-				filesRenamed += item.previews.length;
-				renamedItems.push({
-					id: item.id,
-					title: item.title,
-					files: item.previews.map((p) => ({ existingPath: p.existingPath, newPath: p.newPath }))
-				});
-			}
-		} catch (error) {
-			commandsFailed++;
-			errors.push(
-				`Failed to rename movies: ${error instanceof Error ? error.message : String(error)}`
-			);
-		}
-	}
-
-	// Rename folders if enabled
-	let foldersRenamed = 0;
-	if (settings.renameFolders && renamedItems.length > 0) {
-		// Group movies by root folder path for batch operation
-		const movieIds = renamedItems.map((item) => item.id);
-
-		// Get movies to find their root folder paths
-		const moviesToRename = movies.filter((m) => movieIds.includes(m.id));
-		const rootFolderPaths = [
-			...new Set(moviesToRename.map((m) => m.rootFolderPath).filter(Boolean))
-		];
-
-		for (const rootPath of rootFolderPaths) {
-			const movieIdsInPath = moviesToRename
-				.filter((m) => m.rootFolderPath === rootPath)
-				.map((m) => m.id);
-
-			try {
-				await client.renameMovieFolders(movieIdsInPath, rootPath!);
-				foldersRenamed += movieIdsInPath.length;
-
-				// Fire refresh without waiting - Radarr processes in background
-				await client.refreshMovies(movieIdsInPath);
-			} catch (error) {
-				errors.push(
-					`Failed to rename folders in ${rootPath}: ${error instanceof Error ? error.message : String(error)}`
-				);
-			}
-		}
-	}
-
-	const log: RenameJobLog = {
-		id: logId,
-		instanceId: instance.id,
-		instanceName: instance.name,
-		instanceType: 'radarr',
-		startedAt: startedAt.toISOString(),
-		completedAt: new Date().toISOString(),
-		status:
-			commandsFailed > 0 && commandsCompleted === 0
-				? 'failed'
-				: commandsFailed > 0
-					? 'partial'
-					: 'success',
-		config: {
-			dryRun: false,
-			renameFolders: settings.renameFolders,
-			ignoreTag: settings.ignoreTag,
-			manual
-		},
-		library: {
-			totalItems: movies.length,
-			fetchDurationMs
-		},
-		filtering: {
-			afterIgnoreTag: filteredMovies.length,
-			skippedByTag: movies.length - filteredMovies.length
-		},
-		results: {
-			filesNeedingRename,
-			filesRenamed,
-			foldersRenamed,
-			commandsTriggered,
-			commandsCompleted,
-			commandsFailed,
-			errors
-		},
-		renamedItems
-	};
-
-	await logRenameRun(log);
-	sendRenameNotification(log, settings.summaryNotifications);
-	return log;
-}
-
-/**
- * Process rename for a Sonarr instance
- */
-async function processSonarrRename(
-	client: SonarrClient,
-	settings: RenameSettings,
-	instance: ArrInstance,
-	startedAt: Date,
-	logId: string,
-	manual: boolean,
-	dryRun: boolean
-): Promise<RenameJobLog> {
-	const fetchStart = Date.now();
-
-	// Fetch series and tags
-	const [series, tags] = await Promise.all([client.getAllSeries(), client.getTags()]);
-	const fetchDurationMs = Date.now() - fetchStart;
-
-	// Find the ignore tag ID if configured
-	let ignoreTagId: number | null = null;
-	if (settings.ignoreTag) {
-		const ignoreTag = tags.find((t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase());
-		ignoreTagId = ignoreTag?.id ?? null;
-	}
-
-	// Filter out items with the ignore tag
-	const filteredSeries = ignoreTagId
-		? series.filter((s) => !s.tags?.includes(ignoreTagId!))
-		: series;
-
-	// Get rename previews for each series that has files
-	const seriesWithFiles = filteredSeries.filter(
-		(s) => s.statistics && s.statistics.episodeFileCount > 0
+	const { DiscordNotifier } = await import(
+		'$lib/server/notifications/notifiers/discord/index.ts'
 	);
-	const renameItems: RenameItem[] = [];
 
-	for (const show of seriesWithFiles) {
-		const previews = await client.getRenamePreview(show.id);
-		if (previews.length > 0) {
-			renameItems.push({
-				id: show.id,
-				title: show.title,
-				previews
-			});
-		}
-	}
+	const services = notificationServicesQueries.getAllEnabled();
+	const notificationType = `rename.${log.status}`;
 
-	const filesNeedingRename = renameItems.reduce((sum, item) => sum + item.previews.length, 0);
-
-	// If dry run, just return the preview info
-	if (dryRun) {
-		const log: RenameJobLog = {
-			id: logId,
-			instanceId: instance.id,
-			instanceName: instance.name,
-			instanceType: 'sonarr',
-			startedAt: startedAt.toISOString(),
-			completedAt: new Date().toISOString(),
-			status: 'success',
-			config: {
-				dryRun: true,
-				renameFolders: settings.renameFolders,
-				ignoreTag: settings.ignoreTag,
-				manual
-			},
-			library: {
-				totalItems: series.length,
-				fetchDurationMs
-			},
-			filtering: {
-				afterIgnoreTag: filteredSeries.length,
-				skippedByTag: series.length - filteredSeries.length
-			},
-			results: {
-				filesNeedingRename,
-				filesRenamed: 0,
-				foldersRenamed: 0,
-				commandsTriggered: 0,
-				commandsCompleted: 0,
-				commandsFailed: 0,
-				errors: ['[DRY RUN] Rename skipped']
-			},
-			renamedItems: renameItems.map((item) => ({
-				id: item.id,
-				title: item.title,
-				files: item.previews.map((p) => ({ existingPath: p.existingPath, newPath: p.newPath }))
-			}))
-		};
-
-		await logRenameRun(log);
-		sendRenameNotification(log, settings.summaryNotifications);
-		return log;
-	}
-
-	// Execute renames
-	let filesRenamed = 0;
-	let commandsTriggered = 0;
-	let commandsCompleted = 0;
-	let commandsFailed = 0;
-	const errors: string[] = [];
-	const renamedItems: {
-		id: number;
-		title: string;
-		files: { existingPath: string; newPath: string }[];
-	}[] = [];
-
-	if (renameItems.length > 0) {
-		const seriesIds = renameItems.map((item) => item.id);
-
+	for (const service of services) {
 		try {
-			// Fire rename command without waiting - Sonarr processes in background
-			await client.renameSeries(seriesIds);
-			commandsTriggered++;
-			commandsCompleted++;
-
-			for (const item of renameItems) {
-				filesRenamed += item.previews.length;
-				renamedItems.push({
-					id: item.id,
-					title: item.title,
-					files: item.previews.map((p) => ({ existingPath: p.existingPath, newPath: p.newPath }))
-				});
+			const enabledTypes = JSON.parse(service.enabled_types) as string[];
+			if (!enabledTypes.includes(notificationType)) {
+				continue;
 			}
-		} catch (error) {
-			commandsFailed++;
-			errors.push(
-				`Failed to rename series: ${error instanceof Error ? error.message : String(error)}`
-			);
+
+			const config = JSON.parse(service.config);
+
+			if (service.service_type === 'discord') {
+				const notifier = new DiscordNotifier(config);
+				const notification = notifications
+					.rename({ log, config, summaryNotifications })
+					.build();
+				await notifier.notify(notification);
+			}
+		} catch {
+			// Errors are logged by the notifier
 		}
 	}
-
-	// Rename folders if enabled
-	let foldersRenamed = 0;
-	if (settings.renameFolders && renamedItems.length > 0) {
-		// Group series by root folder path for batch operation
-		const seriesIds = renamedItems.map((item) => item.id);
-
-		// Get series to find their root folder paths
-		const seriesToRename = series.filter((s) => seriesIds.includes(s.id));
-		const rootFolderPaths = [
-			...new Set(
-				seriesToRename
-					.map((s) => {
-						// Extract root folder from path (path minus last segment)
-						if (s.path) {
-							const parts = s.path.split('/');
-							parts.pop();
-							return parts.join('/');
-						}
-						return null;
-					})
-					.filter(Boolean)
-			)
-		];
-
-		for (const rootPath of rootFolderPaths) {
-			const seriesIdsInPath = seriesToRename
-				.filter((s) => s.path?.startsWith(rootPath!))
-				.map((s) => s.id);
-
-			try {
-				await client.renameSeriesFolders(seriesIdsInPath, rootPath!);
-				foldersRenamed += seriesIdsInPath.length;
-
-				// Fire refresh without waiting - Sonarr processes in background
-				await client.refreshSeries(seriesIdsInPath);
-			} catch (error) {
-				errors.push(
-					`Failed to rename folders in ${rootPath}: ${error instanceof Error ? error.message : String(error)}`
-				);
-			}
-		}
-	}
-
-	const log: RenameJobLog = {
-		id: logId,
-		instanceId: instance.id,
-		instanceName: instance.name,
-		instanceType: 'sonarr',
-		startedAt: startedAt.toISOString(),
-		completedAt: new Date().toISOString(),
-		status:
-			commandsFailed > 0 && commandsCompleted === 0
-				? 'failed'
-				: commandsFailed > 0
-					? 'partial'
-					: 'success',
-		config: {
-			dryRun: false,
-			renameFolders: settings.renameFolders,
-			ignoreTag: settings.ignoreTag,
-			manual
-		},
-		library: {
-			totalItems: series.length,
-			fetchDurationMs
-		},
-		filtering: {
-			afterIgnoreTag: filteredSeries.length,
-			skippedByTag: series.length - filteredSeries.length
-		},
-		results: {
-			filesNeedingRename,
-			filesRenamed,
-			foldersRenamed,
-			commandsTriggered,
-			commandsCompleted,
-			commandsFailed,
-			errors
-		},
-		renamedItems
-	};
-
-	await logRenameRun(log);
-	sendRenameNotification(log, settings.summaryNotifications);
-	return log;
 }
 
+// =========================================================================
+// Main entry point
+// =========================================================================
+
 /**
- * Process a single rename config for an arr instance
+ * Restart safety: if Profilarr shuts down mid-rename, the job queue recovers
+ * the running job back to 'queued' on startup (see jobs/init.ts recoverRunning).
+ * The job re-runs from scratch, but this is safe because:
+ *  - File renames: the preview filter sees already-renamed files as correct and skips them
+ *  - Folder renames: the arr editor endpoint is a no-op if folders are already named correctly
+ *  - Snapshots/diffs: only capture actual changes, so no phantom results
+ * The only cost is re-running preview checks and snapshots (lightweight GETs).
  */
 export async function processRenameConfig(
 	settings: RenameSettings,
@@ -527,51 +263,174 @@ export async function processRenameConfig(
 	manual: boolean = false,
 	dryRun: boolean = false
 ): Promise<RenameJobLog> {
-	const startedAt = new Date();
-	const logId = crypto.randomUUID();
-
-	await logRenameStart(instance.id, instance.name, dryRun, manual);
+	const log = createLog(instance, settings, manual, dryRun);
 
 	try {
+		// Create client and adapter
+		const client = createArrClient(
+			instance.type as 'radarr' | 'sonarr',
+			instance.url,
+			instance.api_key
+		);
+
+		let adapter: RenameAdapter;
 		if (instance.type === 'radarr') {
-			const client = new RadarrClient(instance.url, instance.api_key);
-			try {
-				return await processRadarrRename(client, settings, instance, startedAt, logId, manual, dryRun);
-			} finally {
-				client.close();
-			}
-		} else if (instance.type === 'sonarr') {
-			const client = new SonarrClient(instance.url, instance.api_key);
-			try {
-				return await processSonarrRename(client, settings, instance, startedAt, logId, manual, dryRun);
-			} finally {
-				client.close();
-			}
+			adapter = createRadarrAdapter(client as RadarrClient);
 		} else {
-			const log = createSkippedLog(
-				settings,
-				instance,
-				`Rename not supported for ${instance.type}`,
-				manual,
-				dryRun
+			adapter = createSonarrAdapter(client as SonarrClient);
+		}
+
+		// Fetch library + tags
+		const fetchStart = Date.now();
+		const [items, tags] = await Promise.all([adapter.getLibraryItems(), adapter.getTags()]);
+		log.library.fetchDurationMs = Date.now() - fetchStart;
+		log.library.totalItems = items.length;
+
+		await logger.debug(`Fetched library: ${items.length} items in ${log.library.fetchDurationMs}ms`, {
+			source: SOURCE,
+			meta: { instanceId: instance.id, totalItems: items.length, fetchDurationMs: log.library.fetchDurationMs }
+		});
+
+		// Filter by ignore tag
+		let filteredItems = items;
+		if (settings.ignoreTag) {
+			const tag = tags.find(
+				(t) => t.label.toLowerCase() === settings.ignoreTag!.toLowerCase()
 			);
-			await logRenameSkipped(
-				instance.id,
-				instance.name,
-				`Rename not supported for ${instance.type}`
-			);
+			if (tag) {
+				filteredItems = items.filter((item) => !item.tags.includes(tag.id));
+				log.filtering.skippedByTag = items.length - filteredItems.length;
+			}
+
+			await logger.debug(`Filtered by tag "${settings.ignoreTag}": ${filteredItems.length} remaining, ${log.filtering.skippedByTag} skipped`, {
+				source: SOURCE,
+				meta: { instanceId: instance.id, ignoreTag: settings.ignoreTag, remaining: filteredItems.length, skipped: log.filtering.skippedByTag }
+			});
+		}
+		log.filtering.afterIgnoreTag = filteredItems.length;
+
+		// Early exit if nothing to process
+		if (filteredItems.length === 0) {
+			log.status = 'skipped';
+			log.completedAt = new Date().toISOString();
+			await logRenameRun(log);
 			return log;
 		}
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		await logRenameError(instance.id, instance.name, errorMessage);
 
-		const log = createSkippedLog(settings, instance, errorMessage, manual, dryRun);
-		log.id = logId;
-		log.startedAt = startedAt.toISOString();
+		// Process
+		if (dryRun) {
+			await logger.debug(`Checking rename previews for ${filteredItems.length} items`, {
+				source: SOURCE,
+				meta: { instanceId: instance.id, itemCount: filteredItems.length }
+			});
+
+			await processDryRun(adapter, filteredItems, log);
+
+			await logger.debug(`Dry run complete: ${log.results.filesNeedingRename} files need renaming across ${log.renamedItems.length} items`, {
+				source: SOURCE,
+				meta: { instanceId: instance.id, filesNeedingRename: log.results.filesNeedingRename, itemsWithRenames: log.renamedItems.length }
+			});
+		} else {
+			const filteredIds = filteredItems.map((i) => i.id);
+			const batchSize = instance.type === 'sonarr' ? 10 : 50;
+
+			// Step 1: Preview-filter to find items that actually need file renames
+			const itemsNeedingRename = await getItemsNeedingFileRename(adapter, filteredItems, log);
+
+			await logger.debug(`Preview filter: ${itemsNeedingRename.length}/${filteredItems.length} items need file renames`, {
+				source: SOURCE,
+				meta: { instanceId: instance.id, needingRename: itemsNeedingRename.length, total: filteredItems.length }
+			});
+
+			// Step 2: Snapshot before (all items — folders still need full diff)
+			const beforeSnapshot = await adapter.getSnapshot(filteredIds);
+
+			// Step 3: File rename (only items that need it)
+			if (itemsNeedingRename.length > 0) {
+				await processFileRename(adapter, itemsNeedingRename, log, batchSize);
+			}
+
+			// Step 4: Folder rename (if enabled) — no preview available, uses all items
+			if (settings.renameFolders) {
+				await processFolderRename(adapter, filteredItems, log);
+			}
+
+			// Step 5: Snapshot after (all commands completed)
+			const afterSnapshot = await adapter.getSnapshot(filteredIds);
+
+			// Step 5: Diff snapshots to find actual changes
+			const diff = diffSnapshots(beforeSnapshot, afterSnapshot);
+
+			let totalFilesRenamed = 0;
+			let totalFoldersRenamed = 0;
+
+			for (const entity of diff) {
+				totalFilesRenamed += entity.files.length;
+				if (entity.folder) totalFoldersRenamed++;
+
+				log.renamedItems.push({
+					id: entity.id,
+					title: entity.title,
+					folder: entity.folder
+						? { existingPath: entity.folder.oldPath, newPath: entity.folder.newPath }
+						: undefined,
+					files: entity.files.map((f) => ({
+						existingPath: f.oldPath,
+						newPath: f.newPath
+					}))
+				});
+			}
+
+			// Override counts with actual diff results
+			log.results.filesRenamed = totalFilesRenamed;
+			log.results.filesNeedingRename = totalFilesRenamed;
+			log.results.foldersRenamed = totalFoldersRenamed;
+
+			await logger.debug(`Diff: ${totalFilesRenamed} files, ${totalFoldersRenamed} folders across ${diff.length} entities`, {
+				source: SOURCE,
+				meta: { instanceId: instance.id, filesRenamed: totalFilesRenamed, foldersRenamed: totalFoldersRenamed, entitiesChanged: diff.length }
+			});
+		}
+
+		// Determine final status
+		if (log.results.errors.length > 0) {
+			log.status =
+				log.results.filesRenamed > 0 || log.results.foldersRenamed > 0
+					? 'partial'
+					: 'failed';
+
+			for (const error of log.results.errors) {
+				await logger.warn(`Rename error: ${error}`, {
+					source: SOURCE,
+					meta: { instanceId: instance.id, status: log.status }
+				});
+			}
+		}
+
 		log.completedAt = new Date().toISOString();
-		log.status = 'failed';
 
-		return log;
+		// Log and persist
+		await logRenameRun(log);
+
+		// Send notification (not for dry runs)
+		if (!dryRun) {
+			try {
+				await sendRenameNotification(log, settings.summaryNotifications);
+			} catch (err) {
+				await logger.error('Failed to send rename notification', {
+					source: SOURCE,
+					meta: { error: err }
+				});
+			}
+		}
+	} catch (err) {
+		log.status = 'failed';
+		log.completedAt = new Date().toISOString();
+		log.results.errors.push(err instanceof Error ? err.message : String(err));
+
+		await logRenameError(instance.id, instance.name, String(err));
+		await logRenameRun(log);
 	}
+
+	return log;
 }

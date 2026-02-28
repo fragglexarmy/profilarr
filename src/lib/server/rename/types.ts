@@ -14,6 +14,21 @@ export interface RenameItem {
 	previews: RenamePreviewItem[];
 }
 
+// =========================================================================
+// Snapshot types for before/after diffing
+// =========================================================================
+
+/** Snapshot of a single entity's current state on disk */
+export interface EntitySnapshot {
+	id: number;
+	title: string;
+	folderPath: string;
+	files: { id: number; relativePath: string }[];
+}
+
+/** Full library snapshot keyed by entity ID */
+export type LibrarySnapshot = Map<number, EntitySnapshot>;
+
 /**
  * Structured log for each rename run
  * Contains all metrics and details about what happened
@@ -61,6 +76,7 @@ export interface RenameJobLog {
 	renamedItems: {
 		id: number;
 		title: string;
+		folder?: { existingPath: string; newPath: string };
 		files: { existingPath: string; newPath: string }[];
 	}[];
 }

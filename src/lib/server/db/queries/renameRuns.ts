@@ -35,6 +35,7 @@ interface RenameRunRow {
 interface RenamedItemRow {
 	id: number;
 	title: string;
+	folder?: { existingPath: string; newPath: string };
 	files: { existingPath: string; newPath: string }[];
 }
 

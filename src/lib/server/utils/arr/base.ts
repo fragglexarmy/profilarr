@@ -304,6 +304,13 @@ export class BaseArrClient extends BaseHttpClient {
 	// =========================================================================
 
 	/**
+	 * Get all commands (active and recent)
+	 */
+	getCommands(): Promise<ArrCommand[]> {
+		return this.get<ArrCommand[]>(`/api/${this.apiVersion}/command`);
+	}
+
+	/**
 	 * Get command status by ID
 	 * Used to poll async operations like rename, refresh, etc.
 	 */
@@ -312,21 +319,49 @@ export class BaseArrClient extends BaseHttpClient {
 	}
 
 	/**
-	 * Wait for a command to complete
-	 * Polls every 5 seconds until status is 'completed' or 'failed'
-	 * @param commandId - The command ID to wait for
-	 * @param timeoutMs - Maximum wait time in milliseconds (default: 10 minutes)
-	 * @returns The final command status
-	 * @throws Error if command fails or times out
+	 * Wait for a command to complete.
+	 * Polls as long as the command is alive (queued/started). Logs a warning
+	 * every 10 minutes of no status change. Hard ceiling at 60 minutes.
 	 */
-	async waitForCommand(commandId: number, timeoutMs: number = 600000): Promise<ArrCommand> {
-		const pollInterval = 100; // 100ms
+	async waitForCommand(commandId: number): Promise<ArrCommand> {
+		const MAX_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
+		const STALE_WARN_MS = 10 * 60 * 1000; // warn every 10 minutes of no change
+		const initialInterval = 500;
+		const maxInterval = 5000;
+		let currentInterval = initialInterval;
+		let pollCount = 0;
 		const startTime = Date.now();
+		let lastStatus = '';
+		let lastStatusChangeTime = startTime;
 
 		while (true) {
-			const command = await this.getCommand(commandId);
+			pollCount++;
+			let command: ArrCommand;
+
+			try {
+				command = await this.getCommand(commandId);
+			} catch {
+				throw new Error(`Command ${commandId} disappeared (not found after ${pollCount} polls)`);
+			}
+
+			const elapsed = Date.now() - startTime;
+
+			// Track status changes for stale detection
+			if (command.status !== lastStatus) {
+				lastStatus = command.status;
+				lastStatusChangeTime = Date.now();
+			}
+
+			await logger.debug(`Polling command ${commandId}: status=${command.status} (poll #${pollCount}, ${elapsed}ms elapsed)`, {
+				source: 'BaseArrClient',
+				meta: { commandId, status: command.status, pollCount, elapsedMs: elapsed }
+			});
 
 			if (command.status === 'completed') {
+				await logger.debug(`Command ${commandId} completed after ${pollCount} polls (${elapsed}ms)`, {
+					source: 'BaseArrClient',
+					meta: { commandId, pollCount, elapsedMs: elapsed, message: command.message }
+				});
 				return command;
 			}
 
@@ -334,13 +369,22 @@ export class BaseArrClient extends BaseHttpClient {
 				throw new Error(`Command ${commandId} failed: ${command.message || 'Unknown error'}`);
 			}
 
-			// Check timeout
-			if (Date.now() - startTime >= timeoutMs) {
-				throw new Error(`Command ${commandId} timed out after ${timeoutMs / 1000} seconds`);
+			// Warn if status hasn't changed in a while
+			const staleDuration = Date.now() - lastStatusChangeTime;
+			if (staleDuration >= STALE_WARN_MS && staleDuration % STALE_WARN_MS < currentInterval) {
+				await logger.warn(`Command ${commandId} has been "${command.status}" for ${Math.floor(staleDuration / 60000)} minutes`, {
+					source: 'BaseArrClient',
+					meta: { commandId, status: command.status, staleMinutes: Math.floor(staleDuration / 60000) }
+				});
 			}
 
-			// Wait before next poll
-			await new Promise((resolve) => setTimeout(resolve, pollInterval));
+			// Hard ceiling
+			if (elapsed >= MAX_TIMEOUT_MS) {
+				throw new Error(`Command ${commandId} timed out after 60 minutes (${pollCount} polls)`);
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, currentInterval));
+			currentInterval = Math.min(currentInterval * 2, maxInterval);
 		}
 	}
 

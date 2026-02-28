@@ -311,6 +311,7 @@ export interface SonarrSeries {
 	imdbId?: string;
 	overview?: string;
 	path?: string;
+	rootFolderPath?: string;
 	qualityProfileId: number;
 	seasonFolder?: boolean;
 	monitored: boolean;

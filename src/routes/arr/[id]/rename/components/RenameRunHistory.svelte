@@ -219,10 +219,22 @@
 				<span class="text-sm text-neutral-600 dark:text-neutral-400">
 					<span class="font-mono">{row.library.totalItems.toLocaleString()}</span> scanned
 					<span class="mx-1 text-neutral-300 dark:text-neutral-600">&rarr;</span>
-					<span class="font-mono">{row.results.filesNeedingRename}</span> need rename
-					<span class="mx-1 text-neutral-300 dark:text-neutral-600">&rarr;</span>
-					<span class="font-mono">{row.results.filesRenamed}</span>
-					{row.config.dryRun ? 'would rename' : 'renamed'}
+					{#if row.config.dryRun}
+						<span class="font-mono">{row.results.filesNeedingRename}</span> would rename
+					{:else}
+						{#if row.results.filesRenamed > 0}
+							<span class="font-mono">{row.results.filesRenamed}</span> file{row.results.filesRenamed !== 1 ? 's' : ''}
+						{/if}
+						{#if row.results.foldersRenamed > 0}
+							{#if row.results.filesRenamed > 0}, {/if}
+							<span class="font-mono">{row.results.foldersRenamed}</span> folder{row.results.foldersRenamed !== 1 ? 's' : ''}
+						{/if}
+						{#if row.results.filesRenamed > 0 || row.results.foldersRenamed > 0}
+							renamed
+						{:else}
+							no changes
+						{/if}
+					{/if}
 				</span>
 			{/if}
 		</svelte:fragment>
@@ -278,12 +290,9 @@
 						{#if row.config.dryRun}
 							<span class="font-mono">{row.results.filesNeedingRename}</span> files would be renamed
 						{:else}
-							<span class="font-mono">{row.results.filesRenamed}</span>/<span class="font-mono"
-								>{row.results.filesNeedingRename}</span
-							>
-							files renamed
+							<span class="font-mono">{row.results.filesRenamed}</span> file{row.results.filesRenamed !== 1 ? 's' : ''} renamed
 							{#if row.results.foldersRenamed > 0}
-								, <span class="font-mono">{row.results.foldersRenamed}</span> folders
+								, <span class="font-mono">{row.results.foldersRenamed}</span> folder{row.results.foldersRenamed !== 1 ? 's' : ''} renamed
 							{/if}
 						{/if}
 						{#if row.results.commandsFailed > 0}
@@ -294,11 +303,25 @@
 					</span>
 				</div>
 
+				<!-- Errors -->
+				{#if row.results.errors.length > 0}
+					<div class="flex">
+						<span class="w-24 shrink-0 text-sm font-medium text-red-500 dark:text-red-400"
+							>Errors</span
+						>
+						<div class="space-y-1">
+							{#each row.results.errors as error}
+								<div class="text-sm text-red-600 dark:text-red-400">{error}</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
 				<!-- Renamed Items -->
 				{#if row.renamedItems.length > 0}
 					{@const itemsColumns = [
 						{ key: 'title', header: 'Title', sortable: false },
-						{ key: 'files', header: 'Files', sortable: false, align: 'center' as const }
+						{ key: 'changes', header: 'Changes', sortable: false, align: 'center' as const }
 					]}
 					<div class="mt-4 border-t border-neutral-200 pt-4 dark:border-neutral-700">
 						<div
@@ -318,13 +341,49 @@
 							<svelte:fragment slot="cell" let:row={item} let:column>
 								{#if column.key === 'title'}
 									<span class="text-neutral-900 dark:text-neutral-100">{item.title}</span>
-								{:else if column.key === 'files'}
-									<Badge variant="neutral" mono>{item.files.length}</Badge>
+								{:else if column.key === 'changes'}
+									<div class="flex gap-1">
+										{#if item.folder}
+											<Badge variant="info" mono>Folder</Badge>
+										{/if}
+										{#if item.files.length > 0}
+											<Badge variant="neutral" mono>{item.files.length} file{item.files.length !== 1 ? 's' : ''}</Badge>
+										{/if}
+									</div>
 								{/if}
 							</svelte:fragment>
 
 							<svelte:fragment slot="expanded" let:row={item}>
 								<div class="space-y-3 p-4">
+									{#if item.folder}
+										<div class="space-y-1 border-b border-neutral-200 pb-3 dark:border-neutral-700">
+											<div class="mb-1 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+												Folder
+											</div>
+											<div class="flex gap-2">
+												<span
+													class="w-12 shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400"
+													>From:</span
+												>
+												<span
+													class="break-all font-mono text-xs text-neutral-700 dark:text-neutral-300"
+												>
+													{item.folder.existingPath}
+												</span>
+											</div>
+											<div class="flex gap-2">
+												<span
+													class="w-12 shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+													>To:</span
+												>
+												<span
+													class="break-all font-mono text-xs text-neutral-700 dark:text-neutral-300"
+												>
+													{item.folder.newPath}
+												</span>
+											</div>
+										</div>
+									{/if}
 									{#each item.files as file}
 										<div class="space-y-1">
 											<div class="flex gap-2">

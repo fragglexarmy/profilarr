@@ -21,12 +21,7 @@ export async function logRenameRun(log: RenameJobLog): Promise<void> {
 	if (log.config.manual) parts.unshift('manual');
 	const mode = parts.join(' ');
 
-	const summary = `Completed Job: ${mode} for "${log.instanceName}": ${log.results.filesRenamed}/${log.results.filesNeedingRename} files renamed (${duration}ms)`;
-
-	const items = log.renamedItems.map((item) => ({
-		title: item.title,
-		files: item.files
-	}));
+	const summary = `Completed Job: ${mode} for "${log.instanceName}": ${log.results.filesRenamed} files, ${log.results.foldersRenamed} folders renamed across ${log.renamedItems.length} entities (${duration}ms)`;
 
 	await logger.info(summary, {
 		source: SOURCE,
@@ -35,12 +30,10 @@ export async function logRenameRun(log: RenameJobLog): Promise<void> {
 			status: log.status,
 			dryRun: log.config.dryRun,
 			manual: log.config.manual,
-			filesNeedingRename: log.results.filesNeedingRename,
 			filesRenamed: log.results.filesRenamed,
 			foldersRenamed: log.results.foldersRenamed,
-			skippedByTag: log.filtering.skippedByTag,
-			durationMs: duration,
-			items
+			entitiesChanged: log.renamedItems.length,
+			durationMs: duration
 		}
 	});
 
@@ -66,25 +59,6 @@ export async function logRenameSkipped(
 	await logger.debug(`Skipped ${instanceName}: ${reason}`, {
 		source: SOURCE,
 		meta: { instanceId, reason }
-	});
-}
-
-/**
- * Log when rename processing starts
- */
-export async function logRenameStart(
-	instanceId: number,
-	instanceName: string,
-	dryRun: boolean,
-	manual: boolean = false
-): Promise<void> {
-	const parts = ['rename'];
-	if (dryRun) parts.unshift('dry run');
-	if (manual) parts.unshift('manual');
-	const mode = parts.join(' ');
-	await logger.debug(`Starting Job: ${mode} for "${instanceName}"`, {
-		source: SOURCE,
-		meta: { instanceId, dryRun, manual }
 	});
 }
 
