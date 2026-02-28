@@ -82,7 +82,7 @@
 			Automatically search for better quality releases.
 		</p>
 	</div>
-	<div slot="right" class="flex items-center gap-2">
+	<div slot="right" class="flex flex-wrap items-center gap-2">
 		<Button text="Info" icon={Info} href="/arr/upgrades/info" />
 		{#if !isNewConfig}
 			<Tooltip text="Clear dry run exclusion cache so items can be re-selected">
