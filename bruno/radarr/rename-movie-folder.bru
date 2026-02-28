@@ -1,0 +1,19 @@
+meta {
+  name: Rename Movie Folder (Editor)
+  type: http
+  seq: 22
+}
+
+put {
+  url: {{radarrUrl}}/api/v3/movie/editor
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "movieIds": [1422],
+    "rootFolderPath": "/data/media/movies",
+    "moveFiles": true
+  }
+}

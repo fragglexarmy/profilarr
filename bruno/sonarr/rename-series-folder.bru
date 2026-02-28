@@ -1,0 +1,19 @@
+meta {
+  name: Rename Series Folder (Editor)
+  type: http
+  seq: 22
+}
+
+put {
+  url: {{sonarrUrl}}/api/v3/series/editor
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "seriesIds": [77],
+    "rootFolderPath": "/data/media/tv",
+    "moveFiles": true
+  }
+}
