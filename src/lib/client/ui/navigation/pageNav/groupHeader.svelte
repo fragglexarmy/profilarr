@@ -9,7 +9,9 @@
 	export let hasItems: boolean;
 	export let onToggle: () => void;
 
-	$: isActive = $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
+	$: isActive = hasItems
+		? $page.url.pathname === href
+		: $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
 </script>
 
 <div class="group/header flex items-center">
