@@ -20,7 +20,7 @@
 
 {#if !isAuthPage}
 	<Navbar />
-	<PageNav version={data.version} />
+	<PageNav version={data.version} arrInstances={data.arrInstances} databases={data.databases} />
 	<BottomNav />
 {/if}
 <AlertContainer />

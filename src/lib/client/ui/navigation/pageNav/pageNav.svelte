@@ -2,13 +2,17 @@
 	import Group from './group.svelte';
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
-	import { FolderTree, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X, Wrench } from 'lucide-svelte';
+	import { FolderTree, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X, Wrench, Film, Tv } from 'lucide-svelte';
 	import { navIconStore } from '$stores/navIcons';
 	import { mobileNavOpen } from '$stores/mobileNav';
 	import { page } from '$app/stores';
 	import logo from '$assets/logo-512.png';
+	import radarrLogo from '$assets/Radarr.svg';
+	import sonarrLogo from '$assets/Sonarr.svg';
 
 	export let version: string = '';
+	export let arrInstances: { id: number; name: string; type: string }[] = [];
+	export let databases: { id: number; name: string }[] = [];
 
 	$: useEmoji = $navIconStore === 'emoji';
 
@@ -70,13 +74,30 @@
 			label={useEmoji ? '📦 Databases' : 'Databases'}
 			href="/databases"
 			icon={useEmoji ? undefined : FolderTree}
-		/>
+			hasItems={databases.length > 0}
+			initialOpen={true}
+		>
+			{#each databases as db (db.id)}
+				<GroupItem label={db.name} href="/databases/{db.id}" />
+			{/each}
+		</Group>
 
 		<Group
 			label={useEmoji ? '🔗 Arrs' : 'Arrs'}
 			href="/arr"
 			icon={useEmoji ? undefined : Link}
-		/>
+			hasItems={arrInstances.length > 0}
+			initialOpen={true}
+		>
+			{#each arrInstances as instance (instance.id)}
+				<GroupItem
+					label={instance.name}
+					href="/arr/{instance.id}"
+					icon={useEmoji ? undefined : instance.type === 'radarr' ? Film : Tv}
+					iconSrc={useEmoji ? (instance.type === 'radarr' ? radarrLogo : sonarrLogo) : undefined}
+				/>
+			{/each}
+		</Group>
 
 		<Group
 			label={useEmoji ? '⚡ Quality Profiles' : 'Quality Profiles'}
