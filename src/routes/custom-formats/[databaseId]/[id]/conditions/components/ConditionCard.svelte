@@ -247,14 +247,14 @@
 
 </script>
 
-<div class="relative flex flex-col gap-3 px-3 py-3 {rightPaddingClass} md:flex-row md:items-center">
+<div class="relative flex flex-col gap-3 px-3 py-3 {rightPaddingClass} wide:flex-row wide:items-center">
 	<!-- Identity -->
-	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
-		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 wide:contents wide:border-0 wide:bg-transparent wide:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 wide:hidden">
 			Identity
 		</div>
-		<div class="grid gap-2 md:contents">
-			<div class="w-full min-w-0 shrink-0 md:w-48" title={nameConflict ? 'Duplicate condition name' : ''}>
+		<div class="grid gap-2 wide:contents">
+			<div class="w-full min-w-0 shrink-0 wide:w-48" title={nameConflict ? 'Duplicate condition name' : ''}>
 				<FormInput
 					label="Name"
 					hideLabel
@@ -265,7 +265,7 @@
 					on:input={(e) => emitChange({ name: e.detail })}
 				/>
 			</div>
-			<div class="w-full min-w-0 shrink-0 md:w-52">
+			<div class="w-full min-w-0 shrink-0 wide:w-52">
 				<SearchDropdown
 					options={typeOptions}
 					value={condition.type}
@@ -278,11 +278,11 @@
 	</div>
 
 	<!-- Value -->
-	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
-		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 wide:contents wide:border-0 wide:bg-transparent wide:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 wide:hidden">
 			Value
 		</div>
-		<div class="min-w-0 md:flex-1">
+		<div class="min-w-0 wide:flex-1">
 			{#if isPatternType}
 				<SearchDropdown
 					options={patternOptions}
@@ -291,7 +291,7 @@
 					on:change={(e) => handlePatternChange(e.detail)}
 				/>
 			{:else if condition.type === 'language'}
-				<div class="flex flex-col gap-2 md:flex-row md:items-center">
+				<div class="flex flex-col gap-2 wide:flex-row wide:items-center">
 					<div class="min-w-0 flex-1">
 						<SearchDropdown
 							options={languageOptions}
@@ -324,7 +324,7 @@
 					/>
 				</div>
 			{:else if condition.type === 'size'}
-				<div class="flex flex-col gap-2 md:flex-row md:items-center">
+				<div class="flex flex-col gap-2 wide:flex-row wide:items-center">
 					<div class="w-full flex-1">
 						<NumberInput
 							name="minSize"
@@ -337,7 +337,7 @@
 							on:change={(e) => handleMinSizeChange(e.detail)}
 						/>
 					</div>
-					<span class="hidden text-sm text-neutral-500 md:inline">-</span>
+					<span class="hidden text-sm text-neutral-500 wide:inline">-</span>
 					<div class="w-full flex-1">
 						<NumberInput
 							name="maxSize"
@@ -352,7 +352,7 @@
 					</div>
 				</div>
 			{:else if condition.type === 'year'}
-				<div class="flex flex-col gap-2 md:flex-row md:items-center">
+				<div class="flex flex-col gap-2 wide:flex-row wide:items-center">
 					<div class="w-full flex-1">
 						<NumberInput
 							name="minYear"
@@ -366,7 +366,7 @@
 							on:change={(e) => handleMinYearChange(e.detail)}
 						/>
 					</div>
-					<span class="hidden text-sm text-neutral-500 md:inline">-</span>
+					<span class="hidden text-sm text-neutral-500 wide:inline">-</span>
 					<div class="w-full flex-1">
 						<NumberInput
 							name="maxYear"
@@ -394,11 +394,11 @@
 	</div>
 
 	<!-- Flags -->
-	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
-		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 wide:contents wide:border-0 wide:bg-transparent wide:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 wide:hidden">
 			Flags
 		</div>
-		<div class="grid grid-cols-2 gap-2 md:ml-auto md:flex md:flex-wrap md:items-center md:gap-2 md:shrink-0">
+		<div class="grid grid-cols-2 gap-2 md:grid-cols-4 wide:ml-auto wide:flex wide:flex-wrap wide:items-center wide:gap-2 wide:shrink-0">
 			<Toggle
 				checked={condition.negate}
 				ariaLabel="Negate"
@@ -431,12 +431,12 @@
 	</div>
 
 	<!-- Actions -->
-	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 md:contents md:border-0 md:bg-transparent md:p-0">
-		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 md:hidden">
+	<div class="rounded-xl border border-neutral-200 bg-neutral-50/40 p-2 dark:border-neutral-800 dark:bg-neutral-900/40 wide:contents wide:border-0 wide:bg-transparent wide:p-0">
+		<div class="mb-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400 wide:hidden">
 			Actions
 		</div>
 		{#if isDraft}
-			<div class="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center md:gap-2">
+			<div class="grid grid-cols-2 gap-2 wide:flex wide:flex-wrap wide:items-center wide:gap-2">
 				<Button
 					text="Discard"
 					icon={Trash2}
@@ -457,7 +457,7 @@
 				/>
 			</div>
 		{:else}
-			<div class="grid grid-cols-1 gap-2 md:flex md:flex-wrap md:items-center md:gap-2">
+			<div class="grid grid-cols-1 gap-2 wide:flex wide:flex-wrap wide:items-center wide:gap-2">
 				<Button
 					text="Remove"
 					icon={Trash2}

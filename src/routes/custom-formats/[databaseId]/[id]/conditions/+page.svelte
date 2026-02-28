@@ -285,10 +285,10 @@
 					<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Drafts</span>
 					<Badge variant="neutral" size="sm">{draftConditions.length}</Badge>
 				</div>
-				<div class="space-y-2 md:space-y-0 md:divide-y md:divide-neutral-200 md:dark:divide-neutral-800">
+				<div class="space-y-2 wide:space-y-0 wide:divide-y wide:divide-neutral-200 wide:dark:divide-neutral-800">
 					{#each draftConditions as draft (draft._key)}
 						<div
-							class="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-900 md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-0"
+							class="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-900 wide:rounded-none wide:border-0 wide:bg-transparent wide:px-0 wide:py-0"
 						>
 							<ConditionCard
 								mode="draft"
@@ -314,10 +314,10 @@
 					<span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Conditions</span>
 					<Badge variant="neutral" size="sm">{conditions.length}</Badge>
 				</div>
-				<div class="space-y-2 md:space-y-0 md:divide-y md:divide-neutral-200 md:dark:divide-neutral-800">
+				<div class="space-y-2 wide:space-y-0 wide:divide-y wide:divide-neutral-200 wide:dark:divide-neutral-800">
 					{#each sortedConditions as condition (condition._key)}
 						<div
-							class="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-900 md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-0"
+							class="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-900 wide:rounded-none wide:border-0 wide:bg-transparent wide:px-0 wide:py-0"
 						>
 							<ConditionCard
 								{condition}

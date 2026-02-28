@@ -91,6 +91,9 @@ html {
 	--font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'Geist Mono', ui-monospace, monospace;
 
+	/* Custom breakpoint for condition card layout */
+	--breakpoint-wide: 1600px;
+
 	/* Accent colors using CSS variables set by accent store */
 	--color-accent-50: var(--accent-50);
 	--color-accent-100: var(--accent-100);
