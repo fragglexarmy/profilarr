@@ -15,11 +15,13 @@ const aliases: Record<string, string> = {
 	selectors: 'src/tests/upgrades/selectors.test.ts',
 	backup: 'src/tests/jobs/createBackup.test.ts',
 	cleanup: 'src/tests/logger/cleanupLogs.test.ts',
+	processor: 'src/tests/rename/processor.test.ts',
 
 	// Directories
 	upgrades: 'src/tests/upgrades',
 	jobs: 'src/tests/jobs',
-	logger: 'src/tests/logger'
+	logger: 'src/tests/logger',
+	rename: 'src/tests/rename'
 };
 
 // Get the test target from args
