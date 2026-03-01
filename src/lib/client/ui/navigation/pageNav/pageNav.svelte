@@ -3,7 +3,6 @@
 	import GroupItem from './groupItem.svelte';
 	import Version from './version.svelte';
 	import { FolderTree, Link, Sliders, Palette, Microscope, Tag, Clock, Settings, X, Wrench, Film, Tv } from 'lucide-svelte';
-	import { navIconStore } from '$stores/navIcons';
 	import { mobileNavOpen } from '$stores/mobileNav';
 	import { page } from '$app/stores';
 	import logo from '$assets/logo-512.png';
@@ -13,8 +12,6 @@
 	export let version: string = '';
 	export let arrInstances: { id: number; name: string; type: string }[] = [];
 	export let databases: { id: number; name: string }[] = [];
-
-	$: useEmoji = $navIconStore === 'emoji';
 
 	// Close mobile nav when page changes
 	$: $page.url.pathname, mobileNavOpen.close();
@@ -60,9 +57,10 @@
 	<div class="flex-1 overflow-y-auto p-4">
 		{#if import.meta.env.DEV}
 			<Group
-				label={useEmoji ? '🛠️ Dev' : 'Dev'}
+				label="Dev"
+				emoji="🛠️"
 				href="/dev"
-				icon={useEmoji ? undefined : Wrench}
+				icon={Wrench}
 				initialOpen={true}
 				hasItems={true}
 			>
@@ -71,9 +69,10 @@
 		{/if}
 
 		<Group
-			label={useEmoji ? '📦 Databases' : 'Databases'}
+			label="Databases"
+			emoji="📦"
 			href="/databases"
-			icon={useEmoji ? undefined : FolderTree}
+			icon={FolderTree}
 			hasItems={databases.length > 0}
 			initialOpen={true}
 		>
@@ -83,9 +82,10 @@
 		</Group>
 
 		<Group
-			label={useEmoji ? '🔗 Arrs' : 'Arrs'}
+			label="Arrs"
+			emoji="🔗"
 			href="/arr"
-			icon={useEmoji ? undefined : Link}
+			icon={Link}
 			hasItems={arrInstances.length > 0}
 			initialOpen={true}
 		>
@@ -93,16 +93,17 @@
 				<GroupItem
 					label={instance.name}
 					href="/arr/{instance.id}"
-					icon={useEmoji ? undefined : instance.type === 'radarr' ? Film : Tv}
-					iconSrc={useEmoji ? (instance.type === 'radarr' ? radarrLogo : sonarrLogo) : undefined}
+					icon={instance.type === 'radarr' ? Film : Tv}
+					iconSrc={instance.type === 'radarr' ? radarrLogo : sonarrLogo}
 				/>
 			{/each}
 		</Group>
 
 		<Group
-			label={useEmoji ? '⚡ Quality Profiles' : 'Quality Profiles'}
+			label="Quality Profiles"
+			emoji="⚡"
 			href="/quality-profiles"
-			icon={useEmoji ? undefined : Sliders}
+			icon={Sliders}
 			initialOpen={true}
 			hasItems={true}
 		>
@@ -110,23 +111,26 @@
 		</Group>
 
 		<Group
-			label={useEmoji ? '🎨 Custom Formats' : 'Custom Formats'}
+			label="Custom Formats"
+			emoji="🎨"
 			href="/custom-formats"
-			icon={useEmoji ? undefined : Palette}
+			icon={Palette}
 			initialOpen={false}
 		/>
 
 		<Group
-			label={useEmoji ? '🔬 Regular Expressions' : 'Regular Expressions'}
+			label="Regular Expressions"
+			emoji="🔬"
 			href="/regular-expressions"
-			icon={useEmoji ? undefined : Microscope}
+			icon={Microscope}
 			initialOpen={false}
 		/>
 
 		<Group
-			label={useEmoji ? '🏷️ Media Management' : 'Media Management'}
+			label="Media Management"
+			emoji="🏷️"
 			href="/media-management"
-			icon={useEmoji ? undefined : Tag}
+			icon={Tag}
 			initialOpen={true}
 			hasItems={true}
 		>
@@ -136,16 +140,18 @@
 		</Group>
 
 		<Group
-			label={useEmoji ? '⏳ Delay Profiles' : 'Delay Profiles'}
+			label="Delay Profiles"
+			emoji="⏳"
 			href="/delay-profiles"
-			icon={useEmoji ? undefined : Clock}
+			icon={Clock}
 			initialOpen={false}
 		/>
 
 		<Group
-			label={useEmoji ? '⚙️ Settings' : 'Settings'}
+			label="Settings"
+			emoji="⚙️"
 			href="/settings"
-			icon={useEmoji ? undefined : Settings}
+			icon={Settings}
 			initialOpen={true}
 			hasItems={true}
 		>

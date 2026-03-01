@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { navIconStore } from '$stores/navIcons';
 	import {
 		FolderTree,
 		Link,
@@ -32,7 +31,6 @@
 		{ href: '/delay-profiles', label: 'Delay', icon: Clock, emoji: '⏳', priority: 'low' }
 	];
 
-	$: useEmoji = $navIconStore === 'emoji';
 	$: pathname = $page.url.pathname;
 
 	function isActive(href: string, currentPath: string): boolean {
@@ -56,11 +54,10 @@
 					? 'text-accent-600 dark:text-accent-400'
 					: 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'}"
 			>
-				{#if useEmoji}
-					<span class="text-xl">{item.emoji}</span>
-				{:else}
+					<span class="nav-icon-emoji text-xl">{item.emoji}</span>
+				<span class="nav-icon-lucide">
 					<svelte:component this={item.icon} size={20} strokeWidth={active ? 2.5 : 2} />
-				{/if}
+				</span>
 				<span class="mt-0.5 text-[10px] font-medium">{item.shortLabel ?? item.label}</span>
 			</a>
 		{/each}

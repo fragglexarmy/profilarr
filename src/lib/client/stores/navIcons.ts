@@ -22,6 +22,7 @@ function createNavIconStore() {
 		set(style);
 		if (browser) {
 			localStorage.setItem('navIconStyle', style);
+			document.documentElement.dataset.navIcons = style;
 		}
 	}
 

@@ -37,10 +37,11 @@
 		? 'bg-neutral-200 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
 		: ''}"
 >
+	{#if iconSrc}
+		<span class="nav-icon-emoji"><img src={iconSrc} alt="" class="h-3.5 w-3.5" /></span>
+	{/if}
 	{#if icon}
-		<svelte:component this={icon} size={14} />
-	{:else if iconSrc}
-		<img src={iconSrc} alt="" class="h-3.5 w-3.5" />
+		<span class="nav-icon-lucide"><svelte:component this={icon} size={14} /></span>
 	{/if}
 	{label}
 </a>

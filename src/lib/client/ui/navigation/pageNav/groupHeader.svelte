@@ -5,6 +5,7 @@
 	export let label: string;
 	export let href: string;
 	export let icon: ComponentType | undefined = undefined;
+	export let emoji: string | undefined = undefined;
 	export let isOpen: boolean;
 	export let hasItems: boolean;
 	export let onToggle: () => void;
@@ -24,8 +25,11 @@
 			? 'bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700'
 			: ''}"
 	>
+		{#if emoji}
+			<span class="nav-icon-emoji">{emoji}</span>
+		{/if}
 		{#if icon}
-			<svelte:component this={icon} class="h-4 w-4" />
+			<span class="nav-icon-lucide"><svelte:component this={icon} class="h-4 w-4" /></span>
 		{/if}
 		{label}
 	</a>

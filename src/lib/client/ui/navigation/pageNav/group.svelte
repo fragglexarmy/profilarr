@@ -6,6 +6,7 @@
 	export let label: string;
 	export let href: string;
 	export let icon: ComponentType | undefined = undefined;
+	export let emoji: string | undefined = undefined;
 	export let initialOpen: boolean = true;
 	export let hasItems: boolean = false;
 
@@ -17,7 +18,7 @@
 </script>
 
 <div class="mb-4">
-	<GroupHeader {label} {href} {icon} {isOpen} {hasItems} onToggle={toggleOpen} />
+	<GroupHeader {label} {href} {icon} {emoji} {isOpen} {hasItems} onToggle={toggleOpen} />
 
 	{#if isOpen && hasItems}
 		<div class="mt-2 grid grid-cols-[auto_1fr]" transition:slide={{ duration: 200 }}>
