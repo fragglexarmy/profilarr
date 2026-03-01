@@ -4,10 +4,11 @@ import type { components } from '$api/v1.d.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { syncQualityProfile } from '$lib/server/sync/entitySync.ts';
+import { logger } from '$logger/logger.ts';
 
 type SyncEntityRequest = components['schemas']['SyncEntityRequest'];
 
-const COOLDOWN_MS = 30_000;
+const COOLDOWN_MS = 5_000;
 const VALID_SECTIONS: SyncEntityRequest['section'][] = ['qualityProfiles', 'delayProfiles', 'mediaManagement'];
 
 /**
@@ -48,6 +49,10 @@ export const POST: RequestHandler = async ({ request }) => {
 	const status = arrSyncQueries.getSectionSyncStatus(instanceId, section);
 	if (status) {
 		if (status.sync_status === 'pending' || status.sync_status === 'in_progress') {
+			await logger.debug(`Entity sync blocked: ${section} already ${status.sync_status}`, {
+				source: 'EntitySync:Cooldown',
+				meta: { instanceId, section, syncStatus: status.sync_status }
+			});
 			return json({ error: 'Sync already in progress' }, { status: 409 });
 		}
 
@@ -55,6 +60,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			const elapsed = Date.now() - new Date(status.last_synced_at).getTime();
 			if (elapsed < COOLDOWN_MS) {
 				const retryAfter = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+				await logger.debug(`Entity sync cooldown: ${retryAfter}s remaining for ${section}`, {
+					source: 'EntitySync:Cooldown',
+					meta: { instanceId, section, retryAfter, lastSyncedAt: status.last_synced_at }
+				});
 				return json({ error: 'Cooldown active', retryAfter }, { status: 409 });
 			}
 		}

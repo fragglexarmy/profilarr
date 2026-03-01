@@ -721,6 +721,26 @@ export const arrSyncQueries = {
 	},
 
 	/**
+	 * Record that an entity sync completed for a section (updates timestamp only)
+	 */
+	touchSectionLastSynced(
+		instanceId: number,
+		section: 'qualityProfiles' | 'delayProfiles' | 'mediaManagement'
+	): void {
+		const table = {
+			qualityProfiles: 'arr_sync_quality_profiles_config',
+			delayProfiles: 'arr_sync_delay_profiles_config',
+			mediaManagement: 'arr_sync_media_management'
+		}[section];
+
+		db.execute(
+			`UPDATE ${table} SET last_synced_at = ? WHERE instance_id = ?`,
+			new Date().toISOString(),
+			instanceId
+		);
+	},
+
+	/**
 	 * Get sync status and timing for a specific section of an instance
 	 */
 	getSectionSyncStatus(

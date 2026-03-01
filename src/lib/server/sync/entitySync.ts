@@ -4,6 +4,7 @@
  */
 
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
+import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { createArrClient } from '$utils/arr/factory.ts';
 import { getCache } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
@@ -93,6 +94,8 @@ export async function syncQualityProfile(
 				meta: { instanceId, databaseId, profileName, action: 'created' }
 			});
 		}
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'qualityProfiles');
 
 		return { success: true };
 	} catch (error) {
