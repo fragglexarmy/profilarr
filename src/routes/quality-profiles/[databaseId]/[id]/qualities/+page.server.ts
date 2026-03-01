@@ -4,6 +4,7 @@ import { pcdManager } from '$pcd/index.ts';
 import { canWriteToBase } from '$pcd/index.ts';
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -50,6 +51,7 @@ export const load: ServerLoad = async ({ params }) => {
 
 	return {
 		qualities: qualitiesData,
+		profileName: profile.name,
 		canWriteToBase: canWriteToBase(currentDatabaseId)
 	};
 };
@@ -144,6 +146,16 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update qualities' });
 		}
 
-		return { success: true };
+		const affectedArrs = getAffectedArrs({
+			entityType: 'qualityProfile',
+			databaseId: currentDatabaseId,
+			entityName: profile.name
+		});
+
+		return {
+			success: true,
+			redirectTo: `/quality-profiles/${databaseId}/${id}/qualities`,
+			affectedArrs
+		};
 	}
 };

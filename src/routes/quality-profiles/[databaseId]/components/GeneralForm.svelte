@@ -1,15 +1,20 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { tick } from 'svelte';
 	import { Save, Loader2, Trash2 } from 'lucide-svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
+	import SearchDropdown from '$ui/form/SearchDropdown.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import { alertStore } from '$alerts/store';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 
 	// Form data shape
 	interface GeneralFormData {
@@ -62,8 +67,13 @@
 
 	// Modal state
 	let showDeleteConfirmModal = false;
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
 
 	// Display text based on mode
 	$: title = mode === 'create' ? 'New Quality Profile' : 'General';
@@ -79,57 +89,10 @@
 	$: description = ($current.description ?? '') as string;
 	$: selectedLanguageName = ($current.language ?? null) as string | null;
 
-	// Language autocomplete state
-	let languageSearchQuery = initialData.language || 'Any';
-	let showLanguageDropdown = false;
-
-	$: filteredLanguages = availableLanguages.filter((lang) =>
-		lang.name.toLowerCase().includes(languageSearchQuery.toLowerCase())
-	);
-
-	function selectLanguage(language: LanguageOption) {
-		update('language', language.name);
-		languageSearchQuery = language.name;
-		showLanguageDropdown = false;
-	}
-
-	function clearLanguage() {
-		update('language', null);
-		languageSearchQuery = '';
-		showLanguageDropdown = false;
-	}
-
-	function handleLanguageInput(value: string) {
-		languageSearchQuery = value;
-		showLanguageDropdown = true;
-
-		const exactMatch = availableLanguages.find(
-			(l) => l.name.toLowerCase() === languageSearchQuery.toLowerCase()
-		);
-		if (!exactMatch) {
-			update('language', null);
-		} else {
-			update('language', exactMatch.name);
-		}
-	}
-
-	function handleLanguageFocus() {
-		showLanguageDropdown = true;
-	}
-
-	function handleLanguageBlur() {
-		setTimeout(() => {
-			showLanguageDropdown = false;
-			if (selectedLanguageName) {
-				languageSearchQuery = selectedLanguageName;
-			} else if (
-				languageSearchQuery &&
-				!availableLanguages.find((l) => l.name === languageSearchQuery)
-			) {
-				languageSearchQuery = '';
-			}
-		}, 200);
-	}
+	$: languageOptions = availableLanguages.map((lang) => ({
+		value: lang.name,
+		label: lang.name
+	}));
 
 	// Validation
 	$: isValid = name.trim() !== '';
@@ -194,12 +157,29 @@
 			return async ({ result, update: formUpdate }) => {
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
+				} else if (result.type === 'success' && result.data) {
+					const data = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+					if (data.success) {
+						alertStore.add(
+							'success',
+							mode === 'create' ? 'Quality profile created!' : 'Quality profile updated!'
+						);
+						initEdit(formData);
+						if (data.affectedArrs && data.affectedArrs.length > 0) {
+							pendingRedirectTo = data.redirectTo || '';
+							pendingAffectedArrs = data.affectedArrs;
+							showSyncModal = true;
+						} else {
+							goto(data.redirectTo || '');
+						}
+						saving = false;
+						return;
+					}
 				} else if (result.type === 'redirect') {
 					alertStore.add(
 						'success',
 						mode === 'create' ? 'Quality profile created!' : 'Quality profile updated!'
 					);
-					// Mark as clean so navigation guard doesn't trigger
 					initEdit(formData);
 				}
 				await formUpdate();
@@ -245,67 +225,16 @@
 
 			<!-- Language -->
 			{#if availableLanguages.length > 0}
-				<div class="space-y-2">
-					<div class="relative">
-						{#if selectedLanguageName}
-							<FormInput
-								label="Language"
-								name="language-search"
-								value={languageSearchQuery}
-								description={`Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.`}
-								placeholder="Search for a language..."
-								on:input={(e) => handleLanguageInput(e.detail)}
-								on:focus={handleLanguageFocus}
-								on:blur={handleLanguageBlur}
-							>
-								<svelte:fragment slot="suffix">
-									<button
-										type="button"
-										onclick={clearLanguage}
-										aria-label="Clear language"
-										class="text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-									>
-										<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/>
-										</svg>
-									</button>
-								</svelte:fragment>
-							</FormInput>
-						{:else}
-							<FormInput
-								label="Language"
-								name="language-search"
-								value={languageSearchQuery}
-								description={`Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.`}
-								placeholder="Search for a language..."
-								on:input={(e) => handleLanguageInput(e.detail)}
-								on:focus={handleLanguageFocus}
-								on:blur={handleLanguageBlur}
-							/>
-						{/if}
-
-						{#if showLanguageDropdown && filteredLanguages.length > 0}
-							<div
-								class="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
-							>
-								{#each filteredLanguages as language}
-									<button
-										type="button"
-										onmousedown={() => selectLanguage(language)}
-										class="w-full px-3 py-2 text-left text-sm text-neutral-900 transition-colors hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-700"
-									>
-										{language.name}
-									</button>
-								{/each}
-							</div>
-						{/if}
-					</div>
-				</div>
+				<SearchDropdown
+					label="Language"
+					description={`Set the preferred language for this profile. Leave empty for "Any". Radarr only. Sonarr uses custom formats for language filtering.`}
+					name="language-search"
+					placeholder="Search for a language..."
+					options={languageOptions}
+					value={selectedLanguageName}
+					hideLabel={false}
+					on:change={(e) => update('language', e.detail || null)}
+				/>
 			{/if}
 		</div>
 	</form>
@@ -351,3 +280,13 @@
 		on:cancel={() => (showDeleteConfirmModal = false)}
 	/>
 {/if}
+
+<!-- Sync Prompt Modal -->
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="qualityProfiles"
+	{databaseId}
+	entityName={name.trim()}
+/>

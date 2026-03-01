@@ -30,12 +30,20 @@
 	import { onMount, tick } from 'svelte';
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import { alertStore } from '$alerts/store';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
+
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 
 	let searchStore: SearchStore;
 	$: searchStore = getPersistentSearchStore(
@@ -614,15 +622,25 @@
 			saveError = null;
 			return async ({ result, update: formUpdate }) => {
 				isSaving = false;
-				if (result.type === 'success') {
-					alertStore.add('success', 'Scoring saved!');
-					// Mark as clean so navigation guard doesn't trigger
-					initEdit(initialData);
-					await formUpdate();
+				if (result.type === 'success' && result.data) {
+					const resData = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+					if (resData.success) {
+						alertStore.add('success', 'Scoring saved!');
+						initEdit($current);
+						if (resData.affectedArrs && resData.affectedArrs.length > 0) {
+							pendingRedirectTo = resData.redirectTo || '';
+							pendingAffectedArrs = resData.affectedArrs;
+							showSyncModal = true;
+						} else {
+							await formUpdate();
+						}
+						return;
+					}
 				} else if (result.type === 'failure') {
 					saveError = (result.data as { error?: string })?.error || 'Failed to save';
 					alertStore.add('error', saveError);
 				}
+				await formUpdate();
 			};
 		}}
 	>
@@ -1122,3 +1140,12 @@
 		</div>
 	</div>
 </InfoModal>
+
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="qualityProfiles"
+	{databaseId}
+	entityName={data.profileName}
+/>

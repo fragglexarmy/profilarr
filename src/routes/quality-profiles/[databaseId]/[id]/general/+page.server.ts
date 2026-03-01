@@ -6,6 +6,7 @@ import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import { getRadarrLanguages } from '$lib/server/sync/mappings.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -143,7 +144,17 @@ export const actions: Actions = {
 			arrSyncQueries.updateQualityProfileName(current.name, name.trim());
 		}
 
-		throw redirect(303, `/quality-profiles/${databaseId}/${id}/general`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'qualityProfile',
+			databaseId: currentDatabaseId,
+			entityName: name.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/quality-profiles/${databaseId}/${id}/general`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {

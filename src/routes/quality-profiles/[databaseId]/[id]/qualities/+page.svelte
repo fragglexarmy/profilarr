@@ -20,10 +20,20 @@
 	import Button from '$ui/button/Button.svelte';
 	import { alertStore } from '$lib/client/alerts/store';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
+
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 
 	let showInfoModal = false;
 
@@ -589,13 +599,25 @@
 		isSaving = true;
 		return async ({ result, update: formUpdate }) => {
 			isSaving = false;
-			if (result.type === 'success') {
-				alertStore.add('success', 'Qualities saved!');
-				await formUpdate();
+			if (result.type === 'success' && result.data) {
+				const resData = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+				if (resData.success) {
+					alertStore.add('success', 'Qualities saved!');
+					initEdit($current);
+					if (resData.affectedArrs && resData.affectedArrs.length > 0) {
+						pendingRedirectTo = resData.redirectTo || '';
+						pendingAffectedArrs = resData.affectedArrs;
+						showSyncModal = true;
+					} else {
+						await formUpdate();
+					}
+					return;
+				}
 			} else if (result.type === 'failure') {
 				const message = (result.data as { error?: string })?.error || 'Failed to save';
 				alertStore.add('error', message);
 			}
+			await formUpdate();
 		};
 	}}
 >
@@ -851,6 +873,15 @@
 	on:confirm={handleGroupModalConfirm}
 	on:cancel={closeGroupModal}
 	on:toggle={(event) => toggleGroupSelection(event.detail.name)}
+/>
+
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="qualityProfiles"
+	{databaseId}
+	entityName={data.profileName}
 />
 
 <style>
