@@ -26,10 +26,10 @@ import {
 import {
 	fetchQualityProfileFromPcd,
 	getQualityApiMappings,
-	getReferencedCustomFormatNames,
 	transformQualityProfile,
 	type PcdQualityProfile
 } from './transformer.ts';
+import { getCustomFormatsForProfile } from '$pcd/references.ts';
 
 // Internal types for sync data
 interface ProfileSyncData {
@@ -200,7 +200,7 @@ export class QualityProfileSyncer extends BaseSyncer {
 			}
 
 			// Get referenced custom format names
-			const referencedFormatNames = await getReferencedCustomFormatNames(
+			const referencedFormatNames = await getCustomFormatsForProfile(
 				cache,
 				selection.profileName,
 				this.instanceType

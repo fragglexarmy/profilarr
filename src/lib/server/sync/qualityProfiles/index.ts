@@ -13,9 +13,11 @@ export { QualityProfileSyncer } from './syncer.ts';
 export {
 	transformQualityProfile,
 	fetchQualityProfileFromPcd,
-	getQualityApiMappings,
-	getReferencedCustomFormatNames
+	getQualityApiMappings
 } from './transformer.ts';
+
+// Re-export from centralized references module
+export { getCustomFormatsForProfile } from '$pcd/references.ts';
 
 // Transformer types (internal PCD representations)
 export type {

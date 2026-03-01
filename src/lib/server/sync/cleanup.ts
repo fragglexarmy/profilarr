@@ -11,7 +11,7 @@
 import type { BaseArrClient } from '$utils/arr/base.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache } from '$pcd/index.ts';
-import { getReferencedCustomFormatNames } from './qualityProfiles/transformer.ts';
+import { getCustomFormatsForProfile } from '$pcd/references.ts';
 import type { SyncArrType } from './mappings.ts';
 import { HttpError } from '$http/types.ts';
 import { logger } from '$logger/logger.ts';
@@ -57,7 +57,7 @@ export async function scanForStaleItems(
 		const cache = getCache(databaseId);
 		if (cache) {
 			for (const sel of selections) {
-				const cfNames = await getReferencedCustomFormatNames(cache, sel.profileName, arrType);
+				const cfNames = await getCustomFormatsForProfile(cache, sel.profileName, arrType);
 				for (const name of cfNames) {
 					expectedCFNames.add(name);
 				}

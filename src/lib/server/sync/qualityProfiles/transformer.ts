@@ -397,20 +397,4 @@ export async function getQualityApiMappings(
 	return map;
 }
 
-/**
- * Get all custom format names referenced by a quality profile
- */
-export async function getReferencedCustomFormatNames(
-	cache: PCDCache,
-	profileName: string,
-	arrType: SyncArrType
-): Promise<string[]> {
-	const rows = await cache.kb
-		.selectFrom('quality_profile_custom_formats')
-		.select(['custom_format_name'])
-		.where('quality_profile_name', '=', profileName)
-		.where((eb) => eb.or([eb('arr_type', '=', arrType), eb('arr_type', '=', 'all')]))
-		.execute();
-
-	return [...new Set(rows.map((r) => r.custom_format_name))];
-}
+// getReferencedCustomFormatNames moved to $pcd/references.ts as getCustomFormatsForProfile
