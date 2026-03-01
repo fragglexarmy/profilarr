@@ -179,7 +179,7 @@ CREATE TABLE backup_settings (
     retention_days INTEGER NOT NULL DEFAULT 30,
     enabled INTEGER NOT NULL DEFAULT 1,
     include_database INTEGER NOT NULL DEFAULT 1,
-    compression_enabled INTEGER NOT NULL DEFAULT 1,
+    compression_enabled INTEGER NOT NULL DEFAULT 1,  -- UNUSED: stored but not read by backup logic
 
     -- Metadata
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

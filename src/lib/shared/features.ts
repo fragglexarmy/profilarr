@@ -5,5 +5,7 @@
 
 export const FEATURES = {
 	/** PCD entity import/export */
-	importExport: false
+	importExport: false,
+	/** AI-powered commit message generation */
+	ai: false
 } as const;

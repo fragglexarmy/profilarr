@@ -8,11 +8,11 @@ import { generalSettingsQueries } from '$db/queries/generalSettings.ts';
 import { logSettings } from '$logger/settings.ts';
 import { logger } from '$logger/logger.ts';
 import { scheduleBackupJobs, scheduleLogCleanup } from '$lib/server/jobs/init.ts';
+import { FEATURES } from '$shared/features.ts';
 
 export const load = () => {
 	const logSetting = logSettingsQueries.get();
 	const backupSetting = backupSettingsQueries.get();
-	const aiSetting = aiSettingsQueries.get();
 	const tmdbSetting = tmdbSettingsQueries.get();
 	const generalSetting = generalSettingsQueries.get();
 
@@ -24,16 +24,27 @@ export const load = () => {
 		throw new Error('Backup settings not found in database');
 	}
 
-	if (!aiSetting) {
-		throw new Error('AI settings not found in database');
-	}
-
 	if (!tmdbSetting) {
 		throw new Error('TMDB settings not found in database');
 	}
 
 	if (!generalSetting) {
 		throw new Error('General settings not found in database');
+	}
+
+	// AI settings are feature-flagged
+	let aiSettings = { enabled: false, api_url: '', api_key: '', model: '' };
+	if (FEATURES.ai) {
+		const aiSetting = aiSettingsQueries.get();
+		if (!aiSetting) {
+			throw new Error('AI settings not found in database');
+		}
+		aiSettings = {
+			enabled: aiSetting.enabled === 1,
+			api_url: aiSetting.api_url,
+			api_key: aiSetting.api_key,
+			model: aiSetting.model
+		};
 	}
 
 	return {
@@ -48,15 +59,9 @@ export const load = () => {
 			schedule: backupSetting.schedule,
 			retention_days: backupSetting.retention_days,
 			enabled: backupSetting.enabled === 1,
-			include_database: backupSetting.include_database === 1,
-			compression_enabled: backupSetting.compression_enabled === 1
+			include_database: backupSetting.include_database === 1
 		},
-		aiSettings: {
-			enabled: aiSetting.enabled === 1,
-			api_url: aiSetting.api_url,
-			api_key: aiSetting.api_key,
-			model: aiSetting.model
-		},
+		aiSettings,
 		tmdbSettings: {
 			api_key: tmdbSetting.api_key
 		},
@@ -67,220 +72,151 @@ export const load = () => {
 };
 
 export const actions: Actions = {
-	updateLogs: async ({ request }: RequestEvent) => {
+	save: async ({ request }: RequestEvent) => {
 		const formData = await request.formData();
 
-		// Parse form data
-		const retentionDays = parseInt(formData.get('retention_days') as string);
-		const minLevel = formData.get('min_level') as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-		const enabled = formData.get('enabled') === 'on';
-		const fileLogging = formData.get('file_logging') === 'on';
-		const consoleLogging = formData.get('console_logging') === 'on';
+		// --- Log settings ---
+		const logRetentionDays = parseInt(formData.get('log_retention_days') as string);
+		const logMinLevel = formData.get('log_min_level') as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+		const logEnabled = formData.get('log_enabled') === 'on';
+		const logFileLogging = formData.get('log_file_logging') === 'on';
+		const logConsoleLogging = formData.get('log_console_logging') === 'on';
 
-		// Validate
-		if (isNaN(retentionDays) || retentionDays < 1 || retentionDays > 365) {
-			return fail(400, { error: 'Retention days must be between 1 and 365' });
+		if (isNaN(logRetentionDays) || logRetentionDays < 1 || logRetentionDays > 365) {
+			return fail(400, { error: 'Log retention days must be between 1 and 365' });
 		}
 
-		if (!minLevel || !['DEBUG', 'INFO', 'WARN', 'ERROR'].includes(minLevel)) {
+		if (!logMinLevel || !['DEBUG', 'INFO', 'WARN', 'ERROR'].includes(logMinLevel)) {
 			return fail(400, { error: 'Invalid minimum log level' });
 		}
 
-		// Update settings
-		const updated = logSettingsQueries.update({
-			retentionDays,
-			minLevel,
-			enabled,
-			fileLogging,
-			consoleLogging
+		// --- Backup settings ---
+		const backupSchedule = formData.get('backup_schedule') as string;
+		const backupRetentionDays = parseInt(formData.get('backup_retention_days') as string);
+		const backupEnabled = formData.get('backup_enabled') === 'on';
+
+		if (!backupSchedule) {
+			return fail(400, { error: 'Backup schedule is required' });
+		}
+
+		if (isNaN(backupRetentionDays) || backupRetentionDays < 1 || backupRetentionDays > 365) {
+			return fail(400, { error: 'Backup retention days must be between 1 and 365' });
+		}
+
+		// --- AI settings (feature-flagged) ---
+		let aiEnabled = false;
+		let aiApiUrl = '';
+		let aiApiKey = '';
+		let aiModel = '';
+
+		if (FEATURES.ai) {
+			aiEnabled = formData.get('ai_enabled') === 'on';
+			aiApiUrl = formData.get('ai_api_url') as string;
+			aiApiKey = formData.get('ai_api_key') as string;
+			aiModel = formData.get('ai_model') as string;
+
+			if (aiEnabled && !aiApiUrl) {
+				return fail(400, { error: 'API URL is required when AI is enabled' });
+			}
+
+			if (aiEnabled && !aiModel) {
+				return fail(400, { error: 'Model is required when AI is enabled' });
+			}
+		}
+
+		// --- TMDB settings ---
+		const tmdbApiKey = formData.get('tmdb_api_key') as string;
+
+		// --- Arr defaults ---
+		const arrApplyDefaultDelayProfiles =
+			formData.get('arr_apply_default_delay_profiles') === 'on';
+
+		// --- Persist all settings ---
+		const logUpdated = logSettingsQueries.update({
+			retentionDays: logRetentionDays,
+			minLevel: logMinLevel,
+			enabled: logEnabled,
+			fileLogging: logFileLogging,
+			consoleLogging: logConsoleLogging
 		});
 
-		if (!updated) {
+		if (!logUpdated) {
 			await logger.error('Failed to update log settings', {
 				source: 'settings/general'
 			});
-			return fail(500, { error: 'Failed to update settings' });
+			return fail(500, { error: 'Failed to update log settings' });
 		}
 
-		// Reload settings into cache
-		logSettings.reload();
-		scheduleLogCleanup();
-
-		await logger.info('Log settings updated', {
-			source: 'settings/general',
-			meta: {
-				retentionDays,
-				minLevel,
-				enabled,
-				fileLogging,
-				consoleLogging
-			}
+		const backupUpdated = backupSettingsQueries.update({
+			schedule: backupSchedule,
+			retentionDays: backupRetentionDays,
+			enabled: backupEnabled
 		});
 
-		return { success: true };
-	},
-
-	resetLogs: async () => {
-		const reset = logSettingsQueries.reset();
-
-		if (!reset) {
-			await logger.error('Failed to reset log settings', {
-				source: 'settings/general'
-			});
-			return fail(500, { error: 'Failed to reset settings' });
-		}
-
-		// Reload settings into cache
-		logSettings.reload();
-		scheduleLogCleanup();
-
-		await logger.info('Log settings reset to defaults', {
-			source: 'settings/general'
-		});
-
-		return { success: true, reset: true };
-	},
-
-	updateBackups: async ({ request }: RequestEvent) => {
-		const formData = await request.formData();
-
-		// Parse form data
-		const schedule = formData.get('schedule') as string;
-		const retentionDays = parseInt(formData.get('retention_days') as string);
-		const enabled = formData.get('enabled') === 'on';
-		const compressionEnabled = formData.get('compression_enabled') === 'on';
-
-		// Validate
-		if (!schedule) {
-			return fail(400, { error: 'Schedule is required' });
-		}
-
-		if (isNaN(retentionDays) || retentionDays < 1 || retentionDays > 365) {
-			return fail(400, { error: 'Retention days must be between 1 and 365' });
-		}
-
-		// Update settings
-		const updated = backupSettingsQueries.update({
-			schedule,
-			retentionDays,
-			enabled,
-			compressionEnabled
-		});
-
-		if (!updated) {
+		if (!backupUpdated) {
 			await logger.error('Failed to update backup settings', {
 				source: 'settings/general'
 			});
-			return fail(500, { error: 'Failed to update settings' });
+			return fail(500, { error: 'Failed to update backup settings' });
 		}
 
-		await logger.info('Backup settings updated', {
-			source: 'settings/general',
-			meta: {
-				schedule,
-				retentionDays,
-				enabled,
-				compressionEnabled
-			}
-		});
-
-		scheduleBackupJobs();
-
-		return { success: true };
-	},
-
-	updateAI: async ({ request }: RequestEvent) => {
-		const formData = await request.formData();
-
-		// Parse form data
-		const enabled = formData.get('enabled') === 'on';
-		const apiUrl = formData.get('api_url') as string;
-		const apiKey = formData.get('api_key') as string;
-		const model = formData.get('model') as string;
-
-		// Validate
-		if (enabled && !apiUrl) {
-			return fail(400, { error: 'API URL is required when AI is enabled' });
-		}
-
-		if (enabled && !model) {
-			return fail(400, { error: 'Model is required when AI is enabled' });
-		}
-
-		// Update settings
-		const updated = aiSettingsQueries.update({
-			enabled,
-			apiUrl: apiUrl || 'https://api.openai.com/v1',
-			apiKey: apiKey || '',
-			model: model || 'gpt-4o-mini'
-		});
-
-		if (!updated) {
-			await logger.error('Failed to update AI settings', {
-				source: 'settings/general'
+		if (FEATURES.ai) {
+			const aiUpdated = aiSettingsQueries.update({
+				enabled: aiEnabled,
+				apiUrl: aiApiUrl || 'https://api.openai.com/v1',
+				apiKey: aiApiKey || '',
+				model: aiModel || 'gpt-4o-mini'
 			});
-			return fail(500, { error: 'Failed to update settings' });
+
+			if (!aiUpdated) {
+				await logger.error('Failed to update AI settings', {
+					source: 'settings/general'
+				});
+				return fail(500, { error: 'Failed to update AI settings' });
+			}
 		}
 
-		await logger.info('AI settings updated', {
-			source: 'settings/general',
-			meta: {
-				enabled,
-				apiUrl,
-				model
-				// Note: Don't log apiKey for security
-			}
+		const tmdbUpdated = tmdbSettingsQueries.update({
+			apiKey: tmdbApiKey || ''
 		});
 
-		return { success: true };
-	},
-
-	updateTMDB: async ({ request }: RequestEvent) => {
-		const formData = await request.formData();
-
-		// Parse form data
-		const apiKey = formData.get('api_key') as string;
-
-		// Update settings
-		const updated = tmdbSettingsQueries.update({
-			apiKey: apiKey || ''
-		});
-
-		if (!updated) {
+		if (!tmdbUpdated) {
 			await logger.error('Failed to update TMDB settings', {
 				source: 'settings/general'
 			});
-			return fail(500, { error: 'Failed to update settings' });
+			return fail(500, { error: 'Failed to update TMDB settings' });
 		}
 
-		await logger.info('TMDB settings updated', {
-			source: 'settings/general'
+		const arrUpdated = generalSettingsQueries.update({
+			applyDefaultDelayProfiles: arrApplyDefaultDelayProfiles
 		});
 
-		return { success: true };
-	},
-
-	updateArrDefaults: async ({ request }: RequestEvent) => {
-		const formData = await request.formData();
-
-		// Parse form data
-		const applyDefaultDelayProfiles = formData.get('apply_default_delay_profiles') === 'on';
-
-		// Update settings
-		const updated = generalSettingsQueries.update({
-			applyDefaultDelayProfiles
-		});
-
-		if (!updated) {
+		if (!arrUpdated) {
 			await logger.error('Failed to update arr default settings', {
 				source: 'settings/general'
 			});
-			return fail(500, { error: 'Failed to update settings' });
+			return fail(500, { error: 'Failed to update arr default settings' });
 		}
 
-		await logger.info('Arr default settings updated', {
+		// --- Side effects ---
+		logSettings.reload();
+		scheduleLogCleanup();
+		scheduleBackupJobs();
+
+		await logger.info('General settings saved', {
 			source: 'settings/general',
-			meta: { applyDefaultDelayProfiles }
+			meta: {
+				logRetentionDays,
+				logMinLevel,
+				logEnabled,
+				backupSchedule,
+				backupRetentionDays,
+				backupEnabled,
+				aiEnabled,
+				aiApiUrl,
+				aiModel,
+				arrApplyDefaultDelayProfiles
+			}
 		});
 
 		return { success: true };
