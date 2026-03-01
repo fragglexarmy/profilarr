@@ -333,7 +333,7 @@ export async function processUpgradeConfig(
 				tags.push(...updatedTags);
 
 				// Also strip the tag from local items so filterByFilterTag sees them as available
-				const filterTagId = updatedTags.find((t) => t.label === tagLabel)?.id;
+				const filterTagId = updatedTags.find((t) => t.label.toLowerCase() === tagLabel.toLowerCase())?.id;
 				if (filterTagId !== undefined) {
 					for (const item of matchedItems) {
 						item._tags = item._tags.filter((id) => id !== filterTagId);

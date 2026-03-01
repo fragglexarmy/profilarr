@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { Eye, EyeOff } from 'lucide-svelte';
+	import { alertStore } from '$alerts/store';
 
 	export let label: string;
 	export let description: string = '';
@@ -21,6 +22,7 @@
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let inputClass: string = '';
 	export let inputElement: HTMLInputElement | HTMLTextAreaElement | null = null;
+	export let lowercase: boolean = false;
 
 	const dispatch = createEventDispatcher<{ input: string; focus: void; blur: void }>();
 
@@ -44,6 +46,10 @@
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+		if (lowercase && target.value !== target.value.toLowerCase()) {
+			target.value = target.value.toLowerCase();
+			alertStore.add('warning', 'Tags must be lowercase');
+		}
 		value = target.value;
 		dispatch('input', value);
 	}

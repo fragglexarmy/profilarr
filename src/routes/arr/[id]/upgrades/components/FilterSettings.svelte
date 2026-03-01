@@ -473,6 +473,7 @@
 								<FormInput
 									label="Cooldown tag"
 									hideLabel
+									lowercase
 									name="tag-{row.id}"
 									placeholder={resolveTagLabel(row)}
 									bind:value={row.tag}

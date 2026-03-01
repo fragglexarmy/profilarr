@@ -144,6 +144,7 @@
 			<FormInput
 				label="Ignore Tag"
 				hideLabel
+				lowercase
 				name="ignore-tag"
 				size="md"
 				value={ignoreTag}

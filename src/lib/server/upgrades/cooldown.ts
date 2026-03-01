@@ -37,7 +37,7 @@ export function hasFilterTag(
 
 	for (const tagId of itemTagIds) {
 		const label = tagMap.get(tagId);
-		if (label === tagLabel) {
+		if (label?.toLowerCase() === tagLabel.toLowerCase()) {
 			return true;
 		}
 	}
@@ -155,7 +155,7 @@ export async function resetFilterCooldown(
 
 	// Find the tag ID
 	const tags = await client.getTags();
-	const filterTag = tags.find((t) => t.label === tagLabel);
+	const filterTag = tags.find((t) => t.label.toLowerCase() === tagLabel.toLowerCase());
 
 	if (!filterTag) {
 		return { reset: 0, failed: 0, errors: [] };
