@@ -52,7 +52,7 @@
 			dismiss();
 		}
 	}}
-	class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 shadow-lg shadow-black/5 transition-colors {styles[type]}"
+	class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-sm transition-colors {styles[type]}"
 >
 	<Icon size={18} class="flex-shrink-0 {iconColors[type]}" />
 	<p class="text-sm font-medium">{message}</p>
