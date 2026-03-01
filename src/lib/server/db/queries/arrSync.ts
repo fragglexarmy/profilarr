@@ -720,6 +720,52 @@ export const arrSyncQueries = {
 		);
 	},
 
+	/**
+	 * Get sync status and timing for a specific section of an instance
+	 */
+	getSectionSyncStatus(
+		instanceId: number,
+		section: 'qualityProfiles' | 'delayProfiles' | 'mediaManagement'
+	): { sync_status: string; last_synced_at: string | null } | undefined {
+		const table = {
+			qualityProfiles: 'arr_sync_quality_profiles_config',
+			delayProfiles: 'arr_sync_delay_profiles_config',
+			mediaManagement: 'arr_sync_media_management'
+		}[section];
+
+		return db.queryFirst<{ sync_status: string; last_synced_at: string | null }>(
+			`SELECT sync_status, last_synced_at FROM ${table} WHERE instance_id = ?`,
+			instanceId
+		);
+	},
+
+	/**
+	 * Get arr instances that sync a specific quality profile from a specific database
+	 */
+	getInstancesForQualityProfile(
+		databaseId: number,
+		profileName: string
+	): { instance_id: number; instance_name: string; sync_status: string; last_synced_at: string | null }[] {
+		return db.query<{
+			instance_id: number;
+			instance_name: string;
+			sync_status: string;
+			last_synced_at: string | null;
+		}>(
+			`SELECT DISTINCT
+				ai.id AS instance_id,
+				ai.name AS instance_name,
+				qpc.sync_status,
+				qpc.last_synced_at
+			FROM arr_sync_quality_profiles aqp
+			JOIN arr_instances ai ON ai.id = aqp.instance_id
+			JOIN arr_sync_quality_profiles_config qpc ON qpc.instance_id = aqp.instance_id
+			WHERE aqp.database_id = ? AND aqp.profile_name = ? AND ai.enabled = 1`,
+			databaseId,
+			profileName
+		);
+	},
+
 	getInstanceIdsForTrigger(trigger: SyncTrigger): number[] {
 		const rows = db.query<{ instance_id: number }>(
 			`SELECT instance_id FROM arr_sync_quality_profiles_config WHERE trigger = ?

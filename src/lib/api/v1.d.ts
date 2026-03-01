@@ -189,6 +189,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/arr/sync-entity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync a single entity to an Arr instance
+         * @description Pushes a single entity (quality profile, delay profile, or media management config)
+         *     to an Arr instance. Runs inline and returns when the sync is complete.
+         *
+         *     Checks for cooldown (30s since last sync) and in-progress status before syncing.
+         */
+        post: operations["syncEntity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pcd/export": {
         parameters: {
             query?: never;
@@ -556,6 +579,29 @@ export interface components {
             deletedQualityProfiles: components["schemas"]["StaleItem"][];
             /** @description Quality profiles that were skipped (assigned to media) */
             skippedQualityProfiles: components["schemas"]["SkippedItem"][];
+        };
+        SyncEntityRequest: {
+            /** @description Arr instance ID */
+            instanceId: number;
+            /**
+             * @description Sync section the entity belongs to
+             * @enum {string}
+             */
+            section: "qualityProfiles" | "delayProfiles" | "mediaManagement";
+            /** @description PCD database ID */
+            databaseId: number;
+            /** @description Name of the entity to sync */
+            entityName: string;
+        };
+        SyncEntitySuccessResponse: {
+            /** @enum {boolean} */
+            success: true;
+        };
+        SyncEntityCooldownResponse: {
+            /** @description Cooldown or in-progress message */
+            error: string;
+            /** @description Seconds until cooldown expires */
+            retryAfter?: number;
         };
         /** @enum {string} */
         EntityType: "delay_profile" | "regular_expression" | "custom_format" | "quality_profile" | "radarr_naming" | "sonarr_naming" | "radarr_media_settings" | "sonarr_media_settings" | "radarr_quality_definitions" | "sonarr_quality_definitions";
@@ -1105,6 +1151,66 @@ export interface operations {
                 };
             };
             /** @description Failed to perform cleanup */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    syncEntity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncEntityRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity synced successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncEntitySuccessResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Instance not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cooldown active or sync in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncEntityCooldownResponse"];
+                };
+            };
+            /** @description Sync failed */
             500: {
                 headers: {
                     [name: string]: unknown;

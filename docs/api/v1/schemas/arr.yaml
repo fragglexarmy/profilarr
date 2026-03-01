@@ -532,3 +532,51 @@ CleanupDeleteResult:
       items:
         $ref: '#/SkippedItem'
       description: Quality profiles that were skipped (assigned to media)
+
+# Sync entity endpoint types
+SyncEntityRequest:
+  type: object
+  required:
+    - instanceId
+    - section
+    - databaseId
+    - entityName
+  properties:
+    instanceId:
+      type: integer
+      description: Arr instance ID
+    section:
+      type: string
+      enum:
+        - qualityProfiles
+        - delayProfiles
+        - mediaManagement
+      description: Sync section the entity belongs to
+    databaseId:
+      type: integer
+      description: PCD database ID
+    entityName:
+      type: string
+      description: Name of the entity to sync
+
+SyncEntitySuccessResponse:
+  type: object
+  required:
+    - success
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+
+SyncEntityCooldownResponse:
+  type: object
+  required:
+    - error
+  properties:
+    error:
+      type: string
+      description: Cooldown or in-progress message
+    retryAfter:
+      type: integer
+      description: Seconds until cooldown expires

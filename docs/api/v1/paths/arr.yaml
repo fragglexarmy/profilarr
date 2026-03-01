@@ -236,3 +236,52 @@ cleanup:
           application/json:
             schema:
               $ref: '../schemas/arr.yaml#/ErrorResponse'
+
+sync-entity:
+  post:
+    operationId: syncEntity
+    summary: Sync a single entity to an Arr instance
+    description: |
+      Pushes a single entity (quality profile, delay profile, or media management config)
+      to an Arr instance. Runs inline and returns when the sync is complete.
+
+      Checks for cooldown (30s since last sync) and in-progress status before syncing.
+    tags:
+      - Arr
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/arr.yaml#/SyncEntityRequest'
+    responses:
+      '200':
+        description: Entity synced successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/arr.yaml#/SyncEntitySuccessResponse'
+      '400':
+        description: Invalid request parameters
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/arr.yaml#/ErrorResponse'
+      '404':
+        description: Instance not found
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/arr.yaml#/ErrorResponse'
+      '409':
+        description: Cooldown active or sync in progress
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/arr.yaml#/SyncEntityCooldownResponse'
+      '500':
+        description: Sync failed
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/arr.yaml#/ErrorResponse'

@@ -36,6 +36,8 @@ paths:
     $ref: './paths/arr.yaml#/releases'
   /arr/cleanup:
     $ref: './paths/arr.yaml#/cleanup'
+  /arr/sync-entity:
+    $ref: './paths/arr.yaml#/sync-entity'
   /pcd/export:
     $ref: './paths/pcd.yaml#/export'
   /pcd/import:
@@ -106,6 +108,13 @@ components:
       $ref: './schemas/arr.yaml#/CleanupScanResult'
     CleanupDeleteResult:
       $ref: './schemas/arr.yaml#/CleanupDeleteResult'
+    # Arr - Sync Entity
+    SyncEntityRequest:
+      $ref: './schemas/arr.yaml#/SyncEntityRequest'
+    SyncEntitySuccessResponse:
+      $ref: './schemas/arr.yaml#/SyncEntitySuccessResponse'
+    SyncEntityCooldownResponse:
+      $ref: './schemas/arr.yaml#/SyncEntityCooldownResponse'
     # PCD
     EntityType:
       $ref: './schemas/pcd.yaml#/EntityType'
