@@ -738,7 +738,7 @@
 								icon={ExternalLink}
 								size="xs"
 								variant="secondary"
-								href="{baseUrl}/series/{row.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}"
+								href="{baseUrl}/series/{row.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}"
 								target="_blank"
 								rel="noopener noreferrer"
 								tooltip="Open in Sonarr"
