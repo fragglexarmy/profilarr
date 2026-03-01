@@ -45,7 +45,7 @@
 
 	$: cursorClass = interactive ? 'cursor-pointer' : '';
 
-	$: cardClass = `overflow-hidden rounded-xl border border-neutral-300 dark:border-neutral-700/60 ${bgClass} ${hoverClass} ${cursorClass} ${className}`;
+	$: cardClass = `flex flex-col overflow-hidden rounded-xl border border-neutral-300 dark:border-neutral-700/60 ${bgClass} ${hoverClass} ${cursorClass} ${className}`;
 </script>
 
 {#if href}
@@ -57,7 +57,7 @@
 			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 		{/if}
 
-		<div class={paddingClass}>
+		<div class="flex-1 {paddingClass}">
 			<slot />
 		</div>
 
@@ -78,7 +78,7 @@
 			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 		{/if}
 
-		<div class={paddingClass}>
+		<div class="flex-1 {paddingClass}">
 			<slot />
 		</div>
 
