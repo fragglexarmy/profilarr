@@ -2,6 +2,7 @@ import type { LayoutServerLoad } from './$types';
 import { appInfoQueries } from '$db/queries/appInfo.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
+import { isParserHealthy } from '$lib/server/utils/arr/parser/client.ts';
 
 export const load: LayoutServerLoad = async () => {
 	const arrInstances = arrInstancesQueries.getAll().map((i) => ({
@@ -18,6 +19,7 @@ export const load: LayoutServerLoad = async () => {
 	return {
 		version: appInfoQueries.getVersion(),
 		arrInstances,
-		databases
+		databases,
+		parserAvailable: await isParserHealthy()
 	};
 };

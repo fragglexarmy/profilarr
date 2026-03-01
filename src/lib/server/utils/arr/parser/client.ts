@@ -181,14 +181,34 @@ export async function parseQuality(title: string, type: MediaType): Promise<Qual
 	};
 }
 
+// Cached health status to avoid blocking page loads
+let cachedHealthStatus: { healthy: boolean; checkedAt: number } | null = null;
+const HEALTH_CACHE_TTL = 30000; // 30 seconds
+
 /**
- * Check parser service health
+ * Check parser service health (fast, cached)
+ * Uses a short timeout and caches results to avoid blocking page loads
  */
 export async function isParserHealthy(): Promise<boolean> {
+	// Return cached result if fresh
+	if (cachedHealthStatus && Date.now() - cachedHealthStatus.checkedAt < HEALTH_CACHE_TTL) {
+		return cachedHealthStatus.healthy;
+	}
+
 	try {
-		await getClient().health();
-		return true;
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+		const response = await fetch(`${config.parserUrl}/health`, {
+			signal: controller.signal
+		});
+		clearTimeout(timeoutId);
+
+		const healthy = response.ok;
+		cachedHealthStatus = { healthy, checkedAt: Date.now() };
+		return healthy;
 	} catch {
+		cachedHealthStatus = { healthy: false, checkedAt: Date.now() };
 		return false;
 	}
 }

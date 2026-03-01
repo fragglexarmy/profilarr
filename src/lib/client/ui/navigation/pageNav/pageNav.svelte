@@ -12,6 +12,7 @@
 	export let version: string = '';
 	export let arrInstances: { id: number; name: string; type: string }[] = [];
 	export let databases: { id: number; name: string }[] = [];
+	export let parserAvailable: boolean = true;
 
 	// Close mobile nav when page changes
 	$: $page.url.pathname, mobileNavOpen.close();
@@ -105,9 +106,11 @@
 			href="/quality-profiles"
 			icon={Sliders}
 			initialOpen={true}
-			hasItems={true}
+			hasItems={parserAvailable}
 		>
-			<GroupItem label="Testing" href="/quality-profiles/entity-testing" />
+			{#if parserAvailable}
+				<GroupItem label="Testing" href="/quality-profiles/entity-testing" />
+			{/if}
 		</Group>
 
 		<Group

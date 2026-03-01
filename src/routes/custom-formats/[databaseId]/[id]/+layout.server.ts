@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { pcdManager } from '$pcd/index.ts';
+import { isParserHealthy } from '$lib/server/utils/arr/parser/client.ts';
 
 export const load: LayoutServerLoad = async ({ params }) => {
 	const databaseId = parseInt(params.databaseId, 10);
@@ -26,6 +27,7 @@ export const load: LayoutServerLoad = async ({ params }) => {
 
 	return {
 		databaseName: database.name,
-		formatName: format.name
+		formatName: format.name,
+		parserAvailable: await isParserHealthy()
 	};
 };

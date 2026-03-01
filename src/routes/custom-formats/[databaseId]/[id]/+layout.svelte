@@ -24,12 +24,16 @@
 			active: currentPath.includes('/conditions'),
 			icon: Filter
 		},
-		{
-			label: 'Testing',
-			href: `/custom-formats/${databaseId}/${formatId}/testing`,
-			active: currentPath.includes('/testing'),
-			icon: FlaskConical
-		}
+		...(data.parserAvailable
+			? [
+					{
+						label: 'Testing',
+						href: `/custom-formats/${databaseId}/${formatId}/testing`,
+						active: currentPath.includes('/testing'),
+						icon: FlaskConical
+					}
+				]
+			: [])
 	];
 
 	$: breadcrumb = {
