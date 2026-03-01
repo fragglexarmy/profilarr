@@ -99,20 +99,22 @@
 				<div
 					class="flex flex-shrink-0 justify-between border-t border-neutral-300 px-6 py-4 dark:border-neutral-700/60"
 				>
-					<Button
-						text={cancelText}
-						icon={X}
-						disabled={loading}
-						on:click={handleCancel}
-					/>
-					<Button
-						text={confirmText}
-						icon={loading ? Loader2 : Check}
-						variant={confirmDanger ? 'danger' : 'primary'}
-						disabled={confirmDisabled || loading}
-						{loading}
-						on:click={handleConfirm}
-					/>
+					<slot name="footer">
+						<Button
+							text={cancelText}
+							icon={X}
+							disabled={loading}
+							on:click={handleCancel}
+						/>
+						<Button
+							text={confirmText}
+							icon={loading ? Loader2 : Check}
+							variant={confirmDanger ? 'danger' : 'primary'}
+							disabled={confirmDisabled || loading}
+							{loading}
+							on:click={handleConfirm}
+						/>
+					</slot>
 				</div>
 			</div>
 		</div>
