@@ -30,7 +30,7 @@
 		<Card href="/regular-expressions/{databaseId}/{expression.id}" hoverable>
 			<svelte:fragment slot="header">
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-				<div class="flex items-start justify-between gap-2">
+				<div class="flex items-end justify-between gap-2">
 					<div class="flex min-w-0 flex-wrap items-center gap-1.5">
 						<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
 							{expression.name}
