@@ -786,6 +786,29 @@ export const arrSyncQueries = {
 		);
 	},
 
+	getInstancesForDelayProfile(
+		databaseId: number,
+		profileName: string
+	): { instance_id: number; instance_name: string; sync_status: string; last_synced_at: string | null }[] {
+		return db.query<{
+			instance_id: number;
+			instance_name: string;
+			sync_status: string;
+			last_synced_at: string | null;
+		}>(
+			`SELECT DISTINCT
+				ai.id AS instance_id,
+				ai.name AS instance_name,
+				dpc.sync_status,
+				dpc.last_synced_at
+			FROM arr_sync_delay_profiles_config dpc
+			JOIN arr_instances ai ON ai.id = dpc.instance_id
+			WHERE dpc.database_id = ? AND dpc.profile_name = ? AND ai.enabled = 1`,
+			databaseId,
+			profileName
+		);
+	},
+
 	getInstanceIdsForTrigger(trigger: SyncTrigger): number[] {
 		const rows = db.query<{ instance_id: number }>(
 			`SELECT instance_id FROM arr_sync_quality_profiles_config WHERE trigger = ?

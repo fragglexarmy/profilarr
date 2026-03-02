@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { components } from '$api/v1.d.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { syncQualityProfile, syncCustomFormat, syncRegularExpression } from '$lib/server/sync/entitySync.ts';
+import { syncQualityProfile, syncCustomFormat, syncRegularExpression, syncDelayProfile } from '$lib/server/sync/entitySync.ts';
 import { logger } from '$logger/logger.ts';
 
 type SyncEntityRequest = components['schemas']['SyncEntityRequest'];
@@ -81,6 +81,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				} else {
 					result = await syncQualityProfile(instanceId, databaseId, entityName);
 				}
+				break;
+			case 'delayProfiles':
+				result = await syncDelayProfile(instanceId, databaseId, entityName);
 				break;
 			default:
 				return json({ error: `Sync not yet implemented for section: ${section}` }, { status: 400 });

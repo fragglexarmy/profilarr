@@ -19,6 +19,9 @@ import {
 } from './qualityProfiles/transformer.ts';
 import { getCustomFormatsForProfile, getCustomFormatsForRegex } from '$pcd/references.ts';
 import { fetchCustomFormatFromPcd, transformCustomFormat, syncCustomFormats, type PcdCustomFormat } from './customFormats/index.ts';
+import { getByName as getDelayProfileByName } from '$pcd/entities/delayProfiles/index.ts';
+import type { DelayProfilesRow } from '$shared/pcd/display.ts';
+import type { ArrDelayProfile } from '$arr/types.ts';
 
 interface SyncResult {
 	success: boolean;
@@ -232,4 +235,86 @@ export async function syncRegularExpression(
 	} finally {
 		client.close();
 	}
+}
+
+/**
+ * Sync a single delay profile to an arr instance (always updates id=1)
+ */
+export async function syncDelayProfile(
+	instanceId: number,
+	databaseId: number,
+	profileName: string
+): Promise<SyncResult> {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance) return { success: false, error: 'Instance not found' };
+
+	const cache = getCache(databaseId);
+	if (!cache) return { success: false, error: `PCD cache not found for database ${databaseId}` };
+
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	try {
+		const profile = await getDelayProfileByName(cache, profileName);
+		if (!profile) {
+			return { success: false, error: `Delay profile "${profileName}" not found in PCD` };
+		}
+
+		const transformed = transformDelayProfile(profile);
+		await client.updateDelayProfile(1, transformed);
+
+		await logger.info(`Entity sync: updated delay profile "${profileName}"`, {
+			source: 'EntitySync:DelayProfile',
+			meta: { instanceId, databaseId, profileName }
+		});
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'delayProfiles');
+
+		return { success: true };
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+		await logger.error(`Entity sync failed for delay profile "${profileName}"`, {
+			source: 'EntitySync:DelayProfile',
+			meta: { instanceId, databaseId, profileName, error: errorMsg }
+		});
+		return { success: false, error: errorMsg };
+	} finally {
+		client.close();
+	}
+}
+
+function transformDelayProfile(profile: DelayProfilesRow): ArrDelayProfile {
+	let enableUsenet = true;
+	let enableTorrent = true;
+	let preferredProtocol = 'usenet';
+
+	switch (profile.preferred_protocol) {
+		case 'prefer_usenet':
+			preferredProtocol = 'usenet';
+			break;
+		case 'prefer_torrent':
+			preferredProtocol = 'torrent';
+			break;
+		case 'only_usenet':
+			enableTorrent = false;
+			preferredProtocol = 'usenet';
+			break;
+		case 'only_torrent':
+			enableUsenet = false;
+			preferredProtocol = 'torrent';
+			break;
+	}
+
+	return {
+		id: 1,
+		enableUsenet,
+		enableTorrent,
+		preferredProtocol,
+		usenetDelay: profile.usenet_delay ?? 0,
+		torrentDelay: profile.torrent_delay ?? 0,
+		bypassIfHighestQuality: profile.bypass_if_highest_quality,
+		bypassIfAboveCustomFormatScore: profile.bypass_if_above_custom_format_score,
+		minimumCustomFormatScore: profile.minimum_custom_format_score ?? 0,
+		order: 2147483647,
+		tags: []
+	};
 }

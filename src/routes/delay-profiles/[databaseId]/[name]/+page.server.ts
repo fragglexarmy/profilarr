@@ -7,6 +7,7 @@ import type { OperationLayer } from '$pcd/index.ts';
 import type { PreferredProtocol } from '$shared/pcd/display.ts';
 import { logger } from '$logger/logger.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, name } = params;
@@ -124,7 +125,17 @@ export const actions: Actions = {
 			arrSyncQueries.updateDelayProfileName(current.name, name.trim());
 		}
 
-		throw redirect(303, `/delay-profiles/${databaseId}`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'delayProfile',
+			databaseId: currentDatabaseId,
+			entityName: name.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/delay-profiles/${databaseId}`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {

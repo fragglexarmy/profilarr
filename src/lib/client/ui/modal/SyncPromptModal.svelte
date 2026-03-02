@@ -12,7 +12,7 @@
 	export let section: SyncSection;
 	export let databaseId: number;
 	export let entityName: string;
-	export let entityType: 'qualityProfile' | 'customFormat' | 'regularExpression' = 'qualityProfile';
+	export let entityType: 'qualityProfile' | 'customFormat' | 'regularExpression' | 'delayProfile' = 'qualityProfile';
 
 	type InstanceState = 'idle' | 'syncing' | 'done' | 'failed' | 'cooldown';
 

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { tick } from 'svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
@@ -9,10 +11,12 @@
 	import Card from '$ui/card/Card.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2, Loader2 } from 'lucide-svelte';
 	import type { PreferredProtocol } from '$shared/pcd/display.ts';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 
 	// Form data shape
 	interface DelayProfileFormData {
@@ -66,8 +70,13 @@
 	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 
 	// Modal states
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
 
 	// Delete layer selection
 	let deleteLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
@@ -164,19 +173,35 @@
 		class="md:px-4"
 		use:enhance={() => {
 			saving = true;
-			return async ({ result, update }) => {
+			return async ({ result, update: formUpdate }) => {
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
+				} else if (result.type === 'success' && result.data) {
+					const data = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+					if (data.success) {
+						alertStore.add(
+							'success',
+							mode === 'create' ? 'Delay profile created!' : 'Delay profile updated!'
+						);
+						initEdit(formData);
+						if (data.affectedArrs && data.affectedArrs.length > 0) {
+							pendingRedirectTo = data.redirectTo || '';
+							pendingAffectedArrs = data.affectedArrs;
+							showSyncModal = true;
+						} else {
+							goto(data.redirectTo || '');
+						}
+						saving = false;
+						return;
+					}
 				} else if (result.type === 'redirect') {
 					alertStore.add(
 						'success',
 						mode === 'create' ? 'Delay profile created!' : 'Delay profile updated!'
 					);
-					// Mark as clean so navigation guard doesn't trigger
-					// Don't call clear() - component is still mounted and needs valid data
 					initEdit(formData);
 				}
-				await update();
+				await formUpdate();
 				saving = false;
 			};
 		}}
@@ -354,4 +379,15 @@
 	loading={deleting}
 	on:confirm={handleDeleteConfirm}
 	on:cancel={handleDeleteCancel}
+/>
+
+<!-- Sync Prompt Modal -->
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="delayProfiles"
+	entityType="delayProfile"
+	{databaseId}
+	entityName={formData.name.trim()}
 />

@@ -7,7 +7,7 @@ import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache } from '$pcd/index.ts';
 import type { AffectedArr } from '$shared/sync/types.ts';
 
-type EntityType = 'qualityProfile' | 'customFormat' | 'regularExpression';
+type EntityType = 'qualityProfile' | 'customFormat' | 'regularExpression' | 'delayProfile';
 
 /**
  * Find all arr instances affected by an entity change
@@ -29,6 +29,8 @@ export function getAffectedArrs({
 				return getAffectedArrsForCustomFormat(databaseId, entityName);
 			case 'regularExpression':
 				return getAffectedArrsForRegularExpression(databaseId, entityName);
+			case 'delayProfile':
+				return getAffectedArrsForDelayProfile(databaseId, entityName);
 			default:
 				return [];
 		}
@@ -102,6 +104,25 @@ function getAffectedArrsForRegularExpression(
 	if (profileNames.size === 0) return [];
 
 	return collectInstancesForProfiles(databaseId, [...profileNames]);
+}
+
+function getAffectedArrsForDelayProfile(
+	databaseId: number,
+	profileName: string
+): AffectedArr[] {
+	const rows = arrSyncQueries.getInstancesForDelayProfile(databaseId, profileName);
+
+	return rows.map((row) => ({
+		instanceId: row.instance_id,
+		instanceName: row.instance_name,
+		sections: [
+			{
+				section: 'delayProfiles' as const,
+				syncStatus: row.sync_status,
+				lastSyncedAt: row.last_synced_at
+			}
+		]
+	}));
 }
 
 /**
