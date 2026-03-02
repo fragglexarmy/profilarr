@@ -240,7 +240,7 @@
 				const resData = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
 				if (resData.success) {
 					alertStore.add('success', 'Conditions updated!');
-					initEdit(initialData);
+					initEdit($current);
 					if (resData.affectedArrs && resData.affectedArrs.length > 0) {
 						pendingRedirectTo = resData.redirectTo || '';
 						pendingAffectedArrs = resData.affectedArrs;
@@ -253,7 +253,7 @@
 				}
 			} else if (result.type === 'redirect') {
 				alertStore.add('success', 'Conditions updated!');
-				initEdit(initialData);
+				initEdit($current);
 			}
 			await formUpdate();
 			saving = false;
