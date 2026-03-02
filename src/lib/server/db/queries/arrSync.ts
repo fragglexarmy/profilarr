@@ -832,6 +832,29 @@ export const arrSyncQueries = {
 		);
 	},
 
+	getInstancesForQualityDefinitions(
+		databaseId: number,
+		configName: string
+	): { instance_id: number; instance_name: string; sync_status: string; last_synced_at: string | null }[] {
+		return db.query<{
+			instance_id: number;
+			instance_name: string;
+			sync_status: string;
+			last_synced_at: string | null;
+		}>(
+			`SELECT DISTINCT
+				ai.id AS instance_id,
+				ai.name AS instance_name,
+				mm.sync_status,
+				mm.last_synced_at
+			FROM arr_sync_media_management mm
+			JOIN arr_instances ai ON ai.id = mm.instance_id
+			WHERE mm.quality_definitions_database_id = ? AND mm.quality_definitions_config_name = ? AND ai.enabled = 1`,
+			databaseId,
+			configName
+		);
+	},
+
 	getInstanceIdsForTrigger(trigger: SyncTrigger): number[] {
 		const rows = db.query<{ instance_id: number }>(
 			`SELECT instance_id FROM arr_sync_quality_profiles_config WHERE trigger = ?

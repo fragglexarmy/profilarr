@@ -21,6 +21,7 @@ import { getCustomFormatsForProfile, getCustomFormatsForRegex } from '$pcd/refer
 import { fetchCustomFormatFromPcd, transformCustomFormat, syncCustomFormats, type PcdCustomFormat } from './customFormats/index.ts';
 import { getByName as getDelayProfileByName } from '$pcd/entities/delayProfiles/index.ts';
 import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/entities/mediaManagement/naming/read.ts';
+import { getRadarrByName as getRadarrQualityDefs, getSonarrByName as getSonarrQualityDefs } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
 import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/mediaManagement.ts';
 import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 import type { ArrDelayProfile, RadarrNamingConfig, SonarrNamingConfig } from '$arr/types.ts';
@@ -392,6 +393,93 @@ export async function syncNaming(
 		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
 		await logger.error(`Entity sync failed for naming config "${configName}"`, {
 			source: 'EntitySync:Naming',
+			meta: { instanceId, databaseId, configName, error: errorMsg }
+		});
+		return { success: false, error: errorMsg };
+	} finally {
+		client.close();
+	}
+}
+
+/**
+ * Sync quality definitions to an arr instance
+ * Fetches PCD definitions, maps to arr API names, updates arr definitions
+ */
+export async function syncQualityDefinitions(
+	instanceId: number,
+	databaseId: number,
+	configName: string
+): Promise<SyncResult> {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance) return { success: false, error: 'Instance not found' };
+
+	const cache = getCache(databaseId);
+	if (!cache) return { success: false, error: `PCD cache not found for database ${databaseId}` };
+
+	const instanceType = instance.type as SyncArrType;
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	try {
+		const getByName = instanceType === 'radarr' ? getRadarrQualityDefs : getSonarrQualityDefs;
+		const qualityDefsConfig = await getByName(cache, configName);
+
+		if (!qualityDefsConfig) {
+			return { success: false, error: `Quality definitions config "${configName}" not found in PCD` };
+		}
+
+		if (qualityDefsConfig.entries.length === 0) {
+			return { success: false, error: `Quality definitions config "${configName}" has no entries` };
+		}
+
+		// Get quality API mappings (quality_name -> api_name)
+		const apiMappings = await getQualityApiMappings(cache, instanceType);
+
+		// GET existing quality definitions from arr
+		const arrDefinitions = await client.getQualityDefinitions();
+
+		// Build map of arr quality name (lowercase) -> definition
+		const arrDefMap = new Map<string, (typeof arrDefinitions)[0]>();
+		for (const def of arrDefinitions) {
+			if (def.quality.name) {
+				arrDefMap.set(def.quality.name.toLowerCase(), def);
+			}
+		}
+
+		// Update arr definitions with PCD values
+		let updatedCount = 0;
+		for (const entry of qualityDefsConfig.entries) {
+			const apiName = apiMappings.get(entry.quality_name.toLowerCase());
+			if (!apiName) continue;
+
+			const arrDef = arrDefMap.get(apiName.toLowerCase());
+			if (!arrDef) continue;
+
+			// PCD stores 0 for "unlimited", arr API expects null
+			arrDef.minSize = entry.min_size;
+			arrDef.maxSize = entry.max_size === 0 ? null : entry.max_size;
+			arrDef.preferredSize = entry.preferred_size === 0 ? null : entry.preferred_size;
+			updatedCount++;
+		}
+
+		if (updatedCount === 0) {
+			return { success: false, error: 'No quality definitions matched for update' };
+		}
+
+		// PUT the full array back
+		await client.updateQualityDefinitions(arrDefinitions);
+
+		await logger.info(`Entity sync: updated ${updatedCount} quality definitions for "${configName}"`, {
+			source: 'EntitySync:QualityDefinitions',
+			meta: { instanceId, databaseId, configName, updatedCount }
+		});
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'mediaManagement');
+
+		return { success: true };
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+		await logger.error(`Entity sync failed for quality definitions "${configName}"`, {
+			source: 'EntitySync:QualityDefinitions',
 			meta: { instanceId, databaseId, configName, error: errorMsg }
 		});
 		return { success: false, error: errorMsg };

@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { tick } from 'svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
 	import RangeScale from '$ui/form/RangeScale.svelte';
 	import type { Marker } from '$ui/form/RangeScale.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
@@ -16,6 +19,7 @@
 	import { isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { ArrType } from '$shared/pcd/types.ts';
 	import type { QualityDefinitionsConfig, QualityDefinitionEntry } from '$shared/pcd/display.ts';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 
 	// Resolution grouping for quality definitions UI
 	type ResolutionGroup = 'SD' | '720p' | '1080p' | '2160p' | 'Prereleases' | 'Other';
@@ -101,7 +105,12 @@
 	let saving = false;
 	let deleting = false;
 	let showDeleteModal = false;
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
 	
 	let expandedRows: Set<string | number> = new Set();
 	let mainFormElement: HTMLFormElement;
@@ -470,6 +479,24 @@
 		return async ({ result, update: formUpdate }) => {
 			if (result.type === 'failure' && result.data) {
 				alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
+			} else if (result.type === 'success' && result.data) {
+				const data = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+				if (data.success) {
+					alertStore.add(
+						'success',
+						mode === 'create' ? 'Quality definitions created!' : 'Quality definitions updated!'
+					);
+					initEdit({ name: configName, entries });
+					if (data.affectedArrs && data.affectedArrs.length > 0) {
+						pendingRedirectTo = data.redirectTo || '';
+						pendingAffectedArrs = data.affectedArrs;
+						showSyncModal = true;
+					} else {
+						goto(data.redirectTo || '');
+					}
+					saving = false;
+					return;
+				}
 			} else if (result.type === 'redirect') {
 				alertStore.add(
 					'success',
@@ -526,4 +553,15 @@
 	loading={deleting}
 	on:confirm={handleDeleteConfirm}
 	on:cancel={handleDeleteCancel}
+/>
+
+<!-- Sync Prompt Modal -->
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="mediaManagement"
+	entityType="qualityDefinitions"
+	{databaseId}
+	entityName={configName.trim()}
 />

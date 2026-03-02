@@ -6,6 +6,7 @@ import type { OperationLayer } from '$pcd/index.ts';
 import { getSonarrByName, getAvailableQualities } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
 import { updateSonarrQualityDefinitions, removeSonarrQualityDefinitions } from '$pcd/entities/mediaManagement/quality-definitions/index.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { databaseId, name } = params;
@@ -114,7 +115,17 @@ export const actions: Actions = {
 			arrSyncQueries.updateQualityDefinitionsConfigName(decodedName, newName.trim());
 		}
 
-		throw redirect(303, `/media-management/${databaseId}/quality-definitions`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'qualityDefinitions',
+			databaseId: currentDatabaseId,
+			entityName: newName.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/media-management/${databaseId}/quality-definitions`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {
