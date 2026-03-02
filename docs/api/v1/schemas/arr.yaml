@@ -567,6 +567,7 @@ SyncEntityRequest:
         - delayProfile
         - naming
         - qualityDefinitions
+        - mediaSettings
       description: Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
 
 SyncEntitySuccessResponse:

@@ -596,7 +596,7 @@ export interface components {
              * @description Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
              * @enum {string}
              */
-            entityType?: "qualityProfile" | "customFormat" | "regularExpression" | "delayProfile" | "naming" | "qualityDefinitions";
+            entityType?: "qualityProfile" | "customFormat" | "regularExpression" | "delayProfile" | "naming" | "qualityDefinitions" | "mediaSettings";
         };
         SyncEntitySuccessResponse: {
             /** @enum {boolean} */

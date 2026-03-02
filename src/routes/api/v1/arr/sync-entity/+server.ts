@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { components } from '$api/v1.d.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { syncQualityProfile, syncCustomFormat, syncRegularExpression, syncDelayProfile, syncNaming, syncQualityDefinitions } from '$lib/server/sync/entitySync.ts';
+import { syncQualityProfile, syncCustomFormat, syncRegularExpression, syncDelayProfile, syncNaming, syncQualityDefinitions, syncMediaSettings } from '$lib/server/sync/entitySync.ts';
 import { logger } from '$logger/logger.ts';
 
 type SyncEntityRequest = components['schemas']['SyncEntityRequest'];
@@ -90,6 +90,8 @@ export const POST: RequestHandler = async ({ request }) => {
 					result = await syncNaming(instanceId, databaseId, entityName);
 				} else if (entityType === 'qualityDefinitions') {
 					result = await syncQualityDefinitions(instanceId, databaseId, entityName);
+				} else if (entityType === 'mediaSettings') {
+					result = await syncMediaSettings(instanceId, databaseId, entityName);
 				} else {
 					return json({ error: `Entity type "${entityType}" not yet implemented for mediaManagement` }, { status: 400 });
 				}

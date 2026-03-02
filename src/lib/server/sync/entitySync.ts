@@ -22,6 +22,8 @@ import { fetchCustomFormatFromPcd, transformCustomFormat, syncCustomFormats, typ
 import { getByName as getDelayProfileByName } from '$pcd/entities/delayProfiles/index.ts';
 import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/entities/mediaManagement/naming/read.ts';
 import { getRadarrByName as getRadarrQualityDefs, getSonarrByName as getSonarrQualityDefs } from '$pcd/entities/mediaManagement/quality-definitions/read.ts';
+import { getRadarrByName as getRadarrMediaSettings, getSonarrByName as getSonarrMediaSettings } from '$pcd/entities/mediaManagement/media-settings/read.ts';
+import type { ArrPropersAndRepacks } from '$arr/types.ts';
 import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/mediaManagement.ts';
 import type { DelayProfilesRow } from '$shared/pcd/display.ts';
 import type { ArrDelayProfile, RadarrNamingConfig, SonarrNamingConfig } from '$arr/types.ts';
@@ -486,4 +488,66 @@ export async function syncQualityDefinitions(
 	} finally {
 		client.close();
 	}
+}
+
+/**
+ * Sync media settings to an arr instance
+ * Merges PCD media settings fields into the existing arr media management config
+ */
+export async function syncMediaSettings(
+	instanceId: number,
+	databaseId: number,
+	configName: string
+): Promise<SyncResult> {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance) return { success: false, error: 'Instance not found' };
+
+	const cache = getCache(databaseId);
+	if (!cache) return { success: false, error: `PCD cache not found for database ${databaseId}` };
+
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	try {
+		const getByName = instance.type === 'radarr' ? getRadarrMediaSettings : getSonarrMediaSettings;
+		const mediaSettings = await getByName(cache, configName);
+
+		if (!mediaSettings) {
+			return { success: false, error: `Media settings config "${configName}" not found in PCD` };
+		}
+
+		const existing = await client.getMediaManagementConfig();
+		const updated = {
+			...existing,
+			downloadPropersAndRepacks: mapPropersRepacks(mediaSettings.propers_repacks),
+			enableMediaInfo: mediaSettings.enable_media_info
+		};
+		await client.updateMediaManagementConfig(updated);
+
+		await logger.info(`Entity sync: updated media settings "${configName}"`, {
+			source: 'EntitySync:MediaSettings',
+			meta: { instanceId, databaseId, configName, arrType: instance.type }
+		});
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'mediaManagement');
+
+		return { success: true };
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+		await logger.error(`Entity sync failed for media settings "${configName}"`, {
+			source: 'EntitySync:MediaSettings',
+			meta: { instanceId, databaseId, configName, error: errorMsg }
+		});
+		return { success: false, error: errorMsg };
+	} finally {
+		client.close();
+	}
+}
+
+function mapPropersRepacks(pcdValue: string): ArrPropersAndRepacks {
+	const mapping: Record<string, ArrPropersAndRepacks> = {
+		doNotPrefer: 'doNotPrefer',
+		preferAndUpgrade: 'preferAndUpgrade',
+		doNotUpgradeAutomatically: 'doNotUpgrade'
+	};
+	return mapping[pcdValue] ?? 'doNotPrefer';
 }

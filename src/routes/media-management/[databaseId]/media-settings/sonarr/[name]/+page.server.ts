@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { getSonarrByName, updateSonarrMediaSettings, removeSonarrMediaSettings } from '$pcd/entities/mediaManagement/media-settings/index.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 import type { PropersRepacks } from '$shared/pcd/mediaManagement.ts';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -107,7 +108,17 @@ export const actions: Actions = {
 			arrSyncQueries.updateMediaSettingsConfigName(decodedName, newName.trim());
 		}
 
-		throw redirect(303, `/media-management/${databaseId}/media-settings`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'mediaSettings',
+			databaseId: currentDatabaseId,
+			entityName: newName.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/media-management/${databaseId}/media-settings`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {

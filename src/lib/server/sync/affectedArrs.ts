@@ -7,7 +7,7 @@ import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache } from '$pcd/index.ts';
 import type { AffectedArr } from '$shared/sync/types.ts';
 
-type EntityType = 'qualityProfile' | 'customFormat' | 'regularExpression' | 'delayProfile' | 'naming' | 'qualityDefinitions';
+type EntityType = 'qualityProfile' | 'customFormat' | 'regularExpression' | 'delayProfile' | 'naming' | 'qualityDefinitions' | 'mediaSettings';
 
 /**
  * Find all arr instances affected by an entity change
@@ -35,6 +35,8 @@ export function getAffectedArrs({
 				return getAffectedArrsForNaming(databaseId, entityName);
 			case 'qualityDefinitions':
 				return getAffectedArrsForQualityDefinitions(databaseId, entityName);
+			case 'mediaSettings':
+				return getAffectedArrsForMediaSettings(databaseId, entityName);
 			default:
 				return [];
 		}
@@ -141,6 +143,25 @@ function getAffectedArrsForDelayProfile(
 		sections: [
 			{
 				section: 'delayProfiles' as const,
+				syncStatus: row.sync_status,
+				lastSyncedAt: row.last_synced_at
+			}
+		]
+	}));
+}
+
+function getAffectedArrsForMediaSettings(
+	databaseId: number,
+	configName: string
+): AffectedArr[] {
+	const rows = arrSyncQueries.getInstancesForMediaSettings(databaseId, configName);
+
+	return rows.map((row) => ({
+		instanceId: row.instance_id,
+		instanceName: row.instance_name,
+		sections: [
+			{
+				section: 'mediaManagement' as const,
 				syncStatus: row.sync_status,
 				lastSyncedAt: row.last_synced_at
 			}
