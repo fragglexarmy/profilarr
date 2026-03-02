@@ -786,6 +786,29 @@ export const arrSyncQueries = {
 		);
 	},
 
+	getInstancesForNaming(
+		databaseId: number,
+		configName: string
+	): { instance_id: number; instance_name: string; sync_status: string; last_synced_at: string | null }[] {
+		return db.query<{
+			instance_id: number;
+			instance_name: string;
+			sync_status: string;
+			last_synced_at: string | null;
+		}>(
+			`SELECT DISTINCT
+				ai.id AS instance_id,
+				ai.name AS instance_name,
+				mm.sync_status,
+				mm.last_synced_at
+			FROM arr_sync_media_management mm
+			JOIN arr_instances ai ON ai.id = mm.instance_id
+			WHERE mm.naming_database_id = ? AND mm.naming_config_name = ? AND ai.enabled = 1`,
+			databaseId,
+			configName
+		);
+	},
+
 	getInstancesForDelayProfile(
 		databaseId: number,
 		profileName: string

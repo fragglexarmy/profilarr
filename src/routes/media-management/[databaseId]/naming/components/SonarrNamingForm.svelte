@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { tick } from 'svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Toggle from '$ui/toggle/Toggle.svelte';
 	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
@@ -12,6 +15,7 @@
 	import { Save, Trash2, Info } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { SonarrNamingRow } from '$shared/pcd/display.ts';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 	import { SONARR_COLON_REPLACEMENT_OPTIONS, MULTI_EPISODE_STYLE_OPTIONS, type SonarrColonReplacementFormat, type MultiEpisodeStyle } from '$shared/pcd/mediaManagement.ts';
 	import { resolveSonarrFormat, getSonarrTokenCategories } from '$shared/pcd/namingTokens.ts';
 	import NamingPreview from './NamingPreview.svelte';
@@ -84,9 +88,14 @@
 	let deleting = false;
 	let showDeleteModal = false;
 	let showInfoModal = false;
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 	let selectedLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
 	let standardEpisodeFormatInput: HTMLInputElement | HTMLTextAreaElement | null = null;
 	let dailyEpisodeFormatInput: HTMLInputElement | HTMLTextAreaElement | null = null;
 	let animeEpisodeFormatInput: HTMLInputElement | HTMLTextAreaElement | null = null;
@@ -328,6 +337,24 @@
 		return async ({ result, update: formUpdate }) => {
 			if (result.type === 'failure' && result.data) {
 				alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
+			} else if (result.type === 'success' && result.data) {
+				const data = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+				if (data.success) {
+					alertStore.add(
+						'success',
+						mode === 'create' ? 'Naming config created!' : 'Naming config updated!'
+					);
+					initEdit(formData);
+					if (data.affectedArrs && data.affectedArrs.length > 0) {
+						pendingRedirectTo = data.redirectTo || '';
+						pendingAffectedArrs = data.affectedArrs;
+						showSyncModal = true;
+					} else {
+						goto(data.redirectTo || '');
+					}
+					saving = false;
+					return;
+				}
 			} else if (result.type === 'redirect') {
 				alertStore.add(
 					'success',
@@ -434,3 +461,14 @@
 		</div>
 	</div>
 </InfoModal>
+
+<!-- Sync Prompt Modal -->
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="mediaManagement"
+	entityType="naming"
+	{databaseId}
+	entityName={formData.name.trim()}
+/>

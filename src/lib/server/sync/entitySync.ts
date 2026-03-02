@@ -20,8 +20,10 @@ import {
 import { getCustomFormatsForProfile, getCustomFormatsForRegex } from '$pcd/references.ts';
 import { fetchCustomFormatFromPcd, transformCustomFormat, syncCustomFormats, type PcdCustomFormat } from './customFormats/index.ts';
 import { getByName as getDelayProfileByName } from '$pcd/entities/delayProfiles/index.ts';
+import { getRadarrByName as getRadarrNaming, getSonarrByName as getSonarrNaming } from '$pcd/entities/mediaManagement/naming/read.ts';
+import { colonReplacementToDb, multiEpisodeStyleToDb } from '$shared/pcd/mediaManagement.ts';
 import type { DelayProfilesRow } from '$shared/pcd/display.ts';
-import type { ArrDelayProfile } from '$arr/types.ts';
+import type { ArrDelayProfile, RadarrNamingConfig, SonarrNamingConfig } from '$arr/types.ts';
 
 interface SyncResult {
 	success: boolean;
@@ -317,4 +319,83 @@ function transformDelayProfile(profile: DelayProfilesRow): ArrDelayProfile {
 		order: 2147483647,
 		tags: []
 	};
+}
+
+/**
+ * Sync a naming config to an arr instance
+ * Merges PCD naming fields into the existing arr naming config
+ */
+export async function syncNaming(
+	instanceId: number,
+	databaseId: number,
+	configName: string
+): Promise<SyncResult> {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance) return { success: false, error: 'Instance not found' };
+
+	const cache = getCache(databaseId);
+	if (!cache) return { success: false, error: `PCD cache not found for database ${databaseId}` };
+
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	try {
+		if (instance.type === 'radarr') {
+			const naming = await getRadarrNaming(cache, configName);
+			if (!naming) {
+				return { success: false, error: `Radarr naming config "${configName}" not found in PCD` };
+			}
+
+			const existing = (await client.getNamingConfig()) as RadarrNamingConfig;
+			const updated: RadarrNamingConfig = {
+				...existing,
+				renameMovies: naming.rename,
+				replaceIllegalCharacters: naming.replace_illegal_characters,
+				colonReplacementFormat: naming.colon_replacement_format,
+				standardMovieFormat: naming.movie_format,
+				movieFolderFormat: naming.movie_folder_format
+			};
+			await client.updateNamingConfig(updated);
+		} else if (instance.type === 'sonarr') {
+			const naming = await getSonarrNaming(cache, configName);
+			if (!naming) {
+				return { success: false, error: `Sonarr naming config "${configName}" not found in PCD` };
+			}
+
+			const existing = (await client.getNamingConfig()) as SonarrNamingConfig;
+			const updated: SonarrNamingConfig = {
+				...existing,
+				renameEpisodes: naming.rename,
+				replaceIllegalCharacters: naming.replace_illegal_characters,
+				colonReplacementFormat: colonReplacementToDb(naming.colon_replacement_format),
+				customColonReplacementFormat: naming.custom_colon_replacement_format,
+				multiEpisodeStyle: multiEpisodeStyleToDb(naming.multi_episode_style),
+				standardEpisodeFormat: naming.standard_episode_format,
+				dailyEpisodeFormat: naming.daily_episode_format,
+				animeEpisodeFormat: naming.anime_episode_format,
+				seriesFolderFormat: naming.series_folder_format,
+				seasonFolderFormat: naming.season_folder_format
+			};
+			await client.updateNamingConfig(updated);
+		} else {
+			return { success: false, error: `Unsupported instance type: ${instance.type}` };
+		}
+
+		await logger.info(`Entity sync: updated naming config "${configName}"`, {
+			source: 'EntitySync:Naming',
+			meta: { instanceId, databaseId, configName, arrType: instance.type }
+		});
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'mediaManagement');
+
+		return { success: true };
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+		await logger.error(`Entity sync failed for naming config "${configName}"`, {
+			source: 'EntitySync:Naming',
+			meta: { instanceId, databaseId, configName, error: errorMsg }
+		});
+		return { success: false, error: errorMsg };
+	} finally {
+		client.close();
+	}
 }

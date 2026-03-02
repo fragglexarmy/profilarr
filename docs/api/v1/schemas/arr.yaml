@@ -565,6 +565,7 @@ SyncEntityRequest:
         - customFormat
         - regularExpression
         - delayProfile
+        - naming
       description: Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
 
 SyncEntitySuccessResponse:

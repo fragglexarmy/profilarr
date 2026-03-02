@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { components } from '$api/v1.d.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { syncQualityProfile, syncCustomFormat, syncRegularExpression, syncDelayProfile } from '$lib/server/sync/entitySync.ts';
+import { syncQualityProfile, syncCustomFormat, syncRegularExpression, syncDelayProfile, syncNaming } from '$lib/server/sync/entitySync.ts';
 import { logger } from '$logger/logger.ts';
 
 type SyncEntityRequest = components['schemas']['SyncEntityRequest'];
@@ -84,6 +84,13 @@ export const POST: RequestHandler = async ({ request }) => {
 				break;
 			case 'delayProfiles':
 				result = await syncDelayProfile(instanceId, databaseId, entityName);
+				break;
+			case 'mediaManagement':
+				if (entityType === 'naming') {
+					result = await syncNaming(instanceId, databaseId, entityName);
+				} else {
+					return json({ error: `Entity type "${entityType}" not yet implemented for mediaManagement` }, { status: 400 });
+				}
 				break;
 			default:
 				return json({ error: `Sync not yet implemented for section: ${section}` }, { status: 400 });

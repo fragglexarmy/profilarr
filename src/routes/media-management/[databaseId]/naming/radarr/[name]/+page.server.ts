@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { getRadarrByName, updateRadarrNaming, removeRadarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 import type { RadarrNamingRow } from '$shared/pcd/display.ts';
 import { validateNamingFormat } from '$shared/pcd/namingTokens.ts';
 
@@ -125,7 +126,17 @@ export const actions: Actions = {
 			arrSyncQueries.updateNamingConfigName(decodedName, newName.trim());
 		}
 
-		throw redirect(303, `/media-management/${databaseId}/naming`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'naming',
+			databaseId: currentDatabaseId,
+			entityName: newName.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/media-management/${databaseId}/naming`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {
