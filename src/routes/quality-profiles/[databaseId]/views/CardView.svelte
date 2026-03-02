@@ -65,40 +65,40 @@
 					</div>
 				{/if}
 
-				<!-- Qualities -->
-				<div class="flex flex-wrap items-center gap-1">
-					{#each profile.qualities.slice(0, 3) as quality, idx}
-						{#if idx > 0}
-							<span class="text-xs text-neutral-400">›</span>
-						{/if}
-						<Label
-							variant={quality.is_upgrade_until ? 'success' : 'secondary'}
-							size="sm"
-							rounded="md"
-							mono
-						>{quality.name}</Label>
-					{/each}
-					{#if profile.qualities.length > 3}
-						<span class="text-[10px] text-neutral-500 dark:text-neutral-400">
-							+{profile.qualities.length - 3} more
-						</span>
-					{/if}
-				</div>
 			</div>
 
 			<svelte:fragment slot="footer">
-				<div class="flex items-center gap-3 text-xs">
-					<div class="flex items-center gap-1">
-						<BookOpenText size={12} class="text-neutral-400" />
-						<Label variant="secondary" size="sm" rounded="md" mono>{profile.custom_formats.total}</Label>
+				<div class="space-y-2">
+					<!-- Qualities -->
+					<div class="qualities-overflow">
+						<div class="flex flex-wrap items-center gap-1">
+							{#each profile.qualities as quality, idx}
+								{#if idx > 0}
+									<span class="text-xs text-neutral-400">›</span>
+								{/if}
+								<Label
+									variant={quality.is_upgrade_until ? 'success' : 'secondary'}
+									size="sm"
+									rounded="md"
+									mono
+								>{quality.name}</Label>
+							{/each}
+						</div>
 					</div>
-					<div class="flex items-center gap-1">
-						<Gauge size={12} class="text-neutral-400" />
-						<Label variant="secondary" size="sm" rounded="md" mono>{profile.minimum_custom_format_score}</Label>
-					</div>
-					<div class="flex items-center gap-1">
-						<Earth size={12} class="text-neutral-400" />
-						<Label variant="secondary" size="sm" rounded="md">{profile.language ? profile.language.name : 'Any'}</Label>
+
+						<div class="flex items-center gap-3 text-xs">
+						<div class="flex items-center gap-1">
+							<BookOpenText size={12} class="text-neutral-400" />
+							<Label variant="secondary" size="sm" rounded="md" mono>{profile.custom_formats.total}</Label>
+						</div>
+						<div class="flex items-center gap-1">
+							<Gauge size={12} class="text-neutral-400" />
+							<Label variant="secondary" size="sm" rounded="md" mono>{profile.minimum_custom_format_score}</Label>
+						</div>
+						<div class="flex items-center gap-1">
+							<Earth size={12} class="text-neutral-400" />
+							<Label variant="secondary" size="sm" rounded="md">{profile.language ? profile.language.name : 'Any'}</Label>
+						</div>
 					</div>
 				</div>
 			</svelte:fragment>
@@ -130,5 +130,10 @@
 
 	.description :global(strong) {
 		font-weight: 600;
+	}
+
+	.qualities-overflow {
+		max-height: 3.5rem;
+		overflow: hidden;
 	}
 </style>
