@@ -1,4 +1,4 @@
-import { error, redirect, fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { pcdManager } from '$pcd/index.ts';
 import { canWriteToBase } from '$pcd/index.ts';
@@ -7,6 +7,7 @@ import * as regularExpressionQueries from '$pcd/entities/regularExpressions/inde
 import { getLanguagesWithSupport } from '$lib/server/sync/mappings.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import type { ConditionData } from '$shared/pcd/display.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -58,6 +59,7 @@ export const load: ServerLoad = async ({ params }) => {
 	return {
 		currentDatabase,
 		format,
+		formatName: format.name,
 		conditions,
 		availablePatterns: patterns.map((p) => ({ id: p.id, name: p.name, pattern: p.pattern })),
 		availableLanguages,
@@ -152,6 +154,16 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update conditions' });
 		}
 
-		throw redirect(303, `/custom-formats/${databaseId}/${id}/conditions`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'customFormat',
+			databaseId: currentDatabaseId,
+			entityName: format.name
+		});
+
+		return {
+			success: true,
+			redirectTo: `/custom-formats/${databaseId}/${id}/conditions`,
+			affectedArrs
+		};
 	}
 };

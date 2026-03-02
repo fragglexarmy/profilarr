@@ -592,6 +592,11 @@ export interface components {
             databaseId: number;
             /** @description Name of the entity to sync */
             entityName: string;
+            /**
+             * @description Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
+             * @enum {string}
+             */
+            entityType?: "qualityProfile" | "customFormat";
         };
         SyncEntitySuccessResponse: {
             /** @enum {boolean} */

@@ -18,7 +18,7 @@ import {
 	transformQualityProfile
 } from './qualityProfiles/transformer.ts';
 import { getCustomFormatsForProfile } from '$pcd/references.ts';
-import { fetchCustomFormatFromPcd, syncCustomFormats, type PcdCustomFormat } from './customFormats/index.ts';
+import { fetchCustomFormatFromPcd, transformCustomFormat, syncCustomFormats, type PcdCustomFormat } from './customFormats/index.ts';
 
 interface SyncResult {
 	success: boolean;
@@ -103,6 +103,65 @@ export async function syncQualityProfile(
 		await logger.error(`Entity sync failed for quality profile "${profileName}"`, {
 			source: 'EntitySync:QualityProfile',
 			meta: { instanceId, databaseId, profileName, error: errorMsg }
+		});
+		return { success: false, error: errorMsg };
+	} finally {
+		client.close();
+	}
+}
+
+/**
+ * Sync a single custom format to an arr instance
+ */
+export async function syncCustomFormat(
+	instanceId: number,
+	databaseId: number,
+	formatName: string
+): Promise<SyncResult> {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance) return { success: false, error: 'Instance not found' };
+
+	const cache = getCache(databaseId);
+	if (!cache) return { success: false, error: `PCD cache not found for database ${databaseId}` };
+
+	const instanceType = instance.type as SyncArrType;
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	try {
+		const pcdFormat = await fetchCustomFormatFromPcd(cache, formatName);
+		if (!pcdFormat) {
+			return { success: false, error: `Custom format "${formatName}" not found in PCD` };
+		}
+
+		const existingFormats = await client.getCustomFormats();
+		const existing = existingFormats.find((f) => f.name === formatName);
+
+		const arrFormat = transformCustomFormat(pcdFormat, instanceType);
+		arrFormat.name = formatName;
+
+		if (existing) {
+			arrFormat.id = existing.id;
+			await client.updateCustomFormat(existing.id!, arrFormat);
+			await logger.info(`Entity sync: updated custom format "${formatName}"`, {
+				source: 'EntitySync:CustomFormat',
+				meta: { instanceId, databaseId, formatName, action: 'updated' }
+			});
+		} else {
+			await client.createCustomFormat(arrFormat);
+			await logger.info(`Entity sync: created custom format "${formatName}"`, {
+				source: 'EntitySync:CustomFormat',
+				meta: { instanceId, databaseId, formatName, action: 'created' }
+			});
+		}
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'qualityProfiles');
+
+		return { success: true };
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+		await logger.error(`Entity sync failed for custom format "${formatName}"`, {
+			source: 'EntitySync:CustomFormat',
+			meta: { instanceId, databaseId, formatName, error: errorMsg }
 		});
 		return { success: false, error: errorMsg };
 	} finally {

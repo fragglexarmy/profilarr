@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { components } from '$api/v1.d.ts';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries } from '$db/queries/arrSync.ts';
-import { syncQualityProfile } from '$lib/server/sync/entitySync.ts';
+import { syncQualityProfile, syncCustomFormat } from '$lib/server/sync/entitySync.ts';
 import { logger } from '$logger/logger.ts';
 
 type SyncEntityRequest = components['schemas']['SyncEntityRequest'];
@@ -22,7 +22,7 @@ const VALID_SECTIONS: SyncEntityRequest['section'][] = ['qualityProfiles', 'dela
  */
 export const POST: RequestHandler = async ({ request }) => {
 	const body = (await request.json()) as SyncEntityRequest;
-	const { instanceId, section, databaseId, entityName } = body;
+	const { instanceId, section, databaseId, entityName, entityType } = body;
 
 	if (!instanceId || typeof instanceId !== 'number') {
 		return json({ error: 'instanceId is required' }, { status: 400 });
@@ -74,7 +74,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		switch (section) {
 			case 'qualityProfiles':
-				result = await syncQualityProfile(instanceId, databaseId, entityName);
+				if (entityType === 'customFormat') {
+					result = await syncCustomFormat(instanceId, databaseId, entityName);
+				} else {
+					result = await syncQualityProfile(instanceId, databaseId, entityName);
+				}
 				break;
 			default:
 				return json({ error: `Sync not yet implemented for section: ${section}` }, { status: 400 });

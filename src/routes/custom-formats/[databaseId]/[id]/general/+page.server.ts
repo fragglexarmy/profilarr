@@ -4,6 +4,7 @@ import { pcdManager } from '$pcd/index.ts';
 import { canWriteToBase } from '$pcd/index.ts';
 import * as customFormatQueries from '$pcd/entities/customFormats/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -131,7 +132,17 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update custom format' });
 		}
 
-		throw redirect(303, `/custom-formats/${databaseId}/${id}/general`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'customFormat',
+			databaseId: currentDatabaseId,
+			entityName: name.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/custom-formats/${databaseId}/${id}/general`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {

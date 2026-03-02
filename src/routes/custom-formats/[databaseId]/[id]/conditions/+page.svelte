@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { tick } from 'svelte';
 	import { Plus, Save, Loader2, Info } from 'lucide-svelte';
 	import ConditionCard from './components/ConditionCard.svelte';
@@ -7,13 +9,20 @@
 	import Button from '$ui/button/Button.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
 	import { alertStore } from '$alerts/store';
 	import { sortConditions } from '$shared/pcd/conditions';
 	import { current, isDirty, initEdit, update } from '$lib/client/stores/dirty';
 	import type { PageData } from './$types';
 	import type { ConditionData } from '$shared/pcd/display.ts';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 
 	let infoModalOpen = false;
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
+
+	$: cfDatabaseId = parseInt($page.params.databaseId ?? '0', 10);
 
 	// Extended type with stable key for Svelte keying
 	type KeyedCondition = ConditionData & { _key: string };
@@ -227,9 +236,23 @@
 		return async ({ result, update: formUpdate }) => {
 			if (result.type === 'failure' && result.data) {
 				alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
+			} else if (result.type === 'success' && result.data) {
+				const resData = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+				if (resData.success) {
+					alertStore.add('success', 'Conditions updated!');
+					initEdit(initialData);
+					if (resData.affectedArrs && resData.affectedArrs.length > 0) {
+						pendingRedirectTo = resData.redirectTo || '';
+						pendingAffectedArrs = resData.affectedArrs;
+						showSyncModal = true;
+					} else {
+						goto(resData.redirectTo || '');
+					}
+					saving = false;
+					return;
+				}
 			} else if (result.type === 'redirect') {
 				alertStore.add('success', 'Conditions updated!');
-				// Mark as clean so navigation guard doesn't trigger
 				initEdit(initialData);
 			}
 			await formUpdate();
@@ -431,3 +454,14 @@
 		</div>
 	</div>
 </InfoModal>
+
+<!-- Sync Prompt Modal -->
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="qualityProfiles"
+	entityType="customFormat"
+	databaseId={cfDatabaseId}
+	entityName={data.formatName}
+/>

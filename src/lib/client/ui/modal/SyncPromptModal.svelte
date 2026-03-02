@@ -12,6 +12,7 @@
 	export let section: SyncSection;
 	export let databaseId: number;
 	export let entityName: string;
+	export let entityType: 'qualityProfile' | 'customFormat' = 'qualityProfile';
 
 	type InstanceState = 'idle' | 'syncing' | 'done' | 'failed' | 'cooldown';
 
@@ -40,7 +41,7 @@
 			const res = await fetch('/api/v1/arr/sync-entity', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ instanceId, section, databaseId, entityName })
+				body: JSON.stringify({ instanceId, section, databaseId, entityName, entityType })
 			});
 
 			if (res.ok) {

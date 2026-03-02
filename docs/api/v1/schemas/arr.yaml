@@ -558,6 +558,12 @@ SyncEntityRequest:
     entityName:
       type: string
       description: Name of the entity to sync
+    entityType:
+      type: string
+      enum:
+        - qualityProfile
+        - customFormat
+      description: Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
 
 SyncEntitySuccessResponse:
   type: object
