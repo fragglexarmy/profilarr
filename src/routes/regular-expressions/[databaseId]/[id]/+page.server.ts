@@ -5,6 +5,7 @@ import { canWriteToBase } from '$pcd/index.ts';
 import * as regularExpressionQueries from '$pcd/entities/regularExpressions/index.ts';
 import type { OperationLayer } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
+import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -129,7 +130,17 @@ export const actions: Actions = {
 			return fail(500, { error: result.error || 'Failed to update regular expression' });
 		}
 
-		throw redirect(303, `/regular-expressions/${databaseId}`);
+		const affectedArrs = getAffectedArrs({
+			entityType: 'regularExpression',
+			databaseId: currentDatabaseId,
+			entityName: name.trim()
+		});
+
+		return {
+			success: true,
+			redirectTo: `/regular-expressions/${databaseId}`,
+			affectedArrs
+		};
 	},
 
 	delete: async ({ request, params }) => {

@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { tick } from 'svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
 	import FormInput from '$ui/form/FormInput.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
+	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import RegexPatternField from './RegexPatternField.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2, Loader2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 
 	// Form data shape
 	interface RegularExpressionFormData {
@@ -62,8 +66,13 @@
 
 	// Modal states
 	let showDeleteConfirmModal = false;
+	let showSyncModal = false;
+	let pendingRedirectTo = '';
+	let pendingAffectedArrs: AffectedArr[] = [];
 	let mainFormElement: HTMLFormElement;
 	let deleteFormElement: HTMLFormElement;
+
+	$: databaseId = parseInt($page.params.databaseId ?? '0', 10);
 
 	// Delete layer selection
 	let deleteLayer: 'user' | 'base' = canWriteToBase ? 'base' : 'user';
@@ -138,12 +147,29 @@
 			return async ({ result, update: formUpdate }) => {
 				if (result.type === 'failure' && result.data) {
 					alertStore.add('error', (result.data as { error?: string }).error || 'Operation failed');
+				} else if (result.type === 'success' && result.data) {
+					const data = result.data as { success?: boolean; redirectTo?: string; affectedArrs?: AffectedArr[] };
+					if (data.success) {
+						alertStore.add(
+							'success',
+							mode === 'create' ? 'Regular expression created!' : 'Regular expression updated!'
+						);
+						initEdit(formData);
+						if (data.affectedArrs && data.affectedArrs.length > 0) {
+							pendingRedirectTo = data.redirectTo || '';
+							pendingAffectedArrs = data.affectedArrs;
+							showSyncModal = true;
+						} else {
+							goto(data.redirectTo || '');
+						}
+						saving = false;
+						return;
+					}
 				} else if (result.type === 'redirect') {
 					alertStore.add(
 						'success',
 						mode === 'create' ? 'Regular expression created!' : 'Regular expression updated!'
 					);
-					// Mark as clean so navigation guard doesn't trigger
 					initEdit(formData);
 				}
 				await formUpdate();
@@ -245,3 +271,14 @@
 		on:cancel={() => (showDeleteConfirmModal = false)}
 	/>
 {/if}
+
+<!-- Sync Prompt Modal -->
+<SyncPromptModal
+	bind:open={showSyncModal}
+	redirectTo={pendingRedirectTo}
+	affectedArrs={pendingAffectedArrs}
+	section="qualityProfiles"
+	entityType="regularExpression"
+	{databaseId}
+	entityName={formData.name.trim()}
+/>

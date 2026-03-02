@@ -17,7 +17,7 @@ import {
 	getQualityApiMappings,
 	transformQualityProfile
 } from './qualityProfiles/transformer.ts';
-import { getCustomFormatsForProfile } from '$pcd/references.ts';
+import { getCustomFormatsForProfile, getCustomFormatsForRegex } from '$pcd/references.ts';
 import { fetchCustomFormatFromPcd, transformCustomFormat, syncCustomFormats, type PcdCustomFormat } from './customFormats/index.ts';
 
 interface SyncResult {
@@ -162,6 +162,71 @@ export async function syncCustomFormat(
 		await logger.error(`Entity sync failed for custom format "${formatName}"`, {
 			source: 'EntitySync:CustomFormat',
 			meta: { instanceId, databaseId, formatName, error: errorMsg }
+		});
+		return { success: false, error: errorMsg };
+	} finally {
+		client.close();
+	}
+}
+
+/**
+ * Sync all custom formats affected by a regular expression change
+ */
+export async function syncRegularExpression(
+	instanceId: number,
+	databaseId: number,
+	regexName: string
+): Promise<SyncResult> {
+	const instance = arrInstancesQueries.getById(instanceId);
+	if (!instance) return { success: false, error: 'Instance not found' };
+
+	const cache = getCache(databaseId);
+	if (!cache) return { success: false, error: `PCD cache not found for database ${databaseId}` };
+
+	const instanceType = instance.type as SyncArrType;
+	const client = createArrClient(instance.type as ArrType, instance.url, instance.api_key);
+
+	try {
+		// Find all CFs that use this regex
+		const cfNames = await getCustomFormatsForRegex(cache, regexName);
+		if (cfNames.length === 0) {
+			return { success: true }; // No CFs affected
+		}
+
+		const existingFormats = await client.getCustomFormats();
+		const existingMap = new Map(existingFormats.map((f) => [f.name, f]));
+
+		let synced = 0;
+		for (const cfName of cfNames) {
+			const pcdFormat = await fetchCustomFormatFromPcd(cache, cfName);
+			if (!pcdFormat) continue;
+
+			const arrFormat = transformCustomFormat(pcdFormat, instanceType);
+			arrFormat.name = cfName;
+
+			const existing = existingMap.get(cfName);
+			if (existing) {
+				arrFormat.id = existing.id;
+				await client.updateCustomFormat(existing.id!, arrFormat);
+			} else {
+				await client.createCustomFormat(arrFormat);
+			}
+			synced++;
+		}
+
+		await logger.info(`Entity sync: synced ${synced} custom format(s) for regex "${regexName}"`, {
+			source: 'EntitySync:RegularExpression',
+			meta: { instanceId, databaseId, regexName, cfNames, synced }
+		});
+
+		arrSyncQueries.touchSectionLastSynced(instanceId, 'qualityProfiles');
+
+		return { success: true };
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+		await logger.error(`Entity sync failed for regex "${regexName}"`, {
+			source: 'EntitySync:RegularExpression',
+			meta: { instanceId, databaseId, regexName, error: errorMsg }
 		});
 		return { success: false, error: errorMsg };
 	} finally {

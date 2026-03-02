@@ -7,7 +7,7 @@ import { arrSyncQueries } from '$db/queries/arrSync.ts';
 import { getCache } from '$pcd/index.ts';
 import type { AffectedArr } from '$shared/sync/types.ts';
 
-type EntityType = 'qualityProfile' | 'customFormat';
+type EntityType = 'qualityProfile' | 'customFormat' | 'regularExpression';
 
 /**
  * Find all arr instances affected by an entity change
@@ -27,6 +27,8 @@ export function getAffectedArrs({
 				return getAffectedArrsForQualityProfile(databaseId, entityName);
 			case 'customFormat':
 				return getAffectedArrsForCustomFormat(databaseId, entityName);
+			case 'regularExpression':
+				return getAffectedArrsForRegularExpression(databaseId, entityName);
 			default:
 				return [];
 		}
@@ -61,7 +63,7 @@ function getAffectedArrsForCustomFormat(
 	const cache = getCache(databaseId);
 	if (!cache) return [];
 
-	// CF → QPs that reference it (sync raw SQL to stay synchronous)
+	// CF → QPs that reference it
 	const profileRows = cache.query<{ quality_profile_name: string }>(
 		`SELECT DISTINCT quality_profile_name FROM quality_profile_custom_formats WHERE custom_format_name = ?`,
 		cfName
@@ -69,11 +71,50 @@ function getAffectedArrsForCustomFormat(
 
 	if (profileRows.length === 0) return [];
 
-	// For each QP, find instances that sync it — deduplicate by instance ID
+	return collectInstancesForProfiles(databaseId, profileRows.map((r) => r.quality_profile_name));
+}
+
+function getAffectedArrsForRegularExpression(
+	databaseId: number,
+	regexName: string
+): AffectedArr[] {
+	const cache = getCache(databaseId);
+	if (!cache) return [];
+
+	// Regex → CFs that use it
+	const cfRows = cache.query<{ custom_format_name: string }>(
+		`SELECT DISTINCT custom_format_name FROM condition_patterns WHERE regular_expression_name = ?`,
+		regexName
+	);
+
+	if (cfRows.length === 0) return [];
+
+	// CFs → QPs that reference them
+	const profileNames = new Set<string>();
+	for (const row of cfRows) {
+		const profileRows = cache.query<{ quality_profile_name: string }>(
+			`SELECT DISTINCT quality_profile_name FROM quality_profile_custom_formats WHERE custom_format_name = ?`,
+			row.custom_format_name
+		);
+		for (const pr of profileRows) profileNames.add(pr.quality_profile_name);
+	}
+
+	if (profileNames.size === 0) return [];
+
+	return collectInstancesForProfiles(databaseId, [...profileNames]);
+}
+
+/**
+ * Given profile names, find all arr instances that sync them (deduplicated)
+ */
+function collectInstancesForProfiles(
+	databaseId: number,
+	profileNames: string[]
+): AffectedArr[] {
 	const instanceMap = new Map<number, AffectedArr>();
 
-	for (const row of profileRows) {
-		const instances = arrSyncQueries.getInstancesForQualityProfile(databaseId, row.quality_profile_name);
+	for (const profileName of profileNames) {
+		const instances = arrSyncQueries.getInstancesForQualityProfile(databaseId, profileName);
 		for (const inst of instances) {
 			if (!instanceMap.has(inst.instance_id)) {
 				instanceMap.set(inst.instance_id, {

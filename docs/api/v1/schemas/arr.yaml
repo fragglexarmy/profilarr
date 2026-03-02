@@ -563,6 +563,7 @@ SyncEntityRequest:
       enum:
         - qualityProfile
         - customFormat
+        - regularExpression
       description: Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
 
 SyncEntitySuccessResponse:
