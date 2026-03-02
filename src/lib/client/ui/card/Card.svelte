@@ -57,7 +57,7 @@
 			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 		{/if}
 
-		<div class="flex-1 {paddingClass}">
+		<div class="flex flex-1 flex-col {paddingClass}">
 			<slot />
 		</div>
 
@@ -78,7 +78,7 @@
 			<div class="border-t border-neutral-200 dark:border-neutral-700/60 {dividerClass}"></div>
 		{/if}
 
-		<div class="flex-1 {paddingClass}">
+		<div class="flex flex-1 flex-col {paddingClass}">
 			<slot />
 		</div>
 
