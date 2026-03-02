@@ -1145,7 +1145,6 @@
 	bind:open={showSyncModal}
 	redirectTo={pendingRedirectTo}
 	affectedArrs={pendingAffectedArrs}
-	section="qualityProfiles"
 	{databaseId}
 	entityName={data.profileName}
 />

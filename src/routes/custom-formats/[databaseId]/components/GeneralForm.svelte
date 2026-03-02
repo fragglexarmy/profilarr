@@ -274,7 +274,6 @@
 	bind:open={showSyncModal}
 	redirectTo={pendingRedirectTo}
 	affectedArrs={pendingAffectedArrs}
-	section="qualityProfiles"
 	entityType="customFormat"
 	{databaseId}
 	entityName={name.trim()}

@@ -276,7 +276,6 @@
 	bind:open={showSyncModal}
 	redirectTo={pendingRedirectTo}
 	affectedArrs={pendingAffectedArrs}
-	section="mediaManagement"
 	entityType="mediaSettings"
 	{databaseId}
 	entityName={formData.name.trim()}

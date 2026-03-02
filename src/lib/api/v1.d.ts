@@ -200,10 +200,16 @@ export interface paths {
         put?: never;
         /**
          * Sync a single entity to an Arr instance
-         * @description Pushes a single entity (quality profile, delay profile, or media management config)
-         *     to an Arr instance. Runs inline and returns when the sync is complete.
+         * @description Pushes a single entity to an Arr instance. Runs inline and returns when complete.
          *
-         *     Checks for cooldown (30s since last sync) and in-progress status before syncing.
+         *     Entity types are grouped into sync sections that share cooldown and status tracking:
+         *       - **qualityProfiles**: qualityProfile, customFormat, regularExpression
+         *       - **delayProfiles**: delayProfile
+         *       - **mediaManagement**: naming, qualityDefinitions, mediaSettings
+         *
+         *     The section is derived automatically from the entity type. A 5-second cooldown
+         *     is enforced per section per instance — entity types within the same section share
+         *     the cooldown. Returns 409 if a sync is already in progress or the cooldown is active.
          */
         post: operations["syncEntity"];
         delete?: never;
@@ -583,20 +589,15 @@ export interface components {
         SyncEntityRequest: {
             /** @description Arr instance ID */
             instanceId: number;
-            /**
-             * @description Sync section the entity belongs to
-             * @enum {string}
-             */
-            section: "qualityProfiles" | "delayProfiles" | "mediaManagement";
             /** @description PCD database ID */
             databaseId: number;
             /** @description Name of the entity to sync */
             entityName: string;
             /**
-             * @description Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
+             * @description Type of entity being synced. Determines which sync function runs and which cooldown group applies (qualityProfiles, delayProfiles, or mediaManagement).
              * @enum {string}
              */
-            entityType?: "qualityProfile" | "customFormat" | "regularExpression" | "delayProfile" | "naming" | "qualityDefinitions" | "mediaSettings";
+            entityType: "qualityProfile" | "customFormat" | "regularExpression" | "delayProfile" | "naming" | "qualityDefinitions" | "mediaSettings";
         };
         SyncEntitySuccessResponse: {
             /** @enum {boolean} */

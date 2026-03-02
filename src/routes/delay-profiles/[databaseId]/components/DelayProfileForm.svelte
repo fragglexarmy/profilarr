@@ -386,7 +386,6 @@
 	bind:open={showSyncModal}
 	redirectTo={pendingRedirectTo}
 	affectedArrs={pendingAffectedArrs}
-	section="delayProfiles"
 	entityType="delayProfile"
 	{databaseId}
 	entityName={formData.name.trim()}

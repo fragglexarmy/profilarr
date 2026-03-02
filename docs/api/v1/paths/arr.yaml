@@ -242,10 +242,16 @@ sync-entity:
     operationId: syncEntity
     summary: Sync a single entity to an Arr instance
     description: |
-      Pushes a single entity (quality profile, delay profile, or media management config)
-      to an Arr instance. Runs inline and returns when the sync is complete.
+      Pushes a single entity to an Arr instance. Runs inline and returns when complete.
 
-      Checks for cooldown (30s since last sync) and in-progress status before syncing.
+      Entity types are grouped into sync sections that share cooldown and status tracking:
+        - **qualityProfiles**: qualityProfile, customFormat, regularExpression
+        - **delayProfiles**: delayProfile
+        - **mediaManagement**: naming, qualityDefinitions, mediaSettings
+
+      The section is derived automatically from the entity type. A 5-second cooldown
+      is enforced per section per instance — entity types within the same section share
+      the cooldown. Returns 409 if a sync is already in progress or the cooldown is active.
     tags:
       - Arr
     requestBody:

@@ -538,20 +538,13 @@ SyncEntityRequest:
   type: object
   required:
     - instanceId
-    - section
     - databaseId
     - entityName
+    - entityType
   properties:
     instanceId:
       type: integer
       description: Arr instance ID
-    section:
-      type: string
-      enum:
-        - qualityProfiles
-        - delayProfiles
-        - mediaManagement
-      description: Sync section the entity belongs to
     databaseId:
       type: integer
       description: PCD database ID
@@ -568,7 +561,9 @@ SyncEntityRequest:
         - naming
         - qualityDefinitions
         - mediaSettings
-      description: Type of entity being synced. Defaults to qualityProfile for qualityProfiles section.
+      description: >
+        Type of entity being synced. Determines which sync function runs and which
+        cooldown group applies (qualityProfiles, delayProfiles, or mediaManagement).
 
 SyncEntitySuccessResponse:
   type: object

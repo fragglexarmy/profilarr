@@ -4,12 +4,11 @@
 	import Button from '$ui/button/Button.svelte';
 	import Label from '$ui/label/Label.svelte';
 	import { Check, X, Loader2, RefreshCw, ArrowRight } from 'lucide-svelte';
-	import type { AffectedArr, SyncSection } from '$shared/sync/types.ts';
+	import type { AffectedArr } from '$shared/sync/types.ts';
 
 	export let open = false;
 	export let redirectTo: string;
 	export let affectedArrs: AffectedArr[];
-	export let section: SyncSection;
 	export let databaseId: number;
 	export let entityName: string;
 	export let entityType: 'qualityProfile' | 'customFormat' | 'regularExpression' | 'delayProfile' | 'naming' | 'qualityDefinitions' | 'mediaSettings' = 'qualityProfile';
@@ -41,7 +40,7 @@
 			const res = await fetch('/api/v1/arr/sync-entity', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ instanceId, section, databaseId, entityName, entityType })
+				body: JSON.stringify({ instanceId, databaseId, entityName, entityType })
 			});
 
 			if (res.ok) {

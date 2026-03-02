@@ -560,7 +560,6 @@
 	bind:open={showSyncModal}
 	redirectTo={pendingRedirectTo}
 	affectedArrs={pendingAffectedArrs}
-	section="mediaManagement"
 	entityType="qualityDefinitions"
 	{databaseId}
 	entityName={configName.trim()}
