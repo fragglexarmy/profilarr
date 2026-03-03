@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import type { QualityProfileTableRow } from '$shared/pcd/display.ts';
 	import { page } from '$app/stores';
 	import { BookOpenText, Gauge, Earth, Copy, Download } from 'lucide-svelte';
@@ -11,6 +11,15 @@
 	import { FEATURES } from '$shared/features.ts';
 
 	export let profiles: QualityProfileTableRow[];
+
+	let isMobile = false;
+	$: qualityLimit = isMobile ? 3 : 5;
+
+	onMount(() => {
+		const mq = window.matchMedia('(max-width: 767px)');
+		isMobile = mq.matches;
+		mq.addEventListener('change', (e) => (isMobile = e.matches));
+	});
 
 	const dispatch = createEventDispatcher<{ clone: { name: string }; export: { name: string } }>();
 
@@ -24,6 +33,8 @@
 
 <CardGrid flush>
 	{#each visibleProfiles as profile}
+		{@const visibleQualities = profile.qualities.slice(0, qualityLimit)}
+		{@const hiddenCount = Math.max(0, profile.qualities.length - qualityLimit)}
 		<Card href="/quality-profiles/{databaseId}/{profile.id}/general" hoverable>
 			<svelte:fragment slot="header">
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
@@ -66,20 +77,22 @@
 				{/if}
 
 				<!-- Qualities -->
-				<div class="qualities-overflow mt-auto">
-					<div class="flex flex-wrap items-center gap-1">
-						{#each profile.qualities as quality, idx}
-							{#if idx > 0}
-								<span class="text-xs text-neutral-400">›</span>
-							{/if}
-							<Label
-								variant={quality.is_upgrade_until ? 'success' : 'secondary'}
-								size="sm"
-								rounded="md"
-								mono
-							>{quality.name}</Label>
-						{/each}
-					</div>
+				<div class="mt-auto flex flex-wrap items-center gap-1">
+					{#each visibleQualities as quality, idx}
+						{#if idx > 0}
+							<span class="text-xs text-neutral-400">›</span>
+						{/if}
+						<Label
+							variant={quality.is_upgrade_until ? 'success' : 'secondary'}
+							size="sm"
+							rounded="md"
+							mono
+						>{quality.name}</Label>
+					{/each}
+					{#if hiddenCount > 0}
+						<span class="text-xs text-neutral-400">›</span>
+						<Label variant="secondary" size="sm" rounded="md">+{hiddenCount} more</Label>
+					{/if}
 				</div>
 			</div>
 
@@ -129,8 +142,4 @@
 		font-weight: 600;
 	}
 
-	.qualities-overflow {
-		max-height: 3.5rem;
-		overflow: hidden;
-	}
 </style>
