@@ -87,7 +87,7 @@ Top‑level layout and where each subsystem lives.
 
 **Docs**
 
-- `docs/DEVELOPMENT.md` — release conventions
+- `docs/CONTRIBUTING.md` — development workflow and release conventions
 
 ## 4) Data Stores
 

@@ -3,7 +3,7 @@ name: Docker
 on:
   push:
     branches:
-      - v2
+      - develop
     tags:
       - 'v*'
 
@@ -48,13 +48,7 @@ jobs:
       - name: Determine channel and platforms
         id: channel
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/v2" ]]; then
-            echo "value=develop" >> $GITHUB_OUTPUT
-            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/v*-beta* ]]; then
-            echo "value=beta" >> $GITHUB_OUTPUT
-            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "value=stable" >> $GITHUB_OUTPUT
             echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
           else
@@ -71,13 +65,10 @@ jobs:
             org.opencontainers.image.licenses=AGPL-3.0
           tags: |
             # Branch push -> develop
-            type=raw,value=develop,enable=${{ github.ref == 'refs/heads/v2' }}
-            # Beta tag -> beta + version
-            type=raw,value=beta,enable=${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-beta') }}
-            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-beta') }}
-            # Stable tag -> latest + version
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-beta') }}
-            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-beta') }}
+            type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
+            # Tag push -> latest + version
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
       - name: Build and push
         id: push

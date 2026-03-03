@@ -37,7 +37,6 @@ body:
       label: Release channel
       options:
         - Stable
-        - Beta
         - Develop
     validations:
       required: true
