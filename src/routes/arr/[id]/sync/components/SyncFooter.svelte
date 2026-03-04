@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Button from '$ui/button/Button.svelte';
 	import CronInput from '$ui/cron/CronInput.svelte';
-	import Toggle from '$ui/toggle/Toggle.svelte';
+	import DropdownSelect from '$ui/dropdown/DropdownSelect.svelte';
 	import { RefreshCw, Save, Loader2, AlertTriangle } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
@@ -21,50 +21,38 @@
 		{ value: 'manual', label: 'Manual' },
 		{ value: 'on_pull', label: 'On Pull' },
 		{ value: 'schedule', label: 'Schedule' }
-	] as const;
+	];
 
 	// Save disabled when not dirty or can't save, Sync disabled when dirty (unsaved changes) or nothing configured
 	$: saveDisabled = saving || !isDirty || !canSave;
 	$: syncDisabled = syncing || isDirty || !hasConfig;
-
-	function selectTrigger(value: (typeof triggerOptions)[number]['value'], enabled: boolean) {
-		// Keep trigger single-select: selecting a toggle sets it; unchecking the active one is ignored.
-		if (enabled) {
-			syncTrigger = value;
-		}
-	}
 </script>
 
 <div class="border-t border-neutral-200 px-4 py-4 md:px-6 dark:border-neutral-800">
-	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-		<!-- Trigger options -->
-		<div class="flex flex-wrap items-center gap-3 md:gap-4">
-			<span class="text-sm text-neutral-500 dark:text-neutral-400">Trigger</span>
-			{#each triggerOptions as option}
-				<Toggle
-					checked={syncTrigger === option.value}
-					label={option.label}
-					ariaLabel={`Set trigger to ${option.label}`}
-					on:change={(e) => selectTrigger(option.value, e.detail)}
+	<div class="flex flex-col gap-3">
+		<!-- Row 1: Trigger + Warning + Buttons -->
+		<div class="flex items-center justify-between gap-2">
+			<div>
+				<span class="mb-1 block text-xs text-neutral-500 dark:text-neutral-400">Trigger</span>
+				<DropdownSelect
+					value={syncTrigger}
+					options={triggerOptions}
+					buttonSize="sm"
+					width="w-28"
+					justify="center"
+					on:change={(e) => (syncTrigger = e.detail)}
 				/>
-			{/each}
+			</div>
 
-			{#if syncTrigger === 'schedule'}
-				<div class="min-w-[18rem] flex-1">
-					<CronInput bind:value={cronExpression} disabled={saving} minIntervalMinutes={10} {onWarning} />
-				</div>
-			{/if}
-		</div>
-
-		<!-- Warning + Buttons -->
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-			{#if warning}
-				<div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-					<AlertTriangle size={14} class="flex-shrink-0" />
-					<span>{warning}</span>
-				</div>
-			{/if}
-			<div class="flex items-center gap-3">
+			<div>
+				<span class="mb-1 block text-xs text-transparent select-none">&nbsp;</span>
+				<div class="flex items-center gap-3">
+				{#if warning}
+					<div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+						<AlertTriangle size={14} class="flex-shrink-0" />
+						<span>{warning}</span>
+					</div>
+				{/if}
 				<Button
 					text="Sync Now"
 					variant="secondary"
@@ -86,7 +74,16 @@
 						: 'text-green-600 dark:text-green-400'}
 					on:click={() => dispatch('save')}
 				/>
+				</div>
 			</div>
 		</div>
+
+		<!-- Row 2: Cron (only when schedule) -->
+		{#if syncTrigger === 'schedule'}
+			<div class="border-t border-neutral-200 pt-3 dark:border-neutral-800">
+				<span class="mb-1 block text-xs text-neutral-500 dark:text-neutral-400">Schedule</span>
+				<CronInput bind:value={cronExpression} disabled={saving} minIntervalMinutes={10} {onWarning} />
+			</div>
+		{/if}
 	</div>
 </div>

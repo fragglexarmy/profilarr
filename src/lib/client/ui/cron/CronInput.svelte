@@ -243,7 +243,7 @@
 	}
 </script>
 
-<div class="flex flex-wrap items-center gap-1.5">
+<div class="flex items-center gap-1.5" class:flex-wrap={scheduleType === 'monthly'}>
 	<DropdownSelect
 		value={scheduleType}
 		options={scheduleOptions}
@@ -334,6 +334,7 @@
 			}}
 		/>
 	{:else if scheduleType === 'monthly'}
+		<div class="basis-full"></div>
 		<span class="text-sm text-neutral-500 dark:text-neutral-400">day</span>
 		<div class="w-24">
 			<NumberInput
@@ -352,15 +353,15 @@
 				}}
 			/>
 		</div>
-			<TimeInput
-				label="Time"
-				hideLabel
-				name="cron-monthly-time"
-				fieldWidthRem={5}
-				value={monthlyTime}
-				{disabled}
-				on:input={(event) => {
-					monthlyTime = event.detail;
+		<TimeInput
+			label="Time"
+			hideLabel
+			name="cron-monthly-time"
+			fieldWidthRem={5}
+			value={monthlyTime}
+			{disabled}
+			on:input={(event) => {
+				monthlyTime = event.detail;
 				updateCron();
 			}}
 		/>
