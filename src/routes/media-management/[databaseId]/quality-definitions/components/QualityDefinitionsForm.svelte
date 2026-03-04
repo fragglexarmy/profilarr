@@ -7,13 +7,17 @@
 	import Button from '$ui/button/Button.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import SyncPromptModal from '$ui/modal/SyncPromptModal.svelte';
+	import FormInput from '$ui/form/FormInput.svelte';
 	import RangeScale from '$ui/form/RangeScale.svelte';
 	import type { Marker } from '$ui/form/RangeScale.svelte';
 	import NumberInput from '$ui/form/NumberInput.svelte';
 	import ExpandableTable from '$ui/table/ExpandableTable.svelte';
 	import type { Column } from '$ui/table/types';
 	import { alertStore } from '$alerts/store';
-	import { Save, Trash2, ChevronDown } from 'lucide-svelte';
+	import { Save, Trash2, ChevronDown, Info } from 'lucide-svelte';
+	import InfoModal from '$ui/modal/InfoModal.svelte';
+
+	let showInfoModal = false;
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
 	import { isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
@@ -65,9 +69,21 @@
 	export let availableQualities: string[] = [];
 	export let initialData: QualityDefinitionsConfig | null;
 
+	// Max scale value based on arr type (in base unit MB/min)
+	const baseScaleMax = arrType === 'radarr' ? 2000 : 1000;
+
+	// Normalize entries: API uses 0 for "unlimited", but we work with baseScaleMax internally
+	function normalizeEntries(raw: QualityDefinitionEntry[], scaleMax: number): QualityDefinitionEntry[] {
+		return raw.map((e) => ({
+			...e,
+			preferred_size: e.preferred_size === 0 ? scaleMax : e.preferred_size,
+			max_size: e.max_size === 0 ? scaleMax : e.max_size
+		}));
+	}
+
 	// Form state
 	let configName = initialData?.name ?? '';
-	let entries: QualityDefinitionEntry[] = initialData?.entries ?? [];
+	let entries: QualityDefinitionEntry[] = normalizeEntries(initialData?.entries ?? [], baseScaleMax);
 
 	// Initialize entries for create mode
 	$: if (mode === 'create' && entries.length === 0 && availableQualities.length > 0) {
@@ -89,7 +105,7 @@
 	function mapToFormData(data: QualityDefinitionsConfig | null): DirtyFormData {
 		return {
 			name: data?.name ?? '',
-			entries: data?.entries ?? []
+			entries: normalizeEntries(data?.entries ?? [], baseScaleMax)
 		};
 	}
 
@@ -123,9 +139,6 @@
 			? `Create a new ${arrLabel} quality definitions configuration for ${databaseName}`
 			: `Update ${arrLabel} quality definitions configuration`;
 	$: isValid = configName.trim() !== '' && entries.length > 0;
-
-	// Max scale value based on arr type (in base unit MB/min)
-	$: baseScaleMax = arrType === 'radarr' ? 2000 : 1000;
 
 	// Unit options with conversion multipliers (base unit is MB/min)
 	interface UnitOption {
@@ -287,7 +300,7 @@
 	</div>
 	<div slot="right" class="flex items-center gap-2">
 		<!-- Unit selector (hidden on mobile) -->
-		<div class="relative hidden md:block">
+		<div class="relative hidden qd:block">
 			<button
 				type="button"
 				on:click={() => (showUnitDropdown = !showUnitDropdown)}
@@ -317,6 +330,12 @@
 			{/if}
 		</div>
 
+		<Button
+			text="Info"
+			icon={Info}
+			iconColor="text-blue-600 dark:text-blue-400"
+			on:click={() => (showInfoModal = true)}
+		/>
 		{#if mode === 'edit'}
 			<Button
 				text={deleting ? 'Deleting...' : 'Delete'}
@@ -338,21 +357,13 @@
 
 <div class="mt-6 space-y-6 md:px-4">
 	<!-- Name input -->
-	<div>
-		<label
-			for="name"
-			class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-		>
-			Name <span class="text-red-500">*</span>
-		</label>
-		<input
-			type="text"
-			id="name"
-			bind:value={configName}
-			placeholder="e.g., default"
-			class="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base sm:text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-		/>
-	</div>
+	<FormInput
+		label="Name"
+		name="name"
+		bind:value={configName}
+		placeholder="e.g., default"
+		required
+	/>
 
 	<!-- Quality definitions table -->
 	{#if entries.length === 0}
@@ -388,14 +399,14 @@
 				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 					{#each row.entries as entry (entry.quality_name)}
 						{@const markers = markersMap[entry.quality_name] || createMarkers(entry)}
-						<div class="flex flex-col gap-3 bg-white px-4 py-4 md:flex-row md:items-center md:gap-3 md:pt-5 md:pr-4 md:pb-8 md:pl-8 dark:bg-neutral-900">
+						<div class="flex flex-col gap-3 bg-white px-4 py-4 qd:flex-row qd:items-center qd:gap-3 qd:pt-5 qd:pr-4 qd:pb-8 qd:pl-8 dark:bg-neutral-900">
 							<!-- Quality Name -->
-							<div class="text-sm font-medium text-neutral-900 md:w-32 md:shrink-0 dark:text-neutral-100">
+							<div class="text-sm font-medium text-neutral-900 qd:w-32 qd:shrink-0 dark:text-neutral-100">
 								{entry.quality_name}
 							</div>
 
 							<!-- Range Scale (hidden on mobile) -->
-							<div class="hidden min-w-0 flex-1 pt-4 pr-16 pl-2 md:block">
+							<div class="hidden min-w-0 flex-1 pt-4 pr-16 pl-2 qd:block">
 								<RangeScale
 									orientation="horizontal"
 									direction="start"
@@ -412,8 +423,8 @@
 							</div>
 
 							<!-- Number Inputs -->
-							<div class="flex gap-2 md:contents">
-								<div class="flex-1 md:w-24 md:flex-none md:shrink-0">
+							<div class="flex gap-2 qd:contents">
+								<div class="flex-1 qd:w-24 qd:flex-none qd:shrink-0">
 									<div class="mb-1 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
 										Min <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
 									</div>
@@ -429,7 +440,7 @@
 									/>
 								</div>
 
-								<div class="flex-1 md:w-24 md:flex-none md:shrink-0">
+								<div class="flex-1 qd:w-24 qd:flex-none qd:shrink-0">
 									<div class="mb-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
 										Pref <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
 									</div>
@@ -445,7 +456,7 @@
 									/>
 								</div>
 
-								<div class="flex-1 md:w-24 md:flex-none md:shrink-0">
+								<div class="flex-1 qd:w-24 qd:flex-none qd:shrink-0">
 									<div class="mb-1 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400">
 										Max <span class="text-neutral-400 dark:text-neutral-500">(MB/m)</span>
 									</div>
@@ -454,6 +465,7 @@
 										name="max-{entry.quality_name}"
 										bind:value={markers[2].value}
 										min={markers[1].value}
+										max={baseScaleMax}
 										step={1}
 										responsive
 										onchange={() => syncToEntry(entry.quality_name)}
@@ -564,3 +576,20 @@
 	{databaseId}
 	entityName={configName.trim()}
 />
+
+<!-- Info Modal -->
+<InfoModal bind:open={showInfoModal} header="Quality Definitions">
+	<div class="space-y-3 text-sm text-neutral-700 dark:text-neutral-300">
+		<p>
+			Quality definitions control the acceptable file size range for each quality level. All values are stored in <strong>MB per minute</strong> of runtime.
+		</p>
+		<div class="space-y-1">
+			<p><span class="font-medium text-blue-600 dark:text-blue-400">Min</span> — reject files smaller than this.</p>
+			<p><span class="font-medium text-green-600 dark:text-green-400">Preferred</span> — ideal target size. Files closest to this are prioritized.</p>
+			<p><span class="font-medium text-orange-600 dark:text-orange-400">Max</span> — reject files larger than this.</p>
+		</div>
+		<p>
+			The valid range is <strong>0–{baseScaleMax}</strong> MB/min for {arrLabel}. Setting preferred or max to {baseScaleMax} means <strong>unlimited</strong> — no upper bound is enforced.
+		</p>
+	</div>
+</InfoModal>
