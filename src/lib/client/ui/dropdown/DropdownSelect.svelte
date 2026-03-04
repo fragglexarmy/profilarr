@@ -8,7 +8,7 @@
 
 	export let label: string | undefined = undefined;
 	export let value: string;
-	export let options: { value: string; label: string; description?: string }[];
+	export let options: { value: string; label: string; shortLabel?: string; description?: string }[];
 	export let placeholder: string = 'Select...';
 	export let minWidth: string = '8rem';
 	export let position: 'left' | 'right' | 'middle' = 'left';
@@ -59,7 +59,9 @@
 	}
 
 	$: matchedOption = options.find((o) => o.value === value);
-	$: currentLabel = matchedOption?.label || placeholder;
+	$: currentLabel = matchedOption?.shortLabel
+		? matchedOption.shortLabel
+		: matchedOption?.label || placeholder;
 	$: isPlaceholder = !matchedOption;
 	$: isCompactButton = compactButton ?? (responsiveButton ? isSmallScreen : compact);
 	$: isCompactDropdown =

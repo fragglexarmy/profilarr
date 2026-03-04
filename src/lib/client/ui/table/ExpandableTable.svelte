@@ -248,7 +248,7 @@
 
 					<!-- Expanded Content -->
 					{#if !shouldDisableExpand(row) && expandedRows.has(rowId)}
-						<div class="border-t border-neutral-200 bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-900/30">
+						<div class="border-t border-neutral-200 bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-900">
 							<slot name="expanded" {row}>
 								<div class="p-4 text-sm text-neutral-500 dark:text-neutral-400">
 									No additional details

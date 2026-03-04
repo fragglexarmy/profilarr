@@ -390,7 +390,7 @@
 				<FilterGroupComponent group={row.group} appType={resolvedAppType} on:change={handleChange} />
 
 				<!-- Selection Settings -->
-				<Card padding="md">
+				<Card flush padding="md">
 					<h3 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Settings</h3>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 						<div>
@@ -427,7 +427,8 @@
 								value={row.selector}
 								options={selectors.map((s) => ({
 									value: s.id,
-									label: `${s.label} - ${s.description}`
+									label: `${s.label} - ${s.description}`,
+									shortLabel: s.label
 								}))}
 								minWidth="14rem"
 								compactDropdownThreshold={7}
