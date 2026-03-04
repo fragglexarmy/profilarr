@@ -435,6 +435,29 @@ async function fetchPatternMatches(
 }
 
 /**
+ * Validate a regex pattern using the .NET regex engine
+ * Returns { valid, error } or null if parser is offline
+ *
+ * @param pattern - The regex pattern to validate
+ * @returns Validation result or null if parser unavailable
+ */
+export async function validateRegex(
+	pattern: string
+): Promise<{ valid: boolean; error?: string } | null> {
+	const healthy = await isParserHealthy();
+	if (!healthy) return null;
+
+	try {
+		const data = await getClient().post<{ valid: boolean; error?: string }>('/validate/regex', {
+			pattern
+		});
+		return data;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Match multiple texts against patterns in a single request with caching
  * Results are cached keyed by title + patterns hash
  * Cache automatically invalidates when patterns change

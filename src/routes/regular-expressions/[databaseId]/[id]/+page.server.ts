@@ -6,6 +6,7 @@ import * as regularExpressionQueries from '$pcd/entities/regularExpressions/inde
 import type { OperationLayer } from '$pcd/index.ts';
 import { logger } from '$logger/logger.ts';
 import { getAffectedArrs } from '$lib/server/sync/affectedArrs.ts';
+import { validateRegex } from '$lib/server/utils/arr/parser/index.ts';
 
 export const load: ServerLoad = async ({ params }) => {
 	const { databaseId, id } = params;
@@ -86,6 +87,12 @@ export const actions: Actions = {
 
 		if (!pattern?.trim()) {
 			return fail(400, { error: 'Pattern is required' });
+		}
+
+		// Validate regex against .NET engine (mirrors Radarr/Sonarr validation)
+		const regexValidation = await validateRegex(pattern.trim());
+		if (regexValidation && !regexValidation.valid) {
+			return fail(400, { error: `Invalid regex: ${regexValidation.error}` });
 		}
 
 		// Duplicate name checks are enforced at the entity layer.

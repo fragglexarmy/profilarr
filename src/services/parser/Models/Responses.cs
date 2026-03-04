@@ -51,3 +51,5 @@ public record BatchMatchResponse
 {
     public Dictionary<string, Dictionary<string, bool>> Results { get; init; } = new();
 }
+
+public record ValidateRegexResponse(bool Valid, string? Error = null);

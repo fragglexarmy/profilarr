@@ -14,5 +14,6 @@ export {
 	parseWithCacheBatch,
 	cleanupOldCacheEntries,
 	matchPatterns,
-	matchPatternsBatch
+	matchPatternsBatch,
+	validateRegex
 } from './client.ts';

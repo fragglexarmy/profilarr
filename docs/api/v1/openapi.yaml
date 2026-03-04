@@ -20,6 +20,8 @@ tags:
     description: Arr instance library and release endpoints
   - name: PCD
     description: PCD entity export and portable format endpoints
+  - name: Regex
+    description: Regex pattern validation
 
 paths:
   /health:
@@ -42,6 +44,8 @@ paths:
     $ref: './paths/pcd.yaml#/export'
   /pcd/import:
     $ref: './paths/pcd.yaml#/import'
+  /regex/validate:
+    $ref: './paths/regex.yaml#/validate'
 
 components:
   schemas:
@@ -132,3 +136,8 @@ components:
       $ref: './schemas/pcd.yaml#/ImportRequest'
     ImportResponse:
       $ref: './schemas/pcd.yaml#/ImportResponse'
+    # Regex
+    ValidateRegexRequest:
+      $ref: './schemas/regex.yaml#/ValidateRegexRequest'
+    ValidateRegexResponse:
+      $ref: './schemas/regex.yaml#/ValidateRegexResponse'

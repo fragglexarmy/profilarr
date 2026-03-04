@@ -27,6 +27,7 @@ Startup.LogServerInfo(parserVersion, urls);
 // Map endpoints
 ParseEndpoints.Map(app);
 MatchEndpoints.Map(app);
+ValidateEndpoints.Map(app);
 HealthEndpoints.Map(app, parserVersion);
 
 app.Run();

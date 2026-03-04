@@ -85,7 +85,15 @@
 			: `Update regular expression settings`;
 	$: submitButtonText = mode === 'create' ? 'Create' : 'Save Changes';
 
-	$: isValid = formData.name.trim() !== '' && formData.pattern.trim() !== '';
+	let patternValidationState: 'idle' | 'checking' | 'valid' | 'invalid' | 'unavailable' = 'idle';
+
+	$: isValid =
+		formData.name.trim() !== '' &&
+		formData.pattern.trim() !== '' &&
+		patternValidationState !== 'invalid';
+
+	$: saveTooltip =
+		patternValidationState === 'invalid' ? 'Pattern is not a valid .NET regex' : '';
 
 	async function handleSaveClick() {
 		selectedLayer = canWriteToBase ? 'base' : 'user';
@@ -131,6 +139,8 @@
 					icon={saving ? Loader2 : Save}
 					iconColor="text-blue-600 dark:text-blue-400"
 					text={saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : submitButtonText}
+					tooltip={saveTooltip}
+					tooltipPosition="bottom"
 					on:click={handleSaveClick}
 				/>
 			</div>
@@ -226,6 +236,7 @@
 				regex101Id={formData.regex101Id}
 				onPatternChange={(v) => update('pattern', v)}
 				onRegex101IdChange={(v) => update('regex101Id', v)}
+				onValidationStateChange={(s) => (patternValidationState = s)}
 			/>
 		</div>
 	</form>
