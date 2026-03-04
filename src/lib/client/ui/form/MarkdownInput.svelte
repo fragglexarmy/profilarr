@@ -7,7 +7,7 @@
 	export let placeholder: string = '';
 	export let label: string = '';
 	export let description: string = '';
-	export let rows: number = 6;
+	export let rows: number = 8;
 	export let multiline: boolean = true;
 	export let markdown: boolean = true;
 	export let required: boolean = false;

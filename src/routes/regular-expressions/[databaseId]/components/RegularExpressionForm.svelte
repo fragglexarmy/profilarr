@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 	import { tick } from 'svelte';
 	import TagInput from '$ui/form/TagInput.svelte';
 	import MarkdownInput from '$ui/form/MarkdownInput.svelte';
@@ -11,10 +12,12 @@
 	import StickyCard from '$ui/card/StickyCard.svelte';
 	import Button from '$ui/button/Button.svelte';
 	import RegexPatternField from './RegexPatternField.svelte';
+	import UnitTests from './UnitTests.svelte';
 	import { alertStore } from '$alerts/store';
 	import { Save, Trash2, Loader2 } from 'lucide-svelte';
 	import { current, isDirty, initEdit, initCreate, update } from '$lib/client/stores/dirty';
 	import type { AffectedArr } from '$shared/sync/types.ts';
+	import type { Regex101UnitTest } from '../../../api/regex101/[id]/+server';
 
 	// Form data shape
 	interface RegularExpressionFormData {
@@ -84,6 +87,47 @@
 			? `Create a new regular expression for ${databaseName}`
 			: `Update regular expression settings`;
 	$: submitButtonText = mode === 'create' ? 'Create' : 'Save Changes';
+
+	// Unit tests state
+	let unitTests: Regex101UnitTest[] = [];
+	let unitTestsLoading = false;
+	let unitTestsError: string | null = null;
+	let lastFetchedRegex101Id: string | null = null;
+
+	$: if (browser && formData.regex101Id && formData.regex101Id !== lastFetchedRegex101Id) {
+		fetchUnitTests(formData.regex101Id);
+	} else if (!formData.regex101Id) {
+		unitTests = [];
+		unitTestsError = null;
+		lastFetchedRegex101Id = null;
+	}
+
+	async function fetchUnitTests(id: string) {
+		if (!id.trim()) {
+			unitTests = [];
+			unitTestsError = null;
+			return;
+		}
+
+		unitTestsLoading = true;
+		unitTestsError = null;
+
+		try {
+			const response = await fetch(`/api/regex101/${encodeURIComponent(id)}`);
+			if (!response.ok) {
+				const data = await response.json().catch(() => ({}));
+				throw new Error(data.message || `Failed to fetch: ${response.statusText}`);
+			}
+			const data = await response.json();
+			unitTests = data.unitTests || [];
+			lastFetchedRegex101Id = id;
+		} catch (err) {
+			unitTestsError = err instanceof Error ? err.message : 'Failed to fetch unit tests';
+			unitTests = [];
+		} finally {
+			unitTestsLoading = false;
+		}
+	}
 
 	let patternValidationState: 'idle' | 'checking' | 'valid' | 'invalid' | 'unavailable' = 'idle';
 
@@ -191,7 +235,7 @@
 		<input type="hidden" name="tags" value={JSON.stringify(formData.tags)} />
 		<input type="hidden" name="layer" value={selectedLayer} />
 
-		<div class="space-y-6 pb-12">
+		<div class="space-y-6">
 			<!-- Name -->
 			<FormInput
 				label="Name"
@@ -226,7 +270,6 @@
 					description="Describe what this pattern matches"
 					value={formData.description}
 					onchange={(v) => update('description', v)}
-					rows={3}
 					placeholder="What does this pattern match?"
 				/>
 			</div>
@@ -240,6 +283,19 @@
 			/>
 		</div>
 	</form>
+
+	<!-- Unit Tests (outside form to avoid button submission issues) -->
+	{#if formData.regex101Id}
+		<div class="md:px-4 pb-12">
+			<h4 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+				Unit Tests
+				{#if !unitTestsLoading && unitTests.length > 0}
+					<span class="ml-1 text-xs font-normal text-neutral-500">({unitTests.length})</span>
+				{/if}
+			</h4>
+			<UnitTests {unitTests} loading={unitTestsLoading} error={unitTestsError} />
+		</div>
+	{/if}
 
 	<!-- Hidden delete form -->
 	{#if mode === 'edit'}
