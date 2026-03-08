@@ -198,6 +198,12 @@ jobs:
       - name: Make binary executable
         run: chmod +x dist/build/profilarr
 
+      - name: Warm native library cache
+        run: |
+          mkdir -p /tmp/ffi-warmup/data/databases /tmp/ffi-warmup/logs /tmp/ffi-warmup/backups
+          APP_BASE_PATH=/tmp/ffi-warmup PORT=9999 timeout 30 ./dist/build/profilarr || true
+          rm -rf /tmp/ffi-warmup
+
       - name: Run integration tests
         run: deno task test integration
 
