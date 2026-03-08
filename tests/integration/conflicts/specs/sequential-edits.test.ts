@@ -122,10 +122,11 @@ setup(async () => {
 		localPath: askPath,
 		conflictStrategy: 'ask'
 	});
-	({ userOp1Id: askUserOp1Id, userOp2Id: askUserOp2Id, draftId: askDraftId } = seedScenario(
-		dbPath,
-		askDbId
-	));
+	({
+		userOp1Id: askUserOp1Id,
+		userOp2Id: askUserOp2Id,
+		draftId: askDraftId
+	} = seedScenario(dbPath, askDbId));
 
 	// ─── Override strategy ───────────────────────────────────────────────────
 	const overridePath = await createPcdRepo(basePath, 'seq-override');

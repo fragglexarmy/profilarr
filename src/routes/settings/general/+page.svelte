@@ -416,9 +416,7 @@
 
 					<div class="grid gap-4" class:grid-cols-5={backupEnabled}>
 						<div>
-							<span
-								class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
-							>
+							<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 								Automatic Backups
 							</span>
 							<Toggle
@@ -435,9 +433,7 @@
 
 						{#if backupEnabled}
 							<div class="col-span-2">
-								<span
-									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
-								>
+								<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 									Schedule
 								</span>
 								<DropdownSelect
@@ -493,9 +489,7 @@
 					<div class="space-y-4">
 						<div class="grid gap-4" class:sm:grid-cols-7={logEnabled}>
 							<div>
-								<span
-									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
-								>
+								<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 									Logging
 								</span>
 								<Toggle

@@ -155,10 +155,11 @@ setup(async () => {
 		localPath: overridePath,
 		conflictStrategy: 'override'
 	});
-	({ userOp1Id: overrideUserOp1Id, userOp2Id: overrideUserOp2Id, draftId } = seedScenario(
-		dbPath,
-		overrideDbId
-	));
+	({
+		userOp1Id: overrideUserOp1Id,
+		userOp2Id: overrideUserOp2Id,
+		draftId
+	} = seedScenario(dbPath, overrideDbId));
 	await client.postForm(
 		`/databases/${overrideDbId}/changes?/drop`,
 		{ opIds: String(draftId) },
@@ -173,10 +174,11 @@ setup(async () => {
 		localPath: alignPath,
 		conflictStrategy: 'align'
 	});
-	({ userOp1Id: alignUserOp1Id, userOp2Id: alignUserOp2Id, draftId } = seedScenario(
-		dbPath,
-		alignDbId
-	));
+	({
+		userOp1Id: alignUserOp1Id,
+		userOp2Id: alignUserOp2Id,
+		draftId
+	} = seedScenario(dbPath, alignDbId));
 	await client.postForm(
 		`/databases/${alignDbId}/changes?/drop`,
 		{ opIds: String(draftId) },
