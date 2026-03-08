@@ -62,144 +62,146 @@
 	<title>{data.instance.name} - Rename - Profilarr</title>
 </svelte:head>
 
-<StickyCard position="top">
-	<div slot="left">
-		<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Rename</h1>
-		<p class="text-sm text-neutral-500 dark:text-neutral-400">
-			Automatically rename files and folders to match your naming format.
-		</p>
-	</div>
-	<div slot="right" class="flex items-center gap-2">
-		<Button text="How it works" icon={Info} on:click={() => (showInfoModal = true)} />
-		{#if !isNewConfig}
-			<Tooltip text="Preview which files would be renamed without making changes">
-				<Button
-					text={running ? 'Running...' : 'Dry Run'}
-					icon={FlaskConical}
-					iconColor="text-amber-600 dark:text-amber-400"
-					disabled={running || saving || $isDirty}
-					on:click={() => {
-						const f = document.getElementById('dry-run-form');
-						if (f instanceof HTMLFormElement) f.requestSubmit();
-					}}
-				/>
-			</Tooltip>
-			<Tooltip text="Rename files and folders now">
-				<Button
-					text={running ? 'Running...' : 'Run Now'}
-					icon={Play}
-					iconColor="text-green-600 dark:text-green-400"
-					disabled={running || saving || $isDirty}
-					on:click={() => {
-						const f = document.getElementById('live-run-form');
-						if (f instanceof HTMLFormElement) f.requestSubmit();
-					}}
-				/>
-			</Tooltip>
-		{/if}
-		<Button
-			text={saving ? 'Saving...' : 'Save'}
-			icon={Save}
-			iconColor="text-blue-600 dark:text-blue-400"
-			disabled={saving || running || !$isDirty}
-			on:click={() => {
-				const saveForm = document.getElementById('save-form');
-				if (saveForm instanceof HTMLFormElement) {
-					saveForm.requestSubmit();
-				}
-			}}
-		/>
-	</div>
-</StickyCard>
+{#key data.instance.id}
+	<StickyCard position="top">
+		<div slot="left">
+			<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Rename</h1>
+			<p class="text-sm text-neutral-500 dark:text-neutral-400">
+				Automatically rename files and folders to match your naming format.
+			</p>
+		</div>
+		<div slot="right" class="flex items-center gap-2">
+			<Button text="How it works" icon={Info} on:click={() => (showInfoModal = true)} />
+			{#if !isNewConfig}
+				<Tooltip text="Preview which files would be renamed without making changes">
+					<Button
+						text={running ? 'Running...' : 'Dry Run'}
+						icon={FlaskConical}
+						iconColor="text-amber-600 dark:text-amber-400"
+						disabled={running || saving || $isDirty}
+						on:click={() => {
+							const f = document.getElementById('dry-run-form');
+							if (f instanceof HTMLFormElement) f.requestSubmit();
+						}}
+					/>
+				</Tooltip>
+				<Tooltip text="Rename files and folders now">
+					<Button
+						text={running ? 'Running...' : 'Run Now'}
+						icon={Play}
+						iconColor="text-green-600 dark:text-green-400"
+						disabled={running || saving || $isDirty}
+						on:click={() => {
+							const f = document.getElementById('live-run-form');
+							if (f instanceof HTMLFormElement) f.requestSubmit();
+						}}
+					/>
+				</Tooltip>
+			{/if}
+			<Button
+				text={saving ? 'Saving...' : 'Save'}
+				icon={Save}
+				iconColor="text-blue-600 dark:text-blue-400"
+				disabled={saving || running || !$isDirty}
+				on:click={() => {
+					const saveForm = document.getElementById('save-form');
+					if (saveForm instanceof HTMLFormElement) {
+						saveForm.requestSubmit();
+					}
+				}}
+			/>
+		</div>
+	</StickyCard>
 
-<div class="mt-6 space-y-6">
-	<section>
+	<div class="mt-6 space-y-6">
+		<section>
+			<h2
+				class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+			>
+				<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
+				Settings
+			</h2>
+			<RenameSettings
+				{enabled}
+				{renameFolders}
+				{ignoreTag}
+				{cron}
+				{summaryNotifications}
+				lastRunAt={data.settings?.lastRunAt ?? null}
+				nextRunAt={data.settings?.nextRunAt ?? null}
+				onEnabledChange={(v) => update('enabled', v)}
+				onRenameFoldersChange={(v) => update('renameFolders', v)}
+				onIgnoreTagChange={(v) => update('ignoreTag', v)}
+				onCronChange={(v) => update('cron', v)}
+				onSummaryNotificationsChange={(v) => update('summaryNotifications', v)}
+				onWarning={(msg) => alertStore.add('warning', msg)}
+			/>
+		</section>
+	</div>
+
+	<section class="mt-6">
 		<h2
 			class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
 		>
-			<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
-			Settings
+			<History size={18} class="text-neutral-500 dark:text-neutral-400" />
+			Run History
 		</h2>
-		<RenameSettings
-			{enabled}
-			{renameFolders}
-			{ignoreTag}
-			{cron}
-			{summaryNotifications}
-			lastRunAt={data.settings?.lastRunAt ?? null}
-			nextRunAt={data.settings?.nextRunAt ?? null}
-			onEnabledChange={(v) => update('enabled', v)}
-			onRenameFoldersChange={(v) => update('renameFolders', v)}
-			onIgnoreTagChange={(v) => update('ignoreTag', v)}
-			onCronChange={(v) => update('cron', v)}
-			onSummaryNotificationsChange={(v) => update('summaryNotifications', v)}
-			onWarning={(msg) => alertStore.add('warning', msg)}
-		/>
+		<RenameRunHistory runs={data.renameRuns} />
 	</section>
-</div>
 
-<section class="mt-6">
-	<h2
-		class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
-	>
-		<History size={18} class="text-neutral-500 dark:text-neutral-400" />
-		Run History
-	</h2>
-	<RenameRunHistory runs={data.renameRuns} />
-</section>
-
-<!-- Hidden forms -->
-<form
-	id="save-form"
-	method="POST"
-	action={isNewConfig ? '?/save' : '?/update'}
-	class="hidden"
-	use:enhance={() => {
-		saving = true;
-		return async ({ update }) => {
-			await update({ reset: false });
-			saving = false;
-		};
-	}}
->
-	<input type="hidden" name="enabled" value={enabled} />
-	<input type="hidden" name="renameFolders" value={renameFolders} />
-	<input type="hidden" name="ignoreTag" value={ignoreTag} />
-	<input type="hidden" name="cron" value={cron} />
-	<input type="hidden" name="summaryNotifications" value={summaryNotifications} />
-</form>
-{#if !isNewConfig}
+	<!-- Hidden forms -->
 	<form
-		id="dry-run-form"
+		id="save-form"
 		method="POST"
-		action="?/run"
+		action={isNewConfig ? '?/save' : '?/update'}
 		class="hidden"
 		use:enhance={() => {
-			running = true;
+			saving = true;
 			return async ({ update }) => {
 				await update({ reset: false });
-				running = false;
+				saving = false;
 			};
 		}}
 	>
-		<input type="hidden" name="dryRun" value="true" />
+		<input type="hidden" name="enabled" value={enabled} />
+		<input type="hidden" name="renameFolders" value={renameFolders} />
+		<input type="hidden" name="ignoreTag" value={ignoreTag} />
+		<input type="hidden" name="cron" value={cron} />
+		<input type="hidden" name="summaryNotifications" value={summaryNotifications} />
 	</form>
-	<form
-		id="live-run-form"
-		method="POST"
-		action="?/run"
-		class="hidden"
-		use:enhance={() => {
-			running = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				running = false;
-			};
-		}}
-	>
-		<input type="hidden" name="dryRun" value="false" />
-	</form>
-{/if}
+	{#if !isNewConfig}
+		<form
+			id="dry-run-form"
+			method="POST"
+			action="?/run"
+			class="hidden"
+			use:enhance={() => {
+				running = true;
+				return async ({ update }) => {
+					await update({ reset: false });
+					running = false;
+				};
+			}}
+		>
+			<input type="hidden" name="dryRun" value="true" />
+		</form>
+		<form
+			id="live-run-form"
+			method="POST"
+			action="?/run"
+			class="hidden"
+			use:enhance={() => {
+				running = true;
+				return async ({ update }) => {
+					await update({ reset: false });
+					running = false;
+				};
+			}}
+		>
+			<input type="hidden" name="dryRun" value="false" />
+		</form>
+	{/if}
 
-<RenameInfoModal bind:open={showInfoModal} />
-<DirtyModal />
+	<RenameInfoModal bind:open={showInfoModal} />
+	<DirtyModal />
+{/key}

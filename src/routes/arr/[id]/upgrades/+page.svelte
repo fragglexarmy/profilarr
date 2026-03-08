@@ -84,178 +84,180 @@
 	<title>{data.instance.name} - Upgrades - Profilarr</title>
 </svelte:head>
 
-<StickyCard position="top">
-	<div slot="left">
-		<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Upgrades</h1>
-		<p class="text-sm text-neutral-500 dark:text-neutral-400">
-			Automatically search for better quality releases.
-		</p>
-	</div>
-	<div slot="right" class="flex flex-wrap items-center gap-2">
-		<Button text="Info" icon={Info} href="/arr/upgrades/info" />
-		{#if !isNewConfig}
-			<Tooltip text="Clear dry run exclusion cache so items can be re-selected">
-				<Button
-					text={clearing ? 'Clearing...' : 'Reset Cache'}
-					icon={RotateCcw}
-					disabled={clearing || running || saving}
-					on:click={() => {
-						const f = document.getElementById('clear-cache-form');
-						if (f instanceof HTMLFormElement) f.requestSubmit();
-					}}
-				/>
-			</Tooltip>
-			<Tooltip text="Search indexers without downloading (limited to once every 10 min)">
-				<Button
-					text={running ? 'Running...' : 'Dry Run'}
-					icon={FlaskConical}
-					iconColor="text-amber-600 dark:text-amber-400"
-					disabled={running || saving || clearing || $isDirty}
-					on:click={() => {
-						const f = document.getElementById('dry-run-form');
-						if (f instanceof HTMLFormElement) f.requestSubmit();
-					}}
-				/>
-			</Tooltip>
-			{#if isDev}
-				<Tooltip text="Run a live search that will download upgrades">
+{#key data.instance.id}
+	<StickyCard position="top">
+		<div slot="left">
+			<h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Upgrades</h1>
+			<p class="text-sm text-neutral-500 dark:text-neutral-400">
+				Automatically search for better quality releases.
+			</p>
+		</div>
+		<div slot="right" class="flex flex-wrap items-center gap-2">
+			<Button text="Info" icon={Info} href="/arr/upgrades/info" />
+			{#if !isNewConfig}
+				<Tooltip text="Clear dry run exclusion cache so items can be re-selected">
 					<Button
-						text={running ? 'Running...' : 'Live Run'}
-						icon={Play}
-						iconColor="text-red-600 dark:text-red-400"
-						disabled={running || saving || $isDirty}
+						text={clearing ? 'Clearing...' : 'Reset Cache'}
+						icon={RotateCcw}
+						disabled={clearing || running || saving}
 						on:click={() => {
-							const f = document.getElementById('live-run-form');
+							const f = document.getElementById('clear-cache-form');
 							if (f instanceof HTMLFormElement) f.requestSubmit();
 						}}
 					/>
 				</Tooltip>
+				<Tooltip text="Search indexers without downloading (limited to once every 10 min)">
+					<Button
+						text={running ? 'Running...' : 'Dry Run'}
+						icon={FlaskConical}
+						iconColor="text-amber-600 dark:text-amber-400"
+						disabled={running || saving || clearing || $isDirty}
+						on:click={() => {
+							const f = document.getElementById('dry-run-form');
+							if (f instanceof HTMLFormElement) f.requestSubmit();
+						}}
+					/>
+				</Tooltip>
+				{#if isDev}
+					<Tooltip text="Run a live search that will download upgrades">
+						<Button
+							text={running ? 'Running...' : 'Live Run'}
+							icon={Play}
+							iconColor="text-red-600 dark:text-red-400"
+							disabled={running || saving || $isDirty}
+							on:click={() => {
+								const f = document.getElementById('live-run-form');
+								if (f instanceof HTMLFormElement) f.requestSubmit();
+							}}
+						/>
+					</Tooltip>
+				{/if}
 			{/if}
-		{/if}
-		<Button
-			text={saving ? 'Saving...' : 'Save'}
-			icon={Save}
-			iconColor="text-blue-600 dark:text-blue-400"
-			disabled={saving || running || !$isDirty}
-			on:click={() => {
-				const f = document.getElementById('save-form');
-				if (f instanceof HTMLFormElement) f.requestSubmit();
-			}}
-		/>
+			<Button
+				text={saving ? 'Saving...' : 'Save'}
+				icon={Save}
+				iconColor="text-blue-600 dark:text-blue-400"
+				disabled={saving || running || !$isDirty}
+				on:click={() => {
+					const f = document.getElementById('save-form');
+					if (f instanceof HTMLFormElement) f.requestSubmit();
+				}}
+			/>
+		</div>
+	</StickyCard>
+
+	<div class="mt-6 space-y-6">
+		<section>
+			<h2
+				class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+			>
+				<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
+				Settings
+			</h2>
+			<CoreSettings
+				{enabled}
+				{cron}
+				{filterMode}
+				lastRunAt={data.config?.lastRunAt ?? null}
+				nextRunAt={data.config?.nextRunAt ?? null}
+				minIntervalMinutes={appMinInterval}
+				onEnabledChange={(v) => update('enabled', v)}
+				onCronChange={(v) => update('cron', v)}
+				onFilterModeChange={(v) => update('filterMode', v)}
+				onWarning={(msg) => alertStore.add('warning', msg)}
+			/>
+		</section>
+
+		<section>
+			<h2
+				class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+			>
+				<SlidersHorizontal size={18} class="text-neutral-500 dark:text-neutral-400" />
+				Filters
+			</h2>
+			<FilterSettings
+				{filters}
+				appType={data.instance.type}
+				{runsPerHour}
+				onFiltersChange={(v) => update('filters', JSON.stringify(v))}
+			/>
+		</section>
 	</div>
-</StickyCard>
 
-<div class="mt-6 space-y-6">
-	<section>
+	<section class="mt-6">
 		<h2
 			class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
 		>
-			<Settings size={18} class="text-neutral-500 dark:text-neutral-400" />
-			Settings
+			<History size={18} class="text-neutral-500 dark:text-neutral-400" />
+			Run History
 		</h2>
-		<CoreSettings
-			{enabled}
-			{cron}
-			{filterMode}
-			lastRunAt={data.config?.lastRunAt ?? null}
-			nextRunAt={data.config?.nextRunAt ?? null}
-			minIntervalMinutes={appMinInterval}
-			onEnabledChange={(v) => update('enabled', v)}
-			onCronChange={(v) => update('cron', v)}
-			onFilterModeChange={(v) => update('filterMode', v)}
-			onWarning={(msg) => alertStore.add('warning', msg)}
-		/>
+		<RunHistory runs={data.upgradeRuns} />
 	</section>
 
-	<section>
-		<h2
-			class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+	<!-- Hidden forms -->
+	<form
+		id="save-form"
+		method="POST"
+		action="?/save"
+		class="hidden"
+		use:enhance={() => {
+			saving = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				saving = false;
+			};
+		}}
+	>
+		<input type="hidden" name="enabled" value={enabled} />
+		<input type="hidden" name="cron" value={cron} />
+		<input type="hidden" name="filterMode" value={filterMode} />
+		<input type="hidden" name="filters" value={JSON.stringify(filters)} />
+	</form>
+	{#if !isNewConfig}
+		<form
+			id="dry-run-form"
+			method="POST"
+			action="?/run"
+			class="hidden"
+			use:enhance={() => {
+				running = true;
+				return async ({ update }) => {
+					await update({ reset: false });
+					running = false;
+				};
+			}}
 		>
-			<SlidersHorizontal size={18} class="text-neutral-500 dark:text-neutral-400" />
-			Filters
-		</h2>
-		<FilterSettings
-			{filters}
-			appType={data.instance.type}
-			{runsPerHour}
-			onFiltersChange={(v) => update('filters', JSON.stringify(v))}
-		/>
-	</section>
-</div>
+			<input type="hidden" name="dryRun" value="true" />
+		</form>
+		<form
+			id="live-run-form"
+			method="POST"
+			action="?/run"
+			class="hidden"
+			use:enhance={() => {
+				running = true;
+				return async ({ update }) => {
+					await update({ reset: false });
+					running = false;
+				};
+			}}
+		>
+			<input type="hidden" name="dryRun" value="false" />
+		</form>
+		<form
+			id="clear-cache-form"
+			method="POST"
+			action="?/clearCache"
+			class="hidden"
+			use:enhance={() => {
+				clearing = true;
+				return async ({ update }) => {
+					await update({ reset: false });
+					clearing = false;
+				};
+			}}
+		></form>
+	{/if}
 
-<section class="mt-6">
-	<h2
-		class="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100"
-	>
-		<History size={18} class="text-neutral-500 dark:text-neutral-400" />
-		Run History
-	</h2>
-	<RunHistory runs={data.upgradeRuns} />
-</section>
-
-<!-- Hidden forms -->
-<form
-	id="save-form"
-	method="POST"
-	action="?/save"
-	class="hidden"
-	use:enhance={() => {
-		saving = true;
-		return async ({ update }) => {
-			await update({ reset: false });
-			saving = false;
-		};
-	}}
->
-	<input type="hidden" name="enabled" value={enabled} />
-	<input type="hidden" name="cron" value={cron} />
-	<input type="hidden" name="filterMode" value={filterMode} />
-	<input type="hidden" name="filters" value={JSON.stringify(filters)} />
-</form>
-{#if !isNewConfig}
-	<form
-		id="dry-run-form"
-		method="POST"
-		action="?/run"
-		class="hidden"
-		use:enhance={() => {
-			running = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				running = false;
-			};
-		}}
-	>
-		<input type="hidden" name="dryRun" value="true" />
-	</form>
-	<form
-		id="live-run-form"
-		method="POST"
-		action="?/run"
-		class="hidden"
-		use:enhance={() => {
-			running = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				running = false;
-			};
-		}}
-	>
-		<input type="hidden" name="dryRun" value="false" />
-	</form>
-	<form
-		id="clear-cache-form"
-		method="POST"
-		action="?/clearCache"
-		class="hidden"
-		use:enhance={() => {
-			clearing = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				clearing = false;
-			};
-		}}
-	></form>
-{/if}
-
-<DirtyModal />
+	<DirtyModal />
+{/key}
