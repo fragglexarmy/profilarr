@@ -15,6 +15,10 @@ type ConflictRow = {
 	title: string;
 	summary: string | null;
 	origin: string;
+	/** All op IDs in this conflict group (for batch resolution) */
+	groupOpIds: number[];
+	/** Number of collapsed intermediate conflicts */
+	collapsedCount: number;
 };
 
 function parseMetadata(raw: string | null): OperationMetadata | null {
@@ -37,15 +41,42 @@ function formatTitle(metadata: OperationMetadata | null): string {
 	return `${operation} ${entity}${name}`;
 }
 
+function getGroupKey(metadata: OperationMetadata | null): string {
+	const entity = metadata?.entity ?? 'unknown';
+	const stableValue = metadata?.stableKey?.value ?? metadata?.name ?? '';
+	return `${entity}:${stableValue}`;
+}
+
 export const load: PageServerLoad = async ({ parent }) => {
 	const { database } = await parent();
 	const conflicts = pcdOpHistoryQueries.listLatestConflictsByDatabase(database.id);
 
-	const rows: ConflictRow[] = conflicts.map(({ history, op }) => {
+	// Group conflicts by entity + stableKey, show only the latest per group
+	const groups = new Map<string, { opIds: number[]; latest: (typeof conflicts)[0] }>();
+
+	for (const conflict of conflicts) {
+		const metadata = parseMetadata(conflict.op.metadata ?? null);
+		const key = getGroupKey(metadata);
+		const existing = groups.get(key);
+
+		if (!existing || conflict.op.id > existing.latest.op.id) {
+			groups.set(key, {
+				opIds: existing ? [...existing.opIds, conflict.op.id] : [conflict.op.id],
+				latest: conflict
+			});
+		} else {
+			existing.opIds.push(conflict.op.id);
+		}
+	}
+
+	const rows: ConflictRow[] = [];
+
+	for (const { opIds, latest } of groups.values()) {
+		const { history, op } = latest;
 		const metadata = parseMetadata(op.metadata ?? null);
 		const title = metadata?.title ?? metadata?.summary ?? formatTitle(metadata);
 
-		return {
+		rows.push({
 			opId: op.id,
 			status: history.status,
 			conflictReason: history.conflict_reason,
@@ -55,15 +86,29 @@ export const load: PageServerLoad = async ({ parent }) => {
 			name: metadata?.name ?? '',
 			title,
 			summary: metadata?.summary ?? null,
-			origin: op.origin
-		};
-	});
+			origin: op.origin,
+			groupOpIds: opIds.sort((a, b) => a - b),
+			collapsedCount: opIds.length - 1
+		});
+	}
 
 	return {
 		conflictStrategy: database.conflict_strategy ?? 'override',
 		conflicts: rows
 	};
 };
+
+function parseGroupOpIds(formData: FormData): number[] {
+	const raw = formData.get('groupOpIds');
+	if (!raw || typeof raw !== 'string') return [];
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (!Array.isArray(parsed)) return [];
+		return parsed.filter((id): id is number => typeof id === 'number' && Number.isFinite(id));
+	} catch {
+		return [];
+	}
+}
 
 export const actions: Actions = {
 	align: async ({ request, params }) => {
@@ -73,14 +118,21 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const opId = Number(formData.get('opId'));
-		if (!Number.isFinite(opId)) {
-			return fail(400, { error: 'Invalid operation id' });
+		const groupOpIds = parseGroupOpIds(formData);
+		if (groupOpIds.length === 0) {
+			const opId = Number(formData.get('opId'));
+			if (!Number.isFinite(opId)) {
+				return fail(400, { error: 'Invalid operation id' });
+			}
+			groupOpIds.push(opId);
 		}
 
-		const result = await alignConflict({ databaseId, opId });
-		if (!result.success) {
-			return fail(400, { error: result.error || 'Failed to align conflict' });
+		// Align all ops in the group
+		for (const opId of groupOpIds) {
+			const result = await alignConflict({ databaseId, opId });
+			if (!result.success) {
+				return fail(400, { error: result.error || 'Failed to align conflict' });
+			}
 		}
 
 		return { success: true };
@@ -92,14 +144,22 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const opId = Number(formData.get('opId'));
-		if (!Number.isFinite(opId)) {
-			return fail(400, { error: 'Invalid operation id' });
+		const groupOpIds = parseGroupOpIds(formData);
+		if (groupOpIds.length === 0) {
+			const opId = Number(formData.get('opId'));
+			if (!Number.isFinite(opId)) {
+				return fail(400, { error: 'Invalid operation id' });
+			}
+			groupOpIds.push(opId);
 		}
 
-		const result = await overrideConflict({ databaseId, opId });
-		if (!result.success) {
-			return fail(400, { error: result.error || 'Failed to override conflict' });
+		// Override sequentially, oldest first — each resolution may cascade-fix the next
+		for (const opId of groupOpIds) {
+			const result = await overrideConflict({ databaseId, opId });
+			if (!result.success) {
+				// Op may have auto-resolved from a prior override in this batch — skip
+				continue;
+			}
 		}
 
 		return { success: true };

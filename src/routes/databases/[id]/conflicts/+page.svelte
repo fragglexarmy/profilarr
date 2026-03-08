@@ -26,6 +26,8 @@
 		title: string;
 		summary: string | null;
 		origin: string;
+		groupOpIds: number[];
+		collapsedCount: number;
 	};
 
 	let searchStore: SearchStore;
@@ -333,12 +335,17 @@
 	>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
+				{#if row.collapsedCount > 0}
+					<span class="mr-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+						+{row.collapsedCount} more
+					</span>
+				{/if}
 				<form
 					method="POST"
 					action="?/align"
 					use:enhance={handleConflictAction('Conflict aligned', 'Align conflict failed')}
 				>
-					<input type="hidden" name="opId" value={row.opId} />
+					<input type="hidden" name="groupOpIds" value={JSON.stringify(row.groupOpIds)} />
 					<Button
 						icon={HeartHandshake}
 						text="Align"
@@ -353,7 +360,7 @@
 					action="?/override"
 					use:enhance={handleConflictAction('Conflict override queued', 'Override conflict failed')}
 				>
-					<input type="hidden" name="opId" value={row.opId} />
+					<input type="hidden" name="groupOpIds" value={JSON.stringify(row.groupOpIds)} />
 					<Button
 						icon={HandMetal}
 						text="Override"

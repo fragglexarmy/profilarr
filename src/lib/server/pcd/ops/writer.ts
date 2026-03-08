@@ -5,14 +5,12 @@
 
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
-import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import type { PcdOpOrigin } from '$db/queries/pcdOps.ts';
 import { logger } from '$logger/logger.ts';
 import { compiledQueryToSql } from '../utils/sql.ts';
 import { compile } from '../database/compiler.ts';
 import { getCache } from '../database/registry.ts';
 import type { OperationMetadata, OperationType, WriteOptions, WriteResult } from '../core/types.ts';
-import { uuid } from '$shared/utils/uuid.ts';
 
 function buildMetadataJson(metadata?: OperationMetadata): string | null {
 	if (!metadata) return null;
@@ -182,116 +180,6 @@ async function cancelOutCreate(
 	return false;
 }
 
-type ParsedMetadata = {
-	operation?: string;
-	entity?: string;
-	name?: string;
-	stable_key?: { key?: string; value?: string };
-	changed_fields?: string[];
-};
-
-function parseMetadata(raw: string | null): ParsedMetadata | null {
-	if (!raw) return null;
-	try {
-		return JSON.parse(raw) as ParsedMetadata;
-	} catch {
-		return null;
-	}
-}
-
-function matchesStableKey(
-	stableKey: OperationMetadata['stableKey'] | undefined,
-	otherStableKey: ParsedMetadata['stable_key'] | undefined
-): boolean | null {
-	if (stableKey?.key && stableKey.value && otherStableKey?.key && otherStableKey.value) {
-		return stableKey.key === otherStableKey.key && stableKey.value === otherStableKey.value;
-	}
-	return null;
-}
-
-function hasFieldCoverage(
-	newFields: string[] | undefined,
-	oldFields: string[] | undefined
-): boolean {
-	if (!newFields || newFields.length === 0) return false;
-	if (!oldFields || oldFields.length === 0) return false;
-	const newSet = new Set(newFields);
-	return oldFields.every((field) => newSet.has(field));
-}
-
-async function supersedePriorUserOps(
-	databaseId: number,
-	newOpId: number,
-	metadata: OperationMetadata
-): Promise<void> {
-	if (metadata.operation === 'create') {
-		return;
-	}
-
-	const candidates = pcdOpsQueries.listByDatabaseAndOrigin(databaseId, 'user', {
-		states: ['published']
-	});
-
-	const batchId = uuid();
-	const superseded: number[] = [];
-
-	for (const op of candidates) {
-		if (op.id === newOpId || !op.metadata) continue;
-		const parsed = parseMetadata(op.metadata);
-		if (!parsed?.entity) continue;
-		if (parsed.operation === 'create') continue;
-		if (parsed.entity !== metadata.entity) continue;
-
-		const stableKeyMatch = matchesStableKey(metadata.stableKey, parsed.stable_key);
-		if (stableKeyMatch === false) {
-			continue;
-		}
-
-		if (
-			stableKeyMatch !== true &&
-			(!parsed.name || !metadata.name || parsed.name !== metadata.name)
-		) {
-			continue;
-		}
-
-		if (metadata.operation === 'update') {
-			if (parsed.operation !== 'update') {
-				continue;
-			}
-			if (!hasFieldCoverage(metadata.changedFields, parsed.changed_fields)) {
-				continue;
-			}
-		}
-
-		const updated = pcdOpsQueries.update(op.id, {
-			state: 'superseded',
-			supersededByOpId: newOpId
-		});
-		if (!updated) continue;
-
-		pcdOpHistoryQueries.create({
-			opId: op.id,
-			databaseId,
-			batchId,
-			status: 'superseded'
-		});
-		superseded.push(op.id);
-	}
-
-	if (superseded.length > 0) {
-		await logger.info('Superseded prior user ops', {
-			source: 'PCDWriter',
-			meta: {
-				databaseId,
-				newOpId,
-				entity: metadata.entity,
-				name: metadata.name,
-				supersededOpIds: superseded
-			}
-		});
-	}
-}
-
 /**
  * Write operations to a PCD layer in the database
  *
@@ -381,14 +269,6 @@ export async function writeOperation(options: WriteOptions): Promise<WriteResult
 				source: 'PCDWriter',
 				meta: { databaseId, opId, layer: origin, entity: metadata.entity, name: metadata.name }
 			});
-		}
-
-		if (
-			origin === 'user' &&
-			metadata &&
-			(metadata.operation === 'update' || metadata.operation === 'delete')
-		) {
-			await supersedePriorUserOps(databaseId, opId, metadata);
 		}
 
 		if (!skipRecompile) {
