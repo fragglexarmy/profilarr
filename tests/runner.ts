@@ -69,7 +69,10 @@
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const INTEGRATION_COMPOSE = 'tests/integration/auth/docker-compose.yml';
-const INTEGRATION_SPEC_DIR = 'tests/integration/auth/specs';
+const INTEGRATION_AUTH_SPEC_DIR = 'tests/integration/auth/specs';
+const INTEGRATION_CONFLICT_SPEC_DIR = 'tests/integration/conflicts/specs';
+const INTEGRATION_SPEC_DIR = INTEGRATION_AUTH_SPEC_DIR; // backward compat
+const INTEGRATION_SUITES = new Set(['auth', 'conflicts']);
 
 const E2E_PCD_CONFIG = 'tests/e2e/pcd/playwright.config.ts';
 const E2E_PCD_SPEC_DIR = 'tests/e2e/pcd/specs';
@@ -145,7 +148,7 @@ switch (command) {
 	case 'unit':
 		Deno.exit(await runUnit(remaining[0]));
 	case 'integration':
-		Deno.exit(await runIntegration(remaining[0]));
+		Deno.exit(await runIntegration(remaining.length > 0 ? remaining.join(' ') : undefined));
 	case 'e2e':
 		Deno.exit(await runE2E(remaining, flags));
 	case 'zap':
@@ -198,21 +201,50 @@ async function runUnit(target?: string): Promise<number> {
 // ─── Integration Tests ──────────────────────────────────────────────────────
 
 async function runIntegration(target?: string): Promise<number> {
-	const testPath = target ? `${INTEGRATION_SPEC_DIR}/${target}.test.ts` : INTEGRATION_SPEC_DIR;
+	// Parse suite/spec from target: "conflicts", "conflicts detection", "health", etc.
+	let suite: string | undefined;
+	let specName: string | undefined;
 
-	// Validate target if specified
-	if (target) {
+	if (target && INTEGRATION_SUITES.has(target)) {
+		// "deno task test integration conflicts"
+		suite = target;
+	} else if (target) {
+		// Could be "conflicts detection" (suite + spec) or "health" (legacy auth spec)
+		const parts = target.split(/\s+/);
+		if (parts.length >= 2 && INTEGRATION_SUITES.has(parts[0])) {
+			suite = parts[0];
+			specName = parts[1];
+		} else {
+			// Legacy: treat as auth spec name
+			suite = 'auth';
+			specName = target;
+		}
+	}
+
+	// Resolve spec dirs and files
+	function getSpecDir(s: string): string {
+		return s === 'conflicts' ? INTEGRATION_CONFLICT_SPEC_DIR : INTEGRATION_AUTH_SPEC_DIR;
+	}
+
+	// Validate spec file if specified
+	if (specName && suite) {
+		const testPath = `${getSpecDir(suite)}/${specName}.test.ts`;
 		try {
 			await Deno.stat(testPath);
 		} catch {
-			console.error(`Unknown integration spec: "${target}"`);
+			console.error(`Unknown integration spec: "${specName}" in suite "${suite}"`);
 			console.error(`Expected file: ${testPath}`);
 			return 1;
 		}
 	}
 
-	// Docker is needed when running all specs or a spec that requires it
-	const dockerRequired = !target || INTEGRATION_NEEDS_DOCKER.has(target);
+	// Determine which suites to run
+	const suitesToRun = suite ? [suite] : ['auth', 'conflicts'];
+
+	// Docker is needed when running auth specs (all or specific ones that need it)
+	const runningAuthSpecs = suitesToRun.includes('auth');
+	const dockerRequired =
+		runningAuthSpecs && (!specName || !suite || INTEGRATION_NEEDS_DOCKER.has(specName));
 	let exitCode = 1;
 
 	try {
@@ -222,17 +254,29 @@ async function runIntegration(target?: string): Promise<number> {
 			console.log('Docker infrastructure ready.\n');
 		}
 
-		// Collect spec files
+		// Collect spec files from all suites
 		const specFiles: string[] = [];
-		if (target) {
-			specFiles.push(testPath);
-		} else {
-			for await (const entry of Deno.readDir(INTEGRATION_SPEC_DIR)) {
-				if (entry.isFile && entry.name.endsWith('.test.ts')) {
-					specFiles.push(`${INTEGRATION_SPEC_DIR}/${entry.name}`);
+		for (const s of suitesToRun) {
+			const dir = getSpecDir(s);
+			if (specName && s === suite) {
+				specFiles.push(`${dir}/${specName}.test.ts`);
+			} else {
+				try {
+					for await (const entry of Deno.readDir(dir)) {
+						if (entry.isFile && entry.name.endsWith('.test.ts')) {
+							specFiles.push(`${dir}/${entry.name}`);
+						}
+					}
+				} catch {
+					// Suite directory may not have specs yet
 				}
 			}
-			specFiles.sort();
+		}
+		specFiles.sort();
+
+		if (specFiles.length === 0) {
+			console.error('No integration specs found.');
+			return 1;
 		}
 
 		if (specFiles.length === 1) {
@@ -247,7 +291,11 @@ async function runIntegration(target?: string): Promise<number> {
 
 			exitCode = 0;
 			for (let i = 0; i < specFiles.length; i++) {
-				const name = specFiles[i].replace(`${INTEGRATION_SPEC_DIR}/`, '').replace('.test.ts', '');
+				// Extract suite/spec name for display
+				const name = specFiles[i]
+					.replace('tests/integration/', '')
+					.replace('/specs/', '/')
+					.replace('.test.ts', '');
 				const result = results[i];
 				console.log(`\n${'='.repeat(60)}`);
 				console.log(` ${name}`);
@@ -289,7 +337,10 @@ async function runIntegrationSpec(
 	specFile: string,
 	output: 'inherit' | 'piped'
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-	const specName = specFile.replace(`${INTEGRATION_SPEC_DIR}/`, '').replace('.test.ts', '');
+	const specName = specFile
+		.replace(`${INTEGRATION_AUTH_SPEC_DIR}/`, '')
+		.replace(`${INTEGRATION_CONFLICT_SPEC_DIR}/`, '')
+		.replace('.test.ts', '');
 	const args = ['run', '--allow-all', '--no-check'];
 	if (INTEGRATION_NEEDS_TLS_INSECURE.has(specName)) {
 		args.push('--unsafely-ignore-certificate-errors=localhost');
@@ -655,10 +706,15 @@ function printHelp(): void {
 		'  processor       tests/unit/rename/processor.test.ts',
 		'',
 		'Integration targets:',
-		'  (none)          All specs (parallel, Docker auto-managed)',
-		'  <name>          Single spec: health, csrf, cookie, apiKey, session,',
-		'                  oidc, rateLimit, proxy, xForwardedFor,',
-		'                  secretExposure, backupSecrets',
+		'  (none)          All suites (auth + conflicts, parallel)',
+		'  auth            Auth specs only (Docker auto-managed)',
+		'  auth <name>     Single auth spec: health, csrf, cookie, apiKey,',
+		'                  session, oidc, rateLimit, proxy, xForwardedFor,',
+		'                  secretExposure, backupSecrets, pathTraversal',
+		'  conflicts       Conflict specs only',
+		'  conflicts <n>   Single conflict spec: detection, grouping,',
+		'                  align, override',
+		'  <name>          Legacy: treated as auth spec name',
 		'',
 		'E2E targets:',
 		'  (none)          All PCD specs (headless)',

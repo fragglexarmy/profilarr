@@ -47,7 +47,7 @@ if (!isReload) {
 	await pcdManager.initialize();
 
 	// Auto-link default database on first startup (only once)
-	if (!setupStateQueries.isDefaultDatabaseLinked()) {
+	if (!setupStateQueries.isDefaultDatabaseLinked() && !Deno.env.get('INTEGRATION_TEST')) {
 		try {
 			await pcdManager.link({
 				name: 'Dictionarry',
