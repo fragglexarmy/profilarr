@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { pcdManager } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 
 export const load: LayoutServerLoad = async ({ params }) => {
@@ -11,7 +11,7 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		error(400, 'Invalid parameters');
 	}
 
-	const database = pcdManager.getById(databaseId);
+	const database = pcdManager.getByIdPublic(databaseId);
 	if (!database) error(404, 'Database not found');
 
 	const cache = pcdManager.getCache(databaseId);

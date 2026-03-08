@@ -2,7 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { arrInstancesQueries } from '$db/queries/arrInstances.ts';
 import { arrSyncQueries, type SyncTrigger, type ProfileSelection } from '$db/queries/arrSync.ts';
-import { pcdManager } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
 import { logger } from '$logger/logger.ts';
 import * as qualityProfileQueries from '$pcd/entities/qualityProfiles/index.ts';
 import * as delayProfileQueries from '$pcd/entities/delayProfiles/index.ts';
@@ -28,7 +28,7 @@ export const load: ServerLoad = async ({ params }) => {
 	}
 
 	// Get all databases
-	const databases = pcdManager.getAll();
+	const databases = pcdManager.getAllPublic();
 	const arrType = instance.type as 'radarr' | 'sonarr';
 
 	// Fetch profiles and configs from each database
@@ -47,7 +47,13 @@ export const load: ServerLoad = async ({ params }) => {
 				};
 			}
 
-			const [qualityProfiles, delayProfiles, allNamingConfigs, allQualityDefinitionsConfigs, allMediaSettingsConfigs] = await Promise.all([
+			const [
+				qualityProfiles,
+				delayProfiles,
+				allNamingConfigs,
+				allQualityDefinitionsConfigs,
+				allMediaSettingsConfigs
+			] = await Promise.all([
 				qualityProfileQueries.list(cache),
 				delayProfileQueries.list(cache),
 				namingQueries.list(cache),
@@ -57,14 +63,14 @@ export const load: ServerLoad = async ({ params }) => {
 
 			// Filter configs by arr type - only show configs for the instance's arr type
 			const namingConfigs = allNamingConfigs
-				.filter(c => c.arr_type === arrType)
-				.map(c => ({ name: c.name }));
+				.filter((c) => c.arr_type === arrType)
+				.map((c) => ({ name: c.name }));
 			const qualityDefinitionsConfigs = allQualityDefinitionsConfigs
-				.filter(c => c.arr_type === arrType)
-				.map(c => ({ name: c.name }));
+				.filter((c) => c.arr_type === arrType)
+				.map((c) => ({ name: c.name }));
 			const mediaSettingsConfigs = allMediaSettingsConfigs
-				.filter(c => c.arr_type === arrType)
-				.map(c => ({ name: c.name }));
+				.filter((c) => c.arr_type === arrType)
+				.map((c) => ({ name: c.name }));
 
 			return {
 				id: db.id,
@@ -81,8 +87,10 @@ export const load: ServerLoad = async ({ params }) => {
 	// Load existing sync data
 	const syncData = arrSyncQueries.getFullSyncData(id);
 
+	const { api_key: _, ...safeInstance } = instance;
+
 	return {
-		instance,
+		instance: safeInstance,
 		databases: databasesWithProfiles,
 		syncData
 	};
@@ -182,7 +190,9 @@ export const actions: Actions = {
 		const qualityDefinitionsDatabaseId = formData.get('qualityDefinitionsDatabaseId') as
 			| string
 			| null;
-		const qualityDefinitionsConfigName = formData.get('qualityDefinitionsConfigName') as string | null;
+		const qualityDefinitionsConfigName = formData.get('qualityDefinitionsConfigName') as
+			| string
+			| null;
 		const mediaSettingsDatabaseId = formData.get('mediaSettingsDatabaseId') as string | null;
 		const mediaSettingsConfigName = formData.get('mediaSettingsConfigName') as string | null;
 		const trigger = formData.get('trigger') as SyncTrigger;
@@ -241,7 +251,10 @@ export const actions: Actions = {
 		}
 
 		const status = arrSyncQueries.getSyncConfigStatus(id);
-		if (status.delayProfiles.syncStatus === 'pending' || status.delayProfiles.syncStatus === 'in_progress') {
+		if (
+			status.delayProfiles.syncStatus === 'pending' ||
+			status.delayProfiles.syncStatus === 'in_progress'
+		) {
 			return fail(409, { error: 'Sync already in progress' });
 		}
 
@@ -292,7 +305,10 @@ export const actions: Actions = {
 		}
 
 		const status = arrSyncQueries.getSyncConfigStatus(id);
-		if (status.qualityProfiles.syncStatus === 'pending' || status.qualityProfiles.syncStatus === 'in_progress') {
+		if (
+			status.qualityProfiles.syncStatus === 'pending' ||
+			status.qualityProfiles.syncStatus === 'in_progress'
+		) {
 			return fail(409, { error: 'Sync already in progress' });
 		}
 
@@ -338,12 +354,19 @@ export const actions: Actions = {
 		}
 
 		const mmSync = arrSyncQueries.getMediaManagementSync(id);
-		if (!mmSync.namingDatabaseId && !mmSync.qualityDefinitionsDatabaseId && !mmSync.mediaSettingsDatabaseId) {
+		if (
+			!mmSync.namingDatabaseId &&
+			!mmSync.qualityDefinitionsDatabaseId &&
+			!mmSync.mediaSettingsDatabaseId
+		) {
 			return fail(400, { error: 'No media management configured' });
 		}
 
 		const status = arrSyncQueries.getSyncConfigStatus(id);
-		if (status.mediaManagement.syncStatus === 'pending' || status.mediaManagement.syncStatus === 'in_progress') {
+		if (
+			status.mediaManagement.syncStatus === 'pending' ||
+			status.mediaManagement.syncStatus === 'in_progress'
+		) {
 			return fail(409, { error: 'Sync already in progress' });
 		}
 

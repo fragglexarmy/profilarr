@@ -55,6 +55,7 @@
 			header: 'Time',
 			width: '180px',
 			cell: (row) => ({
+				// nosemgrep: profilarr.xss.table-cell-html-unescaped — arr API data, not user content
 				html: `<span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">${new Date(row.time).toLocaleString()}</span>`
 			})
 		},
@@ -63,6 +64,7 @@
 			header: 'Level',
 			width: '80px',
 			cell: (row) => ({
+				// nosemgrep: profilarr.xss.table-cell-html-unescaped — arr API data, not user content
 				html: `<span class="font-semibold ${levelColors[row.level] || 'text-neutral-600 dark:text-neutral-400'}">${row.level}</span>`
 			})
 		},
@@ -71,6 +73,7 @@
 			header: 'Logger',
 			width: '200px',
 			cell: (row) => ({
+				// nosemgrep: profilarr.xss.table-cell-html-unescaped — arr API data, not user content
 				html: `<span class="font-mono text-xs text-neutral-500 dark:text-neutral-500">${row.logger}</span>`
 			})
 		},
@@ -256,7 +259,14 @@
 	</div>
 
 	<!-- Log Table -->
-	<Table data={filteredLogs} {columns} emptyMessage="No logs found" hoverable={true} compact={true} responsive>
+	<Table
+		data={filteredLogs}
+		{columns}
+		emptyMessage="No logs found"
+		hoverable={true}
+		compact={true}
+		responsive
+	>
 		<svelte:fragment slot="actions" let:row>
 			<div class="flex items-center justify-end gap-1">
 				<Button

@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { marked } from 'marked';
+	import { sanitizeHtml } from '$shared/utils/sanitize';
 
 	export let content: string | null = null;
 	export let inline: boolean = true;
 	export let maxLines: number | undefined = undefined;
 
 	$: html = content
-		? inline
-			? (marked.parseInline(content) as string)
-			: (marked.parse(content) as string)
+		? sanitizeHtml(
+				inline
+					? (marked.parseInline(content) as string) // nosemgrep: profilarr.xss.marked-unsanitized
+					: (marked.parse(content) as string) // nosemgrep: profilarr.xss.marked-unsanitized
+			)
 		: '';
 </script>
 
@@ -19,6 +22,7 @@
 			? `display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${maxLines}; overflow: hidden;`
 			: ''}
 	>
+		<!-- nosemgrep: profilarr.xss.at-html-usage, profilarr.xss.raw-variable-in-html -->
 		{@html html}
 	</span>
 {/if}

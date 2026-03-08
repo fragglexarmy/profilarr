@@ -9,7 +9,11 @@ export { general } from './general/index.ts';
 export { updateGeneral } from './general/index.ts';
 
 // Condition queries/mutations
-export { getConditionsForEvaluation, getAllConditionsForEvaluation, listConditions } from './conditions/index.ts';
+export {
+	getConditionsForEvaluation,
+	getAllConditionsForEvaluation,
+	listConditions
+} from './conditions/index.ts';
 export { updateConditions } from './conditions/index.ts';
 
 // Test queries/mutations
@@ -22,4 +26,5 @@ export { deleteTest } from './tests/index.ts';
 export { list } from './list.ts';
 export { create } from './create.ts';
 export { remove } from './delete.ts';
-export { evaluateCustomFormat, getParsedInfo, extractAllPatterns } from './evaluator.ts';
+export { evaluateCustomFormat, getParsedInfo, extractPatternsByType } from './evaluator.ts';
+export type { PatternsByType, PatternMatchMaps } from './evaluator.ts';

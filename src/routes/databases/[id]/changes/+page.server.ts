@@ -4,16 +4,18 @@ import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 import { pcdOpsQueries } from '$db/queries/pcdOps.ts';
 import { pcdOpHistoryQueries } from '$db/queries/pcdOpHistory.ts';
 import { logger } from '$logger/logger.ts';
-import { compile, pcdManager } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
+import { compile } from '$pcd/database/compiler.ts';
 import { listDraftEntityChanges } from '$pcd/ops/draftChanges.ts';
 import { exportDraftOps, previewDraftOps } from '$pcd/ops/exporter.ts';
 import { uuid } from '$shared/utils/uuid.ts';
+import { validateFilePaths } from '$utils/paths.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { database } = await parent();
 
 	return {
-		isDeveloper: !!database.personal_access_token
+		isDeveloper: database.hasPat
 	};
 };
 
@@ -161,6 +163,14 @@ export const actions: Actions = {
 		const message = (formData.get('message') as string) ?? '';
 		const exportedAt = formData.get('exportedAt')?.toString().trim() || null;
 
+		if (filePaths.length > 0) {
+			try {
+				validateFilePaths(database.local_path, filePaths);
+			} catch {
+				return fail(400, { error: 'Invalid file path' });
+			}
+		}
+
 		if (opIds.length === 0 && filePaths.length === 0) {
 			return { success: false, error: 'No changes selected' };
 		}
@@ -195,6 +205,14 @@ export const actions: Actions = {
 			.filter((value) => Number.isFinite(value));
 		const filePaths = (formData.getAll('filePaths') as string[]).filter(Boolean);
 		const message = (formData.get('message') as string) ?? '';
+
+		if (filePaths.length > 0) {
+			try {
+				validateFilePaths(database.local_path, filePaths);
+			} catch {
+				return fail(400, { error: 'Invalid file path' });
+			}
+		}
 
 		if (opIds.length === 0 && filePaths.length === 0) {
 			return { success: false, error: 'No changes selected' };

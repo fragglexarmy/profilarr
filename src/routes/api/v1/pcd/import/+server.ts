@@ -1,7 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { pcdManager, canWriteToBase } from '$pcd/index.ts';
-import type { PCDCache, OperationLayer } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
+import { canWriteToBase } from '$pcd/ops/writer.ts';
+import type { OperationLayer } from '$pcd/core/types.ts';
+import type { PCDCache } from '$pcd/database/cache.ts';
 import { ENTITY_TYPES } from '$shared/pcd/portable.ts';
 import type {
 	EntityType,
@@ -32,7 +34,10 @@ export const POST: RequestHandler = async ({ request }) => {
 	const { databaseId, layer, entityType, data } = body;
 
 	if (databaseId === undefined || !layer || !entityType || !data) {
-		return json({ error: 'Missing required fields: databaseId, layer, entityType, data' }, { status: 400 });
+		return json(
+			{ error: 'Missing required fields: databaseId, layer, entityType, data' },
+			{ status: 400 }
+		);
 	}
 
 	if (typeof databaseId !== 'number' || !Number.isInteger(databaseId)) {
@@ -56,7 +61,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error: 'Database cache not available' }, { status: 500 });
 	}
 
-	const validationError = validatePortableData(entityType as EntityType, data as Record<string, unknown>);
+	const validationError = validatePortableData(
+		entityType as EntityType,
+		data as Record<string, unknown>
+	);
 	if (validationError) {
 		return json({ error: validationError }, { status: 400 });
 	}
@@ -89,24 +97,54 @@ async function deserializeEntity({ databaseId, cache, layer, entityType, data }:
 
 	switch (entityType) {
 		case 'delay_profile':
-			return deserialize.deserializeDelayProfile({ ...opts, portable: data as unknown as PortableDelayProfile });
+			return deserialize.deserializeDelayProfile({
+				...opts,
+				portable: data as unknown as PortableDelayProfile
+			});
 		case 'regular_expression':
-			return deserialize.deserializeRegularExpression({ ...opts, portable: data as unknown as PortableRegularExpression });
+			return deserialize.deserializeRegularExpression({
+				...opts,
+				portable: data as unknown as PortableRegularExpression
+			});
 		case 'custom_format':
-			return deserialize.deserializeCustomFormat({ ...opts, portable: data as unknown as PortableCustomFormat });
+			return deserialize.deserializeCustomFormat({
+				...opts,
+				portable: data as unknown as PortableCustomFormat
+			});
 		case 'quality_profile':
-			return deserialize.deserializeQualityProfile({ ...opts, portable: data as unknown as PortableQualityProfile });
+			return deserialize.deserializeQualityProfile({
+				...opts,
+				portable: data as unknown as PortableQualityProfile
+			});
 		case 'radarr_naming':
-			return deserialize.deserializeRadarrNaming({ ...opts, portable: data as unknown as PortableRadarrNaming });
+			return deserialize.deserializeRadarrNaming({
+				...opts,
+				portable: data as unknown as PortableRadarrNaming
+			});
 		case 'sonarr_naming':
-			return deserialize.deserializeSonarrNaming({ ...opts, portable: data as unknown as PortableSonarrNaming });
+			return deserialize.deserializeSonarrNaming({
+				...opts,
+				portable: data as unknown as PortableSonarrNaming
+			});
 		case 'radarr_media_settings':
-			return deserialize.deserializeRadarrMediaSettings({ ...opts, portable: data as unknown as PortableMediaSettings });
+			return deserialize.deserializeRadarrMediaSettings({
+				...opts,
+				portable: data as unknown as PortableMediaSettings
+			});
 		case 'sonarr_media_settings':
-			return deserialize.deserializeSonarrMediaSettings({ ...opts, portable: data as unknown as PortableMediaSettings });
+			return deserialize.deserializeSonarrMediaSettings({
+				...opts,
+				portable: data as unknown as PortableMediaSettings
+			});
 		case 'radarr_quality_definitions':
-			return deserialize.deserializeRadarrQualityDefinitions({ ...opts, portable: data as unknown as PortableQualityDefinitions });
+			return deserialize.deserializeRadarrQualityDefinitions({
+				...opts,
+				portable: data as unknown as PortableQualityDefinitions
+			});
 		case 'sonarr_quality_definitions':
-			return deserialize.deserializeSonarrQualityDefinitions({ ...opts, portable: data as unknown as PortableQualityDefinitions });
+			return deserialize.deserializeSonarrQualityDefinitions({
+				...opts,
+				portable: data as unknown as PortableQualityDefinitions
+			});
 	}
 }

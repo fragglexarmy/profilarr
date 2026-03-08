@@ -1,4 +1,4 @@
-import adapter from 'sveltekit-adapter-deno';
+import adapter from './src/adapter/index.js';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -6,12 +6,14 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		csrf: {
-			checkOrigin: false
-		},
 		adapter: adapter({
 			usage: 'deno-compile',
-			out: 'dist/build'
+			out: 'dist/build',
+			buildOptions: {
+				logOverride: {
+					'ignored-bare-import': 'silent'
+				}
+			}
 		}),
 		alias: {
 			$api: './src/lib/api',

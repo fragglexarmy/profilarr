@@ -6,15 +6,21 @@ import { stage, commit, configureIdentity } from '$utils/git/write.ts';
 import { execGit } from '$utils/git/exec.ts';
 import { getBranch, getStatus } from '$utils/git/read.ts';
 import { compile } from '../database/compiler.ts';
-import { syncDependencies } from '../git/dependencies.ts';
 import { canWriteToBase } from './writer.ts';
 import { listDraftEntityChanges } from './draftChanges.ts';
 import { uuid } from '$shared/utils/uuid.ts';
+import { validateFilePaths } from '$utils/paths.ts';
 import { getMaxOpNumber } from '$pcd/utils/git.ts';
 import { loadManifest } from '$pcd/manifest/manifest.ts';
 
 type ExportResult =
-	| { success: true; filename: string | null; opId: number | null; dropped: number; fileCount: number }
+	| {
+			success: true;
+			filename: string | null;
+			opId: number | null;
+			dropped: number;
+			fileCount: number;
+	  }
 	| { success: false; error: string };
 
 type ExportPreflightChecks = {
@@ -132,11 +138,9 @@ function formatOpBlock(op: { id: number; metadata?: string | null; sql: string }
 	const label = opLabel(op);
 	const trimmedSql = op.sql.trim().replace(/;\s*$/, '');
 	const title = label ? ` ( ${label} )` : '';
-	return [
-		`-- --- BEGIN op ${op.id}${title}`,
-		`${trimmedSql};`,
-		`-- --- END op ${op.id}`
-	].join('\n');
+	return [`-- --- BEGIN op ${op.id}${title}`, `${trimmedSql};`, `-- --- END op ${op.id}`].join(
+		'\n'
+	);
 }
 
 function buildChangeMaps(databaseId: number) {
@@ -245,9 +249,7 @@ async function runPreflight(databaseId: number): Promise<ExportPreflight> {
 		await loadManifest(database.local_path);
 		checks.manifestValid = true;
 	} catch (error) {
-		errors.push(
-			error instanceof Error ? error.message : 'Manifest validation failed.'
-		);
+		errors.push(error instanceof Error ? error.message : 'Manifest validation failed.');
 	}
 
 	try {
@@ -256,10 +258,7 @@ async function runPreflight(databaseId: number): Promise<ExportPreflight> {
 		if (!branch) {
 			errors.push('Repository is not on a branch.');
 		} else {
-			const remoteUrl = buildRemoteUrl(
-				database.repository_url,
-				database.personal_access_token
-			);
+			const remoteUrl = buildRemoteUrl(database.repository_url, database.personal_access_token);
 			await fetchRemoteBranch(database.local_path, remoteUrl, branch);
 			checks.remoteReachable = true;
 
@@ -282,7 +281,7 @@ async function runPreflight(databaseId: number): Promise<ExportPreflight> {
 				errors.push(`Repository has ${ahead} unpushed commit${ahead === 1 ? '' : 's'}.`);
 			}
 		}
-	} catch (error) {
+	} catch {
 		errors.push('Failed to reach remote repository.');
 	}
 
@@ -340,7 +339,12 @@ function resolveSelectedOps(databaseId: number, opIds: number[]) {
 		if (!change) continue;
 		for (const op of change.ops) {
 			const row = pcdOpsQueries.getById(op.id);
-			if (!row || row.database_id !== databaseId || row.origin !== 'base' || row.state !== 'draft') {
+			if (
+				!row ||
+				row.database_id !== databaseId ||
+				row.origin !== 'base' ||
+				row.state !== 'draft'
+			) {
 				continue;
 			}
 			opMap.set(row.id, row);
@@ -438,6 +442,14 @@ export async function previewDraftOps(
 		return { success: false, error: 'No changes selected' };
 	}
 
+	if (filePaths.length > 0) {
+		try {
+			validateFilePaths(database.local_path, filePaths);
+		} catch {
+			return { success: false, error: 'Invalid file path' };
+		}
+	}
+
 	const trimmedMessage = message.trim();
 	if (!trimmedMessage) {
 		return { success: false, error: 'Commit message is required' };
@@ -466,7 +478,12 @@ export async function previewDraftOps(
 	// Build ops plan if there are ops
 	let plan: ExportPlan | null = null;
 	if (opIds.length > 0) {
-		const planResult = await buildExportPlan(databaseId, opIds, trimmedMessage, database.local_path);
+		const planResult = await buildExportPlan(
+			databaseId,
+			opIds,
+			trimmedMessage,
+			database.local_path
+		);
 		if (!planResult.success) {
 			return { success: false, error: planResult.error };
 		}
@@ -513,6 +530,14 @@ export async function exportDraftOps(
 
 	if (opIds.length === 0 && filePaths.length === 0) {
 		return { success: false, error: 'No changes selected' };
+	}
+
+	if (filePaths.length > 0) {
+		try {
+			validateFilePaths(database.local_path, filePaths);
+		} catch {
+			return { success: false, error: 'Invalid file path' };
+		}
 	}
 
 	const preflight = await runPreflight(databaseId);

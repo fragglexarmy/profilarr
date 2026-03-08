@@ -8,7 +8,12 @@
  */
 
 import type { PCDCache } from '$pcd/index.ts';
-import { writeOperation, recompileCache, type OperationLayer, type WriteResult } from '$pcd/index.ts';
+import {
+	writeOperation,
+	recompileCache,
+	type OperationLayer,
+	type WriteResult
+} from '$pcd/index.ts';
 import type { ConditionData } from '$shared/pcd/display.ts';
 import { uuid } from '$shared/utils/uuid.ts';
 import { logger } from '$logger/logger.ts';
@@ -157,10 +162,7 @@ export async function updateConditions(options: UpdateConditionsOptions) {
 		throw new Error('Condition names must be unique');
 	}
 
-	const typeFieldMap: Record<
-		string,
-		{ field: keyof ConditionData; label: string } | null
-	> = {
+	const typeFieldMap: Record<string, { field: keyof ConditionData; label: string } | null> = {
 		release_title: { field: 'patterns', label: 'pattern' },
 		release_group: { field: 'patterns', label: 'pattern' },
 		edition: { field: 'patterns', label: 'pattern' },
@@ -480,36 +482,6 @@ WHERE custom_format_name = '${esc(formatName)}'
 	return lastResult ?? { success: true };
 }
 
-/**
- * Get the type-specific table name for a condition type
- */
-function getTypeTable(type: string): string | null {
-	switch (type) {
-		case 'release_title':
-		case 'release_group':
-		case 'edition':
-			return 'condition_patterns';
-		case 'language':
-			return 'condition_languages';
-		case 'source':
-			return 'condition_sources';
-		case 'resolution':
-			return 'condition_resolutions';
-		case 'quality_modifier':
-			return 'condition_quality_modifiers';
-		case 'release_type':
-			return 'condition_release_types';
-		case 'indexer_flag':
-			return 'condition_indexer_flags';
-		case 'size':
-			return 'condition_sizes';
-		case 'year':
-			return 'condition_years';
-		default:
-			return null;
-	}
-}
-
 function baseSnapshot(condition: ConditionData): Record<string, unknown> {
 	return {
 		type: condition.type,
@@ -681,9 +653,7 @@ function getConditionValues(condition: ConditionData): unknown {
 }
 
 function getRegexDependencies(condition: ConditionData): string[] {
-	return (condition.patterns ?? [])
-		.map((pattern) => pattern.name.trim())
-		.filter(Boolean);
+	return (condition.patterns ?? []).map((pattern) => pattern.name.trim()).filter(Boolean);
 }
 
 function getConditionFingerprint(condition: ConditionData): string {

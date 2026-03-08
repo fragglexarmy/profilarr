@@ -1,5 +1,6 @@
 import type { Actions, ServerLoad } from '@sveltejs/kit';
 import { fail, redirect } from '@sveltejs/kit';
+import { config } from '$config';
 import { usersQueries } from '$db/queries/users.ts';
 import { sessionsQueries } from '$db/queries/sessions.ts';
 import { authSettingsQueries } from '$db/queries/authSettings.ts';
@@ -9,6 +10,11 @@ import { parseUserAgent } from '$auth/userAgent.ts';
 import { logger } from '$logger/logger.ts';
 
 export const load: ServerLoad = () => {
+	// AUTH=off — no local auth, setup has no purpose
+	if (config.authMode === 'off') {
+		throw redirect(303, '/');
+	}
+
 	// If local users already exist, redirect to home
 	// (OIDC users don't count - they need to create a local account to use password auth)
 	if (usersQueries.existsLocal()) {
@@ -22,8 +28,17 @@ export const actions: Actions = {
 	default: async (event) => {
 		const { request, cookies } = event;
 
+		// AUTH=off — setup not allowed
+		if (config.authMode === 'off') {
+			throw redirect(303, '/');
+		}
+
 		// Double-check no local users exist (race condition protection)
 		if (usersQueries.existsLocal()) {
+			void logger.warn('Setup attempt after user already exists', {
+				source: 'Auth:Setup',
+				meta: { ip: getClientIp(event, false) }
+			});
 			throw redirect(303, '/');
 		}
 
@@ -88,7 +103,7 @@ export const actions: Actions = {
 				path: '/',
 				httpOnly: true,
 				sameSite: 'lax',
-				secure: false,
+				secure: config.origin.startsWith('https://'),
 				expires
 			});
 

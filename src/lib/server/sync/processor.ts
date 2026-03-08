@@ -15,7 +15,6 @@ import type { ArrType } from '$arr/types.ts';
 import { logger } from '$logger/logger.ts';
 import { upsertScheduledJob } from '$lib/server/jobs/queueService.ts';
 import type {
-	SyncResult,
 	SectionType,
 	SectionHandler,
 	ProcessSyncsResult,
@@ -59,7 +58,10 @@ async function evaluateScheduledSyncs(): Promise<void> {
 	let marked = 0;
 
 	// Gather all scheduled configs
-	const scheduledBySection = new Map<SectionType, ReturnType<SectionHandler['getScheduledConfigs']>>();
+	const scheduledBySection = new Map<
+		SectionType,
+		ReturnType<SectionHandler['getScheduledConfigs']>
+	>();
 	for (const handler of sections) {
 		const configs = handler.getScheduledConfigs();
 		scheduledBySection.set(handler.type, configs);

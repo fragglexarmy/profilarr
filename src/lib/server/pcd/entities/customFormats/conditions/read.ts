@@ -4,7 +4,11 @@
 
 import { sql } from 'kysely';
 import type { PCDCache } from '$pcd/index.ts';
-import type { ConditionData, ConditionListItem, CustomFormatWithConditions } from '$shared/pcd/display.ts';
+import type {
+	ConditionData,
+	ConditionListItem,
+	CustomFormatWithConditions
+} from '$shared/pcd/display.ts';
 
 /**
  * Get all conditions for a custom format with full data for evaluation
@@ -235,9 +239,6 @@ export async function getAllConditionsForEvaluation(
 	if (conditions.length === 0) {
 		return formats.map((f) => ({ name: f.name, conditions: [] }));
 	}
-
-	// Build composite keys for condition lookups
-	const conditionKeys = conditions.map((c) => `${c.custom_format_name}|${c.name}`);
 
 	// Get all related data in parallel
 	const [

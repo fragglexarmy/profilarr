@@ -1,22 +1,22 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
+import { compile } from '$pcd/database/compiler.ts';
+import { syncDependencies } from '$pcd/git/dependencies.ts';
 import {
 	readManifest,
 	writeManifest,
 	validateManifest,
 	readReadme,
 	writeReadme,
-	type Manifest,
-	syncDependencies,
-	compile
-} from '$pcd/index.ts';
+	type Manifest
+} from '$pcd/manifest/manifest.ts';
 import { parseMarkdown } from '$utils/markdown/markdown.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { database } = await parent();
 
-	if (!database.personal_access_token) {
+	if (!database.hasPat) {
 		error(403, 'Config page requires a personal access token');
 	}
 
@@ -66,10 +66,7 @@ export const actions: Actions = {
 			await writeReadme(database.local_path, readme);
 
 			try {
-				await syncDependencies(
-					database.local_path,
-					database.personal_access_token ?? undefined
-				);
+				await syncDependencies(database.local_path, database.personal_access_token ?? undefined);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				return fail(500, { error: `Failed to sync dependencies: ${message}` });

@@ -3,6 +3,7 @@
 	import type { CustomFormatTableRow } from '$shared/pcd/display.ts';
 	import { FlaskConical, Copy, Download } from 'lucide-svelte';
 	import { marked } from 'marked';
+	import { sanitizeHtml } from '$shared/utils/sanitize';
 	import { page } from '$app/stores';
 	import { sortConditions } from '$shared/pcd/conditions';
 	import CardGrid from '$ui/card/CardGrid.svelte';
@@ -25,7 +26,7 @@
 
 	function parseMarkdown(text: string | null): string {
 		if (!text) return '';
-		return marked.parseInline(text) as string;
+		return sanitizeHtml(marked.parseInline(text) as string); // nosemgrep: profilarr.xss.marked-unsanitized
 	}
 
 	function getConditionVariant(
@@ -89,7 +90,7 @@
 				<!-- Description -->
 				{#if format.description}
 					<div class="prose-inline line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400">
-						{@html parseMarkdown(format.description)}
+						{@html parseMarkdown(format.description)}<!-- nosemgrep: profilarr.xss.at-html-usage -->
 					</div>
 				{:else}
 					<div class="text-xs text-neutral-400 italic dark:text-neutral-500">No description</div>
@@ -99,7 +100,9 @@
 				{#if format.conditions.length > 0}
 					<div class="flex flex-wrap gap-1">
 						{#each sortConditions(format.conditions) as condition}
-							<Label variant={getConditionVariant(condition)} size="sm" rounded="md" mono>{condition.name}</Label>
+							<Label variant={getConditionVariant(condition)} size="sm" rounded="md" mono
+								>{condition.name}</Label
+							>
 						{/each}
 					</div>
 				{:else}

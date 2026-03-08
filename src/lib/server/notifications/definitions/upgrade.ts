@@ -3,7 +3,12 @@
  */
 
 import { notify, createEmbed, Colors, type EmbedBuilder } from '../builder.ts';
-import type { UpgradeJobLog, UpgradeSelectionItem, UpgradeOriginalEpisode, UpgradeNewRelease } from '$lib/server/upgrades/types.ts';
+import type {
+	UpgradeJobLog,
+	UpgradeSelectionItem,
+	UpgradeOriginalEpisode,
+	UpgradeNewRelease
+} from '$lib/server/upgrades/types.ts';
 
 interface UpgradeNotificationParams {
 	log: UpgradeJobLog;
@@ -14,7 +19,6 @@ interface UpgradeNotificationParams {
 // Discord limits
 const MAX_EMBED_SIZE = 5800;
 const MAX_FIELDS_PER_EMBED = 25;
-const MAX_FIELD_VALUE = 1024;
 const MAX_FIELD_NAME = 256;
 
 /**

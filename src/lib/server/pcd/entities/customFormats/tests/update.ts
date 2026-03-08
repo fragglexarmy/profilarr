@@ -109,8 +109,6 @@ export async function updateTest(options: UpdateTestOptions) {
 				}
 			: null;
 
-	// Track if title changed for metadata
-	const isTitleChange = input.title !== current.title;
 	const changedFields = [];
 	if (current.title !== input.title) changedFields.push('title');
 	if (current.type !== input.type) changedFields.push('type');
@@ -122,7 +120,8 @@ export async function updateTest(options: UpdateTestOptions) {
 	desiredState.test_title = input.title;
 	desiredState.test_type = input.type;
 	desiredState.test_should_match = input.should_match;
-	desiredState.test_description = normalizedNextDescription === '' ? null : normalizedNextDescription;
+	desiredState.test_description =
+		normalizedNextDescription === '' ? null : normalizedNextDescription;
 	if (current.title !== input.title) {
 		desiredState.title = { from: current.title, to: input.title };
 	}

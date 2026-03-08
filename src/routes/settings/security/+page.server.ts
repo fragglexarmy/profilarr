@@ -11,14 +11,15 @@ export const load: ServerLoad = async ({ cookies }) => {
 	const user = usersQueries.getByUsername('admin') ?? usersQueries.getById(1);
 
 	if (!user) {
-		return { sessions: [], apiKey: null, currentSessionId: null };
+		return { sessions: [], hasApiKey: false, currentSessionId: null };
 	}
 
 	const sessions = sessionsQueries.getByUserId(user.id);
-	const apiKey = authSettingsQueries.getApiKey();
+	const hasApiKey = authSettingsQueries.hasApiKey();
+	const localBypassEnabled = authSettingsQueries.isLocalBypassEnabled();
 
 	return {
-		sessions: sessions.map(s => ({
+		sessions: sessions.map((s) => ({
 			id: s.id,
 			created_at: s.created_at,
 			expires_at: s.expires_at,
@@ -29,8 +30,9 @@ export const load: ServerLoad = async ({ cookies }) => {
 			device_type: s.device_type,
 			isCurrent: s.id === currentSessionId
 		})),
-		apiKey,
-		currentSessionId
+		hasApiKey,
+		currentSessionId,
+		localBypassEnabled
 	};
 };
 
@@ -88,7 +90,7 @@ export const actions: Actions = {
 	},
 
 	regenerateApiKey: async () => {
-		const newKey = authSettingsQueries.regenerateApiKey();
+		const newKey = await authSettingsQueries.regenerateApiKey();
 
 		await logger.info('API key regenerated', {
 			source: 'Auth:APIKey'
@@ -118,6 +120,16 @@ export const actions: Actions = {
 		});
 
 		return { sessionRevoked: true };
+	},
+
+	toggleLocalBypass: async () => {
+		const current = authSettingsQueries.isLocalBypassEnabled();
+		authSettingsQueries.setLocalBypass(!current);
+
+		const state = !current ? 'enabled' : 'disabled';
+		await logger.info(`Local bypass ${state}`, { source: 'Auth:Settings' });
+
+		return { localBypassToggled: true, localBypassEnabled: !current };
 	},
 
 	revokeOtherSessions: async ({ cookies }) => {

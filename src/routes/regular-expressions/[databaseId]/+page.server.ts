@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { ServerLoad } from '@sveltejs/kit';
-import { pcdManager, canWriteToBase } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
+import { canWriteToBase } from '$pcd/ops/writer.ts';
 import * as regularExpressionQueries from '$pcd/entities/regularExpressions/index.ts';
 import { setLastDatabase } from '$utils/redirect/lastDatabase.ts';
 
@@ -13,7 +14,7 @@ export const load: ServerLoad = async ({ params, cookies }) => {
 	}
 
 	// Get all databases for tabs
-	const databases = pcdManager.getAll();
+	const databases = pcdManager.getAllPublic();
 
 	// Parse and validate the database ID
 	const currentDatabaseId = parseInt(databaseId, 10);

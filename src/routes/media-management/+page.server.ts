@@ -1,5 +1,5 @@
 import type { ServerLoad } from '@sveltejs/kit';
-import { pcdManager } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
 import { redirectToLastDatabase, getLastSection } from '$utils/redirect/lastDatabase.ts';
 
 const ALLOWED_SECTIONS = new Set(['naming', 'media-settings', 'quality-definitions']);
@@ -17,6 +17,6 @@ export const load: ServerLoad = ({ cookies, url }) => {
 	});
 
 	return {
-		databases: pcdManager.getAll()
+		databases: pcdManager.getAllPublic()
 	};
 };

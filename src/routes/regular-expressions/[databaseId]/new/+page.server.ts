@@ -1,9 +1,9 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
-import { pcdManager } from '$pcd/index.ts';
-import { canWriteToBase } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
+import { canWriteToBase } from '$pcd/ops/writer.ts';
 import * as regularExpressionQueries from '$pcd/entities/regularExpressions/index.ts';
-import type { OperationLayer } from '$pcd/index.ts';
+import type { OperationLayer } from '$pcd/core/types.ts';
 import { logger } from '$logger/logger.ts';
 import { validateRegex } from '$lib/server/utils/arr/parser/index.ts';
 
@@ -19,7 +19,7 @@ export const load: ServerLoad = ({ params, url }) => {
 		throw error(400, 'Invalid database ID');
 	}
 
-	const currentDatabase = pcdManager.getById(currentDatabaseId);
+	const currentDatabase = pcdManager.getByIdPublic(currentDatabaseId);
 	if (!currentDatabase) {
 		throw error(404, 'Database not found');
 	}

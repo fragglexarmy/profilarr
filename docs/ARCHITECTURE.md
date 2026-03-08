@@ -262,20 +262,20 @@ Example:
 
 ```json
 {
-  "name": "db",
-  "version": "2.1.35",
-  "description": "Seraphys' OCD Playground",
-  "arr_types": ["radarr", "sonarr", "whisparr"],
-  "dependencies": { "schema": "^1.1.0" },
-  "authors": [{ "name": "Dictionarry Team", "email": "team@dictionarry.dev" }],
-  "license": "MIT",
-  "repository": "https://github.com/dictionarry-hub/database",
-  "tags": ["4k", "hdr", "remux", "quality", "archival"],
-  "links": {
-    "homepage": "https://dictionarry.dev",
-    "issues": "https://github.com/dictionarry-hub/db/issues"
-  },
-  "profilarr": { "minimum_version": "2.0.0" }
+	"name": "db",
+	"version": "2.1.35",
+	"description": "Seraphys' OCD Playground",
+	"arr_types": ["radarr", "sonarr", "whisparr"],
+	"dependencies": { "schema": "^1.1.0" },
+	"authors": [{ "name": "Dictionarry Team", "email": "team@dictionarry.dev" }],
+	"license": "MIT",
+	"repository": "https://github.com/dictionarry-hub/database",
+	"tags": ["4k", "hdr", "remux", "quality", "archival"],
+	"links": {
+		"homepage": "https://dictionarry.dev",
+		"issues": "https://github.com/dictionarry-hub/db/issues"
+	},
+	"profilarr": { "minimum_version": "2.0.0" }
 }
 ```
 
@@ -847,17 +847,18 @@ primary flow is enforced in `src/hooks.server.ts` via the auth middleware.
 Controlled by `AUTH` env:
 
 - `on` (default): username/password login + sessions
-- `local`: skip auth for local IPs
 - `off`: trust external proxy (no auth checks)
 - `oidc`: OIDC login (no local password required)
 
-Details and flow diagrams live in `src/lib/server/utils/auth/README.md`.
+Local bypass is a separate DB-backed toggle (Settings > Security), not an auth mode.
+
+Details and flow diagrams live in `docs/architecture/security.md`.
 
 ### 19.2 Session & API Key
 
 - **Session cookie:** `session` (httpOnly, sameSite=lax).
 - **Sliding expiration:** sessions extend when past halfway.
-- **API key:** `X-Api-Key` header or `apikey` query param.
+- **API key:** `X-Api-Key` header only (bcrypt-hashed in DB).
 
 Session and API key settings are stored in `auth_settings` and `sessions`
 tables, managed via `authSettingsQueries` and `sessionsQueries`.
@@ -1092,15 +1093,10 @@ Project scripts live under `scripts/` and are run via `deno task` or directly.
 - `scripts/generate-pcd-types.ts` pulls the schema SQL (GitHub or local) and
   generates `src/lib/shared/pcd/types.ts` via SQLite introspection.
 
-### 22.3 Validation Utilities
+### 22.3 Tests
 
-- `scripts/validate-condition-values.ts` validates condition values in SQL
-  against the enum sets in `shared/pcd`.
-
-### 22.4 Tests
-
-- `scripts/test.ts` is a test runner wrapper with alias support (filters,
-  upgrades, jobs, logger).
+- `tests/runner.ts` is the unified test runner. Handles unit, integration, and
+  E2E tests via subcommands. Run `deno task test --help` for usage.
 
 ### 22.5 Codebase Stats
 

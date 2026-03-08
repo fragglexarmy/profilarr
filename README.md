@@ -64,13 +64,13 @@
 
 **Authentication**
 
-- `AUTH=on` (default) - Username/password login required
-- `AUTH=local` - Skip auth for local network requests
+- `AUTH=on` (default) - Username/password login with session-based auth
 - `AUTH=oidc` - SSO via OpenID Connect provider
 - `AUTH=off` - No authentication (use with external auth like Authentik/Authelia)
+- Optional local bypass toggle for LAN access without login
 
-API access via `X-Api-Key` header or `?apikey=` query param. See
-[auth docs](src/lib/server/utils/auth/README.md) for details.
+API access via `X-Api-Key` header (bcrypt-hashed in DB). See
+[security docs](docs/architecture/security.md) for details.
 
 ## Discord
 
@@ -94,7 +94,7 @@ services:
     image: ghcr.io/dictionarry-hub/profilarr:latest
     container_name: profilarr
     ports:
-      - "6868:6868"
+      - '6868:6868'
     volumes:
       - ./config:/config
     environment:
@@ -112,7 +112,7 @@ services:
     image: ghcr.io/dictionarry-hub/profilarr-parser:latest
     container_name: profilarr-parser
     expose:
-      - "5000"
+      - '5000'
 ```
 
 > [!NOTE]
@@ -139,18 +139,22 @@ This runs the parser service and Vite dev server concurrently. See
 
 ### Environment Variables
 
-| Variable        | Default     | Description                             |
-| --------------- | ----------- | --------------------------------------- |
-| `PUID`          | `1000`      | User ID for file permissions            |
-| `PGID`          | `1000`      | Group ID for file permissions           |
-| `UMASK`         | `022`       | File creation mask                      |
-| `TZ`            | `Etc/UTC`   | Timezone for scheduling                 |
-| `PORT`          | `6868`      | Web UI port                             |
-| `HOST`          | `0.0.0.0`   | Bind address                            |
-| `APP_BASE_PATH` | `/config`   | Base path for data, logs, backups       |
-| `AUTH`          | `on`        | Auth mode: `on`, `local`, `off`, `oidc` |
-| `PARSER_HOST`   | `localhost` | Parser service host                     |
-| `PARSER_PORT`   | `5000`      | Parser service port                     |
+| Variable             | Default     | Description                                                                   |
+| -------------------- | ----------- | ----------------------------------------------------------------------------- |
+| `PUID`               | `1000`      | User ID for file permissions                                                  |
+| `PGID`               | `1000`      | Group ID for file permissions                                                 |
+| `UMASK`              | `022`       | File creation mask                                                            |
+| `TZ`                 | `Etc/UTC`   | Timezone for scheduling                                                       |
+| `PORT`               | `6868`      | Web UI port                                                                   |
+| `HOST`               | `0.0.0.0`   | Bind address                                                                  |
+| `APP_BASE_PATH`      | `/config`   | Base path for data, logs, backups                                             |
+| `AUTH`               | `on`        | Auth mode: `on`, `off`, `oidc`                                                |
+| `ORIGIN`             | —           | External URL for reverse proxy setups (e.g., `https://profilarr.example.com`) |
+| `OIDC_DISCOVERY_URL` | —           | OIDC discovery endpoint (only when `AUTH=oidc`)                               |
+| `OIDC_CLIENT_ID`     | —           | OIDC client ID (only when `AUTH=oidc`)                                        |
+| `OIDC_CLIENT_SECRET` | —           | OIDC client secret (only when `AUTH=oidc`)                                    |
+| `PARSER_HOST`        | `localhost` | Parser service host                                                           |
+| `PARSER_PORT`        | `5000`      | Parser service port                                                           |
 
 ## License
 

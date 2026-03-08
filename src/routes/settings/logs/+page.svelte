@@ -61,6 +61,7 @@
 			sortable: true,
 			sortAccessor: (row) => new Date(row.timestamp).getTime(),
 			cell: (row) => ({
+				// nosemgrep: profilarr.xss.table-cell-html-unescaped — date formatting, not user content
 				html: `<span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">${new Date(row.timestamp).toLocaleString()}</span>`
 			})
 		},
@@ -188,7 +189,12 @@
 	});
 
 	function getCellValue(row: LogEntry, key: string): unknown {
-		return key.split('.').reduce<unknown>((obj, k) => (obj as Record<string, unknown> | undefined)?.[k], row as unknown);
+		return key
+			.split('.')
+			.reduce<unknown>(
+				(obj, k) => (obj as Record<string, unknown> | undefined)?.[k],
+				row as unknown
+			);
 	}
 
 	function compareValues(a: unknown, b: unknown): number {

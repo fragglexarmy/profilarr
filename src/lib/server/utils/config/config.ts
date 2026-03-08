@@ -2,7 +2,7 @@
  * Application configuration singleton
  */
 
-export type AuthMode = 'on' | 'local' | 'off' | 'oidc';
+export type AuthMode = 'on' | 'off' | 'oidc';
 
 class Config {
 	private basePath: string;
@@ -10,6 +10,7 @@ class Config {
 	public readonly parserUrl: string;
 	public readonly port: number;
 	public readonly host: string;
+	public readonly origin: string;
 	public readonly authMode: AuthMode;
 	public readonly oidc: {
 		discoveryUrl: string | null;
@@ -45,11 +46,14 @@ class Config {
 		this.port = parseInt(Deno.env.get('PORT') || '6868', 10);
 		this.host = Deno.env.get('HOST') || '0.0.0.0';
 
-		// Auth mode: 'on' (default), 'local', 'off', 'oidc'
+		// External origin (scheme + host) for OIDC redirects and cookie security.
+		// Falls back to the local server URL when unset.
+		this.origin = Deno.env.get('ORIGIN') || this.serverUrl;
+
+		// Auth mode: 'on' (default), 'off', 'oidc'
+		// Note: AUTH=local is no longer an env var — use the local bypass toggle in Settings > Security
 		const auth = (Deno.env.get('AUTH') || 'on').toLowerCase();
-		this.authMode = ['on', 'local', 'off', 'oidc'].includes(auth)
-			? (auth as AuthMode)
-			: 'on';
+		this.authMode = ['on', 'off', 'oidc'].includes(auth) ? (auth as AuthMode) : 'on';
 
 		// OIDC configuration (only used when AUTH=oidc)
 		this.oidc = {

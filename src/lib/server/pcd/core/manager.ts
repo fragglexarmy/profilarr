@@ -12,10 +12,14 @@ import {
 	type UpdateInfo
 } from '$utils/git/index.ts';
 import { databaseInstancesQueries } from '$db/queries/databaseInstances.ts';
-import type { DatabaseInstance } from '$db/queries/databaseInstances.ts';
+import type { DatabaseInstance, DatabaseInstancePublic } from '$db/queries/databaseInstances.ts';
 import { loadManifest, type Manifest } from '../manifest/manifest.ts';
 import { getPCDPath } from '../utils/operations.ts';
-import { processDependencies, syncDependencies, validateDependencies } from '../git/dependencies.ts';
+import {
+	processDependencies,
+	syncDependencies,
+	validateDependencies
+} from '../git/dependencies.ts';
 import { compile, invalidate } from '../database/compiler.ts';
 import { getCache } from '../database/registry.ts';
 import { logger } from '$logger/logger.ts';
@@ -150,6 +154,7 @@ class PCDManager {
 			await Deno.remove(instance.local_path, { recursive: true });
 		} catch (error) {
 			// Log but don't throw - database entry is already deleted
+			// nosemgrep: javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring — JS template literals don't interpret format specifiers
 			console.error(`Failed to remove PCD directory ${instance.local_path}:`, error);
 		}
 	}
@@ -288,10 +293,30 @@ class PCDManager {
 	}
 
 	/**
+	 * Get all PCDs with secrets stripped (for frontend use)
+	 */
+	getAllPublic(): DatabaseInstancePublic[] {
+		return databaseInstancesQueries.getAll().map(({ personal_access_token, ...safe }) => ({
+			...safe,
+			hasPat: personal_access_token !== null
+		}));
+	}
+
+	/**
 	 * Get PCD by ID
 	 */
 	getById(id: number): DatabaseInstance | undefined {
 		return databaseInstancesQueries.getById(id);
+	}
+
+	/**
+	 * Get PCD by ID with secrets stripped (for frontend use)
+	 */
+	getByIdPublic(id: number): DatabaseInstancePublic | undefined {
+		const instance = databaseInstancesQueries.getById(id);
+		if (!instance) return undefined;
+		const { personal_access_token, ...safe } = instance;
+		return { ...safe, hasPat: personal_access_token !== null };
 	}
 
 	/**
@@ -316,7 +341,10 @@ class PCDManager {
 		// Validate dependencies for all instances first
 		for (const instance of enabledInstances) {
 			try {
-				await validateDependencies(instance.local_path, instance.personal_access_token ?? undefined);
+				await validateDependencies(
+					instance.local_path,
+					instance.personal_access_token ?? undefined
+				);
 			} catch (error) {
 				await logger.error(`Failed to validate dependencies for "${instance.name}"`, {
 					source: 'PCDManager',

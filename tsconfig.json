@@ -10,12 +10,15 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "bundler",
-		"lib": ["ES2022", "DOM"],
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"types": ["deno"],
 		"allowImportingTsExtensions": true,
-		"noEmit": true
+		"noEmit": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true
 	},
-	"exclude": ["src/tests/**"]
+	"exclude": ["tests/**", "src/adapter/**"]
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
 	//

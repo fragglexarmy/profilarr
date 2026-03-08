@@ -18,6 +18,9 @@ AGENTS.md
 /temp
 /config
 
+# Editor — track shared settings, ignore personal files
+.vscode/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -41,19 +44,20 @@ bin/
 obj/
 *.user
 *.suo
+*.sln
 .vs/
 
 # Bruno environments (contain API keys)
 bruno/environments/
 
 # OIDC testing (local Keycloak config)
-src/tests/oidc/
+tests/e2e/auth/realm-export.json
 
 # Playwright
 test-results/
 playwright-report/
-src/tests/e2e/test-results/
-src/tests/e2e/playwright-report/
+tests/e2e/*/test-results/
+tests/e2e/*/playwright-report/
 
 # Research repos
 research/

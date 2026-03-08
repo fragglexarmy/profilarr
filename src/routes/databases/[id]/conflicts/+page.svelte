@@ -34,7 +34,9 @@
 	});
 
 	const entityKeys = Array.from(new Set(data.conflicts.map((row) => row.entity))).sort();
-	const reasonKeys = Array.from(new Set(data.conflicts.map((row) => row.conflictReason || ''))).sort();
+	const reasonKeys = Array.from(
+		new Set(data.conflicts.map((row) => row.conflictReason || ''))
+	).sort();
 	let activeEntities = new Set<string>();
 	let activeReasons = new Set<string>();
 
@@ -48,10 +50,7 @@
 				update: () => Promise<void>;
 			}) => {
 				if (result.type === 'failure' && result.data) {
-					alertStore.add(
-						'error',
-						(result.data as { error?: string }).error || failureMessage
-					);
+					alertStore.add('error', (result.data as { error?: string }).error || failureMessage);
 				} else if (result.type === 'success') {
 					alertStore.add('success', successMessage);
 				}
@@ -59,7 +58,6 @@
 			};
 		};
 	}
-
 
 	function toggleEntity(entity: string) {
 		if (entity === '__all__') {
@@ -169,6 +167,7 @@
 			header: 'Op #',
 			width: '90px',
 			cell: (row) => ({
+				// nosemgrep: profilarr.xss.table-cell-html-unescaped — internal numeric operation ID
 				html: `<span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">${row.opId}</span>`
 			})
 		},
@@ -217,21 +216,14 @@
 			: conflict.title.toLowerCase().includes(query) ||
 				conflict.entity.toLowerCase().includes(query) ||
 				conflict.name.toLowerCase().includes(query) ||
-				(
-					reasonLabels[conflict.conflictReason ?? 'guard_mismatch'] ??
-					conflict.conflictReason ??
-					''
-				)
+				(reasonLabels[conflict.conflictReason ?? 'guard_mismatch'] ?? conflict.conflictReason ?? '')
 					.toLowerCase()
 					.includes(query) ||
 				conflict.status.toLowerCase().includes(query);
 
-		const matchesEntity =
-			activeEntities.size === 0 ? true : activeEntities.has(conflict.entity);
+		const matchesEntity = activeEntities.size === 0 ? true : activeEntities.has(conflict.entity);
 		const matchesReason =
-			activeReasons.size === 0
-				? true
-				: activeReasons.has(conflict.conflictReason ?? '');
+			activeReasons.size === 0 ? true : activeReasons.has(conflict.conflictReason ?? '');
 
 		return matchesQuery && matchesEntity && matchesReason;
 	});
@@ -243,7 +235,12 @@
 
 <ActionsBar className="justify-end mt-6">
 	<SearchAction {searchStore} placeholder="Search conflicts..." />
-	<ActionButton icon={Fingerprint} title="Filter entity" hasDropdown={true} dropdownPosition="right">
+	<ActionButton
+		icon={Fingerprint}
+		title="Filter entity"
+		hasDropdown={true}
+		dropdownPosition="right"
+	>
 		<svelte:fragment slot="dropdown" let:dropdownPosition>
 			<Dropdown position={dropdownPosition} minWidth="12rem">
 				<div class="max-h-64 overflow-y-auto">
@@ -281,7 +278,12 @@
 			</Dropdown>
 		</svelte:fragment>
 	</ActionButton>
-	<ActionButton icon={AlertTriangle} title="Filter reason" hasDropdown={true} dropdownPosition="right">
+	<ActionButton
+		icon={AlertTriangle}
+		title="Filter reason"
+		hasDropdown={true}
+		dropdownPosition="right"
+	>
 		<svelte:fragment slot="dropdown" let:dropdownPosition>
 			<Dropdown position={dropdownPosition} minWidth="12rem">
 				<div class="max-h-64 overflow-y-auto">

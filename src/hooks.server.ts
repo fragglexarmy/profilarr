@@ -17,14 +17,14 @@ import { db } from '$db/db.ts';
 import { runMigrations } from '$db/migrations.ts';
 import { initializeJobs } from '$jobs/init.ts';
 import { recoverInterruptedSyncs } from '$lib/server/sync/utils.ts';
-import { pcdManager } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
 import {
 	getAuthState,
 	isPublicPath,
 	maybeExtendSession,
 	cleanupExpiredSessions
 } from '$auth/middleware.ts';
-import { getClientIp } from '$auth/network.ts';
+import { cleanupExpiredAttempts } from '$auth/rateLimit.ts';
 import { setupStateQueries } from '$db/queries/setupState.ts';
 
 if (!isReload) {
@@ -81,7 +81,8 @@ if (!isReload) {
 	// Recover any syncs that were interrupted by a restart
 	await recoverInterruptedSyncs();
 
-	// Clean expired sessions on startup
+	// Clean expired sessions and login attempts on startup
+	cleanupExpiredAttempts();
 	const expiredCount = cleanupExpiredSessions();
 	if (expiredCount > 0) {
 		await logger.info(
@@ -108,7 +109,7 @@ if (!isReload) {
  * Handles authentication, authorization, and session management
  */
 export const handle: Handle = async ({ event, resolve }) => {
-	const auth = getAuthState(event);
+	const auth = await getAuthState(event);
 
 	// First-run setup flow (applies to all auth modes except AUTH=off)
 	if (auth.needsSetup) {
@@ -118,7 +119,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		throw redirect(303, '/auth/setup');
 	}
 
-	// AUTH=off or AUTH=local with local IP - skip auth after setup
+	// AUTH=off or local bypass with local IP - skip auth after setup
 	if (auth.skipAuth) {
 		return resolve(event);
 	}
@@ -133,14 +134,23 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
+	// API key auth is scoped to /api/ paths only (excluding /api/internal/ when it exists).
+	// Browser pages and form actions require a real session.
+	if (auth.user && !auth.session && auth.user.username === 'api') {
+		if (
+			!event.url.pathname.startsWith('/api/') ||
+			event.url.pathname.startsWith('/api/internal/')
+		) {
+			return new Response(JSON.stringify({ error: 'API key auth is not accepted for this path' }), {
+				status: 403,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+	}
+
 	// Not authenticated - redirect or return 401
 	if (!auth.user) {
 		if (event.url.pathname.startsWith('/api')) {
-			const ip = getClientIp(event);
-			void logger.warn('Unauthorized API access', {
-				source: 'Auth',
-				meta: { ip, endpoint: event.url.pathname, method: event.request.method }
-			});
 			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 				status: 401,
 				headers: { 'Content-Type': 'application/json' }

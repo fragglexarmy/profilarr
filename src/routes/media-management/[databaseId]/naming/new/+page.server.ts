@@ -1,10 +1,13 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { pcdManager } from '$pcd/index.ts';
-import { canWriteToBase } from '$pcd/index.ts';
-import type { OperationLayer } from '$pcd/index.ts';
+import { pcdManager } from '$pcd/core/manager.ts';
+import { canWriteToBase } from '$pcd/ops/writer.ts';
+import type { OperationLayer } from '$pcd/core/types.ts';
 import type { RadarrNamingRow, SonarrNamingRow } from '$shared/pcd/display.ts';
-import { createRadarrNaming, createSonarrNaming } from '$pcd/entities/mediaManagement/naming/index.ts';
+import {
+	createRadarrNaming,
+	createSonarrNaming
+} from '$pcd/entities/mediaManagement/naming/index.ts';
 import { validateNamingFormat } from '$shared/pcd/namingTokens.ts';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -83,7 +86,8 @@ export const actions: Actions = {
 					}
 				});
 			} catch (err) {
-				const message = err instanceof Error ? err.message : 'Failed to create radarr naming config';
+				const message =
+					err instanceof Error ? err.message : 'Failed to create radarr naming config';
 				if (message.includes('already exists')) {
 					return fail(400, { error: message });
 				}
@@ -105,7 +109,9 @@ export const actions: Actions = {
 				'colonReplacementFormat'
 			) as SonarrNamingRow['colon_replacement_format'];
 			const customColonReplacementFormat = formData.get('customColonReplacementFormat') as string;
-			const multiEpisodeStyle = formData.get('multiEpisodeStyle') as SonarrNamingRow['multi_episode_style'];
+			const multiEpisodeStyle = formData.get(
+				'multiEpisodeStyle'
+			) as SonarrNamingRow['multi_episode_style'];
 
 			const formatFields = [
 				{ name: 'Standard episode format', value: standardEpisodeFormat },
@@ -142,7 +148,8 @@ export const actions: Actions = {
 					}
 				});
 			} catch (err) {
-				const message = err instanceof Error ? err.message : 'Failed to create sonarr naming config';
+				const message =
+					err instanceof Error ? err.message : 'Failed to create sonarr naming config';
 				if (message.includes('already exists')) {
 					return fail(400, { error: message });
 				}

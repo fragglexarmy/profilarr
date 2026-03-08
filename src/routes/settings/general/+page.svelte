@@ -5,13 +5,7 @@
 	import { alertStore } from '$alerts/store';
 	import { navIconStore, type NavIconStyle } from '$stores/navIcons';
 	import { alertSettingsStore, type AlertPosition, DEFAULT_ALERT_SETTINGS } from '$alerts/settings';
-	import {
-		initEdit,
-		update,
-		isDirty,
-		resetFromServer,
-		clear
-	} from '$stores/dirty';
+	import { initEdit, update, isDirty, resetFromServer, clear } from '$stores/dirty';
 	import { FEATURES } from '$shared/features.ts';
 	import {
 		Save,
@@ -56,11 +50,11 @@
 	// AI (feature-flagged)
 	let aiEnabled = data.aiSettings.enabled;
 	let aiApiUrl = data.aiSettings.api_url;
-	let aiApiKey = data.aiSettings.api_key;
+	let aiApiKey = '';
 	let aiModel = data.aiSettings.model;
 
 	// TMDB
-	let tmdbApiKey = data.tmdbSettings.api_key;
+	let tmdbApiKey = '';
 	let tmdbShowKey = false;
 	let tmdbTesting = false;
 
@@ -204,7 +198,7 @@
 	// --- TMDB test ---
 
 	async function testTMDBConnection() {
-		if (!tmdbApiKey) {
+		if (!tmdbApiKey && !data.tmdbSettings.hasApiKey) {
 			alertStore.add('error', 'Please enter an API key first');
 			return;
 		}
@@ -242,10 +236,7 @@
 				alertStore.add('error', (result.data as { error?: string }).error || 'Failed to save');
 			} else if (result.type === 'success') {
 				// Save UI stores (client-side only)
-				const durationMs = Math.max(
-					0,
-					Math.round((uiAlertDurationSeconds ?? 0) * 1000)
-				);
+				const durationMs = Math.max(0, Math.round((uiAlertDurationSeconds ?? 0) * 1000));
 				navIconStore.setStyle(uiNavIconStyle);
 				alertSettingsStore.setSettings({ position: uiAlertPosition, durationMs });
 
@@ -303,9 +294,9 @@
 
 						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<div>
-								<label class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
+								<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 									Alert Position
-								</label>
+								</span>
 								<DropdownSelect
 									value={uiAlertPosition}
 									options={alertPositionOptions}
@@ -346,8 +337,12 @@
 						</div>
 
 						<!-- Test Alerts -->
-						<div class="flex flex-wrap items-center gap-2 border-t border-neutral-200 pt-4 dark:border-neutral-700">
-							<span class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+						<div
+							class="flex flex-wrap items-center gap-2 border-t border-neutral-200 pt-4 dark:border-neutral-700"
+						>
+							<span
+								class="text-xs font-semibold tracking-wide text-neutral-500 uppercase dark:text-neutral-400"
+							>
 								Test
 							</span>
 							<Button
@@ -416,9 +411,7 @@
 				<!-- ==================== Backup Configuration ==================== -->
 				<Card>
 					<svelte:fragment slot="header">
-						<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-							Backups
-						</h2>
+						<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Backups</h2>
 						<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 							Configure automatic backups, schedule, and retention policy
 						</p>
@@ -438,9 +431,11 @@
 						{#if backupEnabled}
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div>
-									<label class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
+									<span
+										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+									>
 										Schedule
-									</label>
+									</span>
 									<DropdownSelect
 										value={backupSchedule}
 										options={backupScheduleOptions}
@@ -489,9 +484,7 @@
 					<svelte:fragment slot="header">
 						<div class="flex items-center justify-between">
 							<div>
-								<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-									Logging
-								</h2>
+								<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Logging</h2>
 								<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 									Configure application logs, rotation, and retention
 								</p>
@@ -532,9 +525,11 @@
 
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div>
-									<label class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
+									<span
+										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+									>
 										Minimum Level
-									</label>
+									</span>
 									<DropdownSelect
 										value={logMinLevel}
 										options={logLevelOptions}
@@ -614,7 +609,10 @@
 								value={tmdbApiKey}
 								type={tmdbShowKey ? 'text' : 'password'}
 								mono
-								description="Use the API Read Access Token (not API Key) from themoviedb.org"
+								placeholder={data.tmdbSettings.hasApiKey ? '••••••••••••••••' : ''}
+								description={data.tmdbSettings.hasApiKey
+									? 'Leave blank to keep existing key'
+									: 'Use the API Read Access Token (not API Key) from themoviedb.org'}
 								on:input={(e) => {
 									tmdbApiKey = e.detail;
 									update('tmdb_api_key', e.detail);
@@ -686,7 +684,10 @@
 									value={aiApiKey}
 									type={aiShowKey ? 'text' : 'password'}
 									mono
-									description="Required for cloud providers. Leave empty for local APIs."
+									placeholder={data.aiSettings.hasApiKey ? '••••••••••••••••' : ''}
+									description={data.aiSettings.hasApiKey
+										? 'Leave blank to keep existing key'
+										: 'Required for cloud providers. Leave empty for local APIs.'}
 									on:input={(e) => {
 										aiApiKey = e.detail;
 										update('ai_api_key', e.detail);

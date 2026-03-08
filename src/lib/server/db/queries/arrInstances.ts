@@ -17,6 +17,8 @@ export interface ArrInstance {
 	updated_at: string;
 }
 
+export type ArrInstancePublic = Omit<ArrInstance, 'api_key'>;
+
 export interface CreateArrInstanceInput {
 	name: string;
 	type: string;
@@ -88,7 +90,9 @@ export const arrInstancesQueries = {
 	 * Get enabled arr instances
 	 */
 	getEnabled(): ArrInstance[] {
-		return db.query<ArrInstance>('SELECT * FROM arr_instances WHERE enabled = 1 ORDER BY type, name');
+		return db.query<ArrInstance>(
+			'SELECT * FROM arr_instances WHERE enabled = 1 ORDER BY type, name'
+		);
 	},
 
 	/**

@@ -7,7 +7,7 @@ import { logger } from '$logger/logger.ts';
 
 export const GET: RequestHandler = async (event) => {
 	const { cookies } = event;
-	const ip = getClientIp(event);
+	const ip = getClientIp(event, false);
 
 	// Validate OIDC configuration
 	if (config.authMode !== 'oidc') {
@@ -25,7 +25,10 @@ export const GET: RequestHandler = async (event) => {
 			source: 'Auth:OIDC',
 			meta: { missing }
 		});
-		throw error(500, 'OIDC is not configured. Set OIDC_DISCOVERY_URL, OIDC_CLIENT_ID, and OIDC_CLIENT_SECRET');
+		throw error(
+			500,
+			'OIDC is not configured. Set OIDC_DISCOVERY_URL, OIDC_CLIENT_ID, and OIDC_CLIENT_SECRET'
+		);
 	}
 
 	await logger.debug('OIDC flow started', {
@@ -36,23 +39,27 @@ export const GET: RequestHandler = async (event) => {
 	// Fetch discovery document
 	const discovery = await getDiscoveryDocument(config.oidc.discoveryUrl);
 
-	// Generate state token for CSRF protection
+	// Generate state (CSRF) and nonce (token replay) tokens
 	const state = generateState();
+	const nonce = crypto.randomUUID();
 
-	// Store state in cookie (10 minute expiry)
-	cookies.set('oidc_state', state, {
+	// Store state and nonce in cookies (10 minute expiry)
+	const cookieOpts = {
 		path: '/',
 		httpOnly: true,
-		sameSite: 'lax',
-		secure: false,
+		sameSite: 'lax' as const,
+		secure: config.origin.startsWith('https://'),
 		maxAge: 60 * 10
-	});
+	};
+	cookies.set('oidc_state', state, cookieOpts);
+	cookies.set('oidc_nonce', nonce, cookieOpts);
 
 	// Build authorization URL and redirect
 	const authUrl = buildAuthorizationUrl(discovery.authorization_endpoint, {
 		clientId: config.oidc.clientId,
-		redirectUri: `${config.serverUrl}/auth/oidc/callback`,
-		state
+		redirectUri: `${config.origin}/auth/oidc/callback`,
+		state,
+		nonce
 	});
 
 	throw redirect(302, authUrl);

@@ -35,8 +35,10 @@ export const load: ServerLoad = ({ params }) => {
 	// Load upgrade runs from database
 	const upgradeRuns = upgradeRunsQueries.getByInstanceId(id);
 
+	const { api_key: _, ...safeInstance } = instance;
+
 	return {
-		instance,
+		instance: safeInstance,
 		config: config ?? null,
 		upgradeRuns
 	};
@@ -179,10 +181,13 @@ export const actions: Actions = {
 			if (lastDryRun && Date.now() - lastDryRun < DRY_RUN_COOLDOWN_MS) {
 				const remainingMs = DRY_RUN_COOLDOWN_MS - (Date.now() - lastDryRun);
 				const remainingMin = Math.ceil(remainingMs / 60000);
-				await logger.warn(`Dry run cooldown active for "${instance.name}" - ${remainingMin}m remaining`, {
-					source: 'upgrades',
-					meta: { instanceId: id, instanceName: instance.name, remainingMin }
-				});
+				await logger.warn(
+					`Dry run cooldown active for "${instance.name}" - ${remainingMin}m remaining`,
+					{
+						source: 'upgrades',
+						meta: { instanceId: id, instanceName: instance.name, remainingMin }
+					}
+				);
 				return fail(400, {
 					error: `Dry run cooldown active. Try again in ${remainingMin} minute${remainingMin !== 1 ? 's' : ''}.`
 				});
