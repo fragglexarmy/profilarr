@@ -129,6 +129,9 @@ jobs:
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
           restore-keys: deno-${{ runner.os }}-
 
+      - name: Clear corrupted native libraries
+        run: rm -rf ~/.cache/deno/plug
+
       - run: deno install --node-modules-dir
 
       - name: Run unit tests
@@ -181,6 +184,9 @@ jobs:
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
           restore-keys: deno-${{ runner.os }}-
 
+      - name: Clear corrupted native libraries
+        run: rm -rf ~/.cache/deno/plug
+
       - run: deno install --node-modules-dir
 
       - name: Download build artifact
@@ -218,6 +224,9 @@ jobs:
             node_modules
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
           restore-keys: deno-${{ runner.os }}-
+
+      - name: Clear corrupted native libraries
+        run: rm -rf ~/.cache/deno/plug
 
       - run: deno install --node-modules-dir
 
