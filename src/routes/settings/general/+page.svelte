@@ -283,17 +283,23 @@
 					</svelte:fragment>
 
 					<div class="space-y-4">
-						<Toggle
-							label="Use Emojis"
-							checked={uiNavIconStyle === 'emoji'}
-							on:change={(e) => {
-								uiNavIconStyle = e.detail ? 'emoji' : 'lucide';
-								update('ui_nav_icon_style', uiNavIconStyle);
-							}}
-						/>
-
-						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+						<div class="grid grid-cols-1 gap-4 sm:grid-cols-5">
 							<div>
+								<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
+									Emoji Icons
+								</span>
+								<Toggle
+									label={uiNavIconStyle === 'emoji' ? 'Enabled' : 'Disabled'}
+									checked={uiNavIconStyle === 'emoji'}
+									fullWidth
+									on:change={(e) => {
+										uiNavIconStyle = e.detail ? 'emoji' : 'lucide';
+										update('ui_nav_icon_style', uiNavIconStyle);
+									}}
+								/>
+							</div>
+
+							<div class="sm:col-span-2">
 								<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 									Alert Position
 								</span>
@@ -307,17 +313,14 @@
 										update('ui_alert_position', uiAlertPosition);
 									}}
 								/>
-								<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-									On mobile, only top or bottom applies.
-								</p>
 							</div>
 
-							<div>
+							<div class="sm:col-span-2">
 								<label
 									for="ui_alert_duration"
 									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
 								>
-									Alert Duration
+									Alert Duration (seconds)
 								</label>
 								<NumberInput
 									name="ui_alert_duration"
@@ -330,9 +333,6 @@
 										update('ui_alert_duration_seconds', v);
 									}}
 								/>
-								<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-									In seconds. Set to 0 to keep until dismissed.
-								</p>
 							</div>
 						</div>
 
@@ -402,9 +402,6 @@
 							name="arr_apply_default_delay_profiles"
 							value={arrApplyDefaultDelayProfiles ? 'on' : ''}
 						/>
-						<p class="text-xs text-neutral-500 dark:text-neutral-400">
-							Automatically configure the default delay profile when adding new arr instances
-						</p>
 					</div>
 				</Card>
 
@@ -417,62 +414,62 @@
 						</p>
 					</svelte:fragment>
 
-					<div class="space-y-4">
-						<Toggle
-							label="Enable Automatic Backups"
-							checked={backupEnabled}
-							on:change={(e) => {
-								backupEnabled = e.detail;
-								update('backup_enabled', e.detail);
-							}}
-						/>
+					<div class="grid gap-4" class:grid-cols-5={backupEnabled}>
+						<div>
+							<span
+								class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+							>
+								Automatic Backups
+							</span>
+							<Toggle
+								label={backupEnabled ? 'Enabled' : 'Disabled'}
+								checked={backupEnabled}
+								fullWidth={backupEnabled}
+								on:change={(e) => {
+									backupEnabled = e.detail;
+									update('backup_enabled', e.detail);
+								}}
+							/>
+						</div>
 						<input type="hidden" name="backup_enabled" value={backupEnabled ? 'on' : ''} />
 
 						{#if backupEnabled}
-							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-								<div>
-									<span
-										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
-									>
-										Schedule
-									</span>
-									<DropdownSelect
-										value={backupSchedule}
-										options={backupScheduleOptions}
-										fullWidth
-										fixed
-										on:change={(e) => {
-											backupSchedule = e.detail;
-											update('backup_schedule', e.detail);
-										}}
-									/>
-									<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-										How often to create automatic backups
-									</p>
-								</div>
+							<div class="col-span-2">
+								<span
+									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+								>
+									Schedule
+								</span>
+								<DropdownSelect
+									value={backupSchedule}
+									options={backupScheduleOptions}
+									fullWidth
+									fixed
+									on:change={(e) => {
+										backupSchedule = e.detail;
+										update('backup_schedule', e.detail);
+									}}
+								/>
+							</div>
 
-								<div>
-									<label
-										for="backup_retention_days"
-										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
-									>
-										Retention Period
-									</label>
-									<NumberInput
-										name="backup_retention_days"
-										id="backup_retention_days"
-										value={backupRetentionDays}
-										min={1}
-										max={365}
-										onchange={(v) => {
-											backupRetentionDays = v;
-											update('backup_retention_days', v);
-										}}
-									/>
-									<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-										In days. Delete backups older than this.
-									</p>
-								</div>
+							<div class="col-span-2">
+								<label
+									for="backup_retention_days"
+									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+								>
+									Retention Period (days)
+								</label>
+								<NumberInput
+									name="backup_retention_days"
+									id="backup_retention_days"
+									value={backupRetentionDays}
+									min={1}
+									max={365}
+									onchange={(v) => {
+										backupRetentionDays = v;
+										update('backup_retention_days', v);
+									}}
+								/>
 							</div>
 						{/if}
 						<input type="hidden" name="backup_schedule" value={backupSchedule} />
@@ -494,37 +491,61 @@
 					</svelte:fragment>
 
 					<div class="space-y-4">
-						<Toggle
-							label="Enable Logging"
-							checked={logEnabled}
-							on:change={(e) => {
-								logEnabled = e.detail;
-								update('log_enabled', e.detail);
-							}}
-						/>
-						<input type="hidden" name="log_enabled" value={logEnabled ? 'on' : ''} />
+						<div class="grid gap-4" class:sm:grid-cols-7={logEnabled}>
+							<div>
+								<span
+									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+								>
+									Logging
+								</span>
+								<Toggle
+									label={logEnabled ? 'Enabled' : 'Disabled'}
+									checked={logEnabled}
+									fullWidth={logEnabled}
+									on:change={(e) => {
+										logEnabled = e.detail;
+										update('log_enabled', e.detail);
+									}}
+								/>
+							</div>
+							<input type="hidden" name="log_enabled" value={logEnabled ? 'on' : ''} />
 
-						{#if logEnabled}
-							<Toggle
-								label="File Logging"
-								checked={logFileLogging}
-								on:change={(e) => {
-									logFileLogging = e.detail;
-									update('log_file_logging', e.detail);
-								}}
-							/>
-
-							<Toggle
-								label="Console Logging"
-								checked={logConsoleLogging}
-								on:change={(e) => {
-									logConsoleLogging = e.detail;
-									update('log_console_logging', e.detail);
-								}}
-							/>
-
-							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							{#if logEnabled}
 								<div>
+									<span
+										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+									>
+										File Logging
+									</span>
+									<Toggle
+										label={logFileLogging ? 'Enabled' : 'Disabled'}
+										checked={logFileLogging}
+										fullWidth
+										on:change={(e) => {
+											logFileLogging = e.detail;
+											update('log_file_logging', e.detail);
+										}}
+									/>
+								</div>
+
+								<div>
+									<span
+										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
+									>
+										Console Logging
+									</span>
+									<Toggle
+										label={logConsoleLogging ? 'Enabled' : 'Disabled'}
+										checked={logConsoleLogging}
+										fullWidth
+										on:change={(e) => {
+											logConsoleLogging = e.detail;
+											update('log_console_logging', e.detail);
+										}}
+									/>
+								</div>
+
+								<div class="sm:col-span-2">
 									<span
 										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
 									>
@@ -540,17 +561,14 @@
 											update('log_min_level', logMinLevel);
 										}}
 									/>
-									<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-										Only log at or above this level
-									</p>
 								</div>
 
-								<div>
+								<div class="sm:col-span-2">
 									<label
 										for="log_retention_days"
 										class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
 									>
-										Retention Period
+										Retention Period (days)
 									</label>
 									<NumberInput
 										name="log_retention_days"
@@ -563,12 +581,9 @@
 											update('log_retention_days', v);
 										}}
 									/>
-									<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-										In days. Logs rotate daily (YYYY-MM-DD.log).
-									</p>
 								</div>
-							</div>
-						{/if}
+							{/if}
+						</div>
 						<input type="hidden" name="log_file_logging" value={logFileLogging ? 'on' : ''} />
 						<input type="hidden" name="log_console_logging" value={logConsoleLogging ? 'on' : ''} />
 						<input type="hidden" name="log_min_level" value={logMinLevel} />
