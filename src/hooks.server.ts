@@ -168,5 +168,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = auth.user;
 	event.locals.session = auth.session;
 
-	return resolve(event);
+	const response = await resolve(event);
+	response.headers.delete('link');
+	return response;
 };
