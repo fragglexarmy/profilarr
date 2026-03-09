@@ -49,6 +49,13 @@ export async function run(): Promise<void> {
 			await setupFn();
 		} catch (error) {
 			console.error(`\n${c.red}${c.bold}Setup failed:${c.reset}`, error);
+			if (teardownFn) {
+				try {
+					await teardownFn();
+				} catch (teardownError) {
+					console.error(`${c.red}Teardown after setup failure error:${c.reset}`, teardownError);
+				}
+			}
 			Deno.exit(1);
 		}
 	}

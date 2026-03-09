@@ -26,3 +26,12 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - '7446:7446'
+    volumes:
+      - ./nginx-small-header.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'

@@ -28,7 +28,7 @@
  *   deno task test integration health       Single spec
  *   deno task test integration csrf         Single spec
  *
- *   Specs that need Docker (mock-oauth2-server + Caddy): oidc, cookie, proxy
+ *   Specs that need Docker (mock-oauth2-server + Caddy + nginx): oidc, cookie, proxy, reverseProxy502, reverseProxy502-manual
  *   Docker starts automatically when needed and tears down after.
  *
  * ─── E2E Tests ───────────────────────────────────────────────────────────
@@ -81,7 +81,13 @@ const E2E_AUTH_COMPOSE = 'tests/integration/auth/docker-compose.yml';
 const E2E_AUTH_BINARY = './dist/build/profilarr';
 
 // Integration specs that require Docker infrastructure
-const INTEGRATION_NEEDS_DOCKER = new Set(['oidc', 'cookie', 'proxy']);
+const INTEGRATION_NEEDS_DOCKER = new Set([
+	'oidc',
+	'cookie',
+	'proxy',
+	'reverseProxy502',
+	'reverseProxy502-manual'
+]);
 // Integration specs that connect to Caddy's self-signed TLS
 const INTEGRATION_NEEDS_TLS_INSECURE = new Set(['cookie', 'proxy', 'oidc']);
 
@@ -263,7 +269,11 @@ async function runIntegration(target?: string): Promise<number> {
 			} else {
 				try {
 					for await (const entry of Deno.readDir(dir)) {
-						if (entry.isFile && entry.name.endsWith('.test.ts')) {
+						if (
+							entry.isFile &&
+							entry.name.endsWith('.test.ts') &&
+							!entry.name.endsWith('-manual.test.ts')
+						) {
 							specFiles.push(`${dir}/${entry.name}`);
 						}
 					}
@@ -350,6 +360,7 @@ async function runIntegrationSpec(
 	const cmd = new Deno.Command('deno', {
 		args,
 		env: { ...Deno.env.toObject(), INTEGRATION_TEST: '1' },
+		stdin: output === 'inherit' ? 'inherit' : 'null',
 		stdout: output,
 		stderr: output
 	});
