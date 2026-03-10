@@ -93,7 +93,8 @@
 	<div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-x-6">
 		<!-- Status -->
 		<div>
-			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span
+			>
 			<div class="md:flex md:items-center md:gap-2">
 				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Status:</span>
 				<Toggle
@@ -108,9 +109,12 @@
 
 		<!-- Rename Folders -->
 		<div>
-			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Folders</span>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400"
+				>Folders</span
+			>
 			<div class="md:flex md:items-center md:gap-2">
-				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Folders:</span>
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Folders:</span
+				>
 				<Toggle
 					checked={renameFolders}
 					label={renameFolders ? 'On' : 'Off'}
@@ -123,9 +127,12 @@
 
 		<!-- Summary Notifications -->
 		<div>
-			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Summary</span>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400"
+				>Summary</span
+			>
 			<div class="md:flex md:items-center md:gap-2">
-				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Summary:</span>
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Summary:</span
+				>
 				<Toggle
 					checked={summaryNotifications}
 					label={summaryNotifications ? 'On' : 'Off'}
@@ -141,16 +148,22 @@
 
 		<!-- Schedule -->
 		<div>
-			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Schedule</span>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400"
+				>Schedule</span
+			>
 			<div class="md:flex md:items-center md:gap-2">
-				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Schedule:</span>
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400"
+					>Schedule:</span
+				>
 				<CronInput bind:value={cronValue} {minIntervalMinutes} {onWarning} />
 			</div>
 		</div>
 
 		<!-- Ignore Tag -->
 		<div>
-			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Ignore Tag</span>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400"
+				>Ignore Tag</span
+			>
 			<div class="md:flex md:items-center md:gap-2">
 				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400"
 					>Ignore Tag:</span

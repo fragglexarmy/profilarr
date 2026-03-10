@@ -314,8 +314,8 @@
 					<!-- Key exists but can't be displayed -->
 					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 						<p class="text-sm text-neutral-500 dark:text-neutral-400">
-							Your API key is hashed and cannot be displayed. Regenerating will replace
-							the current key.
+							Your API key is hashed and cannot be displayed. Regenerating will replace the current
+							key.
 						</p>
 						<form
 							method="POST"

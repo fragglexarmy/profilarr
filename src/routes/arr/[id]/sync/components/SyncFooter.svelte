@@ -55,7 +55,9 @@
 				<span class="mb-1 block text-xs text-transparent select-none">&nbsp;</span>
 				<div class="flex items-center gap-3">
 					{#if warning}
-						<div class="hidden items-center gap-1.5 text-xs text-amber-600 sm:flex dark:text-amber-400">
+						<div
+							class="hidden items-center gap-1.5 text-xs text-amber-600 sm:flex dark:text-amber-400"
+						>
 							<AlertTriangle size={14} class="flex-shrink-0" />
 							<span>{warning}</span>
 						</div>

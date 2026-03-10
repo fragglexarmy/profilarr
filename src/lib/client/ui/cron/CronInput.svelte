@@ -243,7 +243,10 @@
 	}
 </script>
 
-<div class="flex items-center gap-1.5" class:flex-wrap={scheduleType === 'weekly' || scheduleType === 'monthly'}>
+<div
+	class="flex items-center gap-1.5"
+	class:flex-wrap={scheduleType === 'weekly' || scheduleType === 'monthly'}
+>
 	<DropdownSelect
 		value={scheduleType}
 		options={scheduleOptions}

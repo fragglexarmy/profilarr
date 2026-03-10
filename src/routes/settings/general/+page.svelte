@@ -546,17 +546,17 @@
 										Minimum Level
 									</span>
 									<div class="font-mono">
-									<DropdownSelect
-										value={logMinLevel}
-										options={logLevelOptions}
-										fullWidth
-										fixed
-										on:change={(e) => {
-											logMinLevel = e.detail as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-											update('log_min_level', logMinLevel);
-										}}
-									/>
-								</div>
+										<DropdownSelect
+											value={logMinLevel}
+											options={logLevelOptions}
+											fullWidth
+											fixed
+											on:change={(e) => {
+												logMinLevel = e.detail as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+												update('log_min_level', logMinLevel);
+											}}
+										/>
+									</div>
 								</div>
 
 								<div class="sm:col-span-2">
