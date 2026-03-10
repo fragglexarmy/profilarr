@@ -310,6 +310,7 @@
 							<Toggle
 								label="Bypass if Highest Quality"
 								checked={formData.bypassIfHighestQuality}
+								fullWidth
 								on:change={() => update('bypassIfHighestQuality', !formData.bypassIfHighestQuality)}
 							/>
 							<p class="mt-1 px-3 text-xs text-neutral-500 dark:text-neutral-400">
@@ -322,6 +323,7 @@
 								<Toggle
 									label="Bypass if Above Custom Format Score"
 									checked={formData.bypassIfAboveCfScore}
+									fullWidth
 									on:change={() => update('bypassIfAboveCfScore', !formData.bypassIfAboveCfScore)}
 								/>
 								<NumberInput

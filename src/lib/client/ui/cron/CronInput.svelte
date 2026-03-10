@@ -243,7 +243,7 @@
 	}
 </script>
 
-<div class="flex items-center gap-1.5" class:flex-wrap={scheduleType === 'monthly'}>
+<div class="flex items-center gap-1.5" class:flex-wrap={scheduleType === 'weekly' || scheduleType === 'monthly'}>
 	<DropdownSelect
 		value={scheduleType}
 		options={scheduleOptions}
@@ -309,6 +309,7 @@
 			}}
 		/>
 	{:else if scheduleType === 'weekly'}
+		<div class="basis-full"></div>
 		<DropdownSelect
 			value={String(weeklyDay)}
 			options={weekdayOptions}

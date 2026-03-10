@@ -129,11 +129,12 @@
 						{#if database.delayProfiles.length === 0}
 							<p class="text-sm text-neutral-500 dark:text-neutral-400">No delay profiles</p>
 						{:else}
-							<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+							<div class="grid grid-cols-1 gap-2 sm:grid-cols-3 md:grid-cols-5">
 								{#each database.delayProfiles as profile}
 									<Toggle
 										checked={selectedKey === `${database.id}-${profile.name}`}
 										label={profile.name}
+										fullWidth
 										ariaLabel={`Toggle delay profile ${profile.name} from ${database.name}`}
 										on:change={(e) => setProfile(database.id, profile.name, e.detail)}
 									/>

@@ -246,7 +246,7 @@
 					}}
 				>
 					<Toggle
-						label="Allow unauthenticated access from local IPs"
+						label={data.localBypassEnabled ? 'Enabled' : 'Disabled'}
 						checked={data.localBypassEnabled}
 						disabled={togglingBypass}
 						on:change={() => bypassForm.requestSubmit()}
@@ -312,10 +312,10 @@
 					</div>
 				{:else if data.hasApiKey}
 					<!-- Key exists but can't be displayed -->
-					<div class="flex items-center justify-between gap-4">
+					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 						<p class="text-sm text-neutral-500 dark:text-neutral-400">
-							An API key is configured. The stored key cannot be retrieved. Regenerating will
-							invalidate the current key and create a new one.
+							Your API key is hashed and cannot be displayed. Regenerating will replace
+							the current key.
 						</p>
 						<form
 							method="POST"

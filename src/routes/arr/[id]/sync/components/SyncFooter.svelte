@@ -30,6 +30,13 @@
 
 <div class="border-t border-neutral-200 px-4 py-4 md:px-6 dark:border-neutral-800">
 	<div class="flex flex-col gap-3">
+		{#if warning}
+			<div class="flex items-center gap-1.5 text-xs text-amber-600 sm:hidden dark:text-amber-400">
+				<AlertTriangle size={14} class="flex-shrink-0" />
+				<span>{warning}</span>
+			</div>
+		{/if}
+
 		<!-- Row 1: Trigger + Warning + Buttons -->
 		<div class="flex items-center justify-between gap-2">
 			<div>
@@ -48,13 +55,13 @@
 				<span class="mb-1 block text-xs text-transparent select-none">&nbsp;</span>
 				<div class="flex items-center gap-3">
 					{#if warning}
-						<div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+						<div class="hidden items-center gap-1.5 text-xs text-amber-600 sm:flex dark:text-amber-400">
 							<AlertTriangle size={14} class="flex-shrink-0" />
 							<span>{warning}</span>
 						</div>
 					{/if}
 					<Button
-						text="Sync Now"
+						text="Sync"
 						variant="secondary"
 						disabled={syncDisabled}
 						icon={syncing ? Loader2 : RefreshCw}

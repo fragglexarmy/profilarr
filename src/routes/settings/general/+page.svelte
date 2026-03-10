@@ -74,10 +74,10 @@
 	// --- Dropdown options ---
 
 	const logLevelOptions = [
-		{ value: 'DEBUG', label: 'DEBUG — All logs including debug information' },
-		{ value: 'INFO', label: 'INFO — Informational messages and above' },
-		{ value: 'WARN', label: 'WARN — Warnings and errors only' },
-		{ value: 'ERROR', label: 'ERROR — Errors only' }
+		{ value: 'DEBUG', label: 'DEBUG' },
+		{ value: 'INFO', label: 'INFO' },
+		{ value: 'WARN', label: 'WARN' },
+		{ value: 'ERROR', label: 'ERROR' }
 	];
 
 	const backupScheduleOptions = [
@@ -414,7 +414,7 @@
 						</p>
 					</svelte:fragment>
 
-					<div class="grid gap-4" class:grid-cols-5={backupEnabled}>
+					<div class="grid gap-4" class:sm:grid-cols-5={backupEnabled}>
 						<div>
 							<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 								Automatic Backups
@@ -432,7 +432,7 @@
 						<input type="hidden" name="backup_enabled" value={backupEnabled ? 'on' : ''} />
 
 						{#if backupEnabled}
-							<div class="col-span-2">
+							<div class="sm:col-span-2">
 								<span class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50">
 									Schedule
 								</span>
@@ -448,7 +448,7 @@
 								/>
 							</div>
 
-							<div class="col-span-2">
+							<div class="sm:col-span-2">
 								<label
 									for="backup_retention_days"
 									class="mb-1 block text-sm font-medium text-neutral-900 dark:text-neutral-50"
@@ -545,6 +545,7 @@
 									>
 										Minimum Level
 									</span>
+									<div class="font-mono">
 									<DropdownSelect
 										value={logMinLevel}
 										options={logLevelOptions}
@@ -555,6 +556,7 @@
 											update('log_min_level', logMinLevel);
 										}}
 									/>
+								</div>
 								</div>
 
 								<div class="sm:col-span-2">

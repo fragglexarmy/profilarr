@@ -89,78 +89,89 @@
 <div
 	class="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
 >
-	<!-- Mobile: 2-column grid, Desktop: inline flex -->
-	<div
-		class="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 md:flex md:flex-wrap md:gap-x-6"
-	>
+	<!-- Mobile: stacked, Desktop: inline flex -->
+	<div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-x-6">
 		<!-- Status -->
-		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span>
-		<div class="md:flex md:items-center md:gap-2">
-			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Status:</span>
-			<Toggle
-				checked={enabled}
-				label={enabled ? 'Enabled' : 'Disabled'}
-				color={enabled ? 'green' : 'red'}
-				on:change={(e) => onEnabledChange?.(e.detail)}
-			/>
+		<div>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Status</span>
+			<div class="md:flex md:items-center md:gap-2">
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Status:</span>
+				<Toggle
+					checked={enabled}
+					label={enabled ? 'Enabled' : 'Disabled'}
+					fullWidth
+					color={enabled ? 'green' : 'red'}
+					on:change={(e) => onEnabledChange?.(e.detail)}
+				/>
+			</div>
 		</div>
 
 		<!-- Rename Folders -->
-		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Folders</span>
-		<div class="md:flex md:items-center md:gap-2">
-			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Folders:</span>
-			<Toggle
-				checked={renameFolders}
-				label={renameFolders ? 'On' : 'Off'}
-				color={renameFolders ? 'accent' : 'neutral'}
-				on:change={(e) => onRenameFoldersChange?.(e.detail)}
-			/>
+		<div>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Folders</span>
+			<div class="md:flex md:items-center md:gap-2">
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Folders:</span>
+				<Toggle
+					checked={renameFolders}
+					label={renameFolders ? 'On' : 'Off'}
+					fullWidth
+					color={renameFolders ? 'accent' : 'neutral'}
+					on:change={(e) => onRenameFoldersChange?.(e.detail)}
+				/>
+			</div>
 		</div>
 
 		<!-- Summary Notifications -->
-		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Summary</span>
-		<div class="md:flex md:items-center md:gap-2">
-			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Summary:</span>
-			<Toggle
-				checked={summaryNotifications}
-				label={summaryNotifications ? 'On' : 'Off'}
-				color={summaryNotifications ? 'accent' : 'neutral'}
-				on:change={(e) => onSummaryNotificationsChange?.(e.detail)}
-			/>
+		<div>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Summary</span>
+			<div class="md:flex md:items-center md:gap-2">
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Summary:</span>
+				<Toggle
+					checked={summaryNotifications}
+					label={summaryNotifications ? 'On' : 'Off'}
+					fullWidth
+					color={summaryNotifications ? 'accent' : 'neutral'}
+					on:change={(e) => onSummaryNotificationsChange?.(e.detail)}
+				/>
+			</div>
 		</div>
 
 		<!-- Divider (desktop only) -->
 		<div class="hidden h-6 w-px bg-neutral-200 md:block dark:bg-neutral-700"></div>
 
 		<!-- Schedule -->
-		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Schedule</span>
-		<div class="md:flex md:items-center md:gap-2">
-			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Schedule:</span>
-			<CronInput bind:value={cronValue} {minIntervalMinutes} {onWarning} />
+		<div>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Schedule</span>
+			<div class="md:flex md:items-center md:gap-2">
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400">Schedule:</span>
+				<CronInput bind:value={cronValue} {minIntervalMinutes} {onWarning} />
+			</div>
 		</div>
 
 		<!-- Ignore Tag -->
-		<span class="text-sm text-neutral-500 md:hidden dark:text-neutral-400">Ignore Tag</span>
-		<div class="md:flex md:items-center md:gap-2">
-			<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400"
-				>Ignore Tag:</span
-			>
-			<FormInput
-				label="Ignore Tag"
-				hideLabel
-				lowercase
-				name="ignore-tag"
-				size="md"
-				value={ignoreTag}
-				placeholder="no-rename"
-				on:input={(e) => onIgnoreTagChange?.(e.detail)}
-			/>
+		<div>
+			<span class="mb-1 block text-sm text-neutral-500 md:hidden dark:text-neutral-400">Ignore Tag</span>
+			<div class="md:flex md:items-center md:gap-2">
+				<span class="hidden text-sm text-neutral-500 md:inline dark:text-neutral-400"
+					>Ignore Tag:</span
+				>
+				<FormInput
+					label="Ignore Tag"
+					hideLabel
+					lowercase
+					name="ignore-tag"
+					size="md"
+					value={ignoreTag}
+					placeholder="no-rename"
+					on:input={(e) => onIgnoreTagChange?.(e.detail)}
+				/>
+			</div>
 		</div>
 
 		<!-- Run status (right-aligned on desktop, full-width row on mobile) -->
 		{#if lastRunAt}
 			<div
-				class="col-span-2 flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 md:ml-auto md:border-0 md:pt-0 dark:border-neutral-700 dark:text-neutral-400"
+				class="flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 md:ml-auto md:border-0 md:pt-0 dark:border-neutral-700 dark:text-neutral-400"
 			>
 				{#if !enabled}
 					<span

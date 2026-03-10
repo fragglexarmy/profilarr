@@ -60,7 +60,7 @@
 		: 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800'}"
 >
 	{#if label}
-		<span class="truncate">{label}</span>
+		<span class="min-w-0">{label}</span>
 	{/if}
 	<IconCheckbox
 		{checked}
