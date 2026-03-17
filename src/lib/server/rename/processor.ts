@@ -15,8 +15,8 @@ import type { RenameSettings } from '$db/queries/arrRenameSettings.ts';
 import type { ArrInstance } from '$db/queries/arrInstances.ts';
 import type { RenameJobLog, LibrarySnapshot } from './types.ts';
 import { logRenameRun, logRenameError } from './logger.ts';
-import { notifications } from '$lib/server/notifications/definitions/index.ts';
-import { notificationServicesQueries } from '$db/queries/notificationServices.ts';
+import { notifications } from '$notifications/definitions/index.ts';
+import { notificationManager } from '$notifications/NotificationManager.ts';
 import { logger } from '$logger/logger.ts';
 
 import {
@@ -107,7 +107,8 @@ function createRadarrAdapter(client: RadarrClient): RenameAdapter {
 				id: m.id,
 				title: m.title,
 				tags: m.tags ?? [],
-				rootFolderPath: m.rootFolderPath ?? ''
+				rootFolderPath: m.rootFolderPath ?? '',
+				imageUrl: m.images?.find((img) => img.coverType === 'poster')?.remoteUrl
 			}));
 		},
 		getTags: () => client.getTags(),
@@ -162,7 +163,8 @@ function createSonarrAdapter(client: SonarrClient): RenameAdapter {
 				id: s.id,
 				title: s.title,
 				tags: s.tags ?? [],
-				rootFolderPath: s.rootFolderPath ?? ''
+				rootFolderPath: s.rootFolderPath ?? '',
+				imageUrl: s.images?.find((img) => img.coverType === 'poster')?.remoteUrl
 			}));
 		},
 		getTags: () => client.getTags(),
@@ -223,29 +225,7 @@ async function sendRenameNotification(
 	log: RenameJobLog,
 	summaryNotifications: boolean
 ): Promise<void> {
-	const { DiscordNotifier } = await import('$lib/server/notifications/notifiers/discord/index.ts');
-
-	const services = notificationServicesQueries.getAllEnabled();
-	const notificationType = `rename.${log.status}`;
-
-	for (const service of services) {
-		try {
-			const enabledTypes = JSON.parse(service.enabled_types) as string[];
-			if (!enabledTypes.includes(notificationType)) {
-				continue;
-			}
-
-			const config = JSON.parse(service.config);
-
-			if (service.service_type === 'discord') {
-				const notifier = new DiscordNotifier(config);
-				const notification = notifications.rename({ log, config, summaryNotifications }).build();
-				await notifier.notify(notification);
-			}
-		} catch {
-			// Errors are logged by the notifier
-		}
-	}
+	await notificationManager.notify(notifications.rename({ log, summaryNotifications }));
 }
 
 // =========================================================================
@@ -392,6 +372,9 @@ export async function processRenameConfig(
 			// Step 5: Diff snapshots to find actual changes
 			const diff = diffSnapshots(beforeSnapshot, afterSnapshot);
 
+			// Build imageUrl lookup from library items
+			const imageUrlMap = new Map(filteredItems.map((i) => [i.id, i.imageUrl]));
+
 			let totalFilesRenamed = 0;
 			let totalFoldersRenamed = 0;
 
@@ -408,7 +391,8 @@ export async function processRenameConfig(
 					files: entity.files.map((f) => ({
 						existingPath: f.oldPath,
 						newPath: f.newPath
-					}))
+					})),
+					imageUrl: imageUrlMap.get(entity.id)
 				});
 			}
 
