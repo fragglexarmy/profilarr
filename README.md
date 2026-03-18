@@ -8,83 +8,76 @@
   </picture>
 </p>
 
-<br>
+<h3 align="center">Build, test, and deploy configurations across your media stack</h3>
 
 <p align="center">
-  <a href="https://github.com/Dictionarry-Hub/profilarr/releases"><img src="https://img.shields.io/github/v/release/Dictionarry-Hub/profilarr?color=blue" alt="GitHub release"></a>
-  <a href="https://hub.docker.com/r/santiagosayshey/profilarr"><img src="https://img.shields.io/docker/pulls/santiagosayshey/profilarr?color=blue" alt="Docker Pulls"></a>
-  <a href="https://github.com/Dictionarry-Hub/profilarr/blob/develop/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"></a>
-  <a href="https://dictionarry.dev/"><img src="https://img.shields.io/badge/Website-dictionarry.dev-blue" alt="Website"></a>
-  <a href="https://discord.gg/2A89tXZMgA"><img src="https://img.shields.io/discord/1202375791556431892?color=blue&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://www.buymeacoffee.com/santiagosayshey"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-blue?logo=buy-me-a-coffee" alt="Buy Me A Coffee"></a>
-  <a href="https://github.com/sponsors/Dictionarry-Hub"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support-blue?logo=github-sponsors" alt="GitHub Sponsors"></a>
+  <a href="https://github.com/Dictionarry-Hub/profilarr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Dictionarry-Hub/profilarr/ci.yml?label=CI" alt="CI"></a>
+  <a href="https://github.com/Dictionarry-Hub/profilarr/releases"><img src="https://img.shields.io/github/v/release/Dictionarry-Hub/profilarr" alt="Release"></a>
+  <a href="https://github.com/Dictionarry-Hub/profilarr/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"></a>
+  <a href="https://discord.gg/2A89tXZMgA"><img src="https://img.shields.io/discord/1202375791556431892?color=5865F2&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://dictionarry.dev"><img src="https://img.shields.io/badge/Website-dictionarry.dev-blue" alt="Website"></a>
 </p>
 
-<p>Manage quality profiles, custom formats, and release profiles across your Radarr and Sonarr instances. Define your profiles once with a Git-backed configuration database, then sync them to any number of *arr instances.</p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/hero-light.png">
+    <img alt="Profilarr screenshot" src="docs/assets/hero-light.png" width="800">
+  </picture>
+</p>
 
 > [!WARNING]
-> V2 is under heavy development and is _NOT_ ready for production use. Use
-> [Profilarr V1](https://github.com/Dictionarry-Hub/profilarr/tree/v1) until
-> V2 is ready.
+> V2 is not yet ready for production use. It is currently in closed beta.
+> For production use, see [Profilarr V1](https://github.com/Dictionarry-Hub/profilarr/tree/v1).
+> Join our [Discord](https://discord.gg/2A89tXZMgA) if you'd like to beta test.
 
-## Features
+## 🌍 Overview
 
-**Core**
+If you manage a media server, you've probably spent hours configuring quality
+profiles, piecing together custom formats from forum posts, and hoping nothing
+drifts between instances. Profilarr tries to make that easier.
 
-- **Link** - Connect to configuration databases like the
-  [Dictionarry database](https://github.com/Dictionarry-Hub/db) or any Profilarr
-  Compliant Database (PCD)
-- **Bridge** - Add your Radarr and Sonarr instances by URL and API key
-- **Sync** - Push configurations to your instances. Profilarr compiles
-  everything to the right format automatically
+## ✨ Features
 
-**For Users**
+### 🔨 Build
 
-- **Ready-to-Use Configurations** - Stop spending hours piecing together
-  settings from forum posts. Get complete, tested quality profiles, custom
-  formats, and media settings designed around specific goals
-- **Stay Updated** - Make local tweaks that persist across upstream updates.
-  View changelogs, diffs, and revert changes when needed. Merge conflicts are
-  handled transparently
-- **Automated Upgrades** - The arrs don't search for the best release, they grab
-  the first RSS item that qualifies. Profilarr triggers intelligent searches
-  based on filters and selectors
+- **Link databases** - connect to curated databases like
+  [Dictionarry](https://github.com/Dictionarry-Hub/database),
+  [TRaSH Guides](https://github.com/Dictionarry-Hub/trash-pcd),
+  or [Dumpstarr](https://github.com/Dumpstarr/Database)
+- **Build your own** - create and share your own database using the
+  [PCD template](https://github.com/Dictionarry-Hub/database-template)
+- **Quality profiles** - group and order qualities, score custom formats per app
+- **Custom formats** - match releases by resolution, source, release group,
+  size, language, and more
+- **Regular expressions** - reusable patterns shared across custom formats
+- **Media management** - naming conventions, media settings, and quality
+  definitions
+- **Delay profiles** - protocol preferences, delays, and score gates
+- **Local tweaks** - your changes persist across upstream updates with smart
+  conflict handling
 
-**For Developers**
+### 🧪 Test
 
-- **Unified Architecture** - One configuration language that compiles to
-  Radarr/Sonarr-specific formats on sync. No more maintaining separate configs
-  for each app
-- **Reusable Components** - Regular expressions are separate entities shared
-  across custom formats. Change once, update everywhere
-- **OSQL** - Configurations stored as append-only SQL operations. Readable,
-  auditable, diffable. Git-native version control with complete history
-- **Testing** - Validate regex patterns, custom format conditions, and quality
-  profile behavior before syncing
+- **Regular expressions** - validate patterns with embedded [Regex101](https://regex101.com/) test cases
+- **Custom formats** - test releases against conditions with a full breakdown of
+  how each passes or fails, with match visualization. Powered by a C# parser
+  that matches Radarr and Sonarr's own parsing logic
+- **Quality profiles** - simulate how a profile scores and ranks releases for a
+  given movie or series
 
-**Authentication**
+### 🚀 Deploy
 
-- `AUTH=on` (default) - Username/password login with session-based auth
-- `AUTH=oidc` - SSO via OpenID Connect provider
-- `AUTH=off` - No authentication (use with external auth like Authentik/Authelia)
-- Optional local bypass toggle for LAN access without login
+- **Sync** - push configurations to any number of Arr instances
+- **Upgrades** - automated searches with configurable filters, selectors, and
+  cooldowns
+- **Rename** - bulk rename files and folders with dry-run previews
+- **Jobs** - scheduled automation for sync, upgrades, renames, backups, and
+  cleanup
+- **Notifications** - Discord, Telegram, Slack, ntfy, Pushover, Gotify, Apprise,
+  and generic webhooks
 
-API access via `X-Api-Key` header (bcrypt-hashed in DB). See
-[security docs](docs/architecture/security.md) for details.
-
-## Discord
-
-We're most active on [Discord](https://discord.gg/2A89tXZMgA), where we post
-announcements, help people troubleshoot their setups, and have the kind of
-conversations that don't fit neatly into GitHub issues. If you've got questions
-or want to follow along with development, that's where to find us.
-
-## Documentation
-
-See **[dictionarry.dev](https://dictionarry.dev/)** for complete installation,
-usage, and API documenation.
-
-## Getting Started
+## 📦 Getting Started
 
 ### Production
 
@@ -120,6 +113,21 @@ services:
 > testing. Linking, syncing, and all other features work without it. Remove the
 > `parser` service and related environment variables if you don't need it.
 
+| Variable      | Default     | Description                     |
+| ------------- | ----------- | ------------------------------- |
+| `PUID`        | `1000`      | User ID for file permissions    |
+| `PGID`        | `1000`      | Group ID for file permissions   |
+| `UMASK`       | `022`       | File creation mask              |
+| `TZ`          | `Etc/UTC`   | Timezone for scheduling         |
+| `PORT`        | `6868`      | Web UI port                     |
+| `HOST`        | `0.0.0.0`   | Bind address                    |
+| `AUTH`        | `on`        | Auth mode (`on`, `oidc`, `off`) |
+| `PARSER_HOST` | `localhost` | Parser service host             |
+| `PARSER_PORT` | `5000`      | Parser service port             |
+
+See the [documentation](https://dictionarry.dev/) for full setup and
+configuration guides.
+
 ### Development
 
 **Prerequisites**
@@ -134,29 +142,23 @@ cd profilarr
 deno task dev
 ```
 
-This runs the parser service and Vite dev server concurrently. See
-[CONTRIBUTING.md](docs/CONTRIBUTING.md) for architecture documentation.
+This runs the parser service and Vite dev server concurrently.
 
-### Environment Variables
+Contributions are welcome! For anything beyond small fixes, please open an
+issue or reach out on [Discord](https://discord.gg/2A89tXZMgA) first so we
+can discuss the approach. See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for the
+full development workflow.
 
-| Variable             | Default     | Description                                                                   |
-| -------------------- | ----------- | ----------------------------------------------------------------------------- |
-| `PUID`               | `1000`      | User ID for file permissions                                                  |
-| `PGID`               | `1000`      | Group ID for file permissions                                                 |
-| `UMASK`              | `022`       | File creation mask                                                            |
-| `TZ`                 | `Etc/UTC`   | Timezone for scheduling                                                       |
-| `PORT`               | `6868`      | Web UI port                                                                   |
-| `HOST`               | `0.0.0.0`   | Bind address                                                                  |
-| `APP_BASE_PATH`      | `/config`   | Base path for data, logs, backups                                             |
-| `AUTH`               | `on`        | Auth mode: `on`, `off`, `oidc`                                                |
-| `ORIGIN`             | —           | External URL for reverse proxy setups (e.g., `https://profilarr.example.com`) |
-| `OIDC_DISCOVERY_URL` | —           | OIDC discovery endpoint (only when `AUTH=oidc`)                               |
-| `OIDC_CLIENT_ID`     | —           | OIDC client ID (only when `AUTH=oidc`)                                        |
-| `OIDC_CLIENT_SECRET` | —           | OIDC client secret (only when `AUTH=oidc`)                                    |
-| `PARSER_HOST`        | `localhost` | Parser service host                                                           |
-| `PARSER_PORT`        | `5000`      | Parser service port                                                           |
+## ❤️ Support
 
-## License
+Every feature in Profilarr is free for everyone, and development will continue
+with or without donations. If you'd like to show support, you can, but it's
+in no way necessary.
+
+- :coffee: [Buy Me A Coffee](https://www.buymeacoffee.com/santiagosayshey)
+- :cat: [GitHub Sponsors](https://github.com/sponsors/Dictionarry-Hub)
+
+## 🤝 License
 
 [AGPL-3.0](LICENSE)
 
