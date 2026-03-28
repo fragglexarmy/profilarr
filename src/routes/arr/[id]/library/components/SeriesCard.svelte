@@ -26,10 +26,12 @@
 		return allMonitored ? 'monitored' : 'partial';
 	})();
 
-	$: slug = series.title
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '');
+	$: slug =
+		series.titleSlug ??
+		series.title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
 
 	function formatSize(bytes: number): string {
 		if (!bytes) return '-';
@@ -119,18 +121,20 @@
 			</div>
 		{/if}
 		<!-- Monitored indicator -->
-		<div class="absolute top-2 left-2">
-			<IconCheckbox
-				checked={monitoredState !== 'unmonitored'}
-				icon={Check}
-				color={monitoredState === 'monitored'
-					? 'green'
-					: monitoredState === 'partial'
-						? '#EAB308'
-						: 'neutral'}
-				shape="circle"
-			/>
-		</div>
+		{#if visibleFields.has('monitored')}
+			<div class="absolute top-2 left-2">
+				<IconCheckbox
+					checked={monitoredState !== 'unmonitored'}
+					icon={Check}
+					color={monitoredState === 'monitored'
+						? 'green'
+						: monitoredState === 'partial'
+							? '#EAB308'
+							: 'neutral'}
+					shape="circle"
+				/>
+			</div>
+		{/if}
 
 		<!-- Info button -->
 		<div class="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
