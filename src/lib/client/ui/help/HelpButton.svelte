@@ -1,8 +1,12 @@
 <script lang="ts">
-	import { Bug, Bird, Lightbulb } from 'lucide-svelte';
+	import { Bug, Bird, Lightbulb, GraduationCap } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
+	import { FEATURES } from '$lib/shared/features';
+	import { dev } from '$app/environment';
 
 	export let variant: 'fab' | 'navbar' = 'fab';
+
+	$: cutsceneEnabled = FEATURES.cutscene || dev;
 
 	const quips = [
 		'What do you want THIS time?',
@@ -51,6 +55,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
+	data-onboarding={isFab ? 'help-button' : undefined}
 	class={isFab ? 'fixed right-6 bottom-6 z-50 hidden md:block' : 'relative md:hidden'}
 	on:click|stopPropagation
 >
@@ -87,12 +92,24 @@
 					href="https://github.com/Dictionarry-Hub/profilarr/issues/new?template=feature.yml"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="flex w-full items-center gap-3 px-3 py-2 text-left text-neutral-700 transition-colors hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-700"
+					class="flex w-full items-center gap-3 px-3 py-2 text-left text-neutral-700 transition-colors hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-700 {cutsceneEnabled
+						? 'border-b border-neutral-200/50 dark:border-neutral-700/40'
+						: ''}"
 					on:click={close}
 				>
 					<Lightbulb size={16} />
 					<span>Request a Feature</span>
 				</a>
+				{#if cutsceneEnabled && isFab}
+					<a
+						href="/onboarding"
+						class="flex w-full items-center gap-3 px-3 py-2 text-left text-neutral-700 transition-colors hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-700"
+						on:click={close}
+					>
+						<GraduationCap size={16} />
+						<span>Onboarding</span>
+					</a>
+				{/if}
 				{#if isFab}
 					<div class="border-t border-neutral-200/50 px-3 py-2 dark:border-neutral-700/40">
 						<p class="text-xs text-neutral-500 italic dark:text-neutral-400">{quip}</p>
@@ -112,12 +129,12 @@
 		{#if isFab}
 			<span class="nav-icon-emoji text-2xl select-none" class:squawk={open}>🦜</span>
 			<span class="nav-icon-lucide text-neutral-700 dark:text-neutral-200" class:squawk={open}>
-				<Bird size={24} />
+				<Bird size={24} class="-scale-x-100" />
 			</span>
 		{:else}
 			<span class="nav-icon-emoji text-lg" class:squawk={open}>🦜</span>
 			<span class="nav-icon-lucide" class:squawk={open}>
-				<Bird class="h-[18px] w-[18px] text-neutral-700 dark:text-neutral-300" />
+				<Bird class="h-[18px] w-[18px] -scale-x-100 text-neutral-700 dark:text-neutral-300" />
 			</span>
 		{/if}
 	</button>

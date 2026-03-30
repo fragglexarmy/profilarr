@@ -6,6 +6,12 @@
 	import BottomNav from '$ui/navigation/bottomNav/BottomNav.svelte';
 	import AlertContainer from '$alerts/AlertContainer.svelte';
 	import HelpButton from '$ui/help/HelpButton.svelte';
+	import CutsceneOverlay from '$lib/client/cutscene/CutsceneOverlay.svelte';
+	import CutscenePrompt from '$lib/client/cutscene/CutscenePrompt.svelte';
+	import CutsceneComplete from '$lib/client/cutscene/CutsceneComplete.svelte';
+	import { cutscene } from '$lib/client/cutscene/store';
+	import { FEATURES } from '$lib/shared/features';
+	import { dev } from '$app/environment';
 	import { page } from '$app/stores';
 	import { onMount, onDestroy } from 'svelte';
 	import { jobStatus } from '$stores/jobStatus';
@@ -15,14 +21,22 @@
 	// Hide navigation on auth pages (login, setup, etc.)
 	$: isAuthPage = $page.url.pathname.startsWith('/auth/');
 
+	$: cutsceneEnabled = FEATURES.cutscene || dev;
+
+	let innerWidth = 0;
+	$: isDesktop = innerWidth >= 768;
+
 	onMount(() => {
 		if (!isAuthPage) jobStatus.connect();
+		if (!isAuthPage && cutsceneEnabled) cutscene.init(data.onboardingShown);
 	});
 
 	onDestroy(() => {
 		jobStatus.disconnect();
 	});
 </script>
+
+<svelte:window bind:innerWidth />
 
 <svelte:head>
 	<link rel="icon" href={logo} />
@@ -39,6 +53,11 @@
 	/>
 	<BottomNav />
 	<HelpButton />
+	{#if cutsceneEnabled && isDesktop}
+		<CutsceneOverlay />
+		<CutscenePrompt />
+		<CutsceneComplete />
+	{/if}
 {/if}
 <AlertContainer />
 

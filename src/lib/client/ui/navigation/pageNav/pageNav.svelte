@@ -51,6 +51,7 @@
 {/if}
 
 <nav
+	data-onboarding="sidebar"
 	class="fixed top-0 left-0 z-[70] flex h-full w-[90vw] flex-col border-r border-neutral-200 bg-neutral-50 transition-transform duration-200 dark:border-neutral-800 dark:bg-neutral-900
 		{$mobileNavOpen ? 'translate-x-0' : '-translate-x-full'}
 		md:top-16 md:h-[calc(100vh-4rem)] md:w-80 md:translate-x-0 md:border-t"
@@ -87,6 +88,7 @@
 			icon={FolderTree}
 			hasItems={databases.length > 0}
 			initialOpen={true}
+			onboardingId="nav-databases"
 		>
 			{#each databases as db (db.id)}
 				<GroupItem label={db.name} href="/databases/{db.id}" />
@@ -100,6 +102,7 @@
 			icon={Link}
 			hasItems={arrInstances.length > 0}
 			initialOpen={true}
+			onboardingId="nav-arrs"
 		>
 			{#each arrInstances as instance (instance.id)}
 				<GroupItem
@@ -118,6 +121,7 @@
 			icon={Sliders}
 			initialOpen={true}
 			hasItems={parserAvailable}
+			onboardingId="nav-quality-profiles"
 		>
 			{#if parserAvailable}
 				<GroupItem label="Testing" href="/quality-profiles/entity-testing" />
@@ -130,6 +134,7 @@
 			href="/custom-formats"
 			icon={Palette}
 			initialOpen={false}
+			onboardingId="nav-custom-formats"
 		/>
 
 		<Group
@@ -138,6 +143,7 @@
 			href="/regular-expressions"
 			icon={Microscope}
 			initialOpen={false}
+			onboardingId="nav-regex"
 		/>
 
 		<Group
@@ -147,6 +153,7 @@
 			icon={Tag}
 			initialOpen={true}
 			hasItems={true}
+			onboardingId="nav-media-management"
 		>
 			<GroupItem
 				label="Naming Settings"
@@ -171,6 +178,7 @@
 			href="/delay-profiles"
 			icon={Clock}
 			initialOpen={false}
+			onboardingId="nav-delay-profiles"
 		/>
 
 		<Group
@@ -180,6 +188,7 @@
 			icon={Settings}
 			initialOpen={true}
 			hasItems={true}
+			onboardingId="nav-settings"
 		>
 			<GroupItem label="General" href="/settings/general" />
 			<GroupItem label="Jobs" href="/settings/jobs" />
