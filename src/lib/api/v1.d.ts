@@ -4,6 +4,37 @@
  */
 
 export interface paths {
+	'/databases': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * List Databases
+		 * @description Returns all linked database instances with secrets stripped.
+		 *
+		 *     **Use cases:**
+		 *     - Dashboard widgets showing connected databases
+		 *     - Automation scripts checking database state
+		 *     - Prerequisite checks (e.g. cutscene onboarding)
+		 *
+		 *     **Behavior:**
+		 *     - Returns an empty array if no databases are linked
+		 *     - The `personal_access_token` field is never included; `hasPat` indicates
+		 *       whether one is configured
+		 *     - The `local_path` field is excluded (internal detail)
+		 */
+		get: operations['listDatabases'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/health': {
 		parameters: {
 			query?: never;
@@ -848,6 +879,46 @@ export interface components {
 		ImportResponse: {
 			success: boolean;
 		};
+		DatabaseInstance: {
+			/** @description Database instance ID */
+			id: number;
+			/**
+			 * Format: uuid
+			 * @description Unique identifier
+			 */
+			uuid: string;
+			/** @description Display name */
+			name: string;
+			/** @description GitHub repository URL */
+			repository_url: string;
+			/** @description Auto-sync interval in minutes (0 = manual only) */
+			sync_strategy: number;
+			/** @description Whether to automatically pull updates (0 or 1) */
+			auto_pull: number;
+			/** @description Whether the database is active (0 or 1) */
+			enabled: number;
+			/** @description Whether the repository is private (0 or 1) */
+			is_private: number;
+			/** @description Whether local ops editing is enabled (0 or 1) */
+			local_ops_enabled: number;
+			/** @description Git user name for commits */
+			git_user_name?: string | null;
+			/** @description Git user email for commits */
+			git_user_email?: string | null;
+			/**
+			 * @description How to handle conflicts between local tweaks and upstream updates
+			 * @enum {string}
+			 */
+			conflict_strategy: 'override' | 'align' | 'ask';
+			/** @description Last successful sync timestamp */
+			last_synced_at?: string | null;
+			/** @description Creation timestamp */
+			created_at: string;
+			/** @description Last update timestamp */
+			updated_at: string;
+			/** @description Whether a personal access token is configured */
+			hasPat: boolean;
+		};
 		ValidateRegexRequest: {
 			/** @description The .NET regex pattern to validate */
 			pattern: string;
@@ -1055,6 +1126,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+	listDatabases: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List of linked databases */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DatabaseInstance'][];
+				};
+			};
+			/** @description Not authenticated */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
 	getHealth: {
 		parameters: {
 			query?: never;
