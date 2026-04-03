@@ -1,11 +1,11 @@
 /**
- * Integration tests: GET /api/v1/databases
+ * Integration tests: GET /api/v1/arr
  *
  * Tests:
  * 1. Returns 401 without auth
- * 2. Returns 200 with empty array when no databases linked
- * 3. Returns populated array after seeding a database instance
- * 4. Response does not contain personal_access_token or local_path
+ * 2. Returns 200 with empty array when no instances exist
+ * 3. Returns populated array after seeding an instance
+ * 4. Response does not contain api_key
  */
 
 import { assertEquals, assertExists } from '@std/assert';
@@ -15,19 +15,18 @@ import { createUserDirect, setApiKey } from '$test-harness/setup.ts';
 import { setup, teardown, test, run } from '$test-harness/runner.ts';
 import { Database } from '@db/sqlite';
 
-const PORT = 7020;
+const PORT = 7021;
 const ORIGIN = `http://localhost:${PORT}`;
-const API_KEY = 'databases-test-key-abc123';
+const API_KEY = 'arr-test-key-abc123';
 
 let client: TestClient;
 
-function seedDatabase(dbPath: string): void {
+function seedArrInstance(dbPath: string): void {
 	const db = new Database(dbPath);
 	try {
 		db.exec(
-			`INSERT INTO database_instances (uuid, name, repository_url, local_path, personal_access_token, enabled)
-			 VALUES (?, 'Test DB', 'https://github.com/test/repo', '/tmp/test-repo', 'secret-pat-value', 1)`,
-			[crypto.randomUUID()]
+			`INSERT INTO arr_instances (name, type, url, api_key, enabled)
+			 VALUES ('Test Radarr', 'radarr', 'http://localhost:7878', 'secret-arr-api-key', 1)`
 		);
 	} finally {
 		db.close();
@@ -46,14 +45,14 @@ teardown(async () => {
 	await stopServer(PORT);
 });
 
-test('GET /api/v1/databases returns 401 without auth', async () => {
+test('GET /api/v1/arr returns 401 without auth', async () => {
 	const unauthClient = new TestClient(ORIGIN);
-	const res = await unauthClient.get('/api/v1/databases');
+	const res = await unauthClient.get('/api/v1/arr');
 	assertEquals(res.status, 401);
 });
 
-test('GET /api/v1/databases returns 200 with empty array', async () => {
-	const res = await client.get('/api/v1/databases', {
+test('GET /api/v1/arr returns 200 with empty array', async () => {
+	const res = await client.get('/api/v1/arr', {
 		headers: { 'X-Api-Key': API_KEY }
 	});
 	assertEquals(res.status, 200);
@@ -62,28 +61,27 @@ test('GET /api/v1/databases returns 200 with empty array', async () => {
 	assertEquals(body.length, 0);
 });
 
-test('GET /api/v1/databases returns seeded database', async () => {
-	seedDatabase(getDbPath(PORT));
-	const res = await client.get('/api/v1/databases', {
+test('GET /api/v1/arr returns seeded instance', async () => {
+	seedArrInstance(getDbPath(PORT));
+	const res = await client.get('/api/v1/arr', {
 		headers: { 'X-Api-Key': API_KEY }
 	});
 	assertEquals(res.status, 200);
 	const body = await res.json();
 	assertEquals(body.length, 1);
-	assertEquals(body[0].name, 'Test DB');
-	assertEquals(body[0].repository_url, 'https://github.com/test/repo');
-	assertExists(body[0].hasPat);
-	assertEquals(body[0].hasPat, true);
+	assertEquals(body[0].name, 'Test Radarr');
+	assertEquals(body[0].type, 'radarr');
+	assertEquals(body[0].url, 'http://localhost:7878');
+	assertExists(body[0].enabled);
 });
 
-test('response does not contain secrets or internal fields', async () => {
-	const res = await client.get('/api/v1/databases', {
+test('response does not contain api_key', async () => {
+	const res = await client.get('/api/v1/arr', {
 		headers: { 'X-Api-Key': API_KEY }
 	});
 	const body = await res.json();
 	assertEquals(body.length, 1);
-	assertEquals(body[0].personal_access_token, undefined);
-	assertEquals(body[0].local_path, undefined);
+	assertEquals(body[0].api_key, undefined);
 });
 
 await run();

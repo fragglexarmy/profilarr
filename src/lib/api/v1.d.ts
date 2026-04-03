@@ -4,6 +4,35 @@
  */
 
 export interface paths {
+	'/arr': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * List Arr Instances
+		 * @description Returns all Arr instances (Radarr/Sonarr) with secrets stripped.
+		 *
+		 *     **Use cases:**
+		 *     - Dashboard widgets showing connected instances
+		 *     - Automation scripts checking instance state
+		 *     - Prerequisite checks (e.g. onboarding)
+		 *
+		 *     **Behavior:**
+		 *     - Returns an empty array if no instances are connected
+		 *     - The `api_key` field is never included
+		 */
+		get: operations['listArrInstances'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/databases': {
 		parameters: {
 			query?: never;
@@ -879,6 +908,27 @@ export interface components {
 		ImportResponse: {
 			success: boolean;
 		};
+		ArrInstance: {
+			/** @description Instance ID */
+			id: number;
+			/** @description Display name */
+			name: string;
+			type: components['schemas']['ArrType'];
+			/** @description Instance URL */
+			url: string;
+			/** @description JSON array of tags */
+			tags?: string | null;
+			/** @description Whether the instance is active (0 or 1) */
+			enabled: number;
+			/** @description Library cache refresh interval in minutes (0 = manual) */
+			library_refresh_interval: number;
+			/** @description Last library refresh timestamp */
+			library_last_refreshed_at?: string | null;
+			/** @description Creation timestamp */
+			created_at: string;
+			/** @description Last update timestamp */
+			updated_at: string;
+		};
 		DatabaseInstance: {
 			/** @description Database instance ID */
 			id: number;
@@ -1126,6 +1176,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+	listArrInstances: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List of Arr instances */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ArrInstance'][];
+				};
+			};
+			/** @description Not authenticated */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
 	listDatabases: {
 		parameters: {
 			query?: never;
