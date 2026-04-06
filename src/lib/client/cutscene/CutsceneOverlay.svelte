@@ -4,7 +4,8 @@
 	import { fade, fly } from 'svelte/transition';
 	import { cutscene } from './store';
 	import { setupCompletion, teardownCompletion } from './completions.ts';
-	import { STAGES, PIPELINES } from './definitions/index.ts';
+	import { STAGES } from './definitions/index.ts';
+	import { routeResolvers } from './routeResolvers.ts';
 	import CutsceneCard from './CutsceneCard.svelte';
 
 	let targetRect: DOMRect | null = null;
@@ -17,27 +18,10 @@
 	$: step = $currentStep;
 	$: active = state.active;
 
-	// Compute overall progress across pipeline or single stage
+	$: isFirstStep = state.stepIndex === 0;
+
 	$: progressInfo = (() => {
 		if (!state.active || !state.stageId) return { current: 0, total: 0 };
-
-		if (state.pipelineId) {
-			const pipeline = PIPELINES[state.pipelineId];
-			if (!pipeline) return { current: 0, total: 0 };
-
-			let total = 0;
-			let current = 0;
-			for (const sid of pipeline.stages) {
-				const s = STAGES[sid];
-				if (!s) continue;
-				if (sid === state.stageId) {
-					current = total + state.stepIndex;
-				}
-				total += s.steps.length;
-			}
-			return { current, total };
-		}
-
 		const stage = STAGES[state.stageId];
 		if (!stage) return { current: 0, total: 0 };
 		return { current: state.stepIndex, total: stage.steps.length };
@@ -77,6 +61,11 @@
 		requestAnimationFrame(frame);
 	}
 
+	function isInViewport(el: Element): boolean {
+		const rect = el.getBoundingClientRect();
+		return rect.top >= 0 && rect.bottom <= window.innerHeight;
+	}
+
 	function findTarget(): void {
 		if (!step?.target) {
 			targetRect = null;
@@ -84,6 +73,12 @@
 		}
 		const el = document.querySelector(`[data-onboarding="${step.target}"]`);
 		if (el) {
+			if (!isInViewport(el)) {
+				el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+				// Re-measure after scroll settles
+				setTimeout(() => findTarget(), 400);
+				return;
+			}
 			const rect = el.getBoundingClientRect();
 			const newRect = {
 				x: rect.left - PAD,
@@ -115,14 +110,19 @@
 	let lastStepId: string | null = null;
 	let cardReady = false;
 
+	async function resolveRoute(route: string | { resolve: string }): Promise<string> {
+		if (typeof route === 'string') return route;
+		const resolver = routeResolvers[route.resolve];
+		if (!resolver) return '/';
+		return resolver();
+	}
+
 	$: if (step && step.id !== lastStepId && typeof window !== 'undefined') {
 		lastStepId = step.id;
 		cardReady = false;
 		teardownCompletion();
 		setupCompletion(step, () => cutscene.advance());
 
-		// Navigate if step requires a specific route
-		const needsNav = step.route && window.location.pathname !== step.route;
 		const afterNav = () => {
 			tick().then(() => {
 				requestAnimationFrame(() => {
@@ -137,8 +137,15 @@
 			});
 		};
 
-		if (needsNav) {
-			goto(step.route!).then(afterNav);
+		// Navigate if step requires a specific route
+		if (step.route) {
+			resolveRoute(step.route).then((resolved) => {
+				if (window.location.pathname !== resolved) {
+					goto(resolved).then(afterNav);
+				} else {
+					afterNav();
+				}
+			});
 		} else {
 			afterNav();
 		}
@@ -224,8 +231,12 @@
 		}
 	}
 
-	function handleContinue(): void {
+	function handleForward(): void {
 		cutscene.advance();
+	}
+
+	function handleBack(): void {
+		cutscene.goBack();
 	}
 
 	function handleCancel(): void {
@@ -239,10 +250,26 @@
 		}
 	}
 
+	// Prevent user scroll while cutscene is active (but allow programmatic scrollIntoView)
+	function preventScroll(e: Event): void {
+		e.preventDefault();
+	}
+	$: if (typeof window !== 'undefined') {
+		if (active) {
+			window.addEventListener('wheel', preventScroll, { passive: false });
+			window.addEventListener('touchmove', preventScroll, { passive: false });
+		} else {
+			window.removeEventListener('wheel', preventScroll);
+			window.removeEventListener('touchmove', preventScroll);
+		}
+	}
+
 	onDestroy(() => {
 		teardownCompletion();
 		observer?.disconnect();
 		if (typeof window !== 'undefined') {
+			window.removeEventListener('wheel', preventScroll);
+			window.removeEventListener('touchmove', preventScroll);
 			window.removeEventListener('scroll', onScroll, true);
 			window.removeEventListener('resize', updateDimensions);
 		}
@@ -304,9 +331,10 @@
 				<CutsceneCard
 					title={step.title}
 					body={step.body}
-					showContinue={step.completion.type === 'manual'}
-					onContinue={handleContinue}
+					onBack={handleBack}
+					onForward={step.completion.type === 'manual' ? handleForward : undefined}
 					onCancel={handleCancel}
+					showBack={!isFirstStep}
 					currentStep={progressInfo.current}
 					totalSteps={progressInfo.total}
 				/>

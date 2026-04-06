@@ -6,7 +6,7 @@ export type Completion =
 
 export interface Step {
 	id: string;
-	route?: string;
+	route?: string | { resolve: string };
 	target?: string;
 	title: string;
 	body: string;
@@ -23,16 +23,21 @@ export interface Step {
 	completion: Completion;
 }
 
+export interface Prerequisite {
+	check: string;
+	message: string;
+}
+
 export interface Stage {
 	id: string;
 	name: string;
 	description: string;
 	steps: Step[];
 	silent?: boolean;
+	prerequisites?: Prerequisite[];
 }
 
-export interface Pipeline {
-	id: string;
+export interface StageGroup {
 	name: string;
 	description: string;
 	stages: string[];
@@ -40,9 +45,7 @@ export interface Pipeline {
 
 export interface CutsceneState {
 	active: boolean;
-	pipelineId: string | null;
 	stageId: string | null;
 	stepIndex: number;
-	completedStages: string[];
 	manualStart: boolean;
 }
