@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, X, AlertCircle, CircleCheck, CircleX } from 'lucide-svelte';
+	import { Check, X, AlertCircle, CircleCheck, CircleX, ExternalLink } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
 	import type { Regex101UnitTest } from '../../regex101/types';
 	import ActionsBar from '$ui/actions/ActionsBar.svelte';
@@ -7,16 +7,20 @@
 	import SearchAction from '$ui/actions/SearchAction.svelte';
 	import ViewToggle from '$ui/actions/ViewToggle.svelte';
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
+	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
+	import DropdownHeader from '$ui/dropdown/DropdownHeader.svelte';
 	import Table from '$ui/table/Table.svelte';
 	import Card from '$ui/card/Card.svelte';
 	import CardGrid from '$ui/card/CardGrid.svelte';
 	import Label from '$ui/label/Label.svelte';
 	import type { Column } from '$ui/table/types';
+	import Tooltip from '$ui/tooltip/Tooltip.svelte';
 	import { createDataPageStore } from '$lib/client/stores/dataPage';
 
 	export let unitTests: Regex101UnitTest[] = [];
 	export let loading: boolean = false;
 	export let error: string | null = null;
+	export let regex101Url: string = '';
 
 	// Data page store for search + view
 	const { search, view, filtered, setItems } = createDataPageStore(unitTests, {
@@ -162,43 +166,17 @@
 			{#if passHovered}
 				<div class="z-50" transition:fly={{ y: -8, duration: 150 }}>
 					<Dropdown position="right">
-						<div class="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-							Filter by result
-						</div>
-						<button
-							type="button"
-							class="flex w-full items-center gap-3 border-t border-neutral-200 px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:hover:bg-neutral-700"
+						<DropdownHeader label="Filter by result" />
+						<DropdownItem
+							label="Passed ({passedCount})"
+							selected={showPassed}
 							on:click={() => (showPassed = !showPassed)}
-						>
-							<div
-								class="flex h-4 w-4 items-center justify-center rounded border {showPassed
-									? 'border-accent-600 bg-accent-600 dark:border-accent-500 dark:bg-accent-500'
-									: 'border-neutral-300 dark:border-neutral-600'}"
-							>
-								{#if showPassed}
-									<Check size={12} class="text-white" />
-								{/if}
-							</div>
-							<span class="text-neutral-700 dark:text-neutral-300">Passed</span>
-							<span class="ml-auto text-xs text-neutral-400">{passedCount}</span>
-						</button>
-						<button
-							type="button"
-							class="flex w-full items-center gap-3 border-t border-neutral-200 px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:hover:bg-neutral-700"
+						/>
+						<DropdownItem
+							label="Failed ({failedCount})"
+							selected={showFailed}
 							on:click={() => (showFailed = !showFailed)}
-						>
-							<div
-								class="flex h-4 w-4 items-center justify-center rounded border {showFailed
-									? 'border-accent-600 bg-accent-600 dark:border-accent-500 dark:bg-accent-500'
-									: 'border-neutral-300 dark:border-neutral-600'}"
-							>
-								{#if showFailed}
-									<Check size={12} class="text-white" />
-								{/if}
-							</div>
-							<span class="text-neutral-700 dark:text-neutral-300">Failed</span>
-							<span class="ml-auto text-xs text-neutral-400">{failedCount}</span>
-						</button>
+						/>
 					</Dropdown>
 				</div>
 			{/if}
@@ -215,49 +193,33 @@
 			{#if matchHovered}
 				<div class="z-50" transition:fly={{ y: -8, duration: 150 }}>
 					<Dropdown position="right">
-						<div class="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-							Filter by expected
-						</div>
-						<button
-							type="button"
-							class="flex w-full items-center gap-3 border-t border-neutral-200 px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:hover:bg-neutral-700"
+						<DropdownHeader label="Filter by expected" />
+						<DropdownItem
+							label="Should Match ({shouldMatchCount})"
+							selected={showShouldMatch}
 							on:click={() => (showShouldMatch = !showShouldMatch)}
-						>
-							<div
-								class="flex h-4 w-4 items-center justify-center rounded border {showShouldMatch
-									? 'border-accent-600 bg-accent-600 dark:border-accent-500 dark:bg-accent-500'
-									: 'border-neutral-300 dark:border-neutral-600'}"
-							>
-								{#if showShouldMatch}
-									<Check size={12} class="text-white" />
-								{/if}
-							</div>
-							<span class="text-neutral-700 dark:text-neutral-300">Should Match</span>
-							<span class="ml-auto text-xs text-neutral-400">{shouldMatchCount}</span>
-						</button>
-						<button
-							type="button"
-							class="flex w-full items-center gap-3 border-t border-neutral-200 px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:hover:bg-neutral-700"
+						/>
+						<DropdownItem
+							label="Shouldn't Match ({shouldNotMatchCount})"
+							selected={showShouldNotMatch}
 							on:click={() => (showShouldNotMatch = !showShouldNotMatch)}
-						>
-							<div
-								class="flex h-4 w-4 items-center justify-center rounded border {showShouldNotMatch
-									? 'border-accent-600 bg-accent-600 dark:border-accent-500 dark:bg-accent-500'
-									: 'border-neutral-300 dark:border-neutral-600'}"
-							>
-								{#if showShouldNotMatch}
-									<Check size={12} class="text-white" />
-								{/if}
-							</div>
-							<span class="text-neutral-700 dark:text-neutral-300">Shouldn't Match</span>
-							<span class="ml-auto text-xs text-neutral-400">{shouldNotMatchCount}</span>
-						</button>
+						/>
 					</Dropdown>
 				</div>
 			{/if}
 		</div>
 
 		<ViewToggle bind:value={$view} />
+
+		{#if regex101Url}
+			<Tooltip text="Regex101">
+				<ActionButton
+					icon={ExternalLink}
+					iconClass="text-blue-600 dark:text-blue-400"
+					on:click={() => window.open(regex101Url, '_blank', 'noopener,noreferrer')}
+				/>
+			</Tooltip>
+		{/if}
 	</ActionsBar>
 
 	<!-- Content -->

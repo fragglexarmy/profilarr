@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-	import { Check, Grip, ChevronUp, ChevronDown } from 'lucide-svelte';
+	import { Check, ChevronUp, ChevronDown } from 'lucide-svelte';
+	import DraggableCard from '$ui/list/DraggableCard.svelte';
 	import Modal from '$ui/modal/Modal.svelte';
 	import IconCheckbox from '$lib/client/ui/form/IconCheckbox.svelte';
 	import FormInput from '$lib/client/ui/form/FormInput.svelte';
@@ -196,7 +197,9 @@
 			{:else}
 				<div class="space-y-2 pb-1">
 					{#each items as item, index (item.name)}
-						<div
+						<DraggableCard
+							isDragging={draggedItem?.index === index}
+							onDragHandlePointerDown={(e) => handlePointerDown(e, item, index)}
 							data-group-modal-index={index}
 							data-group-modal-name={item.name}
 							data-group-modal-selected={selectedNames.has(item.name) ? 'true' : 'false'}
@@ -207,68 +210,48 @@
 									handleToggle(item.name);
 								}
 							}}
-							class="rounded-xl border border-neutral-300 bg-white px-3 py-2.5 transition-colors hover:bg-neutral-50 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:hover:bg-neutral-800 {draggedItem?.index ===
-							index
-								? 'scale-95 opacity-50'
-								: ''} cursor-pointer"
-							style="transition: opacity 100ms, transform 100ms;"
+							className="cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
+							contentClass="px-3 py-2.5"
 							role="button"
 							tabindex="0"
 						>
-							<div class="flex items-center justify-between gap-2.5">
-								<button
-									type="button"
-									class="hidden shrink-0 text-neutral-400 md:block dark:text-neutral-500 {draggedItem?.index ===
-									index
-										? 'cursor-grabbing'
-										: isMobile
-											? ''
-											: 'cursor-grab'}"
-									on:pointerdown={(e) => handlePointerDown(e, item, index)}
-									on:click|stopPropagation|preventDefault
-								>
-									<Grip size={16} />
-								</button>
-								<div class="flex min-w-0 flex-1 items-center justify-between gap-2.5">
-									<div class="min-w-0 flex-1 text-left">
-										<div
-											class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
-										>
-											{item.name}
-										</div>
-									</div>
-									<div class="flex items-center gap-2">
-										{#if isMobile}
-											<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-											<div class="flex items-center gap-1" on:click|stopPropagation>
-												<Button
-													icon={ChevronUp}
-													size="xs"
-													disabled={index === 0}
-													title="Move member up"
-													ariaLabel="Move member up"
-													on:click={() => moveItem(index, 'up')}
-												/>
-												<Button
-													icon={ChevronDown}
-													size="xs"
-													disabled={index === items.length - 1}
-													title="Move member down"
-													ariaLabel="Move member down"
-													on:click={() => moveItem(index, 'down')}
-												/>
-											</div>
-										{/if}
-										<IconCheckbox
-											checked={selectedNames.has(item.name)}
-											icon={Check}
-											color="blue"
-											shape="circle"
-										/>
+							<div class="flex min-w-0 flex-1 items-center justify-between gap-2.5">
+								<div class="min-w-0 flex-1 text-left">
+									<div class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+										{item.name}
 									</div>
 								</div>
+								<div class="flex items-center gap-2">
+									{#if isMobile}
+										<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+										<div class="flex items-center gap-1" on:click|stopPropagation>
+											<Button
+												icon={ChevronUp}
+												size="xs"
+												disabled={index === 0}
+												title="Move member up"
+												ariaLabel="Move member up"
+												on:click={() => moveItem(index, 'up')}
+											/>
+											<Button
+												icon={ChevronDown}
+												size="xs"
+												disabled={index === items.length - 1}
+												title="Move member down"
+												ariaLabel="Move member down"
+												on:click={() => moveItem(index, 'down')}
+											/>
+										</div>
+									{/if}
+									<IconCheckbox
+										checked={selectedNames.has(item.name)}
+										icon={Check}
+										color="blue"
+										shape="circle"
+									/>
+								</div>
 							</div>
-						</div>
+						</DraggableCard>
 					{/each}
 				</div>
 			{/if}

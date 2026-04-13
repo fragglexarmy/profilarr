@@ -11,9 +11,9 @@
 		Layers,
 		ChevronUp,
 		ChevronDown,
-		Pencil,
-		Grip
+		Pencil
 	} from 'lucide-svelte';
+	import DraggableCard from '$ui/list/DraggableCard.svelte';
 	import IconCheckbox from '$lib/client/ui/form/IconCheckbox.svelte';
 	import Label from '$ui/label/Label.svelte';
 	import InfoModal from '$ui/modal/InfoModal.svelte';
@@ -688,7 +688,9 @@
 	<div class="mt-6 space-y-6 md:px-4">
 		<div class="space-y-4">
 			{#each mainBucket as item, index (item.type === 'quality' ? `quality-${item.name}-${index}` : `group-${item.name}-${index}`)}
-				<div
+				<DraggableCard
+					isDragging={draggedQualityFromMain?.index === index}
+					onDragHandlePointerDown={(e) => handlePointerDown(e, item, index)}
 					data-quality-index={index}
 					on:click={() => toggleEnabled(index)}
 					on:keydown={(e) => {
@@ -697,11 +699,7 @@
 							toggleEnabled(index);
 						}
 					}}
-					class="relative cursor-pointer rounded-xl border border-neutral-300 bg-white p-3 select-none dark:border-neutral-700/60 dark:bg-neutral-800/50 {draggedQualityFromMain?.index ===
-					index
-						? 'scale-[0.98] opacity-50'
-						: ''}"
-					style="transition: opacity 100ms, transform 100ms;"
+					className="cursor-pointer"
 					role="button"
 					tabindex="0"
 				>
@@ -716,34 +714,9 @@
 						></div>
 					{/if}
 					<div class="relative flex items-center justify-between">
-						<button
-							type="button"
-							class="mr-2 hidden shrink-0 text-neutral-400 md:block dark:text-neutral-500 {draggedQualityFromMain?.index ===
-							index
-								? 'cursor-grabbing'
-								: 'cursor-grab'}"
-							on:pointerdown={(e) => handlePointerDown(e, item, index)}
-							on:click|stopPropagation|preventDefault
-						>
-							<Grip size={16} />
-						</button>
 						<div class="flex-1">
 							<div class="font-medium text-neutral-900 dark:text-neutral-100">
-								{#if item.type === 'group'}
-									{#if data.canEditGroupMembers}
-										<button
-											type="button"
-											class="cursor-pointer hover:text-accent-600 dark:hover:text-accent-400"
-											on:click|stopPropagation={() => openEditGroupModal(item, index)}
-										>
-											{item.name}
-										</button>
-									{:else}
-										<span>{item.name}</span>
-									{/if}
-								{:else}
-									{item.name}
-								{/if}
+								{item.name}
 							</div>
 							{#if item.type === 'group' && item.members}
 								<div class="mt-1 hidden flex-wrap gap-1 md:flex">
@@ -860,7 +833,7 @@
 							{/each}
 						</div>
 					{/if}
-				</div>
+				</DraggableCard>
 			{/each}
 			<div class="h-[30px]"></div>
 		</div>
