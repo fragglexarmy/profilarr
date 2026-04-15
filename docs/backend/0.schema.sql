@@ -163,7 +163,6 @@ CREATE TABLE quality_group_members (
     quality_profile_name VARCHAR(100) NOT NULL,
     quality_group_name VARCHAR(100) NOT NULL,
     quality_name VARCHAR(100) NOT NULL,
-    position INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (quality_profile_name, quality_group_name, quality_name),
     FOREIGN KEY (quality_profile_name, quality_group_name) REFERENCES quality_groups(quality_profile_name, name) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (quality_name) REFERENCES qualities(name) ON DELETE CASCADE ON UPDATE CASCADE
@@ -219,16 +218,6 @@ CREATE TABLE condition_patterns (
     FOREIGN KEY (regular_expression_name) REFERENCES regular_expressions(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Clean up orphaned conditions when their pattern reference is cascade-deleted
--- (e.g., when the referenced regex is deleted upstream)
-CREATE TRIGGER trg_condition_patterns_cleanup
-AFTER DELETE ON condition_patterns
-BEGIN
-    DELETE FROM custom_format_conditions
-    WHERE custom_format_name = OLD.custom_format_name
-      AND name = OLD.condition_name;
-END;
-
 -- Language-based conditions
 -- Uses stable keys: (custom_format_name, condition_name) and language_name
 CREATE TABLE condition_languages (
@@ -240,15 +229,6 @@ CREATE TABLE condition_languages (
     FOREIGN KEY (custom_format_name, condition_name) REFERENCES custom_format_conditions(custom_format_name, name) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (language_name) REFERENCES languages(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
--- Clean up orphaned conditions when their language reference is cascade-deleted
-CREATE TRIGGER trg_condition_languages_cleanup
-AFTER DELETE ON condition_languages
-BEGIN
-    DELETE FROM custom_format_conditions
-    WHERE custom_format_name = OLD.custom_format_name
-      AND name = OLD.condition_name;
-END;
 
 -- Indexer flag conditions (e.g., "Scene", "Freeleech")
 -- Uses stable key: (custom_format_name, condition_name)
@@ -503,3 +483,5 @@ CREATE INDEX idx_test_releases_entity ON test_releases(entity_type, entity_tmdb_
 CREATE UNIQUE INDEX idx_one_upgrade_until_per_profile
 ON quality_profile_qualities(quality_profile_name)
 WHERE upgrade_until = 1;
+
+ALTER TABLE quality_group_members ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
