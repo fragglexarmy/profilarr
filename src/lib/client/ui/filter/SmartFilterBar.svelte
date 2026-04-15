@@ -7,6 +7,7 @@
 	import Dropdown from '$ui/dropdown/Dropdown.svelte';
 	import DropdownHeader from '$ui/dropdown/DropdownHeader.svelte';
 	import DropdownItem from '$ui/dropdown/DropdownItem.svelte';
+	import DropdownFooter from '$ui/dropdown/DropdownFooter.svelte';
 	import type { FilterFieldDef, FilterTag, SerializedFilterTag } from './types';
 
 	export let fields: FilterFieldDef[] = [];
@@ -91,13 +92,23 @@
 			.map((f) => ({ key: f.key, label: f.label, type: f.type }));
 	})();
 
+	let remainingValueCount = 0;
+
 	$: valueSuggestions = (() => {
-		if (phase !== 'value' || !activeFieldDef) return [];
-		if (activeFieldDef.type === 'number') return [];
+		if (phase !== 'value' || !activeFieldDef) {
+			remainingValueCount = 0;
+			return [];
+		}
+		if (activeFieldDef.type === 'number') {
+			remainingValueCount = 0;
+			return [];
+		}
 		const allSuggestions = activeFieldDef.suggestions?.(items) ?? [];
-		if (!valueInputValue) return allSuggestions.slice(0, 5);
-		const q = valueInputValue.toLowerCase();
-		return allSuggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 5);
+		const matched = valueInputValue
+			? allSuggestions.filter((s) => s.toLowerCase().includes(valueInputValue.toLowerCase()))
+			: allSuggestions;
+		remainingValueCount = Math.max(0, matched.length - 5);
+		return matched.slice(0, 5);
 	})();
 
 	$: suggestions =
@@ -335,23 +346,18 @@
 					on:click={() => handleSuggestionClick(i)}
 				/>
 			{/each}
+			{#if phase === 'value' && remainingValueCount > 0}
+				<DropdownFooter label="and {remainingValueCount} more" />
+			{/if}
 		</Dropdown>
 	{/if}
 </div>
 
 <style>
+	/* Re-apply rounding stripped by ActionsBar's global border-radius reset.
+	   The Dropdown component's own overflow-hidden + rounded-xl handles
+	   internal clipping, so we only need to restore the container radius. */
 	.smart-filter-bar > :global(:nth-child(n + 2)) {
 		border-radius: 0.75rem !important;
-	}
-	.smart-filter-bar > :global(:nth-child(n + 2)) :global(*) {
-		border-radius: 0 !important;
-	}
-	.smart-filter-bar > :global(:nth-child(n + 2)) :global(:first-child) {
-		border-top-left-radius: 0.75rem !important;
-		border-top-right-radius: 0.75rem !important;
-	}
-	.smart-filter-bar > :global(:nth-child(n + 2)) :global(:last-child) {
-		border-bottom-left-radius: 0.75rem !important;
-		border-bottom-right-radius: 0.75rem !important;
 	}
 </style>
