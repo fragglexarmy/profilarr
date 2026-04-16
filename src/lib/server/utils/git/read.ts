@@ -5,7 +5,7 @@
 import { execGit, execGitSafe } from './exec.ts';
 import { fetch } from './write.ts';
 import { validateFilePaths } from '../paths.ts';
-import type { GitStatus, UpdateInfo, Commit, IncomingChanges } from './types.ts';
+import type { GitStatus, UpdateInfo, Commit, CommitStatus, IncomingChanges } from './types.ts';
 
 function normalizeAuthorName(name: string): string {
 	const trimmed = name.trim();
@@ -202,16 +202,23 @@ ${content
 }
 
 /**
- * Get commit history
+ * Get commit history. The `status` tags each returned commit: pass `'installed'`
+ * for refs reachable from HEAD, `'available'` for upstream-only ranges (e.g.
+ * `HEAD..origin/<branch>`). `offset` translates to `--skip=N` for pagination.
  */
 export async function getCommits(
 	repoPath: string,
 	limit: number = 50,
-	ref?: string
+	ref: string | undefined,
+	status: CommitStatus,
+	offset: number = 0
 ): Promise<Commit[]> {
+	if (limit <= 0) return [];
+
 	// Format: hash|shortHash|message|author|email|date
 	const format = '%H|%h|%s|%an|%ae|%cI';
 	const args = ['log', `--format=${format}`, `-${limit}`];
+	if (offset > 0) args.push(`--skip=${offset}`);
 	if (ref) args.push(ref);
 	const output = await execGit(args, repoPath);
 
@@ -240,11 +247,21 @@ export async function getCommits(
 			author: normalizeAuthorName(author),
 			authorEmail,
 			date,
-			files
+			files,
+			status
 		});
 	}
 
 	return commits;
+}
+
+/**
+ * Count commits reachable from a ref expression (e.g. `HEAD`,
+ * `HEAD..origin/main`). Returns 0 if the rev-list fails (e.g. branch missing).
+ */
+export async function countCommits(repoPath: string, ref: string): Promise<number> {
+	const output = await execGitSafe(['rev-list', '--count', ref], repoPath);
+	return parseInt(output || '0', 10) || 0;
 }
 
 /**
@@ -289,7 +306,8 @@ export async function getIncomingChanges(repoPath: string): Promise<IncomingChan
 			author: normalizeAuthorName(author),
 			authorEmail,
 			date,
-			files
+			files,
+			status: 'available'
 		});
 	}
 
