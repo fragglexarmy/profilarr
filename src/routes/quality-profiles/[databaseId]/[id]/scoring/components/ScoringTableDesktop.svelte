@@ -21,6 +21,7 @@
 		| `#${string}`
 		| `var(--${string})`;
 	export let getArrTypeColor: (arrType: string) => IconCheckboxColor;
+	export let firstRowOnboarding: string | undefined = undefined;
 
 	const dispatch = createEventDispatcher<{
 		scoreChange: { formatName: string; arrType: string; score: number | null };
@@ -55,6 +56,10 @@
 			: 'transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900';
 	}
 
+	function rowAttributes(_: any, i: number): Record<string, string> {
+		return i === 0 && firstRowOnboarding ? { 'data-onboarding': firstRowOnboarding } : {};
+	}
+
 	function handleScoreChange(formatName: string, arrType: string, score: number | null) {
 		dispatch('scoreChange', { formatName, arrType, score });
 	}
@@ -79,6 +84,7 @@
 	pageSize={50}
 	hoverable={false}
 	{rowClass}
+	{rowAttributes}
 >
 	<svelte:fragment slot="cell" let:row let:column>
 		{#if column.key === 'name'}
